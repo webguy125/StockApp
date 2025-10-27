@@ -1,0 +1,14 @@
+flask
+flask-cors
+flask-socketio
+flask-caching
+flask-limiter
+pandas
+numpy
+scipy
+scikit-learn
+requests
+python-dateutil
+feedparser
+websocket-client
+pytz

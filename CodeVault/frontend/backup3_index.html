@@ -1,0 +1,265 @@
+<!-- SECTION 1: HTML & STYLES -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stock Chart with Trendline Volume</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+  <style>
+    #popupMenu {
+      position: absolute;
+      display: none;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+    #popupMenu div {
+      padding: 8px;
+      cursor: pointer;
+    }
+    #popupMenu div:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h2>📈 Stock Chart with Trendline Volume</h2>
+
+  <div style="margin-bottom: 10px;">
+    <input type="text" id="symbolInput" placeholder="Enter stock symbol (e.g. GE)" />
+  </div>
+
+  <div id="plot" style="height: 600px;"></div>
+
+  <div id="popupMenu">
+    <div onclick="clearAllLines()">🧹 Clear All Lines</div>
+  </div>
+  
+  
+  
+ <!-- SECTION 2: GLOBALS & EVENT LISTENERS -->
+<script>
+  let currentSymbol = null;
+  let drawnLines = []; // Each item: { id, x0, x1, y0, y1, volume }
+  let selectedLineId = null;
+  let relayoutGuard = false; // Prevents redraw loops
+
+  document.getElementById("symbolInput").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") loadChart();
+  });
+
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Delete" && selectedLineId !== null) {
+      const plotDiv = document.getElementById("plot");
+
+      drawnLines = drawnLines.filter(line => line.id !== selectedLineId);
+
+      const updatedShapes = drawnLines.map(line => ({
+        type: "line",
+        x0: line.x0,
+        x1: line.x1,
+        y0: line.y0,
+        y1: line.y1,
+        line: { color: "black" },
+        _id: line.id
+      }));
+
+      const updatedAnnotations = drawnLines.map(line => ({
+        x: new Date((new Date(line.x0).getTime() + new Date(line.x1).getTime()) / 2),
+        y: (line.y0 + line.y1) / 2,
+        text: `Avg Vol: ${Math.round(line.volume).toLocaleString()}`,
+        showarrow: false,
+        font: { color: "blue", size: 12 }
+      }));
+
+      Plotly.relayout("plot", {
+        shapes: updatedShapes,
+        annotations: updatedAnnotations
+      });
+
+      selectedLineId = null;
+    }
+  });
+
+  function clearAllLines() {
+    Plotly.relayout("plot", { shapes: [], annotations: [] });
+    drawnLines = [];
+    selectedLineId = null;
+    hidePopup();
+  }
+
+  function hidePopup() {
+    document.getElementById("popupMenu").style.display = "none";
+  }
+  
+  
+  
+      <!-- SECTION 3: CHART LOADING & INTERACTION LOGIC -->
+  function loadChart() {
+    const symbol = document.getElementById("symbolInput").value.trim().toUpperCase();
+    if (!symbol) return;
+
+    currentSymbol = symbol;
+    drawnLines = [];
+    selectedLineId = null;
+
+    fetch(`/data/${symbol}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.length === 0) {
+          alert("No data found for symbol: " + symbol);
+          return;
+        }
+
+        const trace = {
+          x: data.map(row => row.Date),
+          open: data.map(row => row.Open),
+          high: data.map(row => row.High),
+          low: data.map(row => row.Low),
+          close: data.map(row => row.Close),
+          type: "candlestick",
+          xaxis: "x",
+          yaxis: "y"
+        };
+
+        const layout = {
+          title: `${symbol} Candlestick Chart`,
+          dragmode: "drawline",
+          shapes: [],
+          annotations: [],
+          xaxis: { rangeslider: { visible: false } },
+          yaxis: { title: "Price" }
+        };
+
+        Plotly.newPlot("plot", [trace], layout).then(() => {
+          const plotDiv = document.getElementById("plot");
+
+          plotDiv.on('plotly_relayout', function(event) {
+            if (relayoutGuard) return;
+            relayoutGuard = true;
+            setTimeout(() => { relayoutGuard = false; }, 100);
+
+            const shapes = plotDiv.layout.shapes || [];
+
+            shapes.forEach((shape) => {
+              if (shape.type !== "line") return;
+
+              if (!shape._id) {
+                shape._id = crypto.randomUUID();
+              }
+
+              const { x0, x1, y0, y1 } = shape;
+              const existing = drawnLines.find(l => l.id === shape._id);
+
+              const coordsChanged = !existing ||
+                existing.x0 !== x0 || existing.x1 !== x1 ||
+                existing.y0 !== y0 || existing.y1 !== y1;
+
+              if (!coordsChanged) return;
+
+              fetch("/volume", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  symbol: currentSymbol,
+                  start_date: x0,
+                  end_date: x1
+                })
+              })
+              .then(res => res.json())
+              .then(data => {
+                const avgVolume = data.avg_volume;
+                const midX = new Date((new Date(x0).getTime() + new Date(x1).getTime()) / 2);
+                const midY = (y0 + y1) / 2;
+
+                const annotation = {
+                  x: midX,
+                  y: midY,
+                  text: `Avg Vol: ${Math.round(avgVolume).toLocaleString()}`,
+                  showarrow: false,
+                  font: { color: "blue", size: 12 }
+                };
+
+                const layout = plotDiv.layout;
+                const annotations = layout.annotations || [];
+
+                if (existing) {
+                  annotations[drawnLines.indexOf(existing)] = annotation;
+                  Object.assign(existing, { x0, x1, y0, y1, volume: avgVolume });
+                } else {
+                  annotations.push(annotation);
+                  drawnLines.push({ id: shape._id, x0, x1, y0, y1, volume: avgVolume });
+                }
+
+                Plotly.relayout("plot", { annotations });
+              });
+            });
+          });
+
+          plotDiv.on('plotly_click', function(data) {
+            const clickedX = data.points[0].x;
+            const clickedY = data.points[0].y;
+
+            const layout = plotDiv.layout;
+            const shapes = layout.shapes || [];
+
+            let closestId = null;
+            let minDistance = Infinity;
+
+            shapes.forEach((shape) => {
+              if (shape.type !== "line") return;
+              const midX = new Date((new Date(shape.x0).getTime() + new Date(shape.x1).getTime()) / 2);
+              const midY = (shape.y0 + shape.y1) / 2;
+              const dx = Math.abs(new Date(clickedX).getTime() - midX.getTime());
+              const dy = Math.abs(clickedY - midY);
+              const dist = dx + dy;
+              if (dist < minDistance) {
+                minDistance = dist;
+                closestId = shape._id;
+              }
+            });
+
+            selectedLineId = minDistance < 10000000 ? closestId : null;
+          });
+
+          plotDiv.addEventListener("contextmenu", function(e) {
+            e.preventDefault();
+
+            if (selectedLineId !== null) {
+              drawnLines = drawnLines.filter(line => line.id !== selectedLineId);
+
+              const updatedShapes = drawnLines.map(line => ({
+                type: "line",
+                x0: line.x0,
+                x1: line.x1,
+                y0: line.y0,
+                y1: line.y1,
+                line: { color: "black" },
+                _id: line.id
+              }));
+
+              const updatedAnnotations = drawnLines.map(line => ({
+                x: new Date((new Date(line.x0).getTime() + new Date(line.x1).getTime()) / 2),
+                y: (line.y0 + line.y1) / 2,
+                text: `Avg Vol: ${Math.round(line.volume).toLocaleString()}`,
+                showarrow: false,
+                font: { color: "blue", size: 12 }
+              }));
+
+              Plotly.relayout("plot", {
+                shapes: updatedShapes,
+                annotations: updatedAnnotations
+              });
+
+              selectedLineId = null;
+            } else {
+              const menu = document.getElementById("popupMenu");
+              menu.style.left = e.pageX + "px";
+              menu.style.top = e.pageY + "px";
+              menu.style.display = "block";
+            }
+          });
+        });
+      });
+  }
+</script>

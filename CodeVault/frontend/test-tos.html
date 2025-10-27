@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TOS Test Page</title>
+  <link rel="stylesheet" href="css/tos-theme.css">
+  <style>
+    .test-box {
+      padding: 20px;
+      margin: 20px;
+      border: 2px solid var(--tos-accent-blue);
+      background-color: var(--tos-bg-secondary);
+      color: var(--tos-text-primary);
+    }
+  </style>
+</head>
+<body class="tos-theme">
+  <div class="tos-container">
+    <div class="test-box">
+      <h1>TOS Theme Test</h1>
+      <p>If you see this text in WHITE on a DARK background, the CSS is working!</p>
+      <p>Background should be: #252525 (dark gray)</p>
+      <p>Text should be: #e0e0e0 (light gray/white)</p>
+      <p>Border should be: Blue (#4a9eff)</p>
+    </div>
+
+    <div class="tos-menu-bar" style="padding: 10px;">
+      <span>Menu Bar Test - Should have dark background</span>
+    </div>
+
+    <div style="padding: 20px; color: white;">
+      <h2>JavaScript Module Test</h2>
+      <p id="js-status">JavaScript not loaded yet...</p>
+    </div>
+  </div>
+
+  <script type="module">
+    document.getElementById('js-status').textContent = '✅ JavaScript ES6 modules are working!';
+    document.getElementById('js-status').style.color = '#00c851';
+  </script>
+</body>
+</html>

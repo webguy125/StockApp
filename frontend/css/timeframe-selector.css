@@ -1,0 +1,166 @@
+/**
+ * Timeframe Selector Styles
+ * TradingView-inspired dropdown menu
+ */
+
+.timeframe-selector-container {
+  position: relative;
+  display: inline-block;
+  margin-right: 15px;
+  z-index: 1000;
+}
+
+.timeframe-selector {
+  position: relative;
+}
+
+.timeframe-button {
+  background: #1e222d;
+  border: 1px solid #2a2e39;
+  color: #d1d4dc;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  min-width: 100px;
+  justify-content: space-between;
+}
+
+.timeframe-button:hover {
+  background: #2a2e39;
+  border-color: #363a45;
+}
+
+.timeframe-button:active {
+  background: #131722;
+}
+
+.timeframe-button svg {
+  opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+
+.timeframe-button:hover svg {
+  opacity: 1;
+}
+
+.timeframe-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: #1e222d;
+  border: 1px solid #2a2e39;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  min-width: 180px;
+  max-height: 500px;
+  overflow-y: auto;
+  display: none;
+  z-index: 1001;
+}
+
+.timeframe-dropdown.open {
+  display: block;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.timeframe-category {
+  border-bottom: 1px solid #2a2e39;
+}
+
+.timeframe-category:last-child {
+  border-bottom: none;
+}
+
+.timeframe-category-header {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #787b86;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #131722;
+  user-select: none;
+}
+
+.timeframe-category-items {
+  padding: 4px 0;
+}
+
+.timeframe-item {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #d1d4dc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.timeframe-item:hover {
+  background: #2a2e39;
+  color: #ffffff;
+}
+
+.timeframe-item.active {
+  background: #2962ff;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.timeframe-item.active:hover {
+  background: #1e53e5;
+}
+
+/* Scrollbar styling */
+.timeframe-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.timeframe-dropdown::-webkit-scrollbar-track {
+  background: #131722;
+  border-radius: 3px;
+}
+
+.timeframe-dropdown::-webkit-scrollbar-thumb {
+  background: #2a2e39;
+  border-radius: 3px;
+}
+
+.timeframe-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #363a45;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .timeframe-dropdown {
+    min-width: 150px;
+    max-height: 400px;
+  }
+
+  .timeframe-button {
+    min-width: 80px;
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .timeframe-item {
+    padding: 7px 14px;
+    font-size: 12px;
+  }
+}

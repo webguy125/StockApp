@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coinbase Live Chart</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .header {
+      background: #1a1a1a;
+      padding: 15px 30px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      color: #00c851;
+    }
+
+    .symbol-selector {
+      display: flex;
+      gap: 10px;
+    }
+
+    .symbol-btn {
+      padding: 8px 15px;
+      background: #2a2a2a;
+      border: 1px solid #404040;
+      color: #e0e0e0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .symbol-btn:hover {
+      background: #3a3a3a;
+      border-color: #00c851;
+    }
+
+    .symbol-btn.active {
+      background: #00c851;
+      color: #000;
+      border-color: #00c851;
+    }
+
+    #chart-container {
+      flex: 1;
+      width: 100%;
+      background: #0a0a0a;
+    }
+
+    .status {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 20px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    .status.connected {
+      border: 1px solid #00c851;
+      color: #00c851;
+    }
+
+    .status.disconnected {
+      border: 1px solid #ff4444;
+      color: #ff4444;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .console {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      max-width: 400px;
+      z-index: 1000;
+    }
+
+    .console-line {
+      margin: 2px 0;
+      opacity: 0.8;
+    }
+
+    .console-line.price {
+      color: #00c851;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 Coinbase Live Chart</h1>
+    <div class="symbol-selector">
+      <button class="symbol-btn active" onclick="selectSymbol('BTC-USD', this)">BTC-USD</button>
+      <button class="symbol-btn" onclick="selectSymbol('ETH-USD', this)">ETH-USD</button>
+      <button class="symbol-btn" onclick="selectSymbol('SOL-USD', this)">SOL-USD</button>
+      <button class="symbol-btn" onclick="selectSymbol('DOGE-USD', this)">DOGE-USD</button>
+    </div>
+  </div>
+
+  <div id="status" class="status disconnected">
+    <div class="status-dot"></div>
+    <span id="status-text">Connecting...</span>
+  </div>
+
+  <div id="chart-container"></div>
+
+  <div id="console" class="console">
+    <div id="console-content"></div>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+  <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+
+  <!-- Our App -->
+  <script src="js/coinbase-app.js"></script>
+
+  <script>
+    // Helper functions for UI
+    function selectSymbol(symbol, button) {
+      // Update button states
+      document.querySelectorAll('.symbol-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      button.classList.add('active');
+
+      // Change symbol in app
+      if (window.coinbaseApp) {
+        window.coinbaseApp.changeSymbol(symbol);
+      }
+    }
+
+    // Override console.log to show in UI
+    const originalLog = console.log;
+    const consoleContent = document.getElementById('console-content');
+    let consoleLines = [];
+
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+
+      // Add to UI console
+      const message = args.join(' ');
+      consoleLines.push(message);
+
+      // Keep last 10 lines
+      if (consoleLines.length > 10) {
+        consoleLines.shift();
+      }
+
+      // Update UI
+      consoleContent.innerHTML = consoleLines.map(line => {
+        const className = line.includes('$') ? 'price' : '';
+        return `<div class="console-line ${className}">${line}</div>`;
+      }).join('');
+    };
+
+    // Update status indicator
+    setInterval(() => {
+      const status = document.getElementById('status');
+      const statusText = document.getElementById('status-text');
+
+      if (window.coinbaseApp && window.coinbaseApp.socket && window.coinbaseApp.socket.connected) {
+        status.className = 'status connected';
+        statusText.textContent = 'Live';
+      } else {
+        status.className = 'status disconnected';
+        statusText.textContent = 'Disconnected';
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

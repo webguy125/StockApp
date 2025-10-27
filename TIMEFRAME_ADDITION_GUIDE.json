@@ -1,0 +1,419 @@
+{
+  "title": "Timeframe Addition Guide",
+  "description": "Complete guide for adding new timeframes to the StockApp cryptocurrency trading platform",
+  "date_created": "2025-10-26",
+  "date_updated": "2025-10-27",
+  "current_working_timeframes": [
+    "1M (1 minute - Coinbase historical + live WebSocket)",
+    "1D (1 day - yfinance historical + live WebSocket)",
+    "1W (1 week - yfinance historical + live WebSocket)",
+    "1MO (1 month - yfinance historical + live WebSocket)",
+    "3MO (3 months - yfinance historical + live WebSocket)"
+  ],
+  "pattern_used": "Standalone implementation with ticker timing fix",
+
+  "data_source_routing": {
+    "overview": "Backend automatically routes requests to the correct data source based on interval",
+    "coinbase_api": {
+      "used_for": "Minute-level crypto intervals (1m, 5m, 15m, 30m, 1h)",
+      "why": "Provides proper OHLC candlestick data. yfinance returns Open=High=Low=Close for crypto minute data.",
+      "endpoint": "https://api.exchange.coinbase.com/products/{symbol}/candles",
+      "limit": "300 candles per request",
+      "implementation": "backend/api_server.py - fetch_coinbase_candles() function (lines 38-143)",
+      "automatic": true,
+      "no_frontend_changes_needed": "Frontend code is identical for all timeframes - backend handles routing"
+    },
+    "yfinance": {
+      "used_for": "Daily and above intervals (1d, 1wk, 1mo, 3mo)",
+      "why": "Excellent for historical daily data with full history available",
+      "limitation": "Returns identical OHLC values for crypto minute-level data (unusable for minute charts)",
+      "automatic": true
+    },
+    "live_websocket": {
+      "source": "Coinbase WebSocket (all timeframes)",
+      "purpose": "Real-time price updates for the live candle",
+      "always_active": true
+    }
+  },
+
+  "yfinance_limitations": {
+    "supported_intervals": [
+      "1m, 2m, 5m, 15m, 30m, 60m, 90m (minutes) - AUTO-ROUTED TO COINBASE FOR CRYPTO",
+      "1h (hours) - AUTO-ROUTED TO COINBASE FOR CRYPTO",
+      "1d, 5d (days) - yfinance works perfectly",
+      "1wk (weeks) - yfinance works perfectly",
+      "1mo, 3mo (months) - yfinance works perfectly"
+    ],
+    "NOT_supported": [
+      "4h - NOT SUPPORTED BY YFINANCE OR COINBASE",
+      "6mo - NOT SUPPORTED BY YFINANCE",
+      "12mo - NOT SUPPORTED BY YFINANCE",
+      "Seconds (1s, 5s, etc.) - NOT SUPPORTED",
+      "Ticks - NOT SUPPORTED",
+      "Ranges - NOT SUPPORTED"
+    ],
+    "crypto_minute_data_issue": {
+      "problem": "yfinance returns Open=High=Low=Close for crypto minute candles (single price point, no body)",
+      "solution": "Backend automatically routes minute intervals to Coinbase API",
+      "developer_note": "No changes needed in frontend code - routing is transparent"
+    }
+  },
+
+  "step_by_step_guide": {
+    "step_1": {
+      "title": "Copy the template from a working timeframe",
+      "action": "Copy C:\\StockApp\\frontend\\js\\timeframes\\days\\1d.js as your starting point",
+      "why": "1D is the reference implementation with all required features"
+    },
+    "step_2": {
+      "title": "Create new timeframe file",
+      "location": "Choose appropriate category folder",
+      "folders": {
+        "minutes": "C:\\StockApp\\frontend\\js\\timeframes\\minutes\\",
+        "hours": "C:\\StockApp\\frontend\\js\\timeframes\\hours\\",
+        "days": "C:\\StockApp\\frontend\\js\\timeframes\\days\\"
+      },
+      "example": "For 5-minute timeframe: C:\\StockApp\\frontend\\js\\timeframes\\minutes\\5m.js"
+    },
+    "step_3": {
+      "title": "Modify the timeframe class",
+      "changes_required": [
+        {
+          "property": "id",
+          "example": "this.id = '5m';",
+          "note": "Must match yfinance interval format"
+        },
+        {
+          "property": "name",
+          "example": "this.name = '5 minutes';",
+          "note": "Display name shown in dropdown"
+        },
+        {
+          "property": "interval",
+          "example": "this.interval = '5m';",
+          "note": "MUST be a valid yfinance interval"
+        },
+        {
+          "property": "period",
+          "example": "this.period = '1d';",
+          "note": "How much historical data to fetch (1d, 5d, 1mo, 3mo, max)"
+        },
+        {
+          "property": "category",
+          "example": "this.category = 'minutes';",
+          "note": "Must match folder name (minutes, hours, days)"
+        },
+        {
+          "property": "renderer",
+          "example": "this.renderer = new CanvasRenderer('5m');",
+          "note": "Pass timeframe ID for gridline spacing"
+        }
+      ]
+    },
+    "step_4": {
+      "title": "Update logging prefix",
+      "find_replace": [
+        {
+          "find": "[1D]",
+          "replace": "[5M]",
+          "note": "Update ALL console.log statements with this prefix"
+        }
+      ],
+      "locations": "All console.log statements throughout the file (~15 occurrences)"
+    },
+    "step_5": {
+      "title": "Add gridline spacing to canvas-renderer.js",
+      "file": "C:\\StockApp\\frontend\\js\\chart-renderers\\canvas-renderer.js",
+      "location": "calculatePriceLevels() method around line 318-340",
+      "code_to_add": "} else if (this.timeframeInterval === '5m') {\n  increment = 200;  // Gridline spacing for 5-minute charts\n",
+      "current_spacings": {
+        "1m": 100,
+        "5m": 100,
+        "15m": 500,
+        "30m": 500,
+        "1h": 500,
+        "1d": 1000,
+        "1wk": 5000,
+        "1mo": 10000,
+        "3mo": 20000
+      },
+      "guideline": "Shorter timeframes = smaller increments, longer timeframes = larger increments"
+    },
+    "step_6": {
+      "title": "Import the new timeframe in TimeframeRegistry.js",
+      "file": "C:\\StockApp\\frontend\\js\\timeframes\\TimeframeRegistry.js",
+      "add_import": "import { Timeframe5m } from './minutes/5m.js';",
+      "location": "Top of file with other imports (around line 7-11)"
+    },
+    "step_7": {
+      "title": "Register the new timeframe",
+      "file": "C:\\StockApp\\frontend\\js\\timeframes\\TimeframeRegistry.js",
+      "add_registration": "this.register(new Timeframe5m());",
+      "location": "In registerAllTimeframes() method (around line 27-35)",
+      "organize_by_category": "Keep minutes, hours, days grouped together"
+    },
+    "step_8": {
+      "title": "Update cache version",
+      "file": "C:\\StockApp\\frontend\\index_tos_style.html",
+      "location": "Line 459",
+      "current": "?v=20251026-emergency-fix",
+      "change_to": "?v=20251026-added-5m",
+      "why": "Forces browser to reload JavaScript files"
+    },
+    "step_9": {
+      "title": "Test the new timeframe",
+      "steps": [
+        "Hard refresh browser (Ctrl+Shift+R)",
+        "Check console for 'Registered X timeframes' (count should increase by 1)",
+        "Select new timeframe from dropdown",
+        "Verify [5M] log messages appear in console",
+        "Confirm chart loads with correct data range",
+        "Test live price updates are working",
+        "Verify gridlines are spaced appropriately"
+      ]
+    }
+  },
+
+  "code_templates": {
+    "complete_timeframe_file": {
+      "filename": "5m.js (example for 5-minute timeframe)",
+      "code": "/**\n * 5 Minute Timeframe\n * Independent implementation - displays 5-minute candlestick chart with live updates\n */\nimport { CanvasRenderer } from '../../chart-renderers/canvas-renderer.js';\n\nexport class Timeframe5m {\n  constructor() {\n    // Timeframe configuration\n    this.id = '5m';\n    this.name = '5 minutes';\n    this.interval = '5m';  // MUST match yfinance interval\n    this.period = '1d';     // Fetch 1 day of 5-minute candles\n    this.category = 'minutes';\n    this.isCustom = false;\n\n    // Chart renderer (independent instance)\n    this.renderer = new CanvasRenderer('5m');\n\n    // Data and state\n    this.symbol = null;\n    this.data = [];\n    this.socket = null;\n    this.isActive = false;\n    this.lastTickerUpdate = null; // Store ticker that arrives before chart loads\n  }\n\n  async initialize(symbol, socket) {\n    console.log(`📊 [5M] Initializing for ${symbol}`);\n    this.symbol = symbol;\n    this.socket = socket;\n    this.isActive = true;\n\n    try {\n      await this.loadHistoricalData();\n      this.subscribeToLiveData();\n      return true;\n    } catch (error) {\n      console.error(`❌ [5M] Initialization error:`, error);\n      return false;\n    }\n  }\n\n  async loadHistoricalData() {\n    const url = `/data/${this.symbol}?interval=${this.interval}&period=${this.period}`;\n    console.log(`📥 [5M] Fetching: ${url}`);\n\n    try {\n      const response = await fetch(url);\n      if (!response.ok) {\n        throw new Error(`HTTP ${response.status}: ${response.statusText}`);\n      }\n\n      this.data = await response.json();\n\n      if (this.data.length === 0) {\n        throw new Error(`No data returned for ${this.symbol}`);\n      }\n\n      console.log(`✅ [5M] Loaded ${this.data.length} 5-minute candles`);\n\n      const success = await this.renderer.render(this.data, this.symbol);\n\n      if (success) {\n        console.log('✅ [5M] Chart rendered successfully');\n\n        // Apply any ticker update that arrived during chart load\n        if (this.lastTickerUpdate && this.lastTickerUpdate.symbol === this.symbol) {\n          console.log(`🔄 [5M] Applying pending ticker update: ${this.lastTickerUpdate.symbol} = $${this.lastTickerUpdate.price}`);\n          const volumeBTC = this.lastTickerUpdate.volume_today || 0;\n          this.renderer.updateLivePrice(this.lastTickerUpdate.price, volumeBTC);\n        }\n      }\n\n      return this.data;\n    } catch (error) {\n      console.error(`❌ [5M] Error loading data:`, error);\n      throw error;\n    }\n  }\n\n  subscribeToLiveData() {\n    if (!this.socket) {\n      console.warn(`⚠️ [5M] No socket connection available`);\n      return;\n    }\n\n    this.socket.emit('subscribe', {\n      product_ids: [`${this.symbol}-USD`],\n      channels: ['ticker', 'matches']\n    });\n\n    console.log(`🔔 [5M] Subscribed to ${this.symbol}-USD`);\n  }\n\n  handleTickerUpdate(data) {\n    console.log(`📈 [5M] Received ticker: ${data.symbol} = $${data.price}, isActive=${this.isActive}`);\n\n    const symbolMatches = data.symbol && this.symbol &&\n      (data.symbol === `${this.symbol}-USD` ||\n       data.symbol.includes(this.symbol) ||\n       this.symbol.includes(data.symbol.split('-')[0]));\n\n    if (!this.isActive || !data || !symbolMatches) {\n      console.log(`  ❌ [5M] Skipping ticker - isActive=${this.isActive}, symbolMatches=${symbolMatches}`);\n      return;\n    }\n\n    const price = parseFloat(data.price);\n    const volumeBTC = data.volume_today || 0;\n\n    console.log(`  ✅ [5M] Processing ticker update - price=${price}, volume=${volumeBTC}, data.length=${this.data.length}`);\n\n    this.lastTickerUpdate = {\n      symbol: this.symbol,\n      price: price,\n      volume_today: volumeBTC\n    };\n\n    if (this.data.length > 0) {\n      console.log(`  🖼️ [5M] Updating renderer with live price`);\n      this.renderer.updateLivePrice(price, volumeBTC);\n    } else {\n      console.log(`  ⚠️ [5M] Chart not loaded yet, ticker stored for later`);\n    }\n  }\n\n  handleTradeUpdate(data) {\n    // Placeholder for trade updates if needed\n  }\n\n  deactivate() {\n    console.log(`⏸️ [5M] Deactivating`);\n    this.isActive = false;\n\n    if (this.socket && this.symbol) {\n      this.socket.emit('unsubscribe', {\n        product_ids: [`${this.symbol}-USD`],\n        channels: ['ticker', 'matches']\n      });\n    }\n  }\n\n  destroy() {\n    this.deactivate();\n\n    if (this.renderer) {\n      this.renderer.destroy();\n    }\n\n    this.data = [];\n    this.symbol = null;\n    this.socket = null;\n    this.lastTickerUpdate = null;\n  }\n\n  async reload() {\n    console.log(`🔄 [5M] Reloading...`);\n    await this.loadHistoricalData();\n  }\n\n  getInfo() {\n    return {\n      id: this.id,\n      name: this.name,\n      interval: this.interval,\n      period: this.period,\n      category: this.category,\n      isCustom: this.isCustom,\n      isActive: this.isActive,\n      dataPoints: this.data.length,\n      symbol: this.symbol\n    };\n  }\n}"
+    }
+  },
+
+  "recommended_timeframes_to_add": {
+    "high_priority": [
+      {
+        "id": "5m",
+        "name": "5 minutes",
+        "interval": "5m",
+        "period": "1d",
+        "category": "minutes",
+        "gridline_spacing": 200,
+        "use_case": "Day trading, quick scalping"
+      },
+      {
+        "id": "15m",
+        "name": "15 minutes",
+        "interval": "15m",
+        "period": "5d",
+        "category": "minutes",
+        "gridline_spacing": 500,
+        "use_case": "Intraday trading"
+      },
+      {
+        "id": "1h",
+        "name": "1 hour",
+        "interval": "1h",
+        "period": "1mo",
+        "category": "hours",
+        "gridline_spacing": 500,
+        "use_case": "Swing trading"
+      },
+      {
+        "id": "4h",
+        "name": "4 hours",
+        "interval": "4h",
+        "period": "3mo",
+        "category": "hours",
+        "gridline_spacing": 1000,
+        "use_case": "Swing trading, trend analysis"
+      }
+    ],
+    "medium_priority": [
+      {
+        "id": "1m",
+        "name": "1 minute",
+        "interval": "1m",
+        "period": "1d",
+        "category": "minutes",
+        "gridline_spacing": 100,
+        "use_case": "Very short-term scalping"
+      },
+      {
+        "id": "30m",
+        "name": "30 minutes",
+        "interval": "30m",
+        "period": "5d",
+        "category": "minutes",
+        "gridline_spacing": 500,
+        "use_case": "Intraday positioning"
+      }
+    ],
+    "low_priority": [
+      {
+        "id": "2m",
+        "name": "2 minutes",
+        "interval": "2m",
+        "period": "1d",
+        "category": "minutes",
+        "gridline_spacing": 100
+      },
+      {
+        "id": "60m",
+        "name": "60 minutes",
+        "interval": "60m",
+        "period": "1mo",
+        "category": "minutes",
+        "gridline_spacing": 500,
+        "note": "Same as 1h, probably unnecessary"
+      },
+      {
+        "id": "90m",
+        "name": "90 minutes",
+        "interval": "90m",
+        "period": "1mo",
+        "category": "minutes",
+        "gridline_spacing": 500
+      }
+    ]
+  },
+
+  "quick_reference": {
+    "working_example": "See C:\\StockApp\\frontend\\js\\timeframes\\days\\1d.js",
+    "total_lines": "~215 lines per timeframe file",
+    "key_methods": [
+      "constructor() - Configure timeframe properties",
+      "initialize() - Load data and subscribe to WebSocket",
+      "loadHistoricalData() - Fetch from backend API",
+      "subscribeToLiveData() - Setup WebSocket subscription",
+      "handleTickerUpdate() - Process live price updates with ticker timing fix",
+      "deactivate() - Unsubscribe and cleanup",
+      "destroy() - Full cleanup",
+      "reload() - Refresh chart data",
+      "getInfo() - Return timeframe metadata"
+    ],
+    "critical_features": [
+      "Ticker timing fix - Store ticker updates that arrive before chart loads",
+      "Symbol matching - Handle BTC vs BTC-USD variations",
+      "Independent renderer - Each timeframe has own CanvasRenderer instance",
+      "Proper logging - Unique prefix for debugging ([5M], [1H], etc.)",
+      "Clean deactivation - Unsubscribe from WebSocket on timeframe switch"
+    ]
+  },
+
+  "troubleshooting": {
+    "chart_not_loading": [
+      "Check console for errors",
+      "Verify interval is supported by yfinance",
+      "Confirm TimeframeRegistry import is correct",
+      "Ensure registration call is present",
+      "Hard refresh browser (Ctrl+Shift+R)"
+    ],
+    "no_live_updates": [
+      "Check [XX] log messages in console",
+      "Verify handleTickerUpdate() is being called",
+      "Confirm ticker timing fix is implemented (lastTickerUpdate storage)",
+      "Check WebSocket subscription (should see 🔔 log message)",
+      "Verify symbol matching logic"
+    ],
+    "wrong_data_range": [
+      "Check 'period' property in constructor",
+      "Verify yfinance supports that period for the interval",
+      "Check console for API fetch URL",
+      "Test URL manually in browser"
+    ],
+    "404_errors": [
+      "Verify file path matches import path exactly",
+      "Check filename case sensitivity",
+      "Ensure file is in correct category folder",
+      "Clear browser cache and hard refresh"
+    ]
+  },
+
+  "notes": {
+    "important": [
+      "NEVER use BaseTimeframe - it has been deleted",
+      "ALL timeframes must be standalone implementations",
+      "Frontend code is IDENTICAL for all timeframes - backend handles data source routing",
+      "Minute intervals (1m, 5m, 15m, 30m, 1h) automatically use Coinbase API",
+      "Daily intervals (1d, 1wk, 1mo, 3mo) automatically use yfinance",
+      "DO NOT implement 4h - NOT supported by Coinbase or yfinance (gap between 1h and 6h)",
+      "DO NOT implement 6mo or 12mo - not supported by yfinance",
+      "Update cache version EVERY time you modify JavaScript files"
+    ],
+    "best_practices": [
+      "Copy 1m.js for minute timeframes, 1d.js for daily timeframes - proven references",
+      "Use consistent logging prefixes for debugging ([1M], [5M], [1D], etc.)",
+      "Test live WebSocket updates after adding new timeframe",
+      "Test switching between timeframes to ensure panning works",
+      "Keep gridline spacing appropriate for timeframe length",
+      "Document why certain intervals are not supported"
+    ]
+  },
+
+  "minute_timeframes_setup": {
+    "overview": "Setting up minute timeframes is identical to daily timeframes - the backend automatically routes to Coinbase API for proper OHLC data",
+    "no_backend_changes_needed": "The backend routing is already implemented. Just create the frontend timeframe file.",
+
+    "quick_start": {
+      "step_1": "Copy C:\\StockApp\\frontend\\js\\timeframes\\minutes\\1m.js as your template",
+      "step_2": "Modify: id, name, interval, period, category, and all [1M] log prefixes",
+      "step_3": "Add gridline spacing to canvas-renderer.js (if needed)",
+      "step_4": "Import and register in TimeframeRegistry.js",
+      "step_5": "Update cache version in index_tos_style.html",
+      "step_6": "Hard refresh browser (Ctrl+Shift+R) and test"
+    },
+
+    "data_source_is_automatic": {
+      "no_thinking_required": "Backend automatically detects minute intervals and routes to Coinbase",
+      "coinbase_integration": "fetch_coinbase_candles() in api_server.py (lines 38-143)",
+      "routing_logic": "api_server.py lines 181-192 - checks if interval in ['1m', '5m', '15m', '30m', '1h']",
+      "proper_ohlc_guaranteed": "Coinbase returns real candlesticks with different Open/High/Low/Close values",
+      "yfinance_issue_bypassed": "No more Open=High=Low=Close problem that yfinance has for crypto minutes"
+    },
+
+    "supported_minute_intervals": {
+      "1m": "1 minute (60 seconds) - 300 candles = 5 hours of data",
+      "5m": "5 minutes (300 seconds) - 300 candles = 25 hours of data",
+      "15m": "15 minutes (900 seconds) - 300 candles = 75 hours of data",
+      "30m": "30 minutes (1800 seconds) - 300 candles = 150 hours of data",
+      "1h": "1 hour (3600 seconds) - 300 candles = 12.5 days of data",
+      "NOT_4h": "4 hour is NOT supported by Coinbase (gap between 1h and 6h)"
+    },
+
+    "coinbase_api_details": {
+      "max_candles_per_request": 300,
+      "time_range_auto_calculated": "Backend calculates: max_seconds = granularity * 300",
+      "endpoint": "https://api.exchange.coinbase.com/products/{symbol}/candles",
+      "format_received": "[[timestamp, low, high, open, close, volume], ...]",
+      "format_transformed": "[{Date, Open, High, Low, Close, Volume}, ...]"
+    },
+
+    "troubleshooting_minute_charts": {
+      "candles_look_like_tiny_lines": {
+        "old_bug": "This was the yfinance bug (Open=High=Low=Close)",
+        "should_not_happen": "Backend now uses Coinbase for minute intervals",
+        "how_to_verify": "Check backend logs for '[ROUTING] Using Coinbase for {symbol} {interval}'",
+        "if_using_yfinance": "Something is broken in the routing logic"
+      },
+      "no_candles_displayed": {
+        "check_console": "Look for API errors in browser console",
+        "test_endpoint": "curl http://127.0.0.1:5000/data/BTC-USD?interval=1m&period=1d",
+        "verify_crypto_symbol": "Coinbase only supports crypto (BTC-USD, ETH-USD, SOL-USD, etc.)"
+      },
+      "panning_not_working": {
+        "fixed_in": "canvas-renderer.js:148 (this.eventsSetup = false)",
+        "solution": "Hard refresh browser (Ctrl+Shift+R)",
+        "verify_cache": "Check cache version updated in index_tos_style.html"
+      }
+    },
+
+    "example_5m_setup": {
+      "description": "Complete example for adding 5-minute timeframe",
+      "file_location": "C:\\StockApp\\frontend\\js\\timeframes\\minutes\\5m.js",
+      "key_properties": {
+        "id": "5m",
+        "name": "5 minutes",
+        "interval": "5m",
+        "period": "1d",
+        "category": "minutes",
+        "log_prefix": "[5M]"
+      },
+      "gridline_spacing": 200,
+      "import_statement": "import { Timeframe5m } from './minutes/5m.js';",
+      "registration": "this.register(new Timeframe5m());",
+      "backend_routing": "Automatic - no changes needed"
+    }
+  }
+}

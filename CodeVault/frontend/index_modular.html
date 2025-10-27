@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>StockApp - Modular Analysis Platform</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+
+  <!-- Modular CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body class="light-theme">
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- User Info -->
+      <div id="userInfo" class="user-info" style="display:none;">
+        Logged in as: <strong id="username"></strong>
+      </div>
+
+      <!-- Symbol & Timeframe -->
+      <div class="section">
+        <div class="section-title">Symbol & Timeframe</div>
+        <div class="input-group">
+          <label>Stock Symbol</label>
+          <input type="text" id="symbolInput" placeholder="e.g., GE, AAPL, TSLA" />
+        </div>
+        <div class="input-group">
+          <label>Timeframe</label>
+          <select id="timeframeSelect">
+            <option value="">Select Timeframe</option>
+            <option value="1d_1m">1 Day (1min)</option>
+            <option value="5d_5m">5 Days (5min)</option>
+            <option value="1mo_1h">1 Month (1h)</option>
+            <option value="3mo_1d">3 Months (Daily)</option>
+            <option value="1y_1d">1 Year (Daily)</option>
+            <option value="3y_1wk">3 Years (Weekly)</option>
+            <option value="5y_1wk">5 Years (Weekly)</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="loadChart()">Load Chart</button>
+      </div>
+
+      <!-- Indicators -->
+      <div class="section">
+        <div class="section-title">Technical Indicators</div>
+        <div class="indicator-item">
+          <span>SMA (20)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="SMA" data-period="20">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="indicator-item">
+          <span>EMA (20)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="EMA" data-period="20">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="indicator-item">
+          <span>RSI (14)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="RSI" data-period="14">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="indicator-item">
+          <span>MACD</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="MACD">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="indicator-item">
+          <span>Bollinger Bands</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="BB" data-period="20">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="indicator-item">
+          <span>VWAP</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="VWAP">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="section">
+        <div class="section-title">Quick Actions</div>
+        <button class="btn-secondary" onclick="detectPatterns()">🔍 Detect Patterns</button>
+        <button class="btn-secondary" onclick="getPredictions()">🔮 Price Prediction</button>
+        <button class="btn-secondary" onclick="getTradeIdeas()">💡 Trade Ideas</button>
+        <button class="btn-secondary" onclick="showPlugins()">🔌 Execute Plugin</button>
+        <button class="btn-secondary" onclick="showAuth()">👤 Login/Register</button>
+      </div>
+
+      <!-- Drawing Tools -->
+      <div class="section">
+        <div class="section-title">Drawing Tools</div>
+        <button class="btn-secondary" onclick="enableDrawing()">✏️ Draw Trendlines</button>
+        <button class="btn-secondary" onclick="enablePan()">🖐️ Pan Mode</button>
+        <button class="btn-secondary" onclick="clearAllLines()">🗑️ Clear All Lines</button>
+      </div>
+
+      <!-- Panel Height Controls -->
+      <div class="section">
+        <div class="section-title">Panel Heights</div>
+        <div class="input-group">
+          <label>Main Chart Height (%)</label>
+          <input type="range" id="mainChartHeight" min="40" max="90" value="70" oninput="updatePanelHeights()">
+        </div>
+        <div class="input-group" id="rsiHeightControl" style="display:none;">
+          <label>RSI Height (%)</label>
+          <input type="range" id="rsiHeight" min="10" max="30" value="15" oninput="updatePanelHeights()">
+        </div>
+        <div class="input-group" id="macdHeightControl" style="display:none;">
+          <label>MACD Height (%)</label>
+          <input type="range" id="macdHeight" min="10" max="30" value="15" oninput="updatePanelHeights()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="header">
+        <h1>📊 StockApp - Modular Analysis Platform</h1>
+        <div>
+          <button class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active" data-tab="chart">📈 Chart</div>
+        <div class="tab" data-tab="analysis">📊 Analysis</div>
+        <div class="tab" data-tab="portfolio">💼 Portfolio</div>
+        <div class="tab" data-tab="plugins">🔌 Plugins</div>
+      </div>
+
+      <!-- Chart Tab -->
+      <div class="tab-content active" id="chart-tab">
+        <div id="plot"></div>
+      </div>
+
+      <!-- Analysis Tab -->
+      <div class="tab-content" id="analysis-tab">
+        <div class="results-panel" id="analysisResults">
+          <p class="loading">Run analysis from Quick Actions to see results here...</p>
+        </div>
+      </div>
+
+      <!-- Portfolio Tab -->
+      <div class="tab-content" id="portfolio-tab">
+        <div class="section">
+          <div class="section-title">Trade Stocks</div>
+          <div class="controls-row">
+            <input type="text" id="tradeSymbol" placeholder="Symbol" />
+            <input type="number" id="tradeShares" placeholder="Shares" min="1" />
+          </div>
+          <div class="controls-row">
+            <button class="btn-primary" onclick="buyStock()">🟢 Buy</button>
+            <button class="btn-secondary" onclick="sellStock()">🔴 Sell</button>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">Your Portfolio</div>
+          <div id="portfolioDisplay">
+            <p class="loading">Loading portfolio...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plugins Tab -->
+      <div class="tab-content" id="plugins-tab">
+        <div class="section">
+          <div class="section-title">Execute Custom Plugin</div>
+          <div class="input-group">
+            <label>Select Plugin</label>
+            <select id="pluginSelect">
+              <option value="">Loading plugins...</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Symbol</label>
+            <input type="text" id="pluginSymbol" placeholder="e.g., AAPL" />
+          </div>
+          <div class="input-group">
+            <label>Period (optional)</label>
+            <input type="number" id="pluginPeriod" placeholder="e.g., 20" />
+          </div>
+          <button class="btn-primary" onclick="executePlugin()">Execute Plugin</button>
+        </div>
+        <div class="section">
+          <div id="pluginResults"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeAuth()">&times;</span>
+      <h2 style="margin-bottom: 20px;">Authentication</h2>
+      <div class="tabs" style="border-bottom: none; margin-bottom: 20px;">
+        <div class="tab active" onclick="switchAuthTab('login')">Login</div>
+        <div class="tab" onclick="switchAuthTab('register')">Register</div>
+      </div>
+      <div id="loginForm">
+        <div class="input-group">
+          <label>Username</label>
+          <input type="text" id="loginUsername" />
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" />
+        </div>
+        <button class="btn-primary" onclick="login()">Login</button>
+      </div>
+      <div id="registerForm" style="display:none;">
+        <div class="input-group">
+          <label>Username</label>
+          <input type="text" id="regUsername" />
+        </div>
+        <div class="input-group">
+          <label>Email</label>
+          <input type="text" id="regEmail" />
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <input type="password" id="regPassword" />
+        </div>
+        <button class="btn-primary" onclick="register()">Register</button>
+      </div>
+      <div id="authMessage"></div>
+    </div>
+  </div>
+
+  <div id="popupMenu"></div>
+
+  <!-- Modular JavaScript (ES6 Modules) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

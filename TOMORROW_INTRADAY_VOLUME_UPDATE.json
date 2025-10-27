@@ -1,0 +1,201 @@
+{
+  "task": "Apply Daily Volume Logic to All Intraday Timeframes",
+  "date_created": "2025-10-23",
+  "priority": "HIGH",
+
+  "context": {
+    "what_we_accomplished_today": {
+      "summary": "Fixed volume tracking for daily (1d) candles with hybrid Yahoo/Coinbase data",
+      "key_innovations": [
+        "Self-adjusting volume scale that calculates Yahoo->BTC conversion ratio from yesterday's data",
+        "Hybrid approach: Use Coinbase REST for completed candles + Yahoo for gaps + WebSocket for live updates",
+        "Volume tracker that accumulates live trades from WebSocket matches channel",
+        "Excluded last (incomplete) candle from maxVolume calculation so it's visible"
+      ]
+    },
+
+    "problem_solved": {
+      "issue": "Yahoo Finance volume for crypto uses proprietary scale (not actual BTC volume)",
+      "solution": "Calculate conversion ratio by comparing yesterday's Yahoo vs Coinbase volume, then apply to today",
+      "example": "If Yahoo shows 688,100 and Coinbase shows 6,881 for yesterday, ratio = 100. Apply this ratio to convert today's Yahoo volume."
+    }
+  },
+
+  "IMPORTANT_UPDATE": "Switched to REST API polling approach (1-second refresh) instead of WebSocket accumulation for simplicity and reliability",
+
+  "tomorrow_task": {
+    "objective": "Extend the REST API polling volume logic to ALL intraday timeframes",
+    "timeframes_to_update": [
+      "1m - 1 minute candles",
+      "5m - 5 minute candles",
+      "15m - 15 minute candles",
+      "30m - 30 minute candles",
+      "1h - 1 hour candles"
+    ],
+
+    "requirements": [
+      "Apply self-adjusting volume scale to intraday data",
+      "Use Coinbase REST API for completed intraday candles where available",
+      "Fill gaps in Yahoo data with Coinbase data (Yahoo sometimes missing recent candles)",
+      "Initialize volume tracker with correct starting volume for current incomplete candle",
+      "Accumulate live WebSocket trades on top of initialized volume",
+      "Ensure volume bars are visible (exclude last candle from maxVolume scaling)"
+    ]
+  },
+
+  "implementation_approach": {
+    "step1": {
+      "file": "backend/coinbase_rest.py",
+      "action": "Add methods to fetch intraday candles from Coinbase",
+      "new_methods": [
+        "get_1m_candles(symbol, hours=24) - Last 24 hours of 1-minute data",
+        "get_5m_candles(symbol, hours=24) - Last 24 hours of 5-minute data",
+        "get_15m_candles(symbol, hours=48) - Last 48 hours of 15-minute data",
+        "get_30m_candles(symbol, hours=48) - Last 48 hours of 30-minute data",
+        "get_1h_candles(symbol, days=7) - Last 7 days of 1-hour data"
+      ],
+      "notes": "Coinbase API uses granularity in seconds: 60=1m, 300=5m, 900=15m, 1800=30m, 3600=1h"
+    },
+
+    "step2": {
+      "file": "backend/api_server.py",
+      "action": "Update /data endpoint to apply hybrid logic for intraday intervals",
+      "logic": [
+        "Detect if interval is intraday (1m, 5m, 15m, 30m, 1h)",
+        "Fetch data from Yahoo (or Kraken for <1d intervals)",
+        "Convert Yahoo/Kraken volume to BTC using price formula: volume / (avg_price * 100)",
+        "Fetch corresponding Coinbase intraday candles",
+        "Calculate self-adjusting ratio from previous candle's volumes",
+        "Replace Yahoo volumes with Coinbase volumes where dates match",
+        "Fill any missing recent candles with Coinbase data",
+        "For last (incomplete) candle: use self-adjusting ratio to convert Yahoo volume",
+        "Initialize volume tracker with adjusted volume for current candle"
+      ]
+    },
+
+    "step3": {
+      "file": "frontend/js/tos-app.js",
+      "action": "Verify WebSocket ticker updates work for all timeframes",
+      "check": "handleTickerUpdate() should use volume_today from WebSocket regardless of timeframe"
+    },
+
+    "step4": {
+      "file": "frontend/js/chart-renderers/canvas-renderer.js",
+      "action": "Verify maxVolume exclusion works for all timeframes",
+      "check": "calculateRanges() already excludes last candle - should work for intraday too"
+    }
+  },
+
+  "technical_details": {
+    "self_adjusting_scale_algorithm": {
+      "description": "Calculate Yahoo->BTC conversion ratio from previous completed candle",
+      "steps": [
+        "1. Get previous candle's Yahoo volume (already converted via price * 100)",
+        "2. Get previous candle's Coinbase volume (actual BTC)",
+        "3. Calculate ratio: yahoo_vol / coinbase_vol",
+        "4. Apply to current candle: current_yahoo_vol / ratio = adjusted_btc_vol"
+      ],
+      "example": {
+        "previous_candle": {
+          "yahoo_volume_converted": 6881.0,
+          "coinbase_volume_actual": 6881.0,
+          "ratio": 1.0
+        },
+        "current_candle": {
+          "yahoo_volume_converted": 4655.0,
+          "ratio_from_previous": 6.3,
+          "adjusted_volume": 739.0,
+          "calculation": "4655 / 6.3 = 739 BTC"
+        }
+      },
+      "fallback": "If previous candle data unavailable, use fixed ratio of 6.3"
+    },
+
+    "volume_tracker_initialization": {
+      "for_completed_candles": "Use Coinbase REST API actual BTC volume",
+      "for_current_incomplete_candle": "Use self-adjusted Yahoo volume + accumulate live WebSocket trades",
+      "websocket_accumulation": "Each trade from 'matches' channel adds trade.size to tracker volume"
+    },
+
+    "data_sources": {
+      "yahoo_finance": {
+        "purpose": "Historical price data (OHLC)",
+        "volume_issue": "Proprietary scale, not actual BTC volume",
+        "conversion": "Divide by (avg_price * 100) to approximate BTC",
+        "accuracy": "Conversion ratio varies, needs self-adjustment"
+      },
+      "coinbase_rest": {
+        "purpose": "Actual BTC volume for completed candles",
+        "advantage": "Accurate, matches TradingView",
+        "limitation": "Latest candle lags (doesn't include current incomplete candle)",
+        "use_case": "Replace Yahoo volume for completed candles, calculate conversion ratio"
+      },
+      "coinbase_websocket": {
+        "ticker_channel": "Real-time price updates (not used for volume - 24h rolling)",
+        "matches_channel": "Individual trade events with size in BTC",
+        "use_case": "Accumulate live trade volume for current incomplete candle"
+      }
+    }
+  },
+
+  "files_to_modify": [
+    {
+      "path": "backend/coinbase_rest.py",
+      "changes": "Add intraday candle fetching methods (1m, 5m, 15m, 30m, 1h)"
+    },
+    {
+      "path": "backend/api_server.py",
+      "changes": "Apply hybrid volume logic to intraday intervals in /data endpoint"
+    }
+  ],
+
+  "files_already_correct": [
+    {
+      "path": "frontend/js/tos-app.js",
+      "reason": "Already uses volume_today from WebSocket, timeframe-agnostic"
+    },
+    {
+      "path": "frontend/js/chart-renderers/canvas-renderer.js",
+      "reason": "Already excludes last candle from maxVolume, works for all timeframes"
+    },
+    {
+      "path": "backend/coinbase_websocket.py",
+      "reason": "Already accumulates trades and emits volume_today, timeframe-agnostic"
+    }
+  ],
+
+  "testing_checklist": [
+    "Load BTC-USD with 1m interval - verify last candle volume visible and updates live",
+    "Load BTC-USD with 5m interval - verify volume matches TradingView pattern",
+    "Load BTC-USD with 15m interval - verify self-adjusting ratio calculated correctly",
+    "Load BTC-USD with 30m interval - verify Coinbase gaps filled in Yahoo data",
+    "Load BTC-USD with 1h interval - verify volume bar scales properly",
+    "Load ETH-USD with all intervals - verify logic works for other symbols",
+    "Check console logs for ratio calculations and volume initialization messages"
+  ],
+
+  "current_implementation_reference": {
+    "daily_interval_code_location": "backend/api_server.py lines 356-405",
+    "key_logic": {
+      "line_358": "if result and coinbase_candles: # Start hybrid volume replacement",
+      "line_383": "coinbase_yesterday = next((c for c in coinbase_candles if c['Date'] == yesterday_date), None)",
+      "line_387": "ratio = yesterday_yahoo / coinbase_yesterday['Volume'] # SELF-ADJUSTING SCALE",
+      "line_388": "adjusted_vol = last_vol / ratio # Apply ratio to today"
+    }
+  },
+
+  "expected_outcome": {
+    "user_experience": "All timeframes (1m, 5m, 15m, 30m, 1h, 1d) show accurate volume bars that match TradingView",
+    "volume_accuracy": "Within 5% of TradingView/Coinbase reported volume",
+    "visual_behavior": "Last candle volume bar always visible and updates in real-time as trades execute",
+    "performance": "No REST API polling - only WebSocket for live updates"
+  },
+
+  "notes": [
+    "The self-adjusting scale is the KEY innovation - it eliminates hardcoded conversion factors",
+    "Coinbase REST API is used strategically: only for completed candles and ratio calculation",
+    "WebSocket provides the real-time feel - volume grows as trades execute",
+    "This approach works because Yahoo's conversion error is consistent within a timeframe",
+    "Fallback to 6.3 ratio ensures system works even with incomplete historical data"
+  ]
+}

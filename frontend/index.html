@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stock Chart with Trendline Volume</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+  <style>
+    #popupMenu {
+      position: absolute;
+      display: none;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+    #popupMenu div {
+      padding: 8px;
+      cursor: pointer;
+    }
+    #popupMenu div:hover {
+      background-color: #f0f0f0;
+    }
+    #customControls {
+      display: none;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>📈 Stock Chart with Trendline Volume</h2>
+
+  <div style="margin-bottom: 10px;">
+    <input type="text" id="symbolInput" placeholder="Enter stock symbol (e.g. GE)" />
+  </div>
+
+  <div style="margin-bottom: 10px;">
+    <select id="timeframeSelect">
+      <option value="">Select Timeframe</option>
+      <option value="1y_1d">1 Year Daily</option>
+      <option value="3y_1wk">3 Years Weekly</option>
+      <option value="10y_1mo">10 Years Monthly</option>
+      <option value="20y_1mo">20 Years Monthly</option>
+      <option value="1d_1m">1 Day 1min</option>
+      <option value="1d_5m">1 Day 5min</option>
+      <option value="5d_15m">5 Days 15min</option>
+      <option value="1mo_1h">1 Month 1h</option>
+      <option value="custom">Custom</option>
+    </select>
+  </div>
+
+  <div id="customControls">
+    <label>Start Date:</label>
+    <input type="date" id="startDate" />
+    <label>End Date:</label>
+    <input type="date" id="endDate" />
+    <label>Interval:</label>
+    <select id="customInterval">
+      <option value="1m">1 Minute</option>
+      <option value="5m">5 Minutes</option>
+      <option value="15m">15 Minutes</option>
+      <option value="30m">30 Minutes</option>
+      <option value="1h">1 Hour</option>
+      <option value="1d">Daily</option>
+      <option value="1wk">Weekly</option>
+      <option value="1mo">Monthly</option>
+    </select>
+    <button id="applyCustom">Apply</button>
+  </div>
+
+  <div id="plot" style="width: 100%; height: 800px;"></div>
+
+  <div id="popupMenu"></div>
+
+<script>
+  let currentSymbol = null;
+  let drawnLines = [];
+  let selectedLineId = null;
+  let relayoutGuard = false;
+  let suppressSave = false;
+  let currentPeriod = null;
+  let currentStart = null;
+  let currentEnd = null;
+  let currentInterval = '1d';
+  let chartData = [];
+
+  document.getElementById("symbolInput").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") loadChart();
+  });
+
+  document.getElementById('timeframeSelect').addEventListener('change', function() {
+    const val = this.value;
+    if (val === 'custom') {
+      document.getElementById('customControls').style.display = 'block';
+    } else {
+      document.getElementById('customControls').style.display = 'none';
+      if (val !== '') {
+        const parts = val.split('_');
+        currentPeriod = parts[0];
+        currentInterval = parts[1];
+        currentStart = null;
+        currentEnd = null;
+        loadChart();
+      }
+    }
+  });
+
+  document.getElementById('applyCustom').addEventListener('click', function() {
+    currentStart = document.getElementById('startDate').value;
+    currentEnd = document.getElementById('endDate').value;
+    currentInterval = document.getElementById('customInterval').value;
+    currentPeriod = null;
+    if (currentStart && currentEnd) {
+      loadChart();
+    }
+  });
+
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Delete" && selectedLineId !== null) {
+      deleteSelectedLine();
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    const menu = document.getElementById('popupMenu');
+    if (menu.style.display !== 'none' && !menu.contains(e.target)) {
+      hidePopup();
+    }
+  });
+
+  function deleteLineFromBackend(lineId) {
+    fetch("/delete_line", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        symbol: currentSymbol,
+        line_id: lineId
+      })
+    });
+  }
+
+  function deleteSelectedLine() {
+    if (selectedLineId === null) return;
+
+    console.log("Deleting line with ID:", selectedLineId);
+    console.log("Current drawnLines:", drawnLines);
+    drawnLines = drawnLines.filter(line => line.id !== selectedLineId);
+    console.log("After filter drawnLines:", drawnLines);
+
+    const updatedShapes = drawnLines.map(line => ({
+      type: "line",
+      x0: line.x0,
+      x1: line.x1,
+      y0: line.y0,
+      y1: line.y1,
+      line: { color: "black" },
+      _id: line.id
+    }));
+
+    const updatedAnnotations = drawnLines.map(line => createAnnotation(line, chartData));
+
+    Plotly.relayout("plot", {
+      shapes: updatedShapes,
+      annotations: updatedAnnotations
+    });
+
+    deleteLineFromBackend(selectedLineId);
+    selectedLineId = null;
+  }
+
+  function clearAllLines() {
+    Plotly.relayout("plot", { shapes: [], annotations: [] });
+    drawnLines = [];
+    selectedLineId = null;
+    hidePopup();
+
+    console.log("🧹 Clear request for symbol:", currentSymbol);
+
+    fetch("/clear_lines", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbol: currentSymbol })
+    });
+  }
+
+  function hidePopup() {
+    document.getElementById("popupMenu").style.display = "none";
+  }
+
+  function updateShapesColors() {
+    const plotDiv = document.getElementById('plot');
+    const layout = plotDiv.layout;
+    const updatedShapes = layout.shapes.map(shape => ({
+      ...shape,
+      line: {
+        ...shape.line,
+        color: (shape._id === selectedLineId) ? 'red' : 'black'
+      }
+    }));
+    Plotly.relayout('plot', { shapes: updatedShapes });
+  }
+
+  function getDataCoords(e) {
+    const gd = document.getElementById('plot');
+    const bb = gd.getBoundingClientRect();
+    const px = e.clientX - bb.left;
+    const py = e.clientY - bb.top;
+    const layout = gd._fullLayout;
+    if (!layout) return null;
+    const xInPlot = px - layout.margin.l;
+    const yInPlot = py - layout.margin.t;
+    const xCoord = layout.xaxis.p2c(xInPlot);
+    if (!xCoord) return null;
+    const xData = new Date(xCoord).getTime();
+    const yData = layout.yaxis.p2c(yInPlot);
+    return { x: xData, y: yData };
+  }
+
+  function distanceToSegment(p, a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    if (dx === 0 && dy === 0) {
+      return Math.hypot(p.x - a.x, p.y - a.y);
+    }
+    let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy);
+    t = Math.max(0, Math.min(1, t));
+    const projX = a.x + t * dx;
+    const projY = a.y + t * dy;
+    return Math.hypot(p.x - projX, p.y - projY);
+  }
+
+  function formatVolume(volume) {
+    if (volume >= 1000000) {
+      const millions = volume / 1000000;
+      if (millions >= 100) {
+        return Math.round(millions) + 'M';
+      } else if (millions >= 10) {
+        return (Math.round(millions * 10) / 10) + 'M';
+      } else {
+        return (Math.round(millions * 100) / 100) + 'M';
+      }
+    } else if (volume >= 1000) {
+      const thousands = volume / 1000;
+      if (thousands >= 100) {
+        return Math.round(thousands) + 'K';
+      } else if (thousands >= 10) {
+        return (Math.round(thousands * 10) / 10) + 'K';
+      } else {
+        return (Math.round(thousands * 100) / 100) + 'K';
+      }
+    } else {
+      return Math.round(volume).toString();
+    }
+  }
+
+  function createAnnotation(line, chartData) {
+    const midX = new Date((new Date(line.x0).getTime() + new Date(line.x1).getTime()) / 2);
+    const midY = (line.y0 + line.y1) / 2;
+
+    // Calculate price range for percentage-based offset
+    const priceRange = Math.abs(line.y1 - line.y0);
+    const baseOffset = Math.max(priceRange * 0.08, 5); // At least 8% of line range or 5 units
+
+    // Default: try above first
+    let yPosition = midY + baseOffset;
+    let verticalAlign = 'bottom';
+
+    // If we have chart data, check for candle overlap
+    if (chartData && chartData.length > 0) {
+      const midTime = midX.getTime();
+
+      // Find nearby candles (within 10% of time range on either side)
+      const timeRange = new Date(line.x1).getTime() - new Date(line.x0).getTime();
+      const searchRadius = timeRange * 0.1;
+
+      const nearbyCandlesAbove = chartData.filter(candle => {
+        const candleTime = new Date(candle.Date).getTime();
+        const timeDiff = Math.abs(candleTime - midTime);
+        if (timeDiff > searchRadius) return false;
+
+        // Check if candle would overlap with label above
+        return candle.High > midY && candle.High < (midY + baseOffset * 2);
+      });
+
+      const nearbyCandlesBelow = chartData.filter(candle => {
+        const candleTime = new Date(candle.Date).getTime();
+        const timeDiff = Math.abs(candleTime - midTime);
+        if (timeDiff > searchRadius) return false;
+
+        // Check if candle would overlap with label below
+        return candle.Low < midY && candle.Low > (midY - baseOffset * 2);
+      });
+
+      // Choose position with fewer conflicts
+      if (nearbyCandlesAbove.length > nearbyCandlesBelow.length) {
+        yPosition = midY - baseOffset;
+        verticalAlign = 'top';
+      }
+    }
+
+    return {
+      x: midX,
+      y: yPosition,
+      text: formatVolume(line.volume),
+      showarrow: false,
+      font: {
+        color: "#2563eb",
+        size: 11,
+        family: "Arial, sans-serif"
+      },
+      xanchor: 'center',
+      yanchor: verticalAlign,
+      bgcolor: 'rgba(255, 255, 255, 0.8)',
+      borderpad: 3
+    };
+  }
+
+  function loadChart() {
+    const symbol = document.getElementById("symbolInput").value.trim().toUpperCase();
+    if (!symbol) return;
+
+    const symbolChanged = (currentSymbol !== symbol);
+    currentSymbol = symbol;
+    if (symbolChanged) {
+      drawnLines = [];
+    }
+    selectedLineId = null;
+
+    let fetchUrl = `/data/${symbol}?interval=${currentInterval}`;
+    if (currentPeriod) {
+      fetchUrl += `&period=${currentPeriod}`;
+    } else if (currentStart && currentEnd) {
+      fetchUrl += `&start=${currentStart}&end=${currentEnd}`;
+    }
+
+    fetch(fetchUrl)
+      .then(res => res.json())
+      .then(data => {
+        if (data.length === 0) {
+          alert("No data found for symbol: " + symbol);
+          return;
+        }
+
+        // Store chart data for smart label positioning
+        chartData = data;
+
+        const trace = {
+          x: data.map(row => row.Date),
+          open: data.map(row => row.Open),
+          high: data.map(row => row.High),
+          low: data.map(row => row.Low),
+          close: data.map(row => row.Close),
+          type: "candlestick",
+          xaxis: "x",
+          yaxis: "y"
+        };
+
+        const layout = {
+          title: `${symbol} Candlestick Chart`,
+          dragmode: "drawline",
+          shapes: [],
+          annotations: [],
+          xaxis: { rangeslider: { visible: false } },
+          yaxis: { title: "Price" }
+        };
+
+        Plotly.newPlot("plot", [trace], layout).then(() => {
+          const plotDiv = document.getElementById("plot");
+
+          // Load saved lines
+          fetch(`/lines/${symbol}`)
+            .then(res => res.json())
+            .then(savedLines => {
+              if (savedLines.length > 0) {
+                const shapes = savedLines.map(line => ({
+                  type: "line",
+                  x0: line.x0,
+                  x1: line.x1,
+                  y0: line.y0,
+                  y1: line.y1,
+                  line: { color: "black" },
+                  _id: line.id
+                }));
+
+                const annotations = savedLines.map(line => createAnnotation(line, chartData));
+
+                drawnLines = savedLines;
+                suppressSave = true;
+                Plotly.relayout("plot", { shapes, annotations });
+                suppressSave = false;
+              }
+            });
+
+          // Handle line edits
+          plotDiv.on('plotly_relayout', function(event) {
+            if (relayoutGuard || suppressSave) return;
+            relayoutGuard = true;
+            setTimeout(() => { relayoutGuard = false; }, 100);
+
+            const shapes = plotDiv.layout.shapes || [];
+
+            shapes.forEach((shape) => {
+              if (shape.type !== "line") return;
+
+              if (!shape._id) {
+                shape._id = crypto.randomUUID();
+              }
+
+              const { x0, x1, y0, y1 } = shape;
+              const existing = drawnLines.find(l => l.id === shape._id);
+
+              const coordsChanged = !existing ||
+                existing.x0 !== x0 || existing.x1 !== x1 ||
+                existing.y0 !== y0 || existing.y1 !== y1;
+
+              if (!coordsChanged) return;
+
+              fetch("/volume", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  symbol: currentSymbol,
+                  start_date: x0,
+                  end_date: x1,
+                  interval: currentInterval
+                })
+              })
+              .then(res => res.json())
+              .then(data => {
+                const avgVolume = data.avg_volume;
+                const lineData = { x0, x1, y0, y1, volume: avgVolume };
+                const annotation = createAnnotation(lineData, chartData);
+
+                const layout = plotDiv.layout;
+                const annotations = layout.annotations || [];
+
+                if (existing) {
+                  annotations[drawnLines.indexOf(existing)] = annotation;
+                  Object.assign(existing, { x0, x1, y0, y1, volume: avgVolume });
+                } else {
+                  annotations.push(annotation);
+                  drawnLines.push({ id: shape._id, x0, x1, y0, y1, volume: avgVolume });
+                }
+
+                Plotly.relayout("plot", { annotations });
+
+                // Save line to backend
+                fetch("/save_line", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    symbol: currentSymbol,
+                    line: {
+                      id: shape._id,
+                      x0, x1, y0, y1,
+                      volume: avgVolume
+                    }
+                  })
+                });
+              });
+            });
+          });
+
+          // Handle line selection via click
+          plotDiv.addEventListener('click', function(e) {
+            const pos = getDataCoords(e);
+            if (!pos) return;
+
+            const clicked_time = pos.x; // ms
+            const clickedY = pos.y;
+
+            // Get current ranges for normalization
+            const layout = plotDiv._fullLayout;
+            const x_min = new Date(layout.xaxis.range[0]).getTime();
+            const x_max = new Date(layout.xaxis.range[1]).getTime();
+            const y_min = layout.yaxis.range[0];
+            const y_max = layout.yaxis.range[1];
+
+            const clicked_xn = (clicked_time - x_min) / (x_max - x_min);
+            const clicked_yn = (clickedY - y_min) / (y_max - y_min);
+
+            let closestId = null;
+            let minDistance = Infinity;
+
+            const shapes = plotDiv.layout.shapes || [];
+
+            shapes.forEach((shape) => {
+              if (shape.type !== "line") return;
+
+              const x0_time = new Date(shape.x0).getTime();
+              const x1_time = new Date(shape.x1).getTime();
+              const x0n = (x0_time - x_min) / (x_max - x_min);
+              const x1n = (x1_time - x_min) / (x_max - x_min);
+              const y0n = (shape.y0 - y_min) / (y_max - y_min);
+              const y1n = (shape.y1 - y_min) / (y_max - y_min);
+
+              const dist = distanceToSegment(
+                { x: clicked_xn, y: clicked_yn },
+                { x: x0n, y: y0n },
+                { x: x1n, y: y1n }
+              );
+
+              if (dist < minDistance) {
+                minDistance = dist;
+                closestId = shape._id;
+              }
+            });
+
+            const threshold = 0.05;
+            if (minDistance < threshold) {
+              if (closestId === selectedLineId) {
+                selectedLineId = null;
+              } else {
+                selectedLineId = closestId;
+                console.log("Selected line ID:", selectedLineId);
+              }
+            } else {
+              selectedLineId = null;
+            }
+
+            updateShapesColors();
+          });
+
+          // Handle right-click context menu
+          plotDiv.addEventListener("contextmenu", function(e) {
+            e.preventDefault();
+
+            const menu = document.getElementById("popupMenu");
+            menu.innerHTML = '';
+
+            if (selectedLineId !== null) {
+              const deleteDiv = document.createElement('div');
+              deleteDiv.textContent = '🗑️ Delete Selected Line';
+              deleteDiv.onclick = function() {
+                deleteSelectedLine();
+                hidePopup();
+              };
+              menu.appendChild(deleteDiv);
+
+              menu.style.left = e.pageX + "px";
+              menu.style.top = e.pageY + "px";
+              menu.style.display = "block";
+            }
+          });
+        });
+      });
+  }
+</script>
+</body>
+</html>

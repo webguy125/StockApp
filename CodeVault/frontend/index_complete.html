@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>StockApp - Complete Analysis Platform</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.light-theme { background-color: #f5f5f5; color: #1a1a1a; }
+    body.dark-theme { background-color: #1a1a1a; color: #e0e0e0; }
+
+    .container { display: flex; height: 100vh; }
+
+    .sidebar {
+      width: 320px;
+      padding: 15px;
+      overflow-y: auto;
+      border-right: 1px solid;
+      transition: background-color 0.3s;
+    }
+
+    .light-theme .sidebar { background-color: #ffffff; border-right-color: #e0e0e0; }
+    .dark-theme .sidebar { background-color: #252525; border-right-color: #404040; }
+
+    .main-content { flex: 1; display: flex; flex-direction: column; padding: 10px 15px; }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    h1 { font-size: 20px; font-weight: 600; }
+
+    .theme-toggle, .btn-primary, .btn-secondary {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+
+    .btn-primary { background-color: #2563eb; color: white; }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-secondary { background-color: #6b7280; color: white; }
+    .btn-secondary:hover { background-color: #4b5563; }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      border-bottom: 2px solid;
+    }
+
+    .light-theme .tabs { border-bottom-color: #e0e0e0; }
+    .dark-theme .tabs { border-bottom-color: #404040; }
+
+    .tab {
+      padding: 8px 14px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .tab:hover { opacity: 0.8; }
+    .tab.active { border-bottom-color: #3b82f6; color: #3b82f6; }
+
+    .tab-content { display: none; height: calc(100vh - 90px); }
+    .tab-content.active { display: flex; flex-direction: column; }
+
+    .section {
+      margin-bottom: 20px;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .light-theme .section { background-color: #f9fafb; }
+    .dark-theme .section { background-color: #2d3748; }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.8;
+    }
+
+    .input-group { margin-bottom: 10px; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 5px;
+      opacity: 0.8;
+    }
+
+    input[type="text"], input[type="number"], input[type="password"], select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid;
+      border-radius: 6px;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+
+    .light-theme input, .light-theme select, .light-theme textarea {
+      background-color: #ffffff;
+      border-color: #d1d5db;
+      color: #1a1a1a;
+    }
+
+    .dark-theme input, .dark-theme select, .dark-theme textarea {
+      background-color: #374151;
+      border-color: #4b5563;
+      color: #e0e0e0;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 8px;
+    }
+
+    .indicator-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px;
+      margin-bottom: 6px;
+      border-radius: 6px;
+    }
+
+    .light-theme .indicator-item { background-color: #f3f4f6; }
+    .dark-theme .indicator-item { background-color: #374151; }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider { background-color: #2563eb; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    #plot { flex: 1; width: 100%; height: 100%; border-radius: 8px; }
+
+    .results-panel {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .light-theme .results-panel { background-color: #f9fafb; border: 1px solid #e0e0e0; }
+    .dark-theme .results-panel { background-color: #2d3748; border: 1px solid #404040; }
+
+    .result-item {
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .light-theme .result-item { background-color: #ffffff; }
+    .dark-theme .result-item { background-color: #374151; }
+
+    .trade-idea {
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border-left: 4px solid;
+    }
+
+    .trade-idea.buy { border-left-color: #10b981; }
+    .trade-idea.sell { border-left-color: #ef4444; }
+
+    .portfolio-position {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+    }
+
+    .light-theme .portfolio-position { background-color: #f3f4f6; }
+    .dark-theme .portfolio-position { background-color: #374151; }
+
+    .profit { color: #10b981; font-weight: 600; }
+    .loss { color: #ef4444; font-weight: 600; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
+      padding: 25px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .dark-theme .modal-content {
+      background-color: #2d3748;
+      color: #e0e0e0;
+    }
+
+    .close {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #999;
+    }
+
+    .close:hover { color: #333; }
+
+    .user-info {
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .light-theme .user-info { background-color: #dbeafe; color: #1e40af; }
+    .dark-theme .user-info { background-color: #1e3a8a; color: #93c5fd; }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-style: italic;
+      opacity: 0.7;
+    }
+
+    .error {
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      background-color: #fee2e2;
+      color: #991b1b;
+      border-left: 4px solid #ef4444;
+    }
+
+    .success {
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      background-color: #d1fae5;
+      color: #065f46;
+      border-left: 4px solid #10b981;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .controls-row button,
+    .controls-row select {
+      flex: 1;
+    }
+
+    #popupMenu {
+      position: absolute;
+      display: none;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .dark-theme #popupMenu {
+      background: #374151;
+      border-color: #4b5563;
+    }
+
+    #popupMenu div {
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+
+    .light-theme #popupMenu div:hover { background-color: #f3f4f6; }
+    .dark-theme #popupMenu div:hover { background-color: #4b5563; }
+  </style>
+</head>
+<body class="light-theme">
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- User Info -->
+      <div id="userInfo" class="user-info" style="display:none;">
+        Logged in as: <strong id="username"></strong>
+      </div>
+
+      <!-- Symbol & Timeframe -->
+      <div class="section">
+        <div class="section-title">Symbol & Timeframe</div>
+        <div class="input-group">
+          <label>Stock Symbol</label>
+          <input type="text" id="symbolInput" placeholder="e.g., GE, AAPL, TSLA" />
+        </div>
+        <div class="input-group">
+          <label>Timeframe</label>
+          <select id="timeframeSelect">
+            <option value="">Select Timeframe</option>
+            <option value="1d_1m">1 Day (1min)</option>
+            <option value="5d_5m">5 Days (5min)</option>
+            <option value="1mo_1h">1 Month (1h)</option>
+            <option value="3mo_1d">3 Months (Daily)</option>
+            <option value="1y_1d">1 Year (Daily)</option>
+            <option value="3y_1wk">3 Years (Weekly)</option>
+            <option value="5y_1wk">5 Years (Weekly)</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="loadChart()">Load Chart</button>
+      </div>
+
+      <!-- Indicators -->
+      <div class="section">
+        <div class="section-title">Technical Indicators</div>
+        <div class="indicator-item">
+          <span>SMA (20)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="SMA" data-period="20">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="indicator-item">
+          <span>EMA (20)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="EMA" data-period="20">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="indicator-item">
+          <span>RSI (14)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="RSI" data-period="14">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="indicator-item">
+          <span>MACD</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="MACD">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="indicator-item">
+          <span>Bollinger Bands</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="BB" data-period="20">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="indicator-item">
+          <span>VWAP</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="VWAP">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="section">
+        <div class="section-title">Quick Actions</div>
+        <button class="btn-secondary" onclick="detectPatterns()">🔍 Detect Patterns</button>
+        <button class="btn-secondary" onclick="getPredictions()">🔮 Price Prediction</button>
+        <button class="btn-secondary" onclick="getTradeIdeas()">💡 Trade Ideas</button>
+        <button class="btn-secondary" onclick="showPlugins()">🔌 Execute Plugin</button>
+        <button class="btn-secondary" onclick="showAuth()">👤 Login/Register</button>
+      </div>
+
+      <!-- Drawing Tools -->
+      <div class="section">
+        <div class="section-title">Drawing Tools</div>
+        <button class="btn-secondary" onclick="enableDrawing()">✏️ Draw Trendlines</button>
+        <button class="btn-secondary" onclick="enablePan()">🖐️ Pan Mode</button>
+        <button class="btn-secondary" onclick="clearAllLines()">🗑️ Clear All Lines</button>
+      </div>
+
+      <!-- Panel Height Controls -->
+      <div class="section">
+        <div class="section-title">Panel Heights</div>
+        <div class="input-group">
+          <label>Main Chart Height (%)</label>
+          <input type="range" id="mainChartHeight" min="40" max="90" value="70" oninput="updatePanelHeights()">
+        </div>
+        <div class="input-group" id="rsiHeightControl" style="display:none;">
+          <label>RSI Height (%)</label>
+          <input type="range" id="rsiHeight" min="10" max="30" value="15" oninput="updatePanelHeights()">
+        </div>
+        <div class="input-group" id="macdHeightControl" style="display:none;">
+          <label>MACD Height (%)</label>
+          <input type="range" id="macdHeight" min="10" max="30" value="15" oninput="updatePanelHeights()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="header">
+        <h1>📊 StockApp - Complete Analysis Platform</h1>
+        <div>
+          <button class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active" data-tab="chart">📈 Chart</div>
+        <div class="tab" data-tab="analysis">📊 Analysis</div>
+        <div class="tab" data-tab="portfolio">💼 Portfolio</div>
+        <div class="tab" data-tab="plugins">🔌 Plugins</div>
+      </div>
+
+      <!-- Chart Tab -->
+      <div class="tab-content active" id="chart-tab">
+        <div id="plot"></div>
+      </div>
+
+      <!-- Analysis Tab -->
+      <div class="tab-content" id="analysis-tab">
+        <div class="results-panel" id="analysisResults">
+          <p class="loading">Run analysis from Quick Actions to see results here...</p>
+        </div>
+      </div>
+
+      <!-- Portfolio Tab -->
+      <div class="tab-content" id="portfolio-tab">
+        <div class="section">
+          <div class="section-title">Trade Stocks</div>
+          <div class="controls-row">
+            <input type="text" id="tradeSymbol" placeholder="Symbol" />
+            <input type="number" id="tradeShares" placeholder="Shares" min="1" />
+          </div>
+          <div class="controls-row">
+            <button class="btn-primary" onclick="buyStock()">🟢 Buy</button>
+            <button class="btn-secondary" onclick="sellStock()">🔴 Sell</button>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">Your Portfolio</div>
+          <div id="portfolioDisplay">
+            <p class="loading">Loading portfolio...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plugins Tab -->
+      <div class="tab-content" id="plugins-tab">
+        <div class="section">
+          <div class="section-title">Execute Custom Plugin</div>
+          <div class="input-group">
+            <label>Select Plugin</label>
+            <select id="pluginSelect">
+              <option value="">Loading plugins...</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Symbol</label>
+            <input type="text" id="pluginSymbol" placeholder="e.g., AAPL" />
+          </div>
+          <div class="input-group">
+            <label>Period (optional)</label>
+            <input type="number" id="pluginPeriod" placeholder="e.g., 20" />
+          </div>
+          <button class="btn-primary" onclick="executePlugin()">Execute Plugin</button>
+        </div>
+        <div class="section">
+          <div id="pluginResults"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeAuth()">&times;</span>
+      <h2 style="margin-bottom: 20px;">Authentication</h2>
+      <div class="tabs" style="border-bottom: none; margin-bottom: 20px;">
+        <div class="tab active" onclick="switchAuthTab('login')">Login</div>
+        <div class="tab" onclick="switchAuthTab('register')">Register</div>
+      </div>
+      <div id="loginForm">
+        <div class="input-group">
+          <label>Username</label>
+          <input type="text" id="loginUsername" />
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" />
+        </div>
+        <button class="btn-primary" onclick="login()">Login</button>
+      </div>
+      <div id="registerForm" style="display:none;">
+        <div class="input-group">
+          <label>Username</label>
+          <input type="text" id="regUsername" />
+        </div>
+        <div class="input-group">
+          <label>Email</label>
+          <input type="text" id="regEmail" />
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <input type="password" id="regPassword" />
+        </div>
+        <button class="btn-primary" onclick="register()">Register</button>
+      </div>
+      <div id="authMessage"></div>
+    </div>
+  </div>
+
+  <div id="popupMenu"></div>
+
+  <script>
+    // State
+    let currentSymbol = null;
+    let currentPeriod = null;
+    let currentInterval = '1d';
+    let drawnLines = [];
+    let selectedLineId = null;
+    let chartData = [];
+    let activeIndicators = {};
+    let currentTheme = 'light';
+    let authToken = null;
+    let currentUser = null;
+    let suppressSave = false;
+    let relayoutGuard = false;
+    let isDrawingMode = false;
+
+    // Theme toggle
+    document.getElementById('themeToggle').addEventListener('click', function() {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.body.className = currentTheme + '-theme';
+      this.textContent = currentTheme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
+      if (currentSymbol) loadChart();
+    });
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        const tabName = this.getAttribute('data-tab');
+        if (!tabName) return;
+
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        this.classList.add('active');
+        document.getElementById(tabName + '-tab').classList.add('active');
+
+        if (tabName === 'portfolio') loadPortfolio();
+        if (tabName === 'plugins') loadPlugins();
+      });
+    });
+
+    // Symbol input
+    document.getElementById('symbolInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') loadChart();
+    });
+
+    // Timeframe selection
+    document.getElementById('timeframeSelect').addEventListener('change', function() {
+      const val = this.value;
+      if (val !== '') {
+        const parts = val.split('_');
+        currentPeriod = parts[0];
+        currentInterval = parts[1];
+        loadChart();
+      }
+    });
+
+    // Indicator toggles
+    document.querySelectorAll('.indicator-toggle').forEach(toggle => {
+      toggle.addEventListener('change', function() {
+        const indicator = this.getAttribute('data-indicator');
+        const period = this.getAttribute('data-period');
+
+        if (this.checked) {
+          activeIndicators[indicator] = { period: period || null };
+        } else {
+          delete activeIndicators[indicator];
+        }
+
+        if (currentSymbol) loadChart();
+      });
+    });
+
+    // Helper functions for trendlines
+    function formatVolume(vol) {
+      if (vol >= 1e9) return (vol / 1e9).toFixed(2) + 'B';
+      if (vol >= 1e6) return (vol / 1e6).toFixed(2) + 'M';
+      if (vol >= 1e3) return (vol / 1e3).toFixed(2) + 'K';
+      return vol.toFixed(0);
+    }
+
+    function createAnnotation(line, chartData) {
+      const midX = new Date((new Date(line.x0).getTime() + new Date(line.x1).getTime()) / 2);
+      const midY = (line.y0 + line.y1) / 2;
+      const priceRange = Math.abs(line.y1 - line.y0);
+      const baseOffset = Math.max(priceRange * 0.08, 5);
+
+      let yPosition = midY + baseOffset;
+      let verticalAlign = 'bottom';
+
+      if (chartData && chartData.length > 0) {
+        const nearbyCandlesAbove = chartData.filter(candle => {
+          return candle.High > midY && candle.High < (midY + baseOffset * 2);
+        });
+
+        const nearbyCandlesBelow = chartData.filter(candle => {
+          return candle.Low < midY && candle.Low > (midY - baseOffset * 2);
+        });
+
+        if (nearbyCandlesAbove.length > nearbyCandlesBelow.length) {
+          yPosition = midY - baseOffset;
+          verticalAlign = 'top';
+        }
+      }
+
+      return {
+        x: midX,
+        y: yPosition,
+        text: formatVolume(line.volume),
+        showarrow: false,
+        font: {
+          color: currentTheme === 'light' ? "#2563eb" : "#60a5fa",
+          size: 14,
+          family: 'Arial, sans-serif',
+          weight: 'bold'
+        },
+        xanchor: 'center',
+        yanchor: verticalAlign,
+        bgcolor: currentTheme === 'light' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(30, 41, 59, 0.95)',
+        borderpad: 6,
+        bordercolor: currentTheme === 'light' ? '#2563eb' : '#60a5fa',
+        borderwidth: 2,
+        captureevents: true,  // Make clickable
+        clicktoshow: false   // Always visible
+      };
+    }
+
+    function getDataCoords(eventData) {
+      const plotDiv = document.getElementById("plot");
+      const xaxis = plotDiv._fullLayout.xaxis;
+      const yaxis = plotDiv._fullLayout.yaxis;
+
+      if (!xaxis || !yaxis) return null;
+
+      const xRange = xaxis.range;
+      const yRange = yaxis.range;
+      const xDomain = xaxis.domain;
+      const yDomain = yaxis.domain;
+
+      const plotWidth = plotDiv.clientWidth;
+      const plotHeight = plotDiv.clientHeight;
+
+      const xPixelStart = xDomain[0] * plotWidth;
+      const xPixelRange = (xDomain[1] - xDomain[0]) * plotWidth;
+      const yPixelStart = (1 - yDomain[1]) * plotHeight;
+      const yPixelRange = (yDomain[1] - yDomain[0]) * plotHeight;
+
+      const xFraction = (eventData.x - xPixelStart) / xPixelRange;
+      const yFraction = 1 - (eventData.y - yPixelStart) / yPixelRange;
+
+      const xData = xRange[0] + xFraction * (xRange[1] - xRange[0]);
+      const yData = yRange[0] + yFraction * (yRange[1] - yRange[0]);
+
+      return { x: new Date(xData), y: yData };
+    }
+
+    function distanceToSegment(px, py, x0, y0, x1, y1, xScale, yScale) {
+      // Calculate line segment vector
+      const dx = (x1 - x0) * xScale;
+      const dy = (y1 - y0) * yScale;
+
+      // Calculate squared length
+      const lenSq = dx * dx + dy * dy;
+
+      console.log('Distance calc:', { dx, dy, lenSq, xScale, yScale });
+
+      // If line is a point
+      if (lenSq === 0 || lenSq < 0.0001) {
+        const distX = (px - x0) * xScale;
+        const distY = (py - y0) * yScale;
+        const dist = Math.sqrt(distX * distX + distY * distY);
+        console.log('Point distance:', dist);
+        return dist;
+      }
+
+      // Calculate projection parameter t
+      const t = Math.max(0, Math.min(1,
+        ((px - x0) * xScale * dx + (py - y0) * yScale * dy) / lenSq
+      ));
+
+      // Calculate closest point on segment
+      const projX = x0 + t * (x1 - x0);
+      const projY = y0 + t * (y1 - y0);
+
+      // Calculate distance to closest point
+      const distX = (px - projX) * xScale;
+      const distY = (py - projY) * yScale;
+      const dist = Math.sqrt(distX * distX + distY * distY);
+
+      console.log('Segment distance:', dist, 't:', t);
+      return dist;
+    }
+
+    // Drag handles removed per user request - circles were not positioning correctly on trendlines
+
+    function updateShapesColors() {
+      const plotDiv = document.getElementById("plot");
+      if (!plotDiv.layout || !plotDiv.layout.shapes) {
+        console.log('⚠️ No plot or shapes found');
+        return;
+      }
+
+      console.log('📊 Updating shapes colors. Selected ID:', selectedLineId);
+
+      const shapes = plotDiv.layout.shapes.map((shape, idx) => {
+        if (shape.type !== "line") return shape;
+
+        const isSelected = shape._id === selectedLineId;
+        const newColor = isSelected ? "#ef4444" : (currentTheme === 'light' ? "black" : "#9ca3af");
+        const newWidth = isSelected ? 3 : 2;
+
+        console.log(`Shape ${idx}: _id=${shape._id}, isSelected=${isSelected}, newColor=${newColor}, newWidth=${newWidth}`);
+
+        return {
+          ...shape,
+          line: {
+            ...shape.line,
+            color: newColor,
+            width: newWidth
+          },
+          editable: true  // Always editable
+        };
+      });
+
+      // Also update annotation colors to indicate selection
+      const annotations = (plotDiv.layout.annotations || []).map(ann => {
+        if (!ann._lineId) return ann;
+        const isSelected = ann._lineId === selectedLineId;
+        return {
+          ...ann,
+          font: {
+            ...ann.font,
+            color: isSelected ? "#ef4444" : (currentTheme === 'light' ? "#2563eb" : "#60a5fa"),
+            size: isSelected ? 16 : 14
+          },
+          bordercolor: isSelected ? "#ef4444" : (currentTheme === 'light' ? '#2563eb' : '#60a5fa'),
+          borderwidth: isSelected ? 3 : 2,
+          bgcolor: isSelected
+            ? 'rgba(239, 68, 68, 0.1)'
+            : (currentTheme === 'light' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(30, 41, 59, 0.95)'),
+          captureevents: true  // Make annotations clickable
+        };
+      });
+
+      suppressSave = true;
+      console.log('🔄 Calling Plotly.relayout with', shapes.length, 'shapes and', annotations.length, 'annotations');
+
+      Plotly.relayout("plot", { shapes, annotations }).then(() => {
+        console.log('✅ Plotly.relayout completed successfully. Selected line:', selectedLineId);
+
+        // Verify the update actually applied
+        const plotDiv = document.getElementById("plot");
+        const currentShapes = plotDiv.layout.shapes || [];
+        console.log('📋 Current shapes after relayout:', currentShapes.length);
+        currentShapes.forEach((s, i) => {
+          if (s.type === "line" && s._id) {
+            console.log(`  Shape ${i}: _id=${s._id}, color=${s.line?.color}, width=${s.line?.width}`);
+          }
+        });
+
+        // Drag handles removed - red highlighting and thicker line width provide visual feedback
+
+        suppressSave = false;
+      }).catch(err => {
+        console.error('❌ Error updating shapes:', err);
+        suppressSave = false;
+      });
+    }
+
+    function deleteSelectedLine() {
+      if (!selectedLineId) return;
+
+      const plotDiv = document.getElementById("plot");
+      const shapes = (plotDiv.layout.shapes || []).filter(s => s._id !== selectedLineId);
+      const annotations = (plotDiv.layout.annotations || []).filter(a => a._lineId !== selectedLineId);
+
+      drawnLines = drawnLines.filter(l => l.id !== selectedLineId);
+
+      fetch("/delete_line", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol: currentSymbol, id: selectedLineId })
+      }).catch(err => console.error("Error deleting line:", err));
+
+      selectedLineId = null;
+      suppressSave = true;
+      Plotly.relayout("plot", { shapes, annotations });
+      suppressSave = false;
+    }
+
+    function hidePopup() {
+      const popup = document.getElementById("popupMenu");
+      popup.style.display = "none";
+    }
+
+    function enableDrawing() {
+      const plotDiv = document.getElementById("plot");
+      isDrawingMode = true;
+      Plotly.relayout("plot", { dragmode: 'drawline' });
+      selectedLineId = null;
+      updateShapesColors();
+    }
+
+    function enablePan() {
+      const plotDiv = document.getElementById("plot");
+      isDrawingMode = false;
+      Plotly.relayout("plot", { dragmode: 'pan' });
+      selectedLineId = null;
+      updateShapesColors();
+    }
+
+    function clearAllLines() {
+      if (!currentSymbol) return;
+
+      if (!confirm("Clear all trendlines for " + currentSymbol + "?")) return;
+
+      fetch("/clear_lines", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol: currentSymbol })
+      })
+      .then(() => {
+        drawnLines = [];
+        selectedLineId = null;
+        suppressSave = true;
+        Plotly.relayout("plot", { shapes: [], annotations: [] });
+        suppressSave = false;
+      })
+      .catch(err => console.error("Error clearing lines:", err));
+    }
+
+    function updatePanelHeights() {
+      const plotDiv = document.getElementById("plot");
+      if (!plotDiv || !plotDiv.layout) return;
+
+      const hasRSI = activeIndicators.RSI;
+      const hasMACD = activeIndicators.MACD;
+
+      const mainHeight = parseInt(document.getElementById('mainChartHeight').value) / 100;
+
+      let newLayout = {
+        'yaxis.domain': [hasRSI && hasMACD ? 0.4 : (hasRSI || hasMACD ? 0.3 : 0), mainHeight]
+      };
+
+      if (hasRSI && hasMACD) {
+        const rsiHeight = 0.15;
+        const macdHeight = 0.15;
+        newLayout['yaxis2.domain'] = [0.2, 0.35];
+        newLayout['yaxis3.domain'] = [0, 0.15];
+      } else if (hasRSI) {
+        const remaining = 1 - mainHeight;
+        newLayout['yaxis2.domain'] = [0, remaining];
+      } else if (hasMACD) {
+        const remaining = 1 - mainHeight;
+        newLayout['yaxis3.domain'] = [0, remaining];
+      }
+
+      Plotly.relayout("plot", newLayout);
+    }
+
+    // Main chart loading function
+    async function loadChart() {
+      const symbol = document.getElementById("symbolInput").value.trim().toUpperCase();
+      if (!symbol) return;
+
+      currentSymbol = symbol;
+
+      let fetchUrl = `/data/${symbol}?interval=${currentInterval}`;
+      if (currentPeriod) fetchUrl += `&period=${currentPeriod}`;
+
+      try {
+        const response = await fetch(fetchUrl);
+        const data = await response.json();
+
+        if (data.length === 0) {
+          alert("No data found for symbol: " + symbol);
+          return;
+        }
+
+        chartData = data;
+
+        const traces = [{
+          x: data.map(row => row.Date),
+          open: data.map(row => row.Open),
+          high: data.map(row => row.High),
+          low: data.map(row => row.Low),
+          close: data.map(row => row.Close),
+          type: "candlestick",
+          name: symbol,
+          xaxis: "x",
+          yaxis: "y"
+        }];
+
+        // Load indicators
+        if (Object.keys(activeIndicators).length > 0) {
+          const indicatorConfigs = Object.keys(activeIndicators).map(type => ({
+            type: type,
+            params: activeIndicators[type].period ? { period: parseInt(activeIndicators[type].period) } : {}
+          }));
+
+          const indicatorResponse = await fetch("/indicators", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              symbol: symbol,
+              period: currentPeriod,
+              interval: currentInterval,
+              indicators: indicatorConfigs
+            })
+          });
+
+          const indicatorData = await indicatorResponse.json();
+
+          // Add indicators to chart
+          if (indicatorData.SMA_20) {
+            traces.push({
+              x: data.map(row => row.Date),
+              y: indicatorData.SMA_20,
+              type: 'scatter',
+              mode: 'lines',
+              name: 'SMA(20)',
+              line: { color: '#f59e0b', width: 2 }
+            });
+          }
+
+          if (indicatorData.EMA_20) {
+            traces.push({
+              x: data.map(row => row.Date),
+              y: indicatorData.EMA_20,
+              type: 'scatter',
+              mode: 'lines',
+              name: 'EMA(20)',
+              line: { color: '#10b981', width: 2 }
+            });
+          }
+
+          if (indicatorData.VWAP) {
+            traces.push({
+              x: data.map(row => row.Date),
+              y: indicatorData.VWAP,
+              type: 'scatter',
+              mode: 'lines',
+              name: 'VWAP',
+              line: { color: '#8b5cf6', width: 2 }
+            });
+          }
+
+          if (indicatorData.BB_upper) {
+            traces.push({
+              x: data.map(row => row.Date),
+              y: indicatorData.BB_upper,
+              type: 'scatter',
+              mode: 'lines',
+              name: 'BB Upper',
+              line: { color: '#6b7280', width: 1, dash: 'dot' }
+            });
+            traces.push({
+              x: data.map(row => row.Date),
+              y: indicatorData.BB_middle,
+              type: 'scatter',
+              mode: 'lines',
+              name: 'BB Middle',
+              line: { color: '#6b7280', width: 1 }
+            });
+            traces.push({
+              x: data.map(row => row.Date),
+              y: indicatorData.BB_lower,
+              type: 'scatter',
+              mode: 'lines',
+              name: 'BB Lower',
+              line: { color: '#6b7280', width: 1, dash: 'dot' }
+            });
+          }
+
+          if (indicatorData.RSI) {
+            traces.push({
+              x: data.map(row => row.Date),
+              y: indicatorData.RSI,
+              type: 'scatter',
+              mode: 'lines',
+              name: 'RSI(14)',
+              line: { color: '#ef4444', width: 2 },
+              xaxis: 'x',
+              yaxis: 'y2'
+            });
+          }
+
+          if (indicatorData.MACD) {
+            traces.push({
+              x: data.map(row => row.Date),
+              y: indicatorData.MACD,
+              type: 'scatter',
+              mode: 'lines',
+              name: 'MACD',
+              line: { color: '#3b82f6', width: 2 },
+              xaxis: 'x',
+              yaxis: 'y3'
+            });
+            traces.push({
+              x: data.map(row => row.Date),
+              y: indicatorData.MACD_signal,
+              type: 'scatter',
+              mode: 'lines',
+              name: 'Signal',
+              line: { color: '#f59e0b', width: 2 },
+              xaxis: 'x',
+              yaxis: 'y3'
+            });
+            traces.push({
+              x: data.map(row => row.Date),
+              y: indicatorData.MACD_histogram,
+              type: 'bar',
+              name: 'Histogram',
+              marker: { color: '#10b981' },
+              xaxis: 'x',
+              yaxis: 'y3'
+            });
+          }
+        }
+
+        const hasRSI = activeIndicators.RSI;
+        const hasMACD = activeIndicators.MACD;
+
+        const layout = {
+          title: `${symbol} - Technical Analysis`,
+          dragmode: 'pan',
+          xaxis: {
+            rangeslider: { visible: false },
+            fixedrange: false,
+            showspikes: true,
+            spikemode: 'across'
+          },
+          yaxis: {
+            title: "Price",
+            side: 'right',
+            domain: hasRSI && hasMACD ? [0.4, 1] : (hasRSI || hasMACD ? [0.3, 1] : [0, 1]),
+            fixedrange: false,
+            showspikes: true,
+            spikemode: 'across'
+          },
+          paper_bgcolor: currentTheme === 'light' ? '#ffffff' : '#1a1a1a',
+          plot_bgcolor: currentTheme === 'light' ? '#ffffff' : '#1a1a1a',
+          font: { color: currentTheme === 'light' ? '#1a1a1a' : '#e0e0e0' },
+          showlegend: true,
+          legend: { x: 0, y: 1.1, orientation: 'h' },
+          hovermode: 'x unified',
+          newshape: {
+            line: { color: currentTheme === 'light' ? 'black' : '#9ca3af', width: 2 }
+          },
+          activeshape: {
+            fillcolor: 'rgba(239, 68, 68, 0.1)',
+            opacity: 0.5
+          }
+        };
+
+        if (hasRSI && hasMACD) {
+          layout.yaxis2 = { title: 'RSI', side: 'right', domain: [0.2, 0.35], range: [0, 100], fixedrange: false };
+          layout.yaxis3 = { title: 'MACD', side: 'right', domain: [0, 0.15], fixedrange: false };
+        } else if (hasRSI) {
+          layout.yaxis2 = { title: 'RSI', side: 'right', domain: [0, 0.25], range: [0, 100], fixedrange: false };
+        } else if (hasMACD) {
+          layout.yaxis3 = { title: 'MACD', side: 'right', domain: [0, 0.25], fixedrange: false };
+        }
+
+        await Plotly.newPlot("plot", traces, layout, {
+          responsive: true,
+          displayModeBar: true,
+          modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+          modeBarButtonsToAdd: ['drawopenpath', 'eraseshape'],
+          scrollZoom: true,
+          editable: true
+        });
+
+        // Load saved trendlines and add event handlers
+        const plotDiv = document.getElementById("plot");
+
+        // Load saved lines for this symbol
+        fetch(`/lines/${symbol}`)
+          .then(res => res.json())
+          .then(savedLines => {
+            if (savedLines.length > 0) {
+              const shapes = savedLines.map(line => ({
+                type: "line",
+                x0: line.x0,
+                x1: line.x1,
+                y0: line.y0,
+                y1: line.y1,
+                line: { color: currentTheme === 'light' ? "black" : "#9ca3af", width: 2 },
+                _id: line.id
+              }));
+
+              const annotations = savedLines.map(line => {
+                const ann = createAnnotation(line, chartData);
+                ann._lineId = line.id;
+                return ann;
+              });
+
+              drawnLines = savedLines;
+              suppressSave = true;
+              Plotly.relayout("plot", { shapes, annotations });
+              suppressSave = false;
+            }
+          })
+          .catch(err => console.error("Error loading saved lines:", err));
+
+        // Handle new/modified lines
+        plotDiv.on('plotly_relayout', function(event) {
+          if (relayoutGuard || suppressSave) return;
+          relayoutGuard = true;
+          setTimeout(() => { relayoutGuard = false; }, 100);
+
+          const shapes = plotDiv.layout.shapes || [];
+          const annotations = plotDiv.layout.annotations || [];
+
+          shapes.forEach((shape) => {
+            if (shape.type !== "line") return;
+            if (!shape._id) shape._id = crypto.randomUUID();
+
+            const { x0, x1, y0, y1 } = shape;
+            const existing = drawnLines.find(l => l.id === shape._id);
+
+            if (existing && existing.x0 === x0 && existing.x1 === x1 && existing.y0 === y0 && existing.y1 === y1) {
+              return;
+            }
+
+            // Fetch volume for this line
+            fetch("/volume", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                symbol: currentSymbol,
+                start_date: x0,
+                end_date: x1,
+                interval: currentInterval
+              })
+            })
+            .then(res => res.json())
+            .then(data => {
+              const avgVolume = data.avg_volume || 0;
+              const lineData = {
+                id: shape._id,
+                x0, x1, y0, y1,
+                volume: avgVolume
+              };
+
+              if (existing) {
+                Object.assign(existing, lineData);
+              } else {
+                drawnLines.push(lineData);
+              }
+
+              const annotation = createAnnotation(lineData, chartData);
+              annotation._lineId = shape._id;
+
+              const existingAnnIdx = annotations.findIndex(a => a._lineId === shape._id);
+              if (existingAnnIdx >= 0) {
+                annotations[existingAnnIdx] = annotation;
+              } else {
+                annotations.push(annotation);
+              }
+
+              suppressSave = true;
+              Plotly.relayout("plot", { annotations });
+              suppressSave = false;
+
+              // Reattach annotation click handlers
+              setupAnnotationClicks();
+
+              // Save to backend
+              fetch("/save_line", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  symbol: currentSymbol,
+                  line: lineData
+                })
+              }).catch(err => console.error("Error saving line:", err));
+            })
+            .catch(err => console.error("Error fetching volume:", err));
+          });
+        });
+
+        // Handle annotation clicks via DOM (more reliable than Plotly events)
+        function setupAnnotationClicks() {
+          setTimeout(() => {
+            console.log('Setting up annotation clicks...');
+            const plotDiv = document.getElementById("plot");
+
+            // Get all SVG text elements
+            const allTextElements = document.querySelectorAll('#plot svg text');
+            console.log(`Found ${allTextElements.length} SVG text elements`);
+
+            // Get our volume annotations from layout
+            const layoutAnns = (plotDiv.layout && plotDiv.layout.annotations) || [];
+            const volumeTexts = layoutAnns
+              .filter(a => a._lineId)
+              .map(a => a.text);
+
+            console.log('Volume texts to look for:', volumeTexts);
+
+            let foundCount = 0;
+            allTextElements.forEach(textEl => {
+              const text = textEl.textContent || textEl.innerText;
+
+              // Check if this text matches one of our volume labels
+              if (volumeTexts.includes(text)) {
+                foundCount++;
+                textEl.style.cursor = 'pointer';
+                textEl.style.pointerEvents = 'all';  // Ensure it captures events
+
+                // Remove existing listeners to avoid duplicates
+                const newEl = textEl.cloneNode(true);
+                textEl.parentNode.replaceChild(newEl, textEl);
+
+                newEl.addEventListener('click', function(e) {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  console.log('✓ Volume label clicked:', text);
+
+                  // Find the line ID from the annotation text
+                  const layoutAnns = plotDiv.layout.annotations || [];
+                  for (let a of layoutAnns) {
+                    if (a._lineId && a.text === text) {
+                      selectedLineId = a._lineId;
+                      updateShapesColors();
+                      console.log('✓ Selected line via volume label:', selectedLineId);
+                      return;
+                    }
+                  }
+                });
+
+                console.log(`✓ Added click handler to volume label: "${text}"`);
+              }
+            });
+
+            console.log(`Attached ${foundCount} annotation click handlers`);
+          }, 500);
+        }
+
+        // Handle line selection via click (works in ALL modes)
+        plotDiv.on('plotly_click', function(event) {
+          console.log('plotly_click event:', event);
+
+          const coords = getDataCoords(event.event);
+          if (!coords) {
+            console.log('Could not get data coords from click');
+            return;
+          }
+
+          console.log('Click coords:', coords);
+
+          const clickX = new Date(coords.x).getTime();
+          const clickY = coords.y;
+
+          const xaxis = plotDiv._fullLayout.xaxis;
+          const yaxis = plotDiv._fullLayout.yaxis;
+
+          if (!xaxis || !yaxis) {
+            console.log('No axis found');
+            return;
+          }
+
+          const xRange = xaxis.range;
+          const yRange = yaxis.range;
+
+          console.log('X range:', xRange, 'Y range:', yRange);
+
+          const xScale = 1 / ((new Date(xRange[1]).getTime() - new Date(xRange[0]).getTime()) / 100);
+          const yScale = 1 / ((yRange[1] - yRange[0]) / 100);
+
+          console.log('Scales:', xScale, yScale);
+
+          let closestLine = null;
+          let minDistance = Infinity;
+
+          const shapes = plotDiv.layout.shapes || [];
+          console.log(`Checking ${shapes.length} shapes for proximity`);
+
+          shapes.forEach((shape, idx) => {
+            if (shape.type !== "line") {
+              console.log(`Shape ${idx} is not a line (${shape.type})`);
+              return;
+            }
+            if (!shape._id) {
+              console.log(`Shape ${idx} has no _id`);
+              return;
+            }
+
+            const x0Time = new Date(shape.x0).getTime();
+            const x1Time = new Date(shape.x1).getTime();
+            const y0 = shape.y0;
+            const y1 = shape.y1;
+
+            console.log(`Line ${idx}: (${x0Time}, ${y0}) to (${x1Time}, ${y1})`);
+
+            const dist = distanceToSegment(clickX, clickY, x0Time, y0, x1Time, y1, xScale, yScale);
+
+            console.log(`Distance to line ${idx}:`, dist);
+
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestLine = shape;  // Always track the closest line
+            }
+          });
+
+          console.log('Closest distance found:', minDistance);
+
+          // Check if closest line is within threshold (50 pixels)
+          if (closestLine && minDistance < 50) {
+            selectedLineId = closestLine._id;
+            updateShapesColors();
+            console.log('✓ Selected line via click, distance:', minDistance, 'id:', selectedLineId);
+          } else {
+            console.log('✗ No line close enough (min:', minDistance, 'threshold: 50)');
+            selectedLineId = null;
+            updateShapesColors();
+          }
+
+          hidePopup();
+        });
+
+        // Handle annotation clicks via Plotly event (backup method)
+        plotDiv.on('plotly_clickannotation', function(event, data) {
+          console.log('plotly_clickannotation event:', event, data);
+
+          // Handle both event formats
+          const annotationData = data || event;
+
+          if (!annotationData || annotationData.index === undefined) {
+            console.log('No annotation data available');
+            return;
+          }
+
+          const annotation = plotDiv.layout.annotations[annotationData.index];
+          if (annotation && annotation._lineId) {
+            selectedLineId = annotation._lineId;
+            updateShapesColors();
+            console.log('Selected line via plotly_clickannotation:', selectedLineId);
+          }
+          hidePopup();
+        });
+
+        // Setup annotation DOM click handlers after a delay
+        setupAnnotationClicks();
+
+        // Handle right-click context menu
+        plotDiv.on('plotly_contextmenu', function(event) {
+          event.event.preventDefault();
+
+          const popup = document.getElementById("popupMenu");
+
+          if (selectedLineId) {
+            // Show delete option for selected line
+            popup.innerHTML = '<div onclick="deleteSelectedLine(); hidePopup();">Delete Line</div>';
+          } else {
+            // No line selected, hide popup
+            hidePopup();
+            return false;
+          }
+
+          popup.style.left = event.event.pageX + 'px';
+          popup.style.top = event.event.pageY + 'px';
+          popup.style.display = 'block';
+
+          return false;
+        });
+
+        // Handle Delete key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Delete' && selectedLineId) {
+            deleteSelectedLine();
+          }
+        });
+
+        // Show/hide resize controls based on active indicators
+        document.getElementById('rsiHeightControl').style.display = hasRSI ? 'block' : 'none';
+        document.getElementById('macdHeightControl').style.display = hasMACD ? 'block' : 'none';
+
+      } catch (error) {
+        console.error("Error loading chart:", error);
+        alert("Error loading chart data");
+      }
+    }
+
+    // Pattern Detection
+    async function detectPatterns() {
+      if (!currentSymbol) {
+        alert("Please load a chart first");
+        return;
+      }
+
+      try {
+        const response = await fetch("/patterns", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            symbol: currentSymbol,
+            period: currentPeriod || "1y",
+            interval: currentInterval
+          })
+        });
+
+        const data = await response.json();
+
+        let html = '<h3 style="margin-bottom: 15px;">Pattern Detection Results</h3>';
+
+        if (data.patterns && data.patterns.length > 0) {
+          data.patterns.forEach(pattern => {
+            html += `
+              <div class="result-item">
+                <strong>${pattern.type}</strong> (${(pattern.confidence * 100).toFixed(0)}% confidence)<br>
+                <small>${pattern.description}</small><br>
+                <small>Support: $${pattern.support?.toFixed(2) || 'N/A'} | Resistance: $${pattern.resistance?.toFixed(2) || 'N/A'}</small>
+              </div>
+            `;
+          });
+        } else {
+          html += '<p>No patterns detected in current timeframe.</p>';
+        }
+
+        document.getElementById('analysisResults').innerHTML = html;
+        document.querySelector('[data-tab="analysis"]').click();
+      } catch (error) {
+        alert("Error detecting patterns");
+      }
+    }
+
+    // Price Prediction
+    async function getPredictions() {
+      if (!currentSymbol) {
+        alert("Please load a chart first");
+        return;
+      }
+
+      document.getElementById('analysisResults').innerHTML = '<p class="loading">Generating predictions...</p>';
+      document.querySelector('[data-tab="analysis"]').click();
+
+      try {
+        const response = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            symbol: currentSymbol,
+            period: "1y",
+            interval: "1d",
+            days: 30
+          })
+        });
+
+        const data = await response.json();
+
+        let html = `
+          <h3 style="margin-bottom: 15px;">30-Day Price Prediction</h3>
+          <div class="result-item">
+            <strong>Current Price:</strong> $${data.current_price.toFixed(2)}<br>
+            <strong>Trend:</strong> ${data.trend} (${data.trend_strength.toFixed(2)}% strength)<br>
+            <strong>Model:</strong> ${data.model} (R² = ${data.r2_score.toFixed(3)})<br>
+            <strong>30-Day Forecast:</strong> $${data.predictions[29].toFixed(2)}<br>
+            <strong>Confidence:</strong> ${(data.confidence[29] * 100).toFixed(0)}%
+          </div>
+          <div class="result-item">
+            <strong>Prediction Chart:</strong>
+            <div id="predictionChart" style="height: 300px; margin-top: 10px;"></div>
+          </div>
+        `;
+
+        document.getElementById('analysisResults').innerHTML = html;
+
+        // Plot prediction chart
+        const trace = {
+          x: data.dates,
+          y: data.predictions,
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: 'Predicted Price',
+          line: { color: '#3b82f6' }
+        };
+
+        const layout = {
+          title: 'Price Forecast',
+          xaxis: { title: 'Date' },
+          yaxis: { title: 'Price ($)' },
+          paper_bgcolor: currentTheme === 'light' ? '#ffffff' : '#2d3748',
+          plot_bgcolor: currentTheme === 'light' ? '#ffffff' : '#2d3748',
+          font: { color: currentTheme === 'light' ? '#1a1a1a' : '#e0e0e0' },
+          height: 300
+        };
+
+        Plotly.newPlot('predictionChart', [trace], layout, { responsive: true });
+      } catch (error) {
+        document.getElementById('analysisResults').innerHTML = '<div class="error">Error generating predictions</div>';
+      }
+    }
+
+    // Trade Ideas
+    async function getTradeIdeas() {
+      if (!currentSymbol) {
+        alert("Please load a chart first");
+        return;
+      }
+
+      document.getElementById('analysisResults').innerHTML = '<p class="loading">Generating trade ideas...</p>';
+      document.querySelector('[data-tab="analysis"]').click();
+
+      try {
+        const response = await fetch("/trade_ideas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            symbol: currentSymbol,
+            period: "3mo",
+            interval: "1d"
+          })
+        });
+
+        const data = await response.json();
+
+        let html = `
+          <h3 style="margin-bottom: 15px;">AI Trade Ideas for ${data.symbol}</h3>
+          <div class="result-item">
+            <strong>Current Price:</strong> $${data.current_price.toFixed(2)}<br>
+            <strong>Market Condition:</strong><br>
+            RSI: ${data.market_condition.rsi.toFixed(1)} |
+            Trend: ${data.market_condition.trend}<br>
+            Support: $${data.market_condition.support.toFixed(2)} |
+            Resistance: $${data.market_condition.resistance.toFixed(2)}
+          </div>
+        `;
+
+        if (data.ideas && data.ideas.length > 0) {
+          data.ideas.forEach(idea => {
+            const profitPct = ((idea.target - idea.entry) / idea.entry * 100).toFixed(2);
+            html += `
+              <div class="trade-idea ${idea.type.toLowerCase()}">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <strong>${idea.type} - ${idea.strategy}</strong>
+                  <span>${(idea.confidence * 100).toFixed(0)}% confidence</span>
+                </div>
+                <div style="font-size: 13px;">
+                  <strong>Entry:</strong> $${idea.entry.toFixed(2)} |
+                  <strong>Target:</strong> $${idea.target.toFixed(2)} (${profitPct}%)<br>
+                  <strong>Stop Loss:</strong> $${idea.stop_loss.toFixed(2)} |
+                  <strong>R/R:</strong> ${idea.risk_reward}:1<br>
+                  <strong>Timeframe:</strong> ${idea.timeframe}<br>
+                  <em>${idea.reason}</em>
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          html += '<p>No trade ideas generated for current market conditions.</p>';
+        }
+
+        document.getElementById('analysisResults').innerHTML = html;
+      } catch (error) {
+        document.getElementById('analysisResults').innerHTML = '<div class="error">Error generating trade ideas</div>';
+      }
+    }
+
+    // Portfolio Management
+    async function loadPortfolio() {
+      try {
+        const response = await fetch("/portfolio");
+        const data = await response.json();
+
+        let html = `
+          <div class="result-item">
+            <div style="display: flex; justify-content: space-between;">
+              <div><strong>Cash:</strong> $${data.cash.toFixed(2)}</div>
+              <div><strong>Total Value:</strong> $${data.total_value.toFixed(2)}</div>
+            </div>
+            <div style="margin-top: 8px;">
+              <strong>Total P&L:</strong>
+              <span class="${data.total_pnl >= 0 ? 'profit' : 'loss'}">
+                $${data.total_pnl.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        `;
+
+        if (data.positions && data.positions.length > 0) {
+          html += '<h4 style="margin: 15px 0 10px 0;">Positions:</h4>';
+          data.positions.forEach(pos => {
+            html += `
+              <div class="portfolio-position">
+                <div>
+                  <strong>${pos.symbol}</strong><br>
+                  <small>${pos.shares} shares @ $${pos.avg_cost.toFixed(2)}</small>
+                </div>
+                <div style="text-align: right;">
+                  <div>${pos.current_price ? '$' + pos.current_price.toFixed(2) : 'N/A'}</div>
+                  <div class="${pos.pnl >= 0 ? 'profit' : 'loss'}">
+                    ${pos.pnl >= 0 ? '+' : ''}$${pos.pnl?.toFixed(2) || '0.00'}
+                    (${pos.pnl_pct >= 0 ? '+' : ''}${pos.pnl_pct?.toFixed(2) || '0.00'}%)
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          html += '<p style="margin-top: 15px;">No positions. Use the trade form above to buy stocks.</p>';
+        }
+
+        document.getElementById('portfolioDisplay').innerHTML = html;
+      } catch (error) {
+        document.getElementById('portfolioDisplay').innerHTML = '<div class="error">Error loading portfolio</div>';
+      }
+    }
+
+    async function buyStock() {
+      const symbol = document.getElementById('tradeSymbol').value.trim().toUpperCase();
+      const shares = parseInt(document.getElementById('tradeShares').value);
+
+      if (!symbol || !shares || shares < 1) {
+        alert("Please enter valid symbol and shares");
+        return;
+      }
+
+      try {
+        const response = await fetch("/portfolio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "buy",
+            symbol: symbol,
+            shares: shares
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`Bought ${shares} shares of ${symbol}`);
+          loadPortfolio();
+          document.getElementById('tradeSymbol').value = '';
+          document.getElementById('tradeShares').value = '';
+        } else {
+          alert(data.error || "Error buying stock");
+        }
+      } catch (error) {
+        alert("Error buying stock");
+      }
+    }
+
+    async function sellStock() {
+      const symbol = document.getElementById('tradeSymbol').value.trim().toUpperCase();
+      const shares = parseInt(document.getElementById('tradeShares').value);
+
+      if (!symbol || !shares || shares < 1) {
+        alert("Please enter valid symbol and shares");
+        return;
+      }
+
+      try {
+        const response = await fetch("/portfolio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "sell",
+            symbol: symbol,
+            shares: shares
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`Sold ${shares} shares of ${symbol}`);
+          loadPortfolio();
+          document.getElementById('tradeSymbol').value = '';
+          document.getElementById('tradeShares').value = '';
+        } else {
+          alert(data.error || "Error selling stock");
+        }
+      } catch (error) {
+        alert("Error selling stock");
+      }
+    }
+
+    // Plugins
+    async function loadPlugins() {
+      try {
+        const response = await fetch("/plugins");
+        const data = await response.json();
+
+        const select = document.getElementById('pluginSelect');
+        select.innerHTML = '<option value="">Select a plugin...</option>';
+
+        if (data.plugins && data.plugins.length > 0) {
+          data.plugins.forEach(plugin => {
+            const option = document.createElement('option');
+            option.value = plugin.name;
+            option.textContent = `${plugin.name} v${plugin.version}`;
+            select.appendChild(option);
+          });
+        } else {
+          select.innerHTML = '<option value="">No plugins available</option>';
+        }
+      } catch (error) {
+        console.error("Error loading plugins:", error);
+      }
+    }
+
+    async function executePlugin() {
+      const pluginName = document.getElementById('pluginSelect').value;
+      const symbol = document.getElementById('pluginSymbol').value.trim().toUpperCase();
+      const period = document.getElementById('pluginPeriod').value;
+
+      if (!pluginName || !symbol) {
+        alert("Please select a plugin and enter a symbol");
+        return;
+      }
+
+      document.getElementById('pluginResults').innerHTML = '<p class="loading">Executing plugin...</p>';
+
+      try {
+        // Get the plugin filename (need to map from display name to filename)
+        const pluginsResponse = await fetch("/plugins");
+        const pluginsData = await pluginsResponse.json();
+
+        // Find the plugin file name by matching the name
+        let pluginFileName = null;
+        for (let i = 0; i < pluginsData.plugins.length; i++) {
+          if (pluginsData.plugins[i].name === pluginName) {
+            // The plugin filename is typically snake_case version
+            pluginFileName = pluginName.toLowerCase().replace(/\s+/g, '_') + '_plugin';
+            break;
+          }
+        }
+
+        // Try common plugin names
+        if (!pluginFileName) {
+          if (pluginName.includes('WMA') || pluginName.includes('Weighted')) pluginFileName = 'wma_plugin';
+          if (pluginName.includes('ATR') || pluginName.includes('True Range')) pluginFileName = 'atr_plugin';
+        }
+
+        const params = period ? { period: parseInt(period) } : {};
+
+        const response = await fetch("/plugins/execute", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            plugin: pluginFileName,
+            symbol: symbol,
+            period: "1y",
+            interval: "1d",
+            params: params
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          document.getElementById('pluginResults').innerHTML = `<div class="error">${data.error}</div>`;
+        } else {
+          let html = `
+            <h3>Plugin Results: ${pluginName}</h3>
+            <div class="result-item">
+              <strong>Symbol:</strong> ${data.symbol}<br>
+              <strong>Data Points:</strong> ${data.result.length}<br>
+              <strong>Last Value:</strong> ${data.result[data.result.length - 1]?.toFixed(2) || 'N/A'}
+            </div>
+            <div class="success">Plugin executed successfully!</div>
+          `;
+          document.getElementById('pluginResults').innerHTML = html;
+        }
+      } catch (error) {
+        document.getElementById('pluginResults').innerHTML = '<div class="error">Error executing plugin</div>';
+      }
+    }
+
+    function showPlugins() {
+      document.querySelector('[data-tab="plugins"]').click();
+    }
+
+    // Authentication
+    function showAuth() {
+      document.getElementById('authModal').style.display = 'block';
+    }
+
+    function closeAuth() {
+      document.getElementById('authModal').style.display = 'none';
+    }
+
+    function switchAuthTab(tab) {
+      if (tab === 'login') {
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('registerForm').style.display = 'none';
+      } else {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('registerForm').style.display = 'block';
+      }
+    }
+
+    async function register() {
+      const username = document.getElementById('regUsername').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+
+      try {
+        const response = await fetch("/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          document.getElementById('authMessage').innerHTML = '<div class="success">Registration successful! Please login.</div>';
+          setTimeout(() => switchAuthTab('login'), 2000);
+        } else {
+          document.getElementById('authMessage').innerHTML = `<div class="error">${data.error}</div>`;
+        }
+      } catch (error) {
+        document.getElementById('authMessage').innerHTML = '<div class="error">Error registering</div>';
+      }
+    }
+
+    async function login() {
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+
+      try {
+        const response = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          authToken = data.token;
+          currentUser = data.username;
+          document.getElementById('username').textContent = currentUser;
+          document.getElementById('userInfo').style.display = 'block';
+          document.getElementById('authMessage').innerHTML = '<div class="success">Login successful!</div>';
+          setTimeout(() => closeAuth(), 1500);
+        } else {
+          document.getElementById('authMessage').innerHTML = `<div class="error">${data.error}</div>`;
+        }
+      } catch (error) {
+        document.getElementById('authMessage').innerHTML = '<div class="error">Error logging in</div>';
+      }
+    }
+
+    // Close popup when clicking outside
+    document.addEventListener('click', function(e) {
+      const popup = document.getElementById("popupMenu");
+      if (popup && !popup.contains(e.target)) {
+        hidePopup();
+      }
+    });
+
+    // Initialize
+    window.addEventListener('load', function() {
+      loadPlugins();
+    });
+  </script>
+</body>
+</html>

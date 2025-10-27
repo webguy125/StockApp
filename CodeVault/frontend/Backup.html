@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stock Chart with Trendline Volume</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+  <style>
+    #popupMenu {
+      position: absolute;
+      display: none;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+    #popupMenu div {
+      padding: 8px;
+      cursor: pointer;
+    }
+    #popupMenu div:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h2>📈 Stock Chart with Trendline Volume</h2>
+
+  <div style="margin-bottom: 10px;">
+    <input type="text" id="symbolInput" placeholder="Enter stock symbol (e.g. GE)" />
+  </div>
+
+  <div id="plot" style="height: 600px;"></div>
+
+  <!-- Popup menu -->
+  <div id="popupMenu">
+    <div onclick="clearAllLines()">🧹 Clear All Lines</div>
+  </div>
+
+  <script>
+    let currentSymbol = null;
+    let drawnLines = [];
+
+    document.getElementById("symbolInput").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        loadChart();
+      }
+    });
+
+    function clearAllLines() {
+      Plotly.relayout("plot", { shapes: [], annotations: [] });
+      drawnLines = [];
+      hidePopup();
+    }
+
+    function hidePopup() {
+      document.getElementById("popupMenu").style.display = "none";
+    }
+
+    document.addEventListener("click", hidePopup);
+
+    function loadChart() {
+      const symbol = document.getElementById("symbolInput").value.trim().toUpperCase();
+      if (!symbol) return;
+
+      currentSymbol = symbol;
+      drawnLines = [];
+
+      fetch(`/data/${symbol}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.length === 0) {
+            alert("No data found for symbol: " + symbol);
+            return;
+          }
+
+          const trace = {
+            x: data.map(row => row.Date),
+            open: data.map(row => row.Open),
+            high: data.map(row => row.High),
+            low: data.map(row => row.Low),
+            close: data.map(row => row.Close),
+            type: "candlestick",
+            xaxis: "x",
+            yaxis: "y"
+          };
+
+          const layout = {
+            title: `${symbol} Candlestick Chart`,
+            dragmode: "drawline",
+            shapes: [],
+            annotations: [],
+            xaxis: { rangeslider: { visible: false } },
+            yaxis: { title: "Price" }
+          };
+
+          Plotly.newPlot("plot", [trace], layout).then(() => {
+            const plotDiv = document.getElementById("plot");
+
+            setInterval(() => {
+              const shapes = plotDiv.layout.shapes || [];
+
+              shapes.forEach((shape, index) => {
+                if (shape.type === "line") {
+                  const { x0, x1, y0, y1 } = shape;
+
+                  if (drawnLines.some(l => l.x0 === x0 && l.x1 === x1)) return;
+                  drawnLines.push({ x0, x1, y0, y1 });
+
+                  fetch("/volume", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      symbol: currentSymbol,
+                      start_date: x0,
+                      end_date: x1
+                    })
+                  })
+                  .then(res => res.json())
+                  .then(data => {
+                    const avgVolume = data.avg_volume;
+                    const midX = new Date((new Date(x0).getTime() + new Date(x1).getTime()) / 2);
+                    const midY = (y0 + y1) / 2;
+
+                    Plotly.relayout("plot", {
+                      [`annotations[${drawnLines.length - 1}]`]: {
+                        x: midX,
+                        y: midY,
+                        text: `Avg Vol: ${Math.round(avgVolume).toLocaleString()}`,
+                        showarrow: false,
+                        font: { color: "blue", size: 12 }
+                      }
+                    });
+                  });
+                }
+              });
+            }, 1000);
+
+            // Right-click to delete a line or show menu
+            plotDiv.addEventListener("contextmenu", function(e) {
+              e.preventDefault();
+
+              const layout = plotDiv.layout;
+              const shapes = layout.shapes || [];
+
+              const bbox = plotDiv.getBoundingClientRect();
+              const relX = e.clientX - bbox.left;
+              const relY = e.clientY - bbox.top;
+
+              const gd = plotDiv._fullLayout;
+              const xaxis = gd.xaxis;
+              const yaxis = gd.yaxis;
+
+              const xVal = xaxis.p2l ? xaxis.p2l(relX) : xaxis.p2d(relX);
+              const yVal = yaxis.p2l ? yaxis.p2l(relY) : yaxis.p2d(relY);
+
+              let deleted = false;
+
+              drawnLines.forEach((line, i) => {
+                const midX = new Date((new Date(line.x0).getTime() + new Date(line.x1).getTime()) / 2);
+                const midY = (line.y0 + line.y1) / 2;
+                const dx = Math.abs(new Date(xVal).getTime() - midX.getTime());
+                const dy = Math.abs(yVal - midY);
+                const dist = dx + dy;
+
+                if (dist < 10000000 && !deleted) {
+                  const updatedShapes = layout.shapes.filter((_, j) => j !== i);
+                  const updatedAnnotations = layout.annotations.filter((_, j) => j !== i);
+
+                  Plotly.relayout("plot", {
+                    shapes: updatedShapes,
+                    annotations: updatedAnnotations
+                  });
+
+                  drawnLines = updatedShapes.map((shape, j) => ({
+                    x0: shape.x0,
+                    x1: shape.x1,
+                    y0: shape.y0,
+                    y1: shape.y1
+                  }));
+
+                  deleted = true;
+                }
+              });
+
+              if (!deleted) {
+                const menu = document.getElementById("popupMenu");
+                menu.style.left = e.pageX + "px";
+                menu.style.top = e.pageY + "px";
+                menu.style.display = "block";
+              }
+            });
+          });
+        });
+    }
+  </script>
+</body>
+</html>

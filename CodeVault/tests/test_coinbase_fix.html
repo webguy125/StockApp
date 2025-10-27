@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Coinbase Fix</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Testing Coinbase Chart Fix</h1>
+    <div id="chart" style="width: 100%; height: 500px;"></div>
+    <div id="log" style="font-family: monospace; margin-top: 20px;"></div>
+
+    <script>
+        const log = (msg) => {
+            document.getElementById('log').innerHTML += msg + '<br>';
+            console.log(msg);
+        };
+
+        async function test() {
+            log('Fetching data from /data/coinbase/BTC-USD...');
+
+            const response = await fetch('http://127.0.0.1:5000/data/coinbase/BTC-USD');
+            const data = await response.json();
+
+            log(`Received ${data.length} candles`);
+            log(`Date range: ${data[0].Date} to ${data[data.length - 1].Date}`);
+
+            const lastCandle = data[data.length - 1];
+            const today = new Date().toISOString().split('T')[0];
+
+            log(`Last candle date: ${lastCandle.Date}`);
+            log(`Today's date: ${today}`);
+            log(`Dates match: ${lastCandle.Date === today}`);
+
+            // Simulate what the app does
+            let liveCandle;
+            let allData;
+
+            if (lastCandle.Date !== today) {
+                liveCandle = {
+                    Date: today,
+                    Open: lastCandle.Close,
+                    High: lastCandle.Close,
+                    Low: lastCandle.Close,
+                    Close: lastCandle.Close,
+                    Volume: 0
+                };
+                allData = [...data, liveCandle];
+                log(`CREATED new live candle for ${today}`);
+                log(`Total candles to plot: ${allData.length}`);
+            } else {
+                liveCandle = {...lastCandle};
+                allData = data;
+                log(`USING existing candle for ${today} as live candle`);
+                log(`Total candles to plot: ${allData.length}`);
+            }
+
+            // Check for duplicates
+            const dates = allData.map(d => d.Date);
+            const uniqueDates = new Set(dates);
+            if (dates.length !== uniqueDates.size) {
+                log('⚠️ WARNING: Duplicate dates found!');
+                const counts = {};
+                dates.forEach(d => counts[d] = (counts[d] || 0) + 1);
+                Object.entries(counts).forEach(([date, count]) => {
+                    if (count > 1) log(`  ${date} appears ${count} times`);
+                });
+            } else {
+                log('✅ No duplicate dates');
+            }
+
+            // Plot the chart
+            const trace = {
+                x: allData.map(d => d.Date),
+                open: allData.map(d => d.Open),
+                high: allData.map(d => d.High),
+                low: allData.map(d => d.Low),
+                close: allData.map(d => d.Close),
+                type: 'candlestick',
+                name: 'BTC-USD'
+            };
+
+            const layout = {
+                title: 'BTC-USD Candles (with fix)',
+                xaxis: { type: 'date' },
+                yaxis: { title: 'Price' }
+            };
+
+            Plotly.newPlot('chart', [trace], layout);
+            log('Chart rendered');
+        }
+
+        test();
+    </script>
+</body>
+</html>

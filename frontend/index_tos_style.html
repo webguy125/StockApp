@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>StockApp - Professional Trading Platform</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Plotly for charts -->
+  <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+
+  <!-- Socket.IO for real-time WebSocket -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+  <!-- ThinkorSwim Theme CSS -->
+  <link rel="stylesheet" href="css/tos-theme.css">
+  <link rel="stylesheet" href="css/timeframe-selector.css">
+</head>
+<body class="tos-theme">
+  <div class="tos-container">
+    <!-- Top Menu Bar -->
+    <div class="tos-menu-bar">
+      <div class="tos-menu-item" data-menu="file" onclick="window.tosApp.menuBar.toggleMenu('file')">
+        File
+        <div class="tos-dropdown">
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('newWorkspace')">New Workspace</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('saveLayout')">Save Layout</div>
+          <div class="tos-dropdown-separator"></div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('exportChart')">Export Chart</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('exportData')">Export Data</div>
+          <div class="tos-dropdown-separator"></div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('settings')">Settings</div>
+        </div>
+      </div>
+
+      <div class="tos-menu-item" data-menu="view" onclick="window.tosApp.menuBar.toggleMenu('view')">
+        View
+        <div class="tos-dropdown">
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('toggleWatchlist')">Show/Hide Watchlist</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('toggleNews')">Show/Hide News</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('toggleActiveTrader')">Show/Hide Active Trader</div>
+          <div class="tos-dropdown-separator"></div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('chartSettings')">Chart Settings</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('layout1')">Layout: 1 Chart</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('layout2x1')">Layout: 2x1</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('layout2x2')">Layout: 2x2</div>
+        </div>
+      </div>
+
+      <div class="tos-menu-item" data-menu="tools" onclick="window.tosApp.menuBar.toggleMenu('tools')">
+        Tools
+        <div class="tos-dropdown">
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('patternScanner')">Pattern Scanner</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('priceAlerts')">Price Alerts</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('tradeIdeas')">Trade Ideas</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('backtester')">Backtester</div>
+          <div class="tos-dropdown-separator"></div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('marketScreener')">Market Screener</div>
+        </div>
+      </div>
+
+      <div class="tos-menu-item" data-menu="analysis" onclick="window.tosApp.menuBar.toggleMenu('analysis')">
+        Analysis
+        <div class="tos-dropdown">
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('technicalStudies')">Technical Studies</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('drawingTools')">Drawing Tools</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('fundamentals')">Fundamentals</div>
+          <div class="tos-dropdown-separator"></div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('compareSymbols')">Compare Symbols</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('correlationMatrix')">Correlation Matrix</div>
+        </div>
+      </div>
+
+      <div class="tos-menu-item" data-menu="trade" onclick="window.tosApp.menuBar.toggleMenu('trade')">
+        Trade
+        <div class="tos-dropdown">
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('quickTrade')">Quick Trade</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('tradeHistory')">Trade History</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('positions')">Positions</div>
+          <div class="tos-dropdown-separator"></div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('accountSummary')">Account Summary</div>
+        </div>
+      </div>
+
+      <div class="tos-menu-item" data-menu="help" onclick="window.tosApp.menuBar.toggleMenu('help')">
+        Help
+        <div class="tos-dropdown">
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('documentation')">Documentation</div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('shortcuts')">Keyboard Shortcuts</div>
+          <div class="tos-dropdown-separator"></div>
+          <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('about')">About StockApp</div>
+        </div>
+      </div>
+
+      <!-- Settings Gear Icon (Right side of menu bar) -->
+      <div class="tos-menu-settings" title="Chart Settings" onclick="window.tosApp.chartSettings.toggleModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Chart Settings Modal -->
+    <div id="chartSettingsModal" class="tos-settings-modal">
+      <div class="tos-settings-content">
+        <div class="tos-settings-header">
+          <h3>Chart Settings</h3>
+          <span class="tos-settings-close" onclick="window.tosApp.chartSettings.closeModal()">&times;</span>
+        </div>
+        <div class="tos-settings-body">
+          <!-- Timezone Selection -->
+          <div class="tos-setting-group">
+            <label class="tos-setting-label">Timezone</label>
+            <select id="timezoneSelect" class="tos-setting-select" onchange="window.tosApp.chartSettings.updateTimezone(this.value)">
+              <option value="America/New_York">EST (Eastern)</option>
+              <option value="America/Chicago" selected>CST (Central)</option>
+              <option value="America/Denver">MST (Mountain)</option>
+              <option value="America/Los_Angeles">PST (Pacific)</option>
+              <option value="UTC">UTC</option>
+            </select>
+          </div>
+
+          <!-- Theme Selection -->
+          <div class="tos-setting-group">
+            <label class="tos-setting-label">Theme</label>
+            <div class="tos-setting-toggle">
+              <label class="tos-switch">
+                <input type="checkbox" id="themeToggle" onchange="window.tosApp.chartSettings.toggleTheme(this.checked)">
+                <span class="tos-slider"></span>
+              </label>
+              <span id="themeLabel">Dark Mode</span>
+            </div>
+          </div>
+
+          <!-- Grid Lines -->
+          <div class="tos-setting-group">
+            <label class="tos-setting-label">Grid Lines</label>
+            <div class="tos-setting-toggle">
+              <label class="tos-switch">
+                <input type="checkbox" id="gridToggle" checked onchange="window.tosApp.chartSettings.toggleGrid(this.checked)">
+                <span class="tos-slider"></span>
+              </label>
+              <span>Show Grid</span>
+            </div>
+          </div>
+
+          <!-- High/Low Markers -->
+          <div class="tos-setting-group">
+            <label class="tos-setting-label">Price Markers</label>
+            <div class="tos-setting-toggle">
+              <label class="tos-switch">
+                <input type="checkbox" id="highLowToggle" checked onchange="window.tosApp.chartSettings.toggleHighLow(this.checked)">
+                <span class="tos-slider"></span>
+              </label>
+              <span>Show High/Low</span>
+            </div>
+          </div>
+
+          <!-- Price Axis Position -->
+          <div class="tos-setting-group">
+            <label class="tos-setting-label">Price Axis Position</label>
+            <select id="priceAxisSelect" class="tos-setting-select" onchange="window.tosApp.chartSettings.updatePriceAxisPosition(this.value)">
+              <option value="right" selected>Right</option>
+              <option value="left">Left</option>
+            </select>
+          </div>
+
+          <!-- Crosshair Price -->
+          <div class="tos-setting-group">
+            <label class="tos-setting-label">Crosshair Price</label>
+            <div class="tos-setting-toggle">
+              <label class="tos-switch">
+                <input type="checkbox" id="crosshairToggle" checked onchange="window.tosApp.chartSettings.toggleCrosshair(this.checked)">
+                <span class="tos-slider"></span>
+              </label>
+              <span>Show Price on Crosshair</span>
+            </div>
+          </div>
+
+          <!-- Support/Resistance Levels -->
+          <div class="tos-setting-group">
+            <label class="tos-setting-label">Support/Resistance</label>
+            <div class="tos-setting-toggle">
+              <label class="tos-switch">
+                <input type="checkbox" id="supportResistanceToggle" onchange="window.tosApp.chartSettings.toggleSupportResistance(this.checked)">
+                <span class="tos-slider"></span>
+              </label>
+              <span>Show Levels</span>
+            </div>
+          </div>
+
+          <!-- Volume Overlay -->
+          <div class="tos-setting-group">
+            <label class="tos-setting-label">Volume</label>
+            <div class="tos-setting-toggle">
+              <label class="tos-switch">
+                <input type="checkbox" id="volumeToggle" onchange="window.tosApp.chartSettings.toggleVolume(this.checked)">
+                <span class="tos-slider"></span>
+              </label>
+              <span>Show Volume</span>
+            </div>
+
+            <!-- Volume Display Mode -->
+            <div class="tos-setting-row">
+              <label for="volumeModeSelect">Volume Display:</label>
+              <select id="volumeModeSelect" onchange="window.tosApp.chartSettings.setVolumeMode(this.value)">
+                <option value="subgraph">Separate Panel Below</option>
+                <option value="overlay">Overlaid on Chart</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="tos-settings-footer">
+          <button class="tos-btn-primary" onclick="window.tosApp.chartSettings.saveSettings()">Save</button>
+          <button class="tos-btn-secondary" onclick="window.tosApp.chartSettings.resetSettings()">Reset to Default</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="tos-main">
+      <!-- Left Panel - Watchlist & News -->
+      <div class="tos-left-panel">
+        <!-- Watchlist Section -->
+        <div class="tos-watchlist">
+          <div class="tos-panel-header">
+            <div class="tos-panel-header-title">Watchlist</div>
+            <div class="tos-panel-header-actions">
+              <button class="tos-panel-icon-btn" title="Add Symbol">+</button>
+            </div>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="tos-watchlist-search">
+            <input type="text" id="watchlist-search" placeholder="Enter symbol..." />
+          </div>
+
+          <!-- Tabs -->
+          <div class="tos-watchlist-tabs">
+            <div class="tos-watchlist-tab active" data-tab="mylist">My List</div>
+            <div class="tos-watchlist-tab" data-tab="majors">Majors</div>
+            <div class="tos-watchlist-tab" data-tab="defi">DeFi</div>
+            <div class="tos-watchlist-tab" data-tab="meme">Meme</div>
+          </div>
+
+          <!-- Watchlist Content -->
+          <div class="tos-watchlist-content" id="watchlist-content">
+            <!-- Items will be dynamically added here -->
+          </div>
+        </div>
+
+        <!-- News Feed Section -->
+        <div class="tos-news-feed">
+          <div class="tos-panel-header">
+            <div class="tos-panel-header-title">News Feed</div>
+            <div class="tos-panel-header-actions">
+              <button class="tos-panel-icon-btn" title="Refresh">↻</button>
+            </div>
+          </div>
+
+          <div class="tos-news-content" id="news-content">
+            <!-- News items will be dynamically added here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Panel - Chart Area -->
+      <div class="tos-center-panel">
+        <!-- Chart Toolbar -->
+        <div class="tos-chart-toolbar">
+          <div class="tos-toolbar-group">
+            <span class="tos-toolbar-label">Symbol:</span>
+            <input type="text" id="tos-symbol-input" class="tos-toolbar-input" placeholder="AAPL" />
+          </div>
+
+          <!-- Chart controls container for timeframe selector -->
+          <div class="chart-controls"></div>
+
+          <div class="tos-toolbar-group">
+            <span class="tos-toolbar-label">Chart:</span>
+            <select id="tos-chart-type" class="tos-toolbar-select">
+              <option value="candlestick" selected>Candlestick</option>
+              <option value="line">Line</option>
+              <option value="bar">Bar</option>
+              <option value="ohlc">OHLC</option>
+            </select>
+          </div>
+
+          <div class="tos-toolbar-group">
+            <button class="tos-toolbar-btn" id="btn-add-indicator" title="Add Indicator">+ Indicator</button>
+            <button class="tos-toolbar-btn" id="btn-drawing-tools" title="Drawing Tools">Draw</button>
+            <button class="tos-toolbar-btn" id="btn-compare" title="Compare Symbols">Compare</button>
+          </div>
+
+          <div class="tos-toolbar-group">
+            <button class="tos-toolbar-btn" id="btn-load-chart">Load Chart</button>
+          </div>
+        </div>
+
+        <!-- Chart Area -->
+        <div class="tos-chart-area">
+          <!-- OHLCV Data Bar -->
+          <div id="tos-chart-data-bar" style="padding: 10px; background: #2a2a2a; color: #e0e0e0; font-size: 13px; border-bottom: 1px solid #404040; display: flex; gap: 15px; align-items: center;">
+            <span style="color: #a0a0a0;">Hover over chart to see data</span>
+          </div>
+          <div id="tos-plot"></div>
+        </div>
+      </div>
+
+      <!-- Right Panel - Active Trader -->
+      <div class="tos-right-panel">
+        <div class="tos-active-trader">
+          <!-- Order Entry -->
+          <div class="tos-panel-header">
+            <div class="tos-panel-header-title">Quick Order</div>
+          </div>
+
+          <div class="tos-order-entry">
+            <div class="tos-order-symbol" id="order-symbol-display">SELECT SYMBOL</div>
+
+            <div class="tos-form-group">
+              <label class="tos-form-label">Symbol</label>
+              <input type="text" id="order-symbol" class="tos-form-input" placeholder="AAPL" />
+            </div>
+
+            <div class="tos-form-group">
+              <label class="tos-form-label">Order Type</label>
+              <select id="order-type" class="tos-form-select">
+                <option value="market">Market</option>
+                <option value="limit">Limit</option>
+                <option value="stop">Stop</option>
+                <option value="stop-limit">Stop-Limit</option>
+              </select>
+            </div>
+
+            <div class="tos-form-group">
+              <label class="tos-form-label">Quantity</label>
+              <input type="number" id="order-quantity" class="tos-form-input" placeholder="100" min="1" />
+            </div>
+
+            <div class="tos-form-group" id="price-group" style="display: none;">
+              <label class="tos-form-label">Limit Price</label>
+              <input type="number" id="order-price" class="tos-form-input" placeholder="0.00" step="0.01" />
+            </div>
+
+            <div class="tos-form-group" id="stop-group" style="display: none;">
+              <label class="tos-form-label">Stop Price</label>
+              <input type="number" id="order-stop-price" class="tos-form-input" placeholder="0.00" step="0.01" />
+            </div>
+
+            <div class="tos-form-group">
+              <label class="tos-form-label">Time in Force</label>
+              <select id="order-tif" class="tos-form-select">
+                <option value="day">Day</option>
+                <option value="gtc">GTC (Good Till Cancelled)</option>
+                <option value="gtd">GTD (Good Till Date)</option>
+              </select>
+            </div>
+
+            <div id="estimated-cost" style="font-size: 11px; margin-bottom: 12px; color: var(--tos-text-secondary);"></div>
+
+            <div class="tos-order-actions">
+              <button class="tos-btn-buy" id="btn-buy">Buy</button>
+              <button class="tos-btn-sell" id="btn-sell">Sell</button>
+            </div>
+          </div>
+
+          <!-- Positions Section -->
+          <div class="tos-positions">
+            <div class="tos-section-toggle">
+              <div class="tos-section-title">Positions</div>
+              <div>▼</div>
+            </div>
+            <div class="tos-section-content" id="positions-content">
+              <!-- Positions will be dynamically added here -->
+            </div>
+          </div>
+
+          <!-- Orders Section -->
+          <div class="tos-positions">
+            <div class="tos-section-toggle">
+              <div class="tos-section-title">Orders</div>
+              <div>▼</div>
+            </div>
+            <div class="tos-section-content collapsed" id="orders-content">
+              <div style="padding: 16px; text-align: center; color: var(--tos-text-secondary); font-size: 11px;">
+                No active orders
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Summary -->
+          <div class="tos-account-summary" id="account-summary">
+            <!-- Account data will be dynamically added here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Status Bar -->
+    <div class="tos-status-bar">
+      <div class="tos-status-left">
+        <div class="tos-status-item">
+          <div class="tos-status-dot" id="connection-status"></div>
+          <span id="connection-text">Connected</span>
+        </div>
+        <div class="tos-status-item">
+          <span id="server-time">--:--:--</span>
+        </div>
+      </div>
+      <div class="tos-status-right">
+        <div class="tos-status-item">
+          <span>Market Data: Real-time</span>
+        </div>
+        <div class="tos-status-item">
+          <span id="notifications-area"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicator Selection Modal -->
+  <div id="indicator-modal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);">
+    <div style="background-color: var(--tos-bg-secondary); margin: 5% auto; padding: 30px; border: 1px solid var(--tos-border-color); width: 600px; max-height: 80vh; overflow-y: auto; border-radius: 8px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; color: var(--tos-text-primary); font-size: 18px;">Add Technical Indicator</h2>
+        <button onclick="document.getElementById('indicator-modal').style.display='none'" style="background: none; border: none; color: var(--tos-text-secondary); font-size: 24px; cursor: pointer;">&times;</button>
+      </div>
+
+      <!-- Current Indicators Section -->
+      <div id="current-indicators-section" style="display: none; margin-bottom: 20px; padding: 15px; background: var(--tos-bg-primary); border-radius: 4px;">
+        <h3 style="margin: 0 0 10px 0; color: var(--tos-text-primary); font-size: 14px; font-weight: 600;">Current Indicators</h3>
+        <div id="current-indicators-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Active indicators will be listed here -->
+        </div>
+        <button id="btn-clear-indicators" style="width: 100%; margin-top: 10px; padding: 8px; background: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;">Clear All</button>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h3 style="margin: 0 0 10px 0; color: var(--tos-text-primary); font-size: 14px; font-weight: 600;">Add Indicator</h3>
+        <input type="text" id="indicator-search" placeholder="Search indicators..." style="width: 100%; padding: 10px; background: var(--tos-bg-primary); border: 1px solid var(--tos-border-color); color: var(--tos-text-primary); border-radius: 4px; font-size: 14px;">
+      </div>
+
+      <div id="indicator-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <!-- Indicators will be populated here -->
+      </div>
+
+      <div id="indicator-params" style="display: none; margin-top: 20px; padding: 20px; background: var(--tos-bg-primary); border-radius: 4px;">
+        <h3 style="margin: 0 0 15px 0; color: var(--tos-text-primary); font-size: 16px;" id="param-title"></h3>
+        <div id="param-inputs"></div>
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+          <button id="btn-add-indicator-confirm" style="flex: 1; padding: 10px; background: var(--tos-accent-blue); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Add to Chart</button>
+          <button onclick="document.getElementById('indicator-params').style.display='none'" style="flex: 1; padding: 10px; background: var(--tos-bg-secondary); color: var(--tos-text-primary); border: 1px solid var(--tos-border-color); border-radius: 4px; cursor: pointer; font-size: 14px;">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modular JavaScript (ES6 Modules) -->
+  <script type="module" src="js/tos-app.js?v=20251027-queue-fix"></script>
+</body>
+</html>

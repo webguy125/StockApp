@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="log"></div>
+
+    <button onclick="subscribeToCandles()">Subscribe to BTC Candles</button>
+
+    <script>
+        const socket = io('http://localhost:5000');
+        const logDiv = document.getElementById('log');
+        const statusDiv = document.getElementById('status');
+
+        function log(message) {
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${time}] ${message}</div>`;
+            console.log(message);
+        }
+
+        socket.on('connect', () => {
+            statusDiv.textContent = 'Connected!';
+            statusDiv.style.color = 'green';
+            log('✅ WebSocket connected');
+        });
+
+        socket.on('connection_response', (data) => {
+            log('📡 Server response: ' + data.message);
+        });
+
+        socket.on('subscription_response', (data) => {
+            log('📡 Subscription: ' + data.message);
+        });
+
+        socket.on('candle_update', (data) => {
+            log(`🕯️ Candle: ${data.symbol} ${data.timestamp} Close=${data.close} Ticks=${data.tick_count}`);
+        });
+
+        socket.on('trade_update', (data) => {
+            log(`💹 Trade: ${data.symbol} ${data.price} ${data.size}`);
+        });
+
+        socket.on('ticker_update', (data) => {
+            log(`📈 Ticker: ${data.symbol} ${data.price}`);
+        });
+
+        socket.on('disconnect', () => {
+            statusDiv.textContent = 'Disconnected';
+            statusDiv.style.color = 'red';
+            log('❌ WebSocket disconnected');
+        });
+
+        socket.on('connect_error', (error) => {
+            statusDiv.textContent = 'Connection Error';
+            statusDiv.style.color = 'red';
+            log('❌ Connection error: ' + error);
+        });
+
+        function subscribeToCandles() {
+            log('Subscribing to BTC candles...');
+            socket.emit('subscribe_candles', { symbol: 'BTC' });
+        }
+    </script>
+</body>
+</html>

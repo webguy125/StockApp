@@ -1,0 +1,498 @@
+{
+  "project": "StockApp - Advanced Technical Analysis Platform",
+  "objective": "Transform the current stock charting application into a professional-grade technical analysis tool with 10X improved functionality, user experience, and analytical capabilities",
+
+  "current_state": {
+    "description": "Flask + Plotly.js stock charting app with trendline drawing and volume analysis",
+    "core_features": [
+      "Real-time stock data from Yahoo Finance",
+      "Interactive candlestick charts with multiple timeframes",
+      "Trendline drawing with average volume calculation",
+      "Persistent storage of trendlines per symbol",
+      "Smart label positioning to avoid candle overlap"
+    ],
+    "tech_stack": {
+      "backend": "Python Flask + yfinance + pandas",
+      "frontend": "Plotly.js + vanilla JavaScript",
+      "storage": "JSON files"
+    }
+  },
+
+  "enhancement_categories": [
+    {
+      "category": "1. Advanced Technical Indicators",
+      "priority": "HIGH",
+      "improvements": [
+        {
+          "feature": "Multi-Indicator Support",
+          "description": "Add overlay and oscillator indicators",
+          "implementation": [
+            "Moving Averages (SMA, EMA, WMA) with customizable periods",
+            "Bollinger Bands with standard deviation bands",
+            "RSI (Relative Strength Index) in separate panel",
+            "MACD with signal line and histogram",
+            "Volume profile/Volume by Price",
+            "Fibonacci retracement levels (auto and manual)",
+            "Support/Resistance zones with strength detection",
+            "Pivot Points (Standard, Fibonacci, Camarilla)"
+          ],
+          "ui_controls": "Sidebar panel with toggle switches and parameter inputs for each indicator"
+        },
+        {
+          "feature": "Pattern Recognition",
+          "description": "Automatic detection of chart patterns",
+          "patterns": [
+            "Head and Shoulders / Inverse H&S",
+            "Double Top / Double Bottom",
+            "Triangle patterns (Ascending, Descending, Symmetrical)",
+            "Flag and Pennant patterns",
+            "Cup and Handle",
+            "Candlestick patterns (Doji, Hammer, Engulfing, etc.)"
+          ],
+          "display": "Highlight detected patterns with labels and confidence scores"
+        }
+      ]
+    },
+
+    {
+      "category": "2. Enhanced Drawing Tools",
+      "priority": "HIGH",
+      "improvements": [
+        {
+          "feature": "Drawing Tool Suite",
+          "tools": [
+            "Horizontal/Vertical lines with price/time labels",
+            "Trend channels (parallel lines)",
+            "Rectangle zones (support/resistance)",
+            "Fibonacci retracement/extension tools",
+            "Andrews Pitchfork",
+            "Gann Fan",
+            "Text annotations and arrows",
+            "Price alerts on specific levels"
+          ],
+          "interaction": "Toolbar with tool selection, color picker, line style (solid/dashed/dotted), and thickness controls"
+        },
+        {
+          "feature": "Advanced Trendline Features",
+          "enhancements": [
+            "Clone/duplicate trendlines",
+            "Extend lines infinitely forward/backward",
+            "Show angle of trendline in degrees",
+            "Display price change and percentage along line",
+            "Snap to nearest high/low points",
+            "Auto-detect trendlines using regression analysis",
+            "Line templates/presets for quick drawing"
+          ]
+        }
+      ]
+    },
+
+    {
+      "category": "3. Multi-Chart Analysis",
+      "priority": "MEDIUM",
+      "improvements": [
+        {
+          "feature": "Multiple Chart Layouts",
+          "layouts": [
+            "Single chart (current)",
+            "2-chart vertical split (compare symbols or timeframes)",
+            "4-chart grid (quad view)",
+            "Custom layouts with drag-and-drop panels"
+          ],
+          "synchronization": "Sync crosshair, zoom, and time range across all charts"
+        },
+        {
+          "feature": "Symbol Comparison",
+          "description": "Overlay multiple symbols on one chart",
+          "features": [
+            "Normalize prices to percentage change",
+            "Correlation coefficient display",
+            "Relative strength comparison",
+            "Sector/Index overlay for context"
+          ]
+        }
+      ]
+    },
+
+    {
+      "category": "4. Data Enhancement",
+      "priority": "HIGH",
+      "improvements": [
+        {
+          "feature": "Extended Market Data",
+          "data_points": [
+            "Pre-market and after-hours data",
+            "Bid/Ask spreads and order book depth",
+            "Level 2 data visualization (if available)",
+            "Options flow and unusual activity",
+            "Institutional holdings and changes",
+            "Earnings dates and analyst ratings",
+            "Dividend history and yield",
+            "Stock splits and corporate actions"
+          ]
+        },
+        {
+          "feature": "Advanced Volume Analysis",
+          "metrics": [
+            "Volume-weighted average price (VWAP)",
+            "Anchored VWAP from specific dates",
+            "Volume delta (buy vs sell pressure)",
+            "Volume profile by price levels",
+            "Cumulative volume delta",
+            "Time and Sales (tick data)",
+            "Volume heat maps"
+          ]
+        },
+        {
+          "feature": "Historical Data Management",
+          "capabilities": [
+            "Cache data locally for faster loading",
+            "Export to CSV/Excel with all indicators",
+            "Replay mode (step through historical data)",
+            "Data quality checks and gap detection",
+            "Multiple data sources (fallback providers)"
+          ]
+        }
+      ]
+    },
+
+    {
+      "category": "5. User Experience Enhancements",
+      "priority": "HIGH",
+      "improvements": [
+        {
+          "feature": "Modern UI/UX",
+          "components": [
+            "Dark/Light theme toggle with custom color schemes",
+            "Responsive design for tablets and large screens",
+            "Customizable workspace layouts (save/load)",
+            "Keyboard shortcuts for all major actions",
+            "Quick symbol search with autocomplete",
+            "Watchlist sidebar with live price updates",
+            "Notification system for price alerts",
+            "Onboarding tutorial for new users"
+          ]
+        },
+        {
+          "feature": "Chart Interaction",
+          "enhancements": [
+            "Mouse wheel zoom with smooth animation",
+            "Pan with click-drag (separate from drawing mode)",
+            "Zoom to selected time range (box select)",
+            "Quick timeframe buttons (1D, 1W, 1M, 3M, 1Y, ALL)",
+            "Crosshair with OHLC values popup",
+            "Measure tool (distance, price change, % change)",
+            "Undo/Redo for drawing operations",
+            "Minimap navigator for large datasets"
+          ]
+        }
+      ]
+    },
+
+    {
+      "category": "6. Analytics & Insights",
+      "priority": "MEDIUM",
+      "improvements": [
+        {
+          "feature": "Statistical Analysis",
+          "metrics": [
+            "Price statistics (High, Low, Avg, Std Dev) for selected range",
+            "Return calculations (Daily, Cumulative, Annualized)",
+            "Volatility analysis (Historical, Implied)",
+            "Beta calculation vs market index",
+            "Sharpe ratio and risk metrics",
+            "Drawdown analysis and recovery time",
+            "Performance attribution by time period"
+          ]
+        },
+        {
+          "feature": "Backtesting Framework",
+          "description": "Test trading strategies on historical data",
+          "capabilities": [
+            "Define entry/exit rules based on indicators",
+            "Calculate returns, win rate, max drawdown",
+            "Position sizing and risk management",
+            "Export backtest results to report",
+            "Monte Carlo simulation for strategy robustness"
+          ]
+        },
+        {
+          "feature": "AI-Powered Insights",
+          "features": [
+            "Price prediction using ML models (LSTM, Prophet)",
+            "Anomaly detection for unusual price movements",
+            "Sentiment analysis from news/social media",
+            "Smart alerts (e.g., 'RSI oversold on 3 timeframes')",
+            "Auto-generated trade ideas with risk/reward"
+          ]
+        }
+      ]
+    },
+
+    {
+      "category": "7. Collaboration & Sharing",
+      "priority": "LOW",
+      "improvements": [
+        {
+          "feature": "Chart Sharing",
+          "capabilities": [
+            "Export chart as PNG/SVG image",
+            "Generate shareable URL with all drawings preserved",
+            "Embed charts in external websites (iframe)",
+            "Screenshot with automatic annotation cleanup",
+            "Video recording of chart animations"
+          ]
+        },
+        {
+          "feature": "Social Features",
+          "features": [
+            "Public/Private chart libraries",
+            "Follow other users and their ideas",
+            "Comment on shared charts",
+            "Trading journal integration",
+            "Community-created indicator scripts"
+          ]
+        }
+      ]
+    },
+
+    {
+      "category": "8. Performance & Scalability",
+      "priority": "HIGH",
+      "improvements": [
+        {
+          "feature": "Optimization",
+          "enhancements": [
+            "WebGL rendering for large datasets (100k+ candles)",
+            "Lazy loading of historical data (load on zoom)",
+            "Data compression and caching strategy",
+            "Server-side rendering for complex calculations",
+            "WebSocket for real-time price updates",
+            "Progressive Web App (PWA) for offline access",
+            "Database migration (SQLite/PostgreSQL) for better performance"
+          ]
+        },
+        {
+          "feature": "Real-Time Features",
+          "capabilities": [
+            "Live price updates every 1-5 seconds",
+            "Streaming quotes via WebSocket",
+            "Real-time indicator recalculation",
+            "Live order book updates",
+            "Alert notifications (browser, email, SMS)"
+          ]
+        }
+      ]
+    },
+
+    {
+      "category": "9. Advanced Features",
+      "priority": "MEDIUM",
+      "improvements": [
+        {
+          "feature": "Screener & Scanner",
+          "description": "Find stocks matching technical criteria",
+          "filters": [
+            "Price crossing moving average",
+            "RSI in overbought/oversold zones",
+            "Volume surge (vs average)",
+            "Pattern breakouts",
+            "Custom formula builder",
+            "Save and schedule scans"
+          ]
+        },
+        {
+          "feature": "Portfolio Tracking",
+          "capabilities": [
+            "Import trades from CSV/broker API",
+            "Track P&L, cost basis, position sizes",
+            "Overlay portfolio positions on charts",
+            "Performance analytics and attribution",
+            "Tax reporting (FIFO, LIFO, Specific ID)"
+          ]
+        },
+        {
+          "feature": "Economic Calendar",
+          "features": [
+            "Display earnings dates, Fed meetings, economic reports",
+            "Mark events on chart timeline",
+            "Filter by importance and country",
+            "Historical event impact analysis"
+          ]
+        }
+      ]
+    },
+
+    {
+      "category": "10. Developer Experience",
+      "priority": "MEDIUM",
+      "improvements": [
+        {
+          "feature": "Code Quality",
+          "enhancements": [
+            "Migrate to TypeScript for type safety",
+            "Implement React/Vue for component architecture",
+            "Add comprehensive unit and integration tests",
+            "Set up CI/CD pipeline (GitHub Actions)",
+            "Code linting and formatting (ESLint, Prettier)",
+            "API documentation (Swagger/OpenAPI)",
+            "Error tracking (Sentry) and logging"
+          ]
+        },
+        {
+          "feature": "Plugin System",
+          "description": "Allow community-created extensions",
+          "capabilities": [
+            "Custom indicator development API",
+            "Theme/template marketplace",
+            "Data provider plugins",
+            "Export/import formats",
+            "Sandboxed script execution"
+          ]
+        }
+      ]
+    }
+  ],
+
+  "implementation_roadmap": {
+    "phase_1_foundation": {
+      "timeline": "2-3 weeks",
+      "focus": "Core improvements and UI polish",
+      "tasks": [
+        "Migrate to modern frontend framework (React/Vue)",
+        "Implement dark/light theme",
+        "Add basic indicators (MA, RSI, MACD)",
+        "Enhance drawing tools (rectangles, horizontal lines)",
+        "Improve data caching and performance",
+        "Add keyboard shortcuts",
+        "Implement undo/redo system"
+      ]
+    },
+    "phase_2_expansion": {
+      "timeline": "4-6 weeks",
+      "focus": "Advanced analytics and multi-chart support",
+      "tasks": [
+        "Pattern recognition system",
+        "Volume profile analysis",
+        "Multi-chart layouts",
+        "Symbol comparison tools",
+        "Screener functionality",
+        "Backtesting framework",
+        "Real-time WebSocket data"
+      ]
+    },
+    "phase_3_intelligence": {
+      "timeline": "6-8 weeks",
+      "focus": "AI features and collaboration",
+      "tasks": [
+        "ML-based price predictions",
+        "Sentiment analysis integration",
+        "Auto-generated trade ideas",
+        "Chart sharing and embedding",
+        "Portfolio tracking",
+        "Economic calendar",
+        "Mobile responsive design"
+      ]
+    },
+    "phase_4_ecosystem": {
+      "timeline": "8-12 weeks",
+      "focus": "Platform maturity and extensibility",
+      "tasks": [
+        "Plugin/extension system",
+        "Community features (sharing, following)",
+        "Advanced performance optimization",
+        "Multi-language support",
+        "White-label options",
+        "Enterprise features (SSO, audit logs)",
+        "API for third-party integrations"
+      ]
+    }
+  },
+
+  "technical_architecture": {
+    "frontend_stack": {
+      "framework": "React 18 + TypeScript",
+      "charting": "TradingView Lightweight Charts or Plotly.js enhanced",
+      "state_management": "Zustand or Redux Toolkit",
+      "ui_library": "Tailwind CSS + Shadcn/ui components",
+      "build_tool": "Vite for fast development",
+      "testing": "Vitest + React Testing Library"
+    },
+    "backend_stack": {
+      "framework": "FastAPI (async Python) for better performance",
+      "database": "PostgreSQL with TimescaleDB extension for time-series",
+      "caching": "Redis for real-time data and session management",
+      "task_queue": "Celery for background jobs (data updates, alerts)",
+      "websocket": "Socket.io or FastAPI WebSocket for live updates",
+      "ml_framework": "scikit-learn, TensorFlow for predictions"
+    },
+    "infrastructure": {
+      "containerization": "Docker + Docker Compose",
+      "deployment": "Kubernetes or Cloud Run for scalability",
+      "monitoring": "Prometheus + Grafana",
+      "logging": "ELK stack (Elasticsearch, Logstash, Kibana)",
+      "cdn": "CloudFlare for static assets",
+      "ci_cd": "GitHub Actions for automated testing and deployment"
+    }
+  },
+
+  "success_metrics": {
+    "performance": [
+      "Chart render time < 200ms for 1 year of daily data",
+      "Real-time updates within 500ms latency",
+      "Support 10,000+ concurrent users",
+      "99.9% uptime SLA"
+    ],
+    "user_engagement": [
+      "Average session duration > 15 minutes",
+      "Return user rate > 60%",
+      "Drawing/indicator usage rate > 80%",
+      "Chart sharing rate > 20%"
+    ],
+    "business": [
+      "10X increase in active users",
+      "5X increase in time spent on platform",
+      "Professional tier conversion rate > 10%",
+      "Net Promoter Score (NPS) > 50"
+    ]
+  },
+
+  "monetization_strategy": {
+    "tiers": [
+      {
+        "name": "Free",
+        "features": "Basic charts, 3 indicators, 10 drawings per chart, daily data only"
+      },
+      {
+        "name": "Pro ($19/month)",
+        "features": "All indicators, unlimited drawings, intraday data, alerts, advanced analytics"
+      },
+      {
+        "name": "Premium ($49/month)",
+        "features": "Real-time data, AI insights, backtesting, portfolio tracking, API access"
+      },
+      {
+        "name": "Enterprise (Custom)",
+        "features": "White-label, SSO, dedicated support, custom integrations, SLA"
+      }
+    ]
+  },
+
+  "next_steps": {
+    "immediate_actions": [
+      "Set up development environment with new tech stack",
+      "Create component library and design system",
+      "Implement data layer with caching strategy",
+      "Build indicator calculation engine",
+      "Develop drawing tools framework",
+      "Set up testing infrastructure"
+    ],
+    "key_decisions": [
+      "Choose between custom charting library vs TradingView integration",
+      "Decide on data provider (yfinance, Alpha Vantage, IEX Cloud, Polygon.io)",
+      "Select database solution (PostgreSQL, InfluxDB, TimescaleDB)",
+      "Determine hosting platform (AWS, GCP, Azure, DigitalOcean)",
+      "Define freemium vs paid feature split"
+    ]
+  }
+}
