@@ -111,10 +111,10 @@ class TOSApp {
     });
 
     // DEBUG: Catch-all listener to see ALL incoming Socket.IO events
-    this.socket.onAny((eventName, ...args) => {
-      console.log(`🌐 [CATCH-ALL] Received event: "${eventName}"`, args);
-    });
-    console.log('✅ Registered catch-all event listener (onAny)');
+    // this.socket.onAny((eventName, ...args) => {
+    //   console.log(`🌐 [CATCH-ALL] Received event: "${eventName}"`, args);
+    // });
+    // console.log('✅ Registered catch-all event listener (onAny)');
 
     // Listen for connection
     this.socket.on('connect', () => {
@@ -140,19 +140,19 @@ class TOSApp {
 
     // Listen for Coinbase ticker updates (real-time price)
     this.socket.on('ticker_update', (data) => {
-      console.log('🔥 RECEIVED ticker_update event:', data);
+      // console.log('🔥 RECEIVED ticker_update event:', data);
       this.handleTickerUpdate(data);
     });
-    console.log('✅ Registered ticker_update event listener');
+    // console.log('✅ Registered ticker_update event listener');
 
     // 1m candle updates removed - using ticker updates for all intervals
 
     // Listen for individual trade updates
     this.socket.on('trade_update', (data) => {
-      console.log('💎 RECEIVED trade_update event:', data);
+      // console.log('💎 RECEIVED trade_update event:', data);
       this.handleTradeUpdate(data);
     });
-    console.log('✅ Registered trade_update event listener');
+    // console.log('✅ Registered trade_update event listener');
 
     // Listen for subscription responses
     this.socket.on('subscription_response', (data) => {
@@ -425,7 +425,7 @@ class TOSApp {
    * Handle real-time ticker updates from Coinbase
    */
   handleTickerUpdate(data) {
-    console.log(`📈 Chart received ticker: ${data.symbol} = $${data.price}`);
+    // console.log(`📈 Chart received ticker: ${data.symbol} = $${data.price}`);
 
     // Only process if this is the current symbol
     // Handle both BTC-USD and BTC formats
@@ -435,11 +435,11 @@ class TOSApp {
        this.currentSymbol.includes(data.symbol.split('-')[0]));
 
     if (!symbolMatches) {
-      console.log(`  ❌ Symbol mismatch: current=${this.currentSymbol}, ticker=${data.symbol}`);
+      // console.log(`  ❌ Symbol mismatch: current=${this.currentSymbol}, ticker=${data.symbol}`);
       return;
     }
 
-    console.log(`  ✅ Symbol match! Updating chart...`);
+    // console.log(`  ✅ Symbol match! Updating chart...`);
 
     // Store latest ticker for this symbol (even if chart isn't loaded yet)
     this.lastTickerUpdate = data;

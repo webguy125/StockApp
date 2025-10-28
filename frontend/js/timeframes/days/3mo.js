@@ -135,7 +135,7 @@ export class Timeframe3mo {
     const price = parseFloat(data.price);
     const volumeBTC = data.volume_today || 0;
 
-    console.log(`  ✅ [3MO] Processing ticker update - price=${price}, volume=${volumeBTC}, data.length=${this.data.length}`);
+    // console.log(`  ✅ [ update - price=${price}, volume=${volumeBTC}, data.length=${this.data.length}`);
 
     // Store latest ticker for this symbol (even if chart isn't loaded yet) - 1D pattern
     this.lastTickerUpdate = {
@@ -149,7 +149,7 @@ export class Timeframe3mo {
       console.log(`  🖼️ [3MO] Updating renderer with live price`);
       this.renderer.updateLivePrice(price, volumeBTC);
     } else {
-      console.log(`  ⚠️ [3MO] Chart not loaded yet, ticker stored for later`);
+      // console.log(`  ⚠️ [, ticker stored for later`);
     }
   }
 

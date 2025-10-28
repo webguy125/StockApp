@@ -46,6 +46,10 @@ export class CanvasRenderer {
     // Live price tracking
     this.livePrice = null;
 
+    // Auto-scroll behavior for tick charts
+    this.autoScrollEnabled = true; // Enable auto-scroll to latest candle by default
+    this.hasRendered = false; // Track if we've rendered at least once
+
     // Colors
     this.colors = {
       background: '#1a1a1a',
@@ -66,10 +70,20 @@ export class CanvasRenderer {
    * Initialize and render the chart
    */
   async render(data, symbol) {
-    console.log(`🎨 Canvas: Rendering ${data.length} candles for ${symbol}`);
+    console.log(`🎨 Canvas: Rendering ${data.length} candles for ${symbol} (autoScroll=${this.autoScrollEnabled}, hasRendered=${this.hasRendered}, canvas=${!!this.canvas})`);
 
     if (data.length > 0) {
       console.log(`📅 Canvas rendering: ${data[0].Date} to ${data[data.length - 1].Date} (${data.length} candles)`);
+    }
+
+    // Detect if data was shifted (oldest candle removed) - BEFORE updating this.data
+    let dataWasShifted = false;
+    if (this.data.length > 0 && data.length > 0) {
+      // If the first candle's date changed, data was shifted
+      if (this.data[0].Date !== data[0].Date) {
+        dataWasShifted = true;
+        console.log(`🔄 Canvas: Data shifted detected (old first: ${this.data[0].Date}, new first: ${data[0].Date})`);
+      }
     }
 
     this.data = data;
@@ -80,18 +94,57 @@ export class CanvasRenderer {
       return false;
     }
 
-    // Create canvas
-    this.createCanvas();
+    // Create canvas only if it doesn't exist yet (first render)
+    // On subsequent renders, reuse the existing canvas to preserve pan/zoom state
+    if (!this.canvas || !this.ctx) {
+      console.log(`🆕 Creating canvas (first render or canvas was destroyed)`);
+      this.createCanvas();
+    }
 
     if (!this.canvas || !this.ctx) {
       console.error('❌ Failed to create canvas');
       return false;
     }
 
-    // Set initial view to show the most recent 100 candles
+    // Set initial view to show the most recent 100 candles (only if auto-scroll enabled)
     const candlesToShow = 100;
-    this.endIndex = data.length - 1;
-    this.startIndex = this.endIndex - candlesToShow;
+
+    // Check current view position and update auto-scroll state accordingly
+    // This catches cases where user panned but render() is called before mouse detection
+    if (this.hasRendered && this.endIndex !== undefined) {
+      const distanceFromLiveEdge = (data.length - 1) - this.endIndex;
+      console.log(`📏 Distance from live edge: ${distanceFromLiveEdge.toFixed(2)} candles (endIndex=${this.endIndex}, dataLength=${data.length})`);
+
+      // Negative distance means endIndex is beyond data bounds (user panned left but data changed)
+      // Treat this as being far from live edge
+      if ((distanceFromLiveEdge < 0 || distanceFromLiveEdge > 1) && this.autoScrollEnabled) {
+        this.autoScrollEnabled = false;
+        console.log('⏸️ Auto-scroll DISABLED - view is not at live edge');
+      } else if (distanceFromLiveEdge >= 0 && distanceFromLiveEdge <= 0.5 && !this.autoScrollEnabled) {
+        this.autoScrollEnabled = true;
+        console.log('▶️ Auto-scroll ENABLED - view returned to live edge');
+      }
+    }
+
+    // Only reset view if auto-scroll is enabled OR this is the very first render
+    if (this.autoScrollEnabled || !this.hasRendered) {
+      this.endIndex = data.length - 1;
+      this.startIndex = this.endIndex - candlesToShow;
+      console.log(`📊 Auto-scroll enabled: Showing latest candles ${this.startIndex} to ${this.endIndex}`);
+      this.hasRendered = true; // Mark as rendered
+    } else {
+      // Auto-scroll is paused - maintain the user's view
+      // console.log(`⏸️ Auto-scroll paused: Current view ${this.startIndex} to ${this.endIndex}`);
+
+      // If data was shifted, compensate by shifting indices left to keep same view
+      if (dataWasShifted) {
+        this.startIndex = Math.max(0, this.startIndex - 1);
+        this.endIndex = Math.max(candlesToShow - 1, this.endIndex - 1);
+        // console.log(`⬅️ Compensating for data shift: adjusted view to ${this.startIndex} - ${this.endIndex}`);
+      }
+
+      // console.log(`⏸️ Final view: ${this.startIndex} to ${this.endIndex}`);
+    }
 
     console.log(`📊 Showing candles ${this.startIndex} to ${this.endIndex}`);
 
@@ -109,7 +162,7 @@ export class CanvasRenderer {
       this.eventsSetup = true;
     }
 
-    console.log('✅ Canvas chart rendered successfully');
+    // console.log('✅ Canvas chart rendered successfully');
     return true;
   }
 
@@ -907,6 +960,24 @@ export class CanvasRenderer {
       this.startIndex = newStartIndex;
       this.endIndex = this.startIndex + visibleCandles - 1;
 
+      // Detect if user has panned away from live edge (disable auto-scroll)
+      // Allow a small tolerance (1 candle) to account for fractional positioning
+      const distanceFromLiveEdge = (this.data.length - 1) - this.endIndex;
+
+      if (distanceFromLiveEdge > 1) {
+        // User has panned away from live data
+        if (this.autoScrollEnabled) {
+          this.autoScrollEnabled = false;
+          console.log('⏸️ Auto-scroll PAUSED - user panned away from live edge');
+        }
+      } else if (distanceFromLiveEdge <= 0.5) {
+        // User has panned back to live edge
+        if (!this.autoScrollEnabled) {
+          this.autoScrollEnabled = true;
+          console.log('▶️ Auto-scroll RESUMED - user returned to live edge');
+        }
+      }
+
       // VERTICAL PANNING (up/down) - TradingView style (unrestricted)
       // Calculate price range shift based on vertical drag
       const priceRange = this.dragStartMaxPrice - this.dragStartMinPrice;
@@ -998,16 +1069,16 @@ export class CanvasRenderer {
    * @param {number} volume - Current 24h volume (optional)
    */
   updateLivePrice(price, volume = null) {
-    console.log(`🖼️ CanvasRenderer.updateLivePrice called: price=${price}, volume=${volume}, data.length=${this.data.length}`);
+    // console.log(`🖼️ CanvasRenderer.updateLivePrice called: price=${price}, volume=${volume}, data.length=${this.data.length}`);
 
     if (this.data.length === 0) {
-      console.log('  ⚠️ No data loaded, skipping update');
+      // console.log('  ⚠️ No data loaded, skipping update');
       return false;
     }
 
     const lastIndex = this.data.length - 1;
     const lastCandle = this.data[lastIndex];
-    console.log(`  📊 Updating last candle [${lastIndex}]: old Close=${lastCandle.Close}, new Close=${price}`);
+    // console.log(`  📊 Updating last candle [${lastIndex}]: old Close=${lastCandle.Close}, new Close=${price}`);
 
     // Set live price for the live price line
     this.livePrice = price;
@@ -1027,7 +1098,7 @@ export class CanvasRenderer {
 
     // Redraw
     this.draw();
-    console.log('  ✅ Chart redrawn with new live price');
+    // console.log('  ✅ Chart redrawn with new live price');
 
     return true;
   }
@@ -1038,7 +1109,12 @@ export class CanvasRenderer {
   destroy() {
     if (this.canvas) {
       this.canvas.remove();
+      this.canvas = null;
+      this.ctx = null;
     }
+    // Reset flags so new chart instance starts fresh
+    this.autoScrollEnabled = true;
+    this.hasRendered = false;
   }
 
   /**

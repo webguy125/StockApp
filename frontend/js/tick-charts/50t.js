@@ -1,20 +1,20 @@
 /**
- * 10-Tick Chart
- * Generates OHLCV bars from every 10 trades using Coinbase WebSocket
+ * 50-Tick Chart
+ * Generates OHLCV bars from every 50 trades using Coinbase WebSocket
  */
 import { CanvasRenderer } from '../chart-renderers/canvas-renderer.js';
 
-export class TickChart10t {
+export class TickChart50t {
   constructor() {
     // Tick chart configuration
-    this.id = '10t';
-    this.name = '10 ticks';
-    this.tickThreshold = 10;
+    this.id = '50t';
+    this.name = '50 ticks';
+    this.tickThreshold = 50;
     this.category = 'ticks';
     this.isCustom = false;
 
     // Chart renderer (independent instance)
-    this.renderer = new CanvasRenderer('10t');
+    this.renderer = new CanvasRenderer('50t');
 
     // Data and state
     this.symbol = null;
@@ -33,7 +33,7 @@ export class TickChart10t {
    * Initialize the tick chart for a specific symbol
    */
   async initialize(symbol, socket) {
-    console.log(`📊 [10T] Initializing for ${symbol}`);
+    console.log(`📊 [50T] Initializing for ${symbol}`);
 
     this.symbol = symbol;
     this.socket = socket;
@@ -48,7 +48,7 @@ export class TickChart10t {
 
       return true;
     } catch (error) {
-      console.error(`❌ [10T] Initialization error:`, error);
+      console.error(`❌ [50T] Initialization error:`, error);
       return false;
     }
   }
@@ -58,7 +58,7 @@ export class TickChart10t {
    */
   async loadHistoricalBars() {
     const url = `/data/tick/${this.symbol}/${this.tickThreshold}`;
-    console.log(`📥 [10T] Fetching: ${url}`);
+    console.log(`📥 [50T] Fetching: ${url}`);
 
     try {
       const response = await fetch(url);
@@ -68,23 +68,23 @@ export class TickChart10t {
 
       this.data = await response.json();
 
-      console.log(`✅ [10T] Loaded ${this.data.length} tick bars`);
+      // console.log(`✅ [50T] Loaded ${this.data.length} tick bars`);
 
       // Render the data
       if (this.data.length > 0) {
         const success = await this.renderer.render(this.data, this.symbol);
         if (success) {
-          console.log('✅ [10T] Chart rendered successfully');
+          console.log('✅ [50T] Chart rendered successfully');
         }
       } else {
-        console.log('⚠️ [10T] No historical data, starting fresh');
+        console.log('⚠️ [50T] No historical data, starting fresh');
         // Initialize empty chart
         await this.renderer.render([], this.symbol);
       }
 
       return this.data;
     } catch (error) {
-      console.error(`❌ [10T] Error loading data:`, error);
+      console.error(`❌ [50T] Error loading data:`, error);
       // Start with empty data if file doesn't exist
       this.data = [];
       await this.renderer.render([], this.symbol);
@@ -98,14 +98,14 @@ export class TickChart10t {
    */
   subscribeToTrades() {
     if (!this.socket) {
-      console.warn(`⚠️ [10T] No socket connection available`);
+      console.warn(`⚠️ [50T] No socket connection available`);
       return;
     }
 
     // No need to emit subscribe - backend handles Coinbase subscription centrally
     // Trade updates will arrive via 'trade_update' events routed through handleTradeUpdate()
 
-    console.log(`🔔 [10T] Ready to receive ${this.symbol} trades`);
+    console.log(`🔔 [50T] Ready to receive ${this.symbol} trades`);
   }
 
   /**
@@ -123,7 +123,7 @@ export class TickChart10t {
       return;
     }
 
-    // console.log(`📈 [10T] Trade received: ${data.product_id} price=${data.price} size=${data.size}`);
+    // console.log(`📈 [50T] Trade received: ${data.product_id} price=${data.price} size=${data.size}`);
 
     // Add trade to current bar
     this.currentBar.trades.push({
@@ -133,7 +133,7 @@ export class TickChart10t {
     });
     this.currentBar.tickCount++;
 
-    // console.log(`  📊 [10T] Current bar: ${this.currentBar.tickCount}/${this.tickThreshold} trades`);
+    console.log(`  📊 [50T] Current bar: ${this.currentBar.tickCount}/${this.tickThreshold} trades`);
 
     // Check if we've reached the threshold
     if (this.currentBar.tickCount >= this.tickThreshold) {
@@ -145,7 +145,7 @@ export class TickChart10t {
    * Complete the current bar and start a new one
    */
   async completeBar() {
-    // console.log(`✅ [10T] Completing bar with ${this.currentBar.tickCount} trades`);
+    // console.log(`✅ [50T] Completing bar with ${this.currentBar.tickCount} trades`);
 
     const trades = this.currentBar.trades;
 
@@ -160,7 +160,7 @@ export class TickChart10t {
       TickCount: trades.length
     };
 
-    // console.log(`  📦 [10T] Bar created: O=${bar.Open} H=${bar.High} L=${bar.Low} C=${bar.Close} V=${bar.Volume.toFixed(4)}`);
+    console.log(`  📦 [50T] Bar created: O=${bar.Open} H=${bar.High} L=${bar.Low} C=${bar.Close} V=${bar.Volume.toFixed(4)}`);
 
     // Add to data array (keep last 300 bars)
     this.data.push(bar);
@@ -180,7 +180,7 @@ export class TickChart10t {
       tickCount: 0
     };
 
-    // console.log(`🔄 [10T] Bar complete, accumulator reset`);
+    console.log(`🔄 [50T] Bar complete, accumulator reset`);
   }
 
   /**
@@ -198,12 +198,12 @@ export class TickChart10t {
 
       const result = await response.json();
       if (result.success) {
-        // console.log(`💾 [10T] Bar saved to backend (total: ${result.total_bars})`);
+        console.log(`💾 [50T] Bar saved to backend (total: ${result.total_bars})`);
       } else {
-        console.error(`❌ [10T] Failed to save bar:`, result.error);
+        console.error(`❌ [50T] Failed to save bar:`, result.error);
       }
     } catch (error) {
-      console.error(`❌ [10T] Error saving bar:`, error);
+      console.error(`❌ [50T] Error saving bar:`, error);
     }
   }
 
@@ -211,7 +211,7 @@ export class TickChart10t {
    * Deactivate this tick chart
    */
   deactivate() {
-    console.log(`⏸️ [10T] Deactivating`);
+    console.log(`⏸️ [50T] Deactivating`);
 
     this.isActive = false;
 
@@ -244,7 +244,7 @@ export class TickChart10t {
    * Reload chart data (full refresh)
    */
   async reload() {
-    console.log(`🔄 [10T] Reloading...`);
+    console.log(`🔄 [50T] Reloading...`);
     await this.loadHistoricalBars();
   }
 

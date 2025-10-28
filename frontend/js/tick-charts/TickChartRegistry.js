@@ -6,11 +6,11 @@
 
 // Tick charts
 import { TickChart10t } from './10t.js';
-// import { TickChart50t } from './50t.js';
-// import { TickChart100t } from './100t.js';
-// import { TickChart250t } from './250t.js';
-// import { TickChart500t } from './500t.js';
-// import { TickChart1000t } from './1000t.js';
+import { TickChart50t } from './50t.js';
+import { TickChart100t } from './100t.js';
+import { TickChart250t } from './250t.js';
+import { TickChart500t } from './500t.js';
+import { TickChart1000t } from './1000t.js';
 
 export class TickChartRegistry {
   constructor() {
@@ -29,11 +29,11 @@ export class TickChartRegistry {
   registerAllTickCharts() {
     // Ticks (trade-based charts)
     this.register(new TickChart10t());
-    // this.register(new TickChart50t());
-    // this.register(new TickChart100t());
-    // this.register(new TickChart250t());
-    // this.register(new TickChart500t());
-    // this.register(new TickChart1000t());
+    this.register(new TickChart50t());
+    this.register(new TickChart100t());
+    this.register(new TickChart250t());
+    this.register(new TickChart500t());
+    this.register(new TickChart1000t());
 
     console.log(`📊 Registered ${this.tickCharts.size} tick charts`);
   }
