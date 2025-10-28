@@ -1,0 +1,121 @@
+{
+  "system_blueprint": {
+    "scanner": {
+      "role": "Filter crypto pairs for candidates",
+      "tech": "Python scripts, exchange APIs (e.g., Kraken, Binance)",
+      "output": "scanner_output.json",
+      "fields": ["symbol", "avg_volume", "volatility", "setup"]
+    },
+    "repository": {
+      "role": "Shared state store",
+      "structure": [
+        "scanner_output.json",
+        "tick_agent/<symbol>.json",
+        "volume_agent/<symbol>.json",
+        "indicators_agent/<symbol>.json",
+        "fundamentals_agent/<symbol>.json",
+        "news_agent/<symbol>.json",
+        "fusion_agent/<symbol>.json",
+        "supreme_leader.json",
+        "tracker_agent/<symbol>.json",
+        "criteria_auditor/<symbol>.json",
+        "evaluator/<symbol>.json",
+        "archivist.json"
+      ]
+    },
+    "agents": {
+      "tick": "Build tick or range bars (50, 100)",
+      "volume": "Ord/Weis wave analysis",
+      "indicators": "RSI, MACD, MAs, ATR",
+      "fundamentals": "On-chain metrics, liquidity, tokenomics",
+      "news": "Sentiment classification (crypto news, social feeds)",
+      "fusion": "Combine signals, weighted scoring",
+      "supreme_leader": "Apply constraints, approve list",
+      "worker_bee": "Update frontend, push to GitHub",
+      "tracker": "Monitor outcomes post-prediction",
+      "criteria_auditor": "Verify original criteria held",
+      "evaluator": "Win/loss verdict, calibration",
+      "archivist": "Store features + outcomes for learning"
+    },
+    "scoring": {
+      "weights": {
+        "technical": 40,
+        "volume": 25,
+        "fundamentals": 20,
+        "news": 15
+      },
+      "thresholds": {
+        "win": "return >= 0.5% with drawdown >= -0.5%",
+        "loss": "return < 0.5% or criteria fail"
+      }
+    },
+    "post_prediction": {
+      "tracker": "Log checkpoints (1h, EOD, 3d, 10d)",
+      "auditor": "Re-check criteria pass/fail",
+      "evaluator": "Assign win/loss, compare forecast vs realized",
+      "supreme_leader": "Flag good/bad, promote or drop",
+      "archivist": "Archive features + labels for drift detection"
+    },
+    "emoji_language": {
+      "emoji_lexicon": {
+        "outcomes": {
+          "🙂": "good / success",
+          "🙁": "bad / failure",
+          "💵": "profit",
+          "💸": "loss",
+          "⚖️": "neutral / breakeven"
+        },
+        "technicals": {
+          "📈": "uptrend",
+          "📉": "downtrend",
+          "🔄": "retest",
+          "📊": "consolidation / sideways",
+          "⚡": "breakout / momentum",
+          "🌀": "volatility spike"
+        },
+        "volume_flow": {
+          "📦": "accumulation",
+          "🏃": "distribution / exit",
+          "💧": "liquidity zone",
+          "🔥": "exhaustion"
+        },
+        "fundamentals_news": {
+          "📰": "positive news",
+          "🗞️": "negative news",
+          "📅": "token unlock / event",
+          "🏦": "on-chain strong",
+          "🏚️": "on-chain weak"
+        },
+        "actions": {
+          "✅": "criteria pass",
+          "❌": "criteria fail",
+          "⏸️": "hold / pending",
+          "⬆️": "promote / whitelist",
+          "⬇️": "drop / blacklist",
+          "📂": "archive / remember"
+        }
+      },
+      "grammar": {
+        "rule": "SYMBOL | EMOJIS | SCORE | CONFIDENCE | TIMESTAMP",
+        "example": "BTCUSDT | 🙂📈💵📰 | 82 | 0.78 | 2025-10-27",
+        "meaning": "BTCUSDT trade was good, uptrend, profitable, positive news, score 82, confidence 78%"
+      },
+      "policy": {
+        "runtime": "Agents communicate in emoji shorthand",
+        "storage": "Expanded JSON persisted to disk for audit",
+        "bridge": "Encoder/decoder maps emoji ↔ JSON",
+        "codec_path": "C:\\stockapp\\language\\emoji_codec.py"
+      }
+    },
+    "governance": {
+      "schema_versioning": true,
+      "audit_trail": "Git commits + JSON logs",
+      "manual_override": "Supreme leader can pause publishing",
+      "rollback": "Snapshots before Worker Bee pushes"
+    },
+    "deployment": {
+      "save_path": "C:\\stockapp\\language\\emoji_blueprint.json",
+      "instruction": "Claude should save this unified blueprint JSON to the above path so all agents can reference it. Claude must also read the README_EMOJI_SYSTEM.md file in the same directory before starting work."
+    }
+  }
+}
