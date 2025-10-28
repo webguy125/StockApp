@@ -68,7 +68,26 @@ export class TickChartRegistry {
   }
 
   /**
-   * Switch to a different tick chart
+   * Initialize ALL tick charts to accumulate trades in background
+   * Called when a new symbol is loaded
+   */
+  async initializeAllForSymbol(symbol, socket) {
+    console.log(`🚀 Initializing background accumulation for all tick charts: ${symbol}`);
+
+    this.currentSymbol = symbol;
+    this.socket = socket;
+
+    // Start all tick charts accumulating in the background
+    for (const tickChart of this.tickCharts.values()) {
+      await tickChart.startAccumulating(symbol, socket);
+    }
+
+    console.log(`✅ All tick charts now accumulating ${symbol} trades in background`);
+  }
+
+  /**
+   * Switch to a different tick chart (for display)
+   * All charts continue accumulating in background, but only one renders
    */
   async switchTickChart(tickChartId, symbol, socket) {
     console.log(`🔄 Switching to tick chart: ${tickChartId} for ${symbol}`);
@@ -79,17 +98,22 @@ export class TickChartRegistry {
       return false;
     }
 
-    // Deactivate current tick chart
+    // If symbol changed, reinitialize all tick charts
+    if (symbol !== this.currentSymbol) {
+      await this.initializeAllForSymbol(symbol, socket);
+    }
+
+    // Deactivate current tick chart (hide it, but keep accumulating)
     if (this.currentTickChart) {
       this.currentTickChart.deactivate();
     }
 
-    // Activate new tick chart
+    // Activate new tick chart (show it)
     this.currentTickChart = newTickChart;
     this.currentSymbol = symbol;
     this.socket = socket;
 
-    const success = await newTickChart.initialize(symbol, socket);
+    const success = await newTickChart.activate();
 
     if (success) {
       console.log(`✅ Switched to ${newTickChart.name}`);
@@ -101,12 +125,15 @@ export class TickChartRegistry {
   }
 
   /**
-   * Handle trade update - route to current tick chart
+   * Handle trade update - route to ALL tick charts for background accumulation
    * This is called when a new trade comes from the 'matches' channel
    */
   handleTradeUpdate(data) {
-    if (this.currentTickChart) {
-      this.currentTickChart.handleTradeUpdate(data);
+    // Route to ALL tick charts so they can accumulate in background
+    for (const tickChart of this.tickCharts.values()) {
+      if (tickChart.isAccumulating) {
+        tickChart.handleTradeUpdate(data);
+      }
     }
   }
 

@@ -511,17 +511,14 @@ class TOSApp {
       return;
     }
 
-    // Route based on active chart type
-    if (this.activeChartType === 'tick') {
-      // Route to tick chart registry
-      if (this.tickChartRegistry) {
-        this.tickChartRegistry.handleTradeUpdate(data);
-      }
-    } else {
-      // Route to timeframe registry for tick/range chart aggregation
-      if (this.timeframeRegistry) {
-        this.timeframeRegistry.handleTradeUpdate(data);
-      }
+    // ALWAYS route to tick chart registry for background accumulation
+    if (this.tickChartRegistry) {
+      this.tickChartRegistry.handleTradeUpdate(data);
+    }
+
+    // Also route to timeframe registry if we're not on a tick chart
+    if (this.activeChartType !== 'tick' && this.timeframeRegistry) {
+      this.timeframeRegistry.handleTradeUpdate(data);
     }
 
     // Log for debugging
@@ -1030,6 +1027,12 @@ class TOSApp {
       await this.timeframeRegistry.switchTimeframe(this.currentTimeframeId, symbol, this.socket);
     } else {
       console.error('❌ Timeframe registry not initialized!');
+    }
+
+    // Initialize ALL tick charts for background accumulation
+    if (this.tickChartRegistry) {
+      console.log(`🚀 Initializing background accumulation for all tick charts: ${symbol}`);
+      await this.tickChartRegistry.initializeAllForSymbol(symbol, this.socket);
     }
 
     // Apply chart settings after chart loads

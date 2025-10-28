@@ -20,7 +20,8 @@ export class TickChart50t {
     this.symbol = null;
     this.data = []; // Completed bars
     this.socket = null;
-    this.isActive = false;
+    this.isActive = false; // Chart is visible and rendering
+    this.isAccumulating = false; // Chart is processing trades (can be true even when not visible)
 
     // Trade accumulator for current bar
     this.currentBar = {
@@ -109,10 +110,66 @@ export class TickChart50t {
   }
 
   /**
+   * Start accumulating trades in the background (without rendering)
+   * Used for background streaming so charts are ready when user switches to them
+   */
+  async startAccumulating(symbol, socket) {
+    console.log(`🔄 [50T] Starting background accumulation for ${symbol}`);
+
+    this.symbol = symbol;
+    this.socket = socket;
+    this.isAccumulating = true;
+
+    try {
+      // Load historical tick bars from backend
+      const url = `/data/tick/${this.symbol}/${this.tickThreshold}`;
+      const response = await fetch(url);
+      if (response.ok) {
+        this.data = await response.json();
+        console.log(`✅ [50T] Loaded ${this.data.length} tick bars (background)`);
+      } else {
+        this.data = [];
+      }
+
+      // Subscribe to WebSocket trade updates
+      this.subscribeToTrades();
+
+      return true;
+    } catch (error) {
+      console.error(`❌ [50T] Background init error:`, error);
+      this.data = [];
+      return false;
+    }
+  }
+
+  /**
+   * Activate this chart (make it visible and start rendering)
+   */
+  async activate() {
+    console.log(`▶️ [50T] Activating chart`);
+
+    this.isActive = true;
+
+    // Render the accumulated data
+    if (this.data.length > 0) {
+      const success = await this.renderer.render(this.data, this.symbol);
+      if (success) {
+        console.log(`✅ [50T] Chart rendered with ${this.data.length} bars`);
+      }
+      return success;
+    } else {
+      console.log(`⚠️ [50T] No data yet, rendering empty chart`);
+      await this.renderer.render([], this.symbol);
+      return true;
+    }
+  }
+
+  /**
    * Handle live trade update from WebSocket
    */
   handleTradeUpdate(data) {
-    if (!this.isActive) {
+    // Check accumulation flag instead of isActive
+    if (!this.isAccumulating) {
       return;
     }
 
@@ -168,8 +225,10 @@ export class TickChart50t {
       this.data.shift(); // Remove oldest bar
     }
 
-    // Update chart renderer
-    await this.renderer.render(this.data, this.symbol);
+    // Update chart renderer (only if this chart is currently active/visible)
+    if (this.isActive) {
+      await this.renderer.render(this.data, this.symbol);
+    }
 
     // Persist to backend (async, don't wait)
     this.saveBarToBackend(bar);
@@ -208,10 +267,10 @@ export class TickChart50t {
   }
 
   /**
-   * Deactivate this tick chart
+   * Deactivate this tick chart (hide it, but continue accumulating in background)
    */
   deactivate() {
-    console.log(`⏸️ [50T] Deactivating`);
+    console.log(`⏸️ [50T] Deactivating (still accumulating in background)`);
 
     this.isActive = false;
 
@@ -220,8 +279,8 @@ export class TickChart50t {
       this.renderer.destroy();
     }
 
+    // Keep accumulating trades (isAccumulating stays true)
     // No need to unsubscribe - backend manages Coinbase connection centrally
-    // Just stop processing incoming trade updates by setting isActive = false
   }
 
   /**
@@ -238,6 +297,8 @@ export class TickChart50t {
     this.currentBar = { trades: [], tickCount: 0 };
     this.symbol = null;
     this.socket = null;
+    this.isActive = false;
+    this.isAccumulating = false;
   }
 
   /**
@@ -259,6 +320,7 @@ export class TickChart50t {
       category: this.category,
       isCustom: this.isCustom,
       isActive: this.isActive,
+      isAccumulating: this.isAccumulating,
       dataPoints: this.data.length,
       symbol: this.symbol,
       currentBarTicks: this.currentBar.tickCount
