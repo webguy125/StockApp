@@ -133,7 +133,7 @@ export class TickChart500t {
     });
     this.currentBar.tickCount++;
 
-    console.log(`  📊 [500T] Current bar: ${this.currentBar.tickCount}/${this.tickThreshold} trades`);
+    // console.log(`  📊 [500T] Current bar: ${this.currentBar.tickCount}/${this.tickThreshold} trades`);
 
     // Check if we've reached the threshold
     if (this.currentBar.tickCount >= this.tickThreshold) {

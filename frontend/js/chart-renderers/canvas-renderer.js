@@ -1053,9 +1053,17 @@ export class CanvasRenderer {
     this.startIndex = Math.max(0, Math.floor(center - newVisibleCandles / 2));
     this.endIndex = Math.min(this.data.length - 1, this.startIndex + newVisibleCandles);
 
-    // Ensure minimum visible candles
-    if (this.endIndex - this.startIndex < 10) {
-      this.endIndex = Math.min(this.data.length - 1, this.startIndex + 10);
+    // Ensure minimum visible candles (adaptive to data size)
+    // For charts with few candles, allow showing all of them
+    const minVisibleCandles = Math.min(10, Math.max(2, this.data.length));
+    if (this.endIndex - this.startIndex < minVisibleCandles) {
+      this.endIndex = Math.min(this.data.length - 1, this.startIndex + minVisibleCandles);
+    }
+
+    // If we still can't meet minimum, show all available data
+    if (this.endIndex - this.startIndex < 2 && this.data.length > 0) {
+      this.startIndex = 0;
+      this.endIndex = this.data.length - 1;
     }
 
     // Only update volume range, preserve manually panned price ranges

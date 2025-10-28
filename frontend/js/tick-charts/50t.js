@@ -133,7 +133,7 @@ export class TickChart50t {
     });
     this.currentBar.tickCount++;
 
-    console.log(`  📊 [50T] Current bar: ${this.currentBar.tickCount}/${this.tickThreshold} trades`);
+    // console.log(`  📊 [50T] Current bar: ${this.currentBar.tickCount}/${this.tickThreshold} trades`);
 
     // Check if we've reached the threshold
     if (this.currentBar.tickCount >= this.tickThreshold) {
@@ -160,7 +160,7 @@ export class TickChart50t {
       TickCount: trades.length
     };
 
-    console.log(`  📦 [50T] Bar created: O=${bar.Open} H=${bar.High} L=${bar.Low} C=${bar.Close} V=${bar.Volume.toFixed(4)}`);
+    // console.log(`  📦 [50T] Bar created: O=${bar.Open} H=${bar.High} L=${bar.Low} C=${bar.Close} V=${bar.Volume.toFixed(4)}`);
 
     // Add to data array (keep last 300 bars)
     this.data.push(bar);
@@ -180,7 +180,7 @@ export class TickChart50t {
       tickCount: 0
     };
 
-    console.log(`🔄 [50T] Bar complete, accumulator reset`);
+    // console.log(`🔄 [50T] Bar complete, accumulator reset`);
   }
 
   /**
@@ -198,7 +198,7 @@ export class TickChart50t {
 
       const result = await response.json();
       if (result.success) {
-        console.log(`💾 [50T] Bar saved to backend (total: ${result.total_bars})`);
+        // console.log(`💾 [50T] Bar saved to backend (total: ${result.total_bars})`);
       } else {
         console.error(`❌ [50T] Failed to save bar:`, result.error);
       }
