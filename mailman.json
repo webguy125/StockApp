@@ -14,5 +14,33 @@
     "update_rule": "If user provides new instructions, overwrite or add by key. Keep only the latest state.",
     "trigger": "When user says 'MailMan, hand the to‑do list to Claude' or specifies a section/item, pass the relevant JSON to Claude."
   },
-  "todo_list": {}
+  "todo_list": {
+    "instructions": {
+      "chart_features": {
+        "timeline": {
+          "description": "Add a timeline below the volume chart anchored to the last candle. When panning left, the timeline moves with the chart."
+        },
+        "yaxis_expand_compress": {
+          "description": "Enable expand/compress on the Y-axis. Trigger expand up when left-click + slide up along price bar; contract down when left-click + slide down."
+        },
+        "xaxis_expand_compress": {
+          "description": "Enable expand/compress on the X-axis. Trigger expand out when left-click + slide left along time bar; contract in when left-click + slide right."
+        }
+      },
+      "trading_tools": {
+        "reference": "Tradepoint / TradingView style tools (not indicators).",
+        "tools_to_build": [
+          "Trend lines",
+          "Fibonacci retracements",
+          "Gann box",
+          "Gann squares"
+        ],
+        "storage": {
+          "directory": "c:\\stockapp\\tools",
+          "rule": "Each tool must have its own file to prevent corruption during updates."
+        }
+      }
+    },
+    "output": "Confirm these instructions are stored. When prompted, pass them to Claude for implementation."
+  }
 }

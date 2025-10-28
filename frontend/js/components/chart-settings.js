@@ -296,192 +296,49 @@ export class ChartSettings {
 
   /**
    * Apply all settings to chart
+   * Canvas renderer handles settings directly, no Plotly needed
    */
   applySettings() {
-    const plotDiv = document.getElementById('tos-plot') || document.getElementById('plot');
-    if (!plotDiv || !plotDiv.data || plotDiv.data.length === 0) return;
-
-    // Find candlestick trace and get date range
-    const candleTrace = plotDiv.data.find(trace => trace.type === 'candlestick');
-    if (!candleTrace || !candleTrace.x || candleTrace.x.length === 0) return;
-
-    // Store the current x-axis range before applying settings
-    const xRange = [candleTrace.x[0], candleTrace.x[candleTrace.x.length - 1]];
-
-    // FIRST: Lock the x-axis range immediately and keep it locked
-    Plotly.relayout(plotDiv, {
-      'xaxis.range': xRange,
-      'xaxis.autorange': false,
-      'xaxis.fixedrange': false  // Allow zooming/panning
-    }).then(() => {
-      // Now apply all settings while range is locked
-      this.applyTheme();
-      this.updateChartGrid();
-      this.updateHighLowMarkers();
-      this.updatePriceAxis();
-      this.updateCrosshair();
-      this.updateSupportResistance();
-      this.updateVolume();
-    });
+    // Canvas renderer applies settings during render
+    // Settings are read from localStorage in the renderer
+    console.log('Canvas renderer will apply settings on next draw');
   }
 
   /**
    * Apply theme to chart
+   * Canvas renderer reads theme from settings
    */
   applyTheme() {
-    const plotDiv = document.getElementById('tos-plot') || document.getElementById('plot');
-    if (!plotDiv || !plotDiv.layout) return;
-
-    const isDark = this.settings.theme === 'dark';
-    const update = {
-      paper_bgcolor: isDark ? '#1a1a1a' : '#ffffff',
-      plot_bgcolor: isDark ? '#1a1a1a' : '#ffffff',
-      'font.color': isDark ? '#e0e0e0' : '#1a1a1a',
-      'xaxis.gridcolor': isDark ? '#333333' : '#e0e0e0',
-      'yaxis.gridcolor': isDark ? '#333333' : '#e0e0e0'
-    };
-
-    Plotly.relayout(plotDiv, update);
+    // Canvas renderer will use this.settings.theme on next draw
+    this.reloadChart();
   }
 
   /**
    * Update chart grid visibility
+   * Canvas renderer reads grid setting
    */
   updateChartGrid() {
-    const plotDiv = document.getElementById('tos-plot') || document.getElementById('plot');
-    if (!plotDiv || !plotDiv.layout) return;
-
-    const update = {
-      'xaxis.showgrid': this.settings.gridLines,
-      'yaxis.showgrid': this.settings.gridLines
-    };
-
-    Plotly.relayout(plotDiv, update);
+    // Canvas renderer will apply grid setting on next draw
+    this.reloadChart();
   }
 
   /**
    * Update high/low price markers
+   * Canvas renderer draws these natively
    */
   updateHighLowMarkers() {
-    const plotDiv = document.getElementById('tos-plot') || document.getElementById('plot');
-    if (!plotDiv || !plotDiv.data || plotDiv.data.length === 0) return;
-
-    if (!this.settings.showHighLow) {
-      // Remove existing high/low annotations and lines
-      const annotations = (plotDiv.layout.annotations || []).filter(a => !a._highLowMarker);
-      const shapes = (plotDiv.layout.shapes || []).filter(s => !s._highLowLine);
-      Plotly.relayout(plotDiv, { annotations, shapes });
-      return;
-    }
-
-    // Find candlestick trace
-    const candleTrace = plotDiv.data.find(trace => trace.type === 'candlestick');
-    if (!candleTrace) return;
-
-    // Calculate high and low
-    const high = Math.max(...candleTrace.high);
-    const low = Math.min(...candleTrace.low);
-
-    // Get existing annotations (excluding high/low)
-    const existingAnnotations = (plotDiv.layout.annotations || []).filter(a => !a._highLowMarker);
-
-    // Add high/low annotations with TradingView-style transparent background
-    const newAnnotations = [
-      ...existingAnnotations,
-      {
-        x: 1.002, // Slightly outside the chart
-        y: high,
-        xref: 'paper',
-        yref: 'y',
-        text: `${high.toFixed(2)}`,
-        showarrow: false,
-        xanchor: 'left',
-        font: {
-          color: '#ffffff',
-          size: 10,
-          family: 'Arial, sans-serif'
-        },
-        bgcolor: 'rgba(0, 200, 81, 0.75)', // Semi-transparent green
-        borderpad: 3,
-        borderwidth: 0,
-        _highLowMarker: true
-      },
-      {
-        x: 1.002,
-        y: low,
-        xref: 'paper',
-        yref: 'y',
-        text: `${low.toFixed(2)}`,
-        showarrow: false,
-        xanchor: 'left',
-        font: {
-          color: '#ffffff',
-          size: 10,
-          family: 'Arial, sans-serif'
-        },
-        bgcolor: 'rgba(255, 68, 68, 0.75)', // Semi-transparent red
-        borderpad: 3,
-        borderwidth: 0,
-        _highLowMarker: true
-      }
-    ];
-
-    // Add horizontal lines at high/low prices
-    const shapes = (plotDiv.layout.shapes || []).filter(s => !s._highLowLine);
-
-    shapes.push(
-      // High price line
-      {
-        type: 'line',
-        xref: 'paper',
-        x0: 0,
-        x1: 1,
-        yref: 'y',
-        y0: high,
-        y1: high,
-        line: {
-          color: 'rgba(0, 200, 81, 0.4)',
-          width: 1,
-          dash: 'dot'
-        },
-        _highLowLine: true
-      },
-      // Low price line
-      {
-        type: 'line',
-        xref: 'paper',
-        x0: 0,
-        x1: 1,
-        yref: 'y',
-        y0: low,
-        y1: low,
-        line: {
-          color: 'rgba(255, 68, 68, 0.4)',
-          width: 1,
-          dash: 'dot'
-        },
-        _highLowLine: true
-      }
-    );
-
-    Plotly.relayout(plotDiv, {
-      annotations: newAnnotations,
-      shapes: shapes
-    });
+    // Canvas renderer draws high/low markers in drawPriceMarkers() method
+    // Setting is already saved to localStorage
+    this.reloadChart();
   }
 
   /**
    * Update price axis position
+   * Canvas renderer handles axis positioning
    */
   updatePriceAxis() {
-    const plotDiv = document.getElementById('tos-plot') || document.getElementById('plot');
-    if (!plotDiv || !plotDiv.layout) return;
-
-    const update = {
-      'yaxis.side': this.settings.priceAxisPosition
-    };
-
-    Plotly.relayout(plotDiv, update);
+    // Canvas renderer will use priceAxisPosition setting
+    this.reloadChart();
   }
 
   /**
@@ -495,47 +352,12 @@ export class ChartSettings {
 
   /**
    * Update support/resistance levels
-   * Calculates and displays recent support and resistance levels
+   * Canvas renderer can draw these if needed
    */
   updateSupportResistance() {
-    const plotDiv = document.getElementById('tos-plot') || document.getElementById('plot');
-    if (!plotDiv || !plotDiv.data || plotDiv.data.length === 0) return;
-
-    // Remove existing S/R lines
-    let shapes = (plotDiv.layout.shapes || []).filter(s => !s._supportResistance);
-
-    if (!this.settings.showSupportResistance) {
-      Plotly.relayout(plotDiv, { shapes });
-      return;
-    }
-
-    // Find candlestick trace
-    const candleTrace = plotDiv.data.find(trace => trace.type === 'candlestick');
-    if (!candleTrace || candleTrace.close.length < 20) return;
-
-    // Simple S/R calculation using pivot points
-    const levels = this.calculateSupportResistance(candleTrace);
-
-    // Add S/R lines
-    levels.forEach(level => {
-      shapes.push({
-        type: 'line',
-        xref: 'paper',
-        x0: 0,
-        x1: 1,
-        yref: 'y',
-        y0: level.price,
-        y1: level.price,
-        line: {
-          color: level.type === 'resistance' ? '#ff4444' : '#00c851',
-          width: 1,
-          dash: 'dot'
-        },
-        _supportResistance: true
-      });
-    });
-
-    Plotly.relayout(plotDiv, { shapes });
+    // Canvas renderer will handle support/resistance levels
+    // Setting is saved to localStorage
+    this.reloadChart();
   }
 
   /**
@@ -566,28 +388,11 @@ export class ChartSettings {
 
   /**
    * Update volume overlay visibility
+   * Canvas renderer handles volume drawing
    */
   updateVolume() {
-    const plotDiv = document.getElementById('tos-plot') || document.getElementById('plot');
-    if (!plotDiv || !plotDiv.data) return;
-
-    // Find volume bar trace (type: 'bar' and yaxis: 'y2')
-    let volumeTraceIndex = -1;
-    for (let i = 0; i < plotDiv.data.length; i++) {
-      if (plotDiv.data[i].type === 'bar' && plotDiv.data[i].yaxis === 'y2') {
-        volumeTraceIndex = i;
-        break;
-      }
-    }
-
-    if (volumeTraceIndex >= 0 && !this.settings.showVolume) {
-      // Volume trace exists and we want to hide it - just hide the trace
-      Plotly.restyle(plotDiv, { visible: false }, [volumeTraceIndex]);
-    } else {
-      // Either no volume trace exists, or we're turning it back on
-      // In both cases, reload chart to ensure proper layout with y2 axis
-      this.reloadChart();
-    }
+    // Canvas renderer will use showVolume setting
+    this.reloadChart();
   }
 
   /**

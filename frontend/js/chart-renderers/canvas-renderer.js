@@ -593,42 +593,86 @@ export class CanvasRenderer {
       ctx.fillText(formattedPrice, chartRight + 50, y + 4);
     }
 
-    // Date labels (below volume bars) - IMPROVED VISIBILITY
-    const volumeBottom = this.margin.top + this.chartHeight + 10 + this.volumeHeight;
+    // Date labels (below volume bars) - TradingView adaptive style
+    // Volume bars end at: this.height - this.margin.bottom
+    const volumeBottom = this.height - this.margin.bottom;
+    const labelY = volumeBottom + 18; // Position labels 18px below volume bars
 
     ctx.textAlign = 'center';
     const visibleCandles = this.endIndex - this.startIndex + 1;
     const totalWidth = chartWidth / visibleCandles;
 
-    // Show dates at regular intervals
-    const maxLabels = Math.min(15, visibleCandles);
-    const labelInterval = Math.max(1, Math.floor(visibleCandles / maxLabels));
-
     // Larger, brighter font for better visibility
-    ctx.font = '13px Arial';
-    ctx.fillStyle = '#e0e0e0'; // Brighter text color
+    ctx.font = '11px Arial';
+    ctx.fillStyle = '#e0e0e0';
 
-    for (let i = 0; i < visibleCandles; i += labelInterval) {
-      const dataIndex = Math.floor(this.startIndex + i); // Floor for array access
-      if (dataIndex >= 0 && dataIndex < this.data.length) {
-        const dateStr = this.data[dataIndex].Date;
-        const x = chartLeft + (i * totalWidth) + (totalWidth / 2);
+    // Adaptive labeling based on zoom level (like TradingView)
+    const loopStart = Math.floor(this.startIndex);
+    const loopEnd = Math.ceil(this.endIndex);
 
-        // Parse date string directly (YYYY-MM-DD format)
-        // Don't use Date constructor to avoid timezone issues
-        const parts = dateStr.split('-');
-        const month = parseInt(parts[1]);
-        const day = parseInt(parts[2]);
-        const displayDate = `${month}/${day}`;
+    let lastMonth = null;
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-        // Draw background rectangle for better readability
-        const textWidth = ctx.measureText(displayDate).width;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; // Semi-transparent background
-        ctx.fillRect(x - textWidth / 2 - 3, volumeBottom + 8, textWidth + 6, 18);
+    // Determine day labeling density based on zoom level
+    let dayInterval;
+    if (visibleCandles > 250) {
+      dayInterval = 0; // No day labels, only months
+    } else if (visibleCandles > 150) {
+      dayInterval = 10; // Show every 10th day
+    } else if (visibleCandles > 100) {
+      dayInterval = 5; // Show every 5th day
+    } else if (visibleCandles > 50) {
+      dayInterval = 2; // Show every other day
+    } else {
+      dayInterval = 1; // Show all days
+    }
 
-        // Draw the date text
-        ctx.fillStyle = '#e0e0e0'; // Bright text
-        ctx.fillText(displayDate, x, volumeBottom + 22);
+    for (let i = loopStart; i <= loopEnd; i++) {
+      if (i < 0 || i >= this.data.length) continue;
+
+      const dateStr = this.data[i].Date;
+      const x = chartLeft + ((i - this.startIndex) * totalWidth) + (totalWidth / 2);
+
+      // Parse date (YYYY-MM-DD format)
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) continue;
+
+      const year = parseInt(parts[0]);
+      const month = parseInt(parts[1]);
+      const day = parseInt(parts[2]);
+
+      // Check if this is the start of a new month
+      const isNewMonth = (lastMonth === null || lastMonth !== month);
+
+      if (isNewMonth) {
+        // Draw month label
+        const monthLabel = monthNames[month - 1];
+        ctx.font = 'bold 11px Arial';
+
+        // Draw background
+        const textWidth = ctx.measureText(monthLabel).width;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(x - textWidth / 2 - 3, labelY - 12, textWidth + 6, 16);
+
+        // Draw month text
+        ctx.fillStyle = '#00bfff'; // Blue for month labels
+        ctx.fillText(monthLabel, x, labelY);
+
+        lastMonth = month;
+      } else if (dayInterval > 0 && day % dayInterval === 0) {
+        // Draw day number (if zoom level allows)
+        ctx.font = '11px Arial';
+
+        const dayLabel = day.toString();
+
+        // Draw background
+        const textWidth = ctx.measureText(dayLabel).width;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(x - textWidth / 2 - 2, labelY - 12, textWidth + 4, 16);
+
+        // Draw day text
+        ctx.fillStyle = '#a0a0a0'; // Dimmer for day numbers
+        ctx.fillText(dayLabel, x, labelY);
       }
     }
   }
@@ -642,6 +686,41 @@ export class CanvasRenderer {
     ctx.font = '16px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(`${this.symbol} - Daily`, this.width / 2, 30);
+  }
+
+  /**
+   * Get formatted date/time string for a candle
+   * Format depends on timeframe interval
+   */
+  getFormattedDateTime(dateStr) {
+    if (!dateStr) return '';
+
+    try {
+      const date = new Date(dateStr);
+
+      // Different formats based on interval
+      if (this.timeframeInterval === '1m' || this.timeframeInterval === '5m' ||
+          this.timeframeInterval === '15m' || this.timeframeInterval === '30m') {
+        // Intraday: show time
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+      } else if (this.timeframeInterval === '1h') {
+        // Hour: show date and hour
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        return `${month}/${day} ${hours}:00`;
+      } else {
+        // Daily/Weekly/Monthly: show date
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}/${day}/${year}`;
+      }
+    } catch (e) {
+      return dateStr;
+    }
   }
 
   /**
@@ -677,7 +756,7 @@ export class CanvasRenderer {
     // Restore context state
     ctx.restore();
 
-    // Draw price label on crosshair
+    // Draw price label on crosshair (right side)
     const price = this.yToPrice(this.mouseY);
     if (price >= this.minPrice && price <= this.maxPrice) {
       const priceText = price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -692,6 +771,39 @@ export class CanvasRenderer {
       ctx.font = 'bold 11px Arial';
       ctx.textAlign = 'left';
       ctx.fillText(priceText, chartRight + 10, this.mouseY + 4);
+    }
+
+    // Draw date/time label at bottom of crosshair (TradingView style)
+    if (this.hoveredIndex >= 0 && this.hoveredIndex < this.data.length) {
+      const dataIndex = Math.floor(this.hoveredIndex);
+      if (dataIndex >= 0 && dataIndex < this.data.length) {
+        const candle = this.data[dataIndex];
+        const dateTimeText = this.getFormattedDateTime(candle.Date);
+
+        // Measure text for background box
+        ctx.font = 'bold 11px Arial';
+        const textWidth = ctx.measureText(dateTimeText).width;
+        const boxWidth = textWidth + 12;
+        const boxHeight = 20;
+
+        // Position at bottom of chart, centered on crosshair
+        const boxX = this.mouseX - (boxWidth / 2);
+        const boxY = chartBottom + 5;
+
+        // Background box
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+        // Border
+        ctx.strokeStyle = '#666666';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+
+        // Date/time text
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText(dateTimeText, this.mouseX, boxY + 14);
+      }
     }
   }
 

@@ -10,8 +10,6 @@ import { initializeWatchlist } from './components/watchlist.js';
 import { initializeNewsFeed } from './components/news-feed.js';
 import { initializeActiveTrader } from './components/active-trader.js';
 import { initializeChartSettings } from './components/chart-settings.js';
-import { loadChart, convertToCST } from './chart/loader.js';
-import { setupPlotlyHandlers } from './trendlines/handlers.js';
 import { CanvasRenderer } from './chart-renderers/canvas-renderer.js';
 import { TimeframeRegistry } from './timeframes/TimeframeRegistry.js';
 import { TickChartRegistry } from './tick-charts/TickChartRegistry.js';
@@ -2488,11 +2486,8 @@ if (document.readyState === 'loading') {
 import { detectPatterns } from './analysis/patterns.js';
 import { getPredictions } from './analysis/predictions.js';
 import { getTradeIdeas } from './analysis/trade-ideas.js';
-import { enableDrawing, enablePan, clearAllLines } from './trendlines/drawing.js';
+// Trendlines removed - Canvas renderer handles drawing natively
 
 window.detectPatterns = detectPatterns;
 window.getPredictions = getPredictions;
 window.getTradeIdeas = getTradeIdeas;
-window.enableDrawing = enableDrawing;
-window.enablePan = enablePan;
-window.clearAllLines = clearAllLines;
