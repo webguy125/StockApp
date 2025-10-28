@@ -270,8 +270,98 @@ def analyze_news(symbol):
 - Loss: Otherwise
 
 ### 15. Archivist
-**Store:** Features + outcomes for learning
-**Format:** CSV or database for ML training
+**Store:** Features + outcomes for learning and retraining
+**Location:** `C:\StockApp\agents\repository\archivist.json`
+
+**Structure:**
+```json
+{
+  "records": [
+    {
+      "symbol": "BTCUSDT",
+      "original_shorthand": "BTCUSDT | 🙂📈💵📰 | 82 | 0.78 | ...",
+      "expanded": {
+        "outcomes": ["good", "profit"],
+        "technicals": ["uptrend"],
+        "fundamentals_news": ["positive news"]
+      },
+      "verdict": "win",
+      "confidence": 0.78,
+      "realized_return": 1.2,
+      "feedback": "criteria_validated"
+    }
+  ],
+  "summary": {
+    "total_predictions": 50,
+    "wins": 30,
+    "win_rate": 0.60,
+    "drift_alerts": []
+  }
+}
+```
+
+**Feeds Back To:**
+- Model fine-tuning
+- Rule calibration
+- Weight adjustment
+
+---
+
+## **PHASE 6: Learning Loop (Week 11-12)**
+
+### 16. Trainer Agent
+**Purpose:** Consume Archivist logs, fine-tune models, recalibrate rules
+**Input:** `agents/repository/archivist.json`
+**Output:** `agents/repository/updated_models/`
+
+**Triggers:**
+1. **drift_detected** - System detected model drift
+2. **performance_drop** - Win rate falling below threshold
+3. **scheduled** - Periodic retraining (e.g., weekly)
+
+**What It Does:**
+```python
+def trainer_agent():
+    # 1. Load archivist data
+    archive = load_json('archivist.json')
+
+    # 2. Check triggers
+    if archive['summary']['win_rate'] < 0.55:
+        trigger = 'performance_drop'
+    elif archive['drift_detection']['volatility_spike_detected']:
+        trigger = 'drift_detected'
+    elif time_since_last_calibration > 7_days:
+        trigger = 'scheduled'
+
+    # 3. Retrain models
+    if trigger:
+        features = extract_features(archive['records'])
+        labels = extract_labels(archive['records'])
+
+        # Fine-tune scoring weights
+        new_weights = optimize_weights(features, labels)
+
+        # Save updated models
+        save_models(new_weights, trigger)
+
+        # Emit shorthand
+        emit("SYSTEM | 📂🌀⚖️ | 0 | 1.00 | {timestamp}")
+```
+
+**Integration:**
+- Trainer runs on schedule OR when Archivist flags drift
+- Updated models → Supreme Leader uses new weights
+- Closes the learning loop!
+
+```
+Predictions → Tracker → Auditor → Evaluator → Archivist
+                                                   ↓
+                                               Trainer
+                                                   ↓
+                                           updated_models/
+                                                   ↓
+                                           Supreme Leader
+```
 
 ---
 

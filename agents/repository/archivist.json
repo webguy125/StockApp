@@ -1,0 +1,77 @@
+{
+  "schema": {
+    "symbol": "string",
+    "original_shorthand": "string",
+    "expanded": "object",
+    "verdict": "string",
+    "confidence": "number",
+    "realized_return": "number",
+    "feedback": "string",
+    "trigger": "string or null",
+    "timestamp": "string (ISO8601)"
+  },
+  "feedback_values": ["criteria_validated", "drift_detected", "performance_drop", "new_symbol_request", "resubmission"],
+  "records": [
+    {
+      "symbol": "BTCUSDT",
+      "original_shorthand": "BTCUSDT | 🙂📈💵📰 | 82 | 0.78 | 2025-10-27T14:00Z",
+      "expanded": {
+        "outcomes": ["good", "profit"],
+        "technicals": ["uptrend"],
+        "volume_flow": ["accumulation"],
+        "fundamentals_news": ["positive news"]
+      },
+      "verdict": "win",
+      "confidence": 0.78,
+      "realized_return": 1.2,
+      "max_drawdown": -0.3,
+      "feedback": "criteria_validated",
+      "trigger": null,
+      "prediction_timestamp": "2025-10-27T14:00Z",
+      "outcome_timestamp": "2025-10-28T14:00Z"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "original_shorthand": "ETHUSDT | 📊❌ | 40 | 0.65 | 2025-10-27T15:00Z",
+      "expanded": {
+        "outcomes": [],
+        "technicals": ["consolidation"],
+        "volume_flow": [],
+        "fundamentals_news": []
+      },
+      "verdict": "loss",
+      "confidence": 0.65,
+      "realized_return": -0.8,
+      "max_drawdown": -1.2,
+      "feedback": "criteria_failed",
+      "trigger": null,
+      "prediction_timestamp": "2025-10-27T15:00Z",
+      "outcome_timestamp": "2025-10-28T15:00Z"
+    }
+  ],
+  "summary": {
+    "total_predictions": 2,
+    "wins": 1,
+    "losses": 1,
+    "win_rate": 0.50,
+    "avg_confidence": 0.715,
+    "avg_return": 0.2,
+    "criteria_validated_rate": 0.50,
+    "last_update": "2025-10-28T15:00Z",
+    "drift_alerts": [],
+    "performance_triggers": []
+  },
+  "drift_detection": {
+    "volatility_spike_detected": false,
+    "volume_pattern_shift": false,
+    "win_rate_drop": false,
+    "last_calibration": "2025-10-20T00:00Z",
+    "next_scheduled_calibration": "2025-10-27T00:00Z"
+  },
+  "training_signals": {
+    "should_retrain": false,
+    "reasons": [],
+    "min_records_threshold": 30,
+    "current_records": 2
+  }
+}

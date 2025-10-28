@@ -1,0 +1,15 @@
+{
+  "symbol": "BTCUSDT",
+  "original_shorthand": "BTCUSDT | 🙂📈💵📰 | 82 | 0.78 | 2025-10-27T14:00Z",
+  "expanded": {
+    "outcomes": ["good", "profit"],
+    "technicals": ["uptrend"],
+    "fundamentals_news": ["positive news"]
+  },
+  "verdict": "win",
+  "confidence": 0.78,
+  "realized_return": 1.2,
+  "feedback": "criteria_validated",
+  "trigger": null,
+  "timestamp": "2025-10-28T14:00Z"
+}

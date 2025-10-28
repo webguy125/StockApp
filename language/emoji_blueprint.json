@@ -24,6 +24,7 @@
       ]
     },
     "agents": {
+      "scanner": "Filter crypto pairs for liquid, volatile candidates",
       "tick": "Build tick or range bars (50, 100)",
       "volume": "Ord/Weis wave analysis",
       "indicators": "RSI, MACD, MAs, ATR",
@@ -35,7 +36,9 @@
       "tracker": "Monitor outcomes post-prediction",
       "criteria_auditor": "Verify original criteria held",
       "evaluator": "Win/loss verdict, calibration",
-      "archivist": "Store features + outcomes for learning"
+      "archivist": "Store features + outcomes for learning and retraining",
+      "trainer": "Consume Archivist logs, fine-tune models, recalibrate rules",
+      "scribe": "Dedicated documentation agent that merges approved changes into README_EMOJI_SYSTEM.md"
     },
     "scoring": {
       "weights": {
@@ -55,6 +58,45 @@
       "evaluator": "Assign win/loss, compare forecast vs realized",
       "supreme_leader": "Flag good/bad, promote or drop",
       "archivist": "Archive features + labels for drift detection"
+    },
+    "feedback_loop": {
+      "tracker": {
+        "role": "Log outcomes at checkpoints (1h, EOD, 3d, 10d)",
+        "output": "tracker_agent/<symbol>.json"
+      },
+      "criteria_auditor": {
+        "role": "Re-check original criteria validity",
+        "output": "criteria_auditor/<symbol>.json"
+      },
+      "evaluator": {
+        "role": "Compare forecast vs realized, assign win/loss",
+        "output": "evaluator/<symbol>.json"
+      },
+      "archivist": {
+        "role": "Store features + outcomes for drift detection and retraining",
+        "output": "archivist.json",
+        "feeds_back": ["model_fine_tuning", "rule_calibration"]
+      },
+      "trainer": {
+        "role": "Consume Archivist logs, fine-tune models, recalibrate rules",
+        "input": "archivist.json",
+        "output": "updated_models/",
+        "trigger": "archivist feedback signals (drift_detected, performance_drop, scheduled)"
+      },
+      "scribe": {
+        "role": "Update README_EMOJI_SYSTEM.md when Supreme Leader marks changes as approved",
+        "input": ["emoji_blueprint.json", "archivist.json", "supreme_leader.json"],
+        "output": "README_EMOJI_SYSTEM.md",
+        "trigger": "supreme_leader approval with update_readme flag"
+      },
+      "supreme_leader": {
+        "role": "Consume improved models/rules, enforce constraints, approve lists",
+        "input": ["fusion_agent.json", "archivist.json (post-calibration)"]
+      }
+    },
+    "constraints": {
+      "max_emoji_length": 4,
+      "enforced_by": "supreme_leader"
     },
     "emoji_language": {
       "emoji_lexicon": {

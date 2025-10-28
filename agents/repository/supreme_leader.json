@@ -1,0 +1,56 @@
+{
+  "approval_schema": {
+    "proposal_id": "string",
+    "approved": "boolean",
+    "update_readme": "boolean",
+    "reason": "string (machine-readable code)",
+    "details": "string (human-readable explanation)",
+    "timestamp": "string (ISO8601)"
+  },
+  "reason_codes": [
+    "exceeds_max_length",
+    "overlaps_existing_symbol",
+    "ambiguous_definition",
+    "invalid_symbol"
+  ],
+  "sample_rejection": {
+    "proposal_id": "emoji_update_002",
+    "approved": false,
+    "update_readme": false,
+    "reason": "overlaps_existing_symbol",
+    "details": "🌙 is already mapped to 'night session', cannot reuse for 'overnight gap'.",
+    "timestamp": "2025-10-28T01:00:00Z"
+  },
+  "sample_approval": {
+    "proposal_id": "emoji_update_003",
+    "approved": true,
+    "update_readme": true,
+    "reason": "",
+    "details": "New emoji ✅ approved and added to lexicon.",
+    "timestamp": "2025-10-28T02:00:00Z"
+  },
+  "approvals": [
+    {
+      "proposal_id": "emoji_update_001",
+      "approved": true,
+      "update_readme": true,
+      "reason": "",
+      "details": "New Scribe agent and constraints approved by Supreme Leader",
+      "timestamp": "2025-10-28T00:00:00Z"
+    }
+  ],
+  "current_constraints": {
+    "max_positions": 5,
+    "min_total_score": 70,
+    "min_confidence": 0.70,
+    "max_emoji_length": 4,
+    "blacklist": [],
+    "whitelist": []
+  },
+  "governance_log": {
+    "last_review": "2025-10-28T00:00:00Z",
+    "total_approvals": 1,
+    "total_rejections": 0,
+    "readme_updates_triggered": 1
+  }
+}
