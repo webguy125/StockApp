@@ -43,12 +43,25 @@ export class CanvasRenderer {
     this.dragStartMaxPrice = 0;
     this.hoveredIndex = -1;
 
+    // Axis expand/compress state
+    this.isDraggingYAxis = false; // Y-axis expand/compress
+    this.isDraggingXAxis = false; // X-axis expand/compress
+    this.yAxisDragStartY = 0;
+    this.yAxisDragStartRange = 0;
+    this.yAxisDragStartCenter = 0;
+    this.xAxisDragStartX = 0;
+    this.xAxisDragStartVisibleCandles = 0;
+
     // Live price tracking
     this.livePrice = null;
 
     // Auto-scroll behavior for tick charts
     this.autoScrollEnabled = true; // Enable auto-scroll to latest candle by default
     this.hasRendered = false; // Track if we've rendered at least once
+
+    // Drawing tools storage
+    this.drawings = []; // Store all completed drawings
+    this.previewDrawing = null; // Current drawing being previewed
 
     // Colors
     this.colors = {
@@ -373,6 +386,14 @@ export class CanvasRenderer {
     // Draw live price lines (current, high, low)
     this.drawLivePriceLines();
 
+    // Draw all completed drawings
+    this.drawAllDrawings();
+
+    // Draw preview of current drawing
+    if (this.previewDrawing) {
+      this.drawPreview(this.previewDrawing);
+    }
+
     // Draw crosshair (when not dragging for cleaner pan experience)
     if (this.mouseX >= 0 && this.mouseY >= 0 && !this.isDragging) {
       this.drawCrosshair();
@@ -385,37 +406,44 @@ export class CanvasRenderer {
   }
 
   /**
-   * Calculate price levels with dynamic increment based on timeframe
+   * Calculate price levels with dynamic increment to create square gridlines
+   * Price gridlines should match the vertical gridline spacing for square grids
    */
   calculatePriceLevels() {
-    // Determine gridline increment based on timeframe
-    // Shorter timeframes = finer gridlines, longer timeframes = coarser gridlines
-    let increment;
+    // Calculate vertical gridline spacing in pixels
+    const chartWidth = this.width - this.margin.left - this.margin.right;
+    const visibleCandles = this.endIndex - this.startIndex + 1;
+    const totalWidth = chartWidth / visibleCandles;
+    const gridInterval = 2; // Vertical gridline every 2 candles
+    const verticalGridSpacing = totalWidth * gridInterval; // Pixels between vertical gridlines
 
-    if (this.timeframeInterval === '1m' || this.timeframeInterval === '5m') {
-      increment = 100;    // Very fine gridlines for minute charts
-    } else if (this.timeframeInterval === '15m' || this.timeframeInterval === '30m' || this.timeframeInterval === '1h') {
-      increment = 500;    // Fine gridlines for hour charts
-    } else if (this.timeframeInterval === '1d') {
-      increment = 1000;   // Standard gridlines for daily (current working setting)
-    } else if (this.timeframeInterval === '1wk' || this.timeframeInterval === '1w') {
-      increment = 5000;   // Wide gridlines for weekly
-    } else if (this.timeframeInterval === '1mo') {
-      increment = 10000;  // Very wide gridlines for monthly
-    } else if (this.timeframeInterval === '3mo') {
-      increment = 20000;  // Extra wide gridlines for 3-month candles
-    } else if (this.timeframeInterval === '6mo') {
-      increment = 30000;  // Very wide gridlines for 6-month candles
-    } else {
-      increment = 1000;   // Default fallback
+    // Calculate how much price range corresponds to the same pixel distance
+    const priceRange = this.maxPrice - this.minPrice;
+    const pixelsPerPrice = this.chartHeight / priceRange;
+    const targetPriceIncrement = verticalGridSpacing / pixelsPerPrice;
+
+    // Round to a nice increment (10, 25, 50, 100, 250, 500, 1000, 2500, 5000, etc.)
+    const niceIncrements = [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000];
+    let increment = niceIncrements[0];
+
+    for (let i = 0; i < niceIncrements.length; i++) {
+      if (niceIncrements[i] >= targetPriceIncrement) {
+        increment = niceIncrements[i];
+        break;
+      }
+      // If we're past the last increment, use the last one
+      if (i === niceIncrements.length - 1) {
+        increment = niceIncrements[i];
+      }
     }
 
-    // Calculate first price level (round down to nearest increment, then go one more below for padding)
-    const firstLevel = Math.floor(this.minPrice / increment) * increment - increment;
+    // Calculate first price level (round down to nearest increment)
+    const firstLevel = Math.floor(this.minPrice / increment) * increment;
 
     // Generate all price levels (extend beyond visible range)
     const levels = [];
     let currentLevel = firstLevel;
+
     // Extend beyond maxPrice for top padding
     while (currentLevel <= this.maxPrice + increment) {
       levels.push(currentLevel);
@@ -1030,6 +1058,19 @@ export class CanvasRenderer {
   }
 
   /**
+   * Convert data index to X coordinate
+   */
+  indexToX(index) {
+    const chartLeft = this.margin.left;
+    const chartWidth = this.width - this.margin.left - this.margin.right;
+    const visibleCandles = this.endIndex - this.startIndex + 1;
+    const totalWidth = chartWidth / visibleCandles;
+    const spacing = totalWidth - (totalWidth * 0.7); // Match candle spacing
+
+    return chartLeft + ((index - this.startIndex) * totalWidth) + spacing / 2 + (totalWidth * 0.7) / 2;
+  }
+
+  /**
    * Setup mouse events
    */
   setupEvents() {
@@ -1038,6 +1079,9 @@ export class CanvasRenderer {
     this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
     this.canvas.addEventListener('mouseleave', (e) => this.onMouseLeave(e));
     this.canvas.addEventListener('wheel', (e) => this.onWheel(e));
+
+    // Listen for drawing tool actions from tool panel
+    this.canvas.addEventListener('tool-action', (e) => this.onToolAction(e));
 
     // Global mouseup to catch release outside canvas
     window.addEventListener('mouseup', (e) => this.onMouseUp(e));
@@ -1057,8 +1101,43 @@ export class CanvasRenderer {
     this.mouseX = e.clientX - rect.left;
     this.mouseY = e.clientY - rect.top;
 
+    // Y-axis expand/compress
+    if (this.isDraggingYAxis) {
+      const dy = this.mouseY - this.yAxisDragStartY;
+      // Drag up = negative dy = expand (increase range)
+      // Drag down = positive dy = compress (decrease range)
+      const scaleFactor = 1 - (dy / 200); // 200px drag = 2x change
+      const newRange = this.yAxisDragStartRange * scaleFactor;
+
+      // Apply new range while keeping center fixed
+      this.minPrice = this.yAxisDragStartCenter - (newRange / 2);
+      this.maxPrice = this.yAxisDragStartCenter + (newRange / 2);
+
+      console.log(`📏 Y-axis: dy=${dy.toFixed(0)}px, scale=${scaleFactor.toFixed(2)}x, range=${newRange.toFixed(0)}`);
+    }
+    // X-axis expand/compress
+    else if (this.isDraggingXAxis) {
+      const dx = this.mouseX - this.xAxisDragStartX;
+      // Drag left = negative dx = expand (show more candles)
+      // Drag right = positive dx = compress (show fewer candles)
+      const scaleFactor = 1 + (dx / 200); // 200px drag = 2x change
+      let newVisibleCandles = Math.floor(this.xAxisDragStartVisibleCandles * scaleFactor);
+
+      // Minimum 10 visible candles
+      newVisibleCandles = Math.max(10, Math.min(this.data.length, newVisibleCandles));
+
+      // Keep center roughly the same
+      const center = (this.startIndex + this.endIndex) / 2;
+      this.startIndex = Math.max(0, Math.floor(center - newVisibleCandles / 2));
+      this.endIndex = Math.min(this.data.length - 1, this.startIndex + newVisibleCandles);
+
+      // Update volume range for new visible candles
+      this.calculateVolumeRange();
+
+      console.log(`📏 X-axis: dx=${dx.toFixed(0)}px, scale=${scaleFactor.toFixed(2)}x, candles=${newVisibleCandles}`);
+    }
     // Pan if dragging
-    if (this.isDragging) {
+    else if (this.isDragging) {
       const dx = this.mouseX - this.dragStartX;
       const dy = this.mouseY - this.dragStartY;
 
@@ -1115,16 +1194,44 @@ export class CanvasRenderer {
    * Mouse down handler
    */
   onMouseDown(e) {
-    this.isDragging = true;
     const rect = this.canvas.getBoundingClientRect();
-    this.dragStartX = e.clientX - rect.left;
-    this.dragStartY = e.clientY - rect.top;
-    this.dragStartIndex = this.startIndex;
-    this.dragStartMinPrice = this.minPrice;
-    this.dragStartMaxPrice = this.maxPrice;
-    this.canvas.style.cursor = 'grabbing';
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
 
-    console.log(`🖱️ Pan started at index ${this.startIndex}, price range: ${this.minPrice.toFixed(0)} - ${this.maxPrice.toFixed(0)}`);
+    // Check if clicking on Y-axis (price axis on right)
+    const chartRight = this.width - this.margin.right;
+    const chartTop = this.margin.top;
+    const chartBottom = this.height - this.margin.bottom;
+
+    // Check if clicking on X-axis (time axis on bottom)
+    const chartLeft = this.margin.left;
+
+    if (mouseX >= chartRight && mouseY >= chartTop && mouseY <= chartBottom) {
+      // Clicked on Y-axis (price axis)
+      this.isDraggingYAxis = true;
+      this.yAxisDragStartY = mouseY;
+      this.yAxisDragStartRange = this.maxPrice - this.minPrice;
+      this.yAxisDragStartCenter = (this.maxPrice + this.minPrice) / 2;
+      this.canvas.style.cursor = 'ns-resize';
+      console.log(`📏 Y-axis expand/compress started`);
+    } else if (mouseY >= chartBottom && mouseX >= chartLeft && mouseX <= chartRight) {
+      // Clicked on X-axis (time axis)
+      this.isDraggingXAxis = true;
+      this.xAxisDragStartX = mouseX;
+      this.xAxisDragStartVisibleCandles = this.endIndex - this.startIndex;
+      this.canvas.style.cursor = 'ew-resize';
+      console.log(`📏 X-axis expand/compress started`);
+    } else {
+      // Normal chart panning
+      this.isDragging = true;
+      this.dragStartX = mouseX;
+      this.dragStartY = mouseY;
+      this.dragStartIndex = this.startIndex;
+      this.dragStartMinPrice = this.minPrice;
+      this.dragStartMaxPrice = this.maxPrice;
+      this.canvas.style.cursor = 'grabbing';
+      console.log(`🖱️ Pan started at index ${this.startIndex}, price range: ${this.minPrice.toFixed(0)} - ${this.maxPrice.toFixed(0)}`);
+    }
 
     // Prevent text selection while dragging
     e.preventDefault();
@@ -1135,6 +1242,8 @@ export class CanvasRenderer {
    */
   onMouseUp(e) {
     this.isDragging = false;
+    this.isDraggingYAxis = false;
+    this.isDraggingXAxis = false;
     this.canvas.style.cursor = 'grab';
   }
 
@@ -1146,8 +1255,83 @@ export class CanvasRenderer {
     this.mouseY = -1;
     this.hoveredIndex = -1;
     this.isDragging = false;
+    this.isDraggingYAxis = false;
+    this.isDraggingXAxis = false;
     this.canvas.style.cursor = 'grab';
     this.draw();
+  }
+
+  /**
+   * Handle drawing tool actions from tool panel
+   */
+  onToolAction(e) {
+    const action = e.detail;
+
+    if (!action || !action.action) {
+      console.warn('⚠️ Invalid tool action:', action);
+      return;
+    }
+
+    console.log('🎨 Tool action received:', action.action, action);
+
+    // Ignore "start" actions - they're just the first click
+    const ignoreActions = ['start-trend-line', 'start-ray-line', 'start-extended-line'];
+    if (ignoreActions.includes(action.action)) {
+      console.log('⏭️ Ignoring start action');
+      return;
+    }
+
+    // Check if this is a preview action or a completed drawing
+    const isPreview = action.action.startsWith('preview-') ||
+                      action.action.includes('-point-') ||
+                      action.action === 'update-polygon';
+
+    // Convert screen coordinates to chart coordinates for trend lines
+    let convertedAction = action;
+    if (action.action.includes('trend-line')) {
+      convertedAction = this.convertToChartCoordinates(action);
+      console.log('🔄 Action after conversion:', convertedAction);
+    }
+
+    if (isPreview) {
+      // Update preview drawing
+      this.previewDrawing = convertedAction;
+      console.log('👁️ Preview updated:', convertedAction.action);
+    } else {
+      // Completed drawing - add to drawings array
+      this.drawings.push(convertedAction);
+      this.previewDrawing = null; // Clear preview
+      console.log(`✅ Drawing added: ${convertedAction.action} (total: ${this.drawings.length})`, convertedAction);
+    }
+
+    // Redraw chart with new drawing/preview
+    this.draw();
+  }
+
+  /**
+   * Convert screen coordinates to chart coordinates (index and price)
+   */
+  convertToChartCoordinates(action) {
+    const converted = { ...action };
+
+    // Convert start point
+    if (action.startX !== undefined && action.startY !== undefined) {
+      converted.startIndex = this.xToIndex(action.startX);
+      converted.startPrice = this.yToPrice(action.startY);
+    }
+
+    // Convert end point
+    if (action.endX !== undefined && action.endY !== undefined) {
+      converted.endIndex = this.xToIndex(action.endX);
+      converted.endPrice = this.yToPrice(action.endY);
+    }
+
+    console.log('🔄 Converted coordinates:', {
+      screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
+      chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`
+    });
+
+    return converted;
   }
 
   /**
@@ -1221,6 +1405,956 @@ export class CanvasRenderer {
     // console.log('  ✅ Chart redrawn with new live price');
 
     return true;
+  }
+
+  /**
+   * Draw all completed drawings
+   */
+  drawAllDrawings() {
+    if (!this.ctx || this.drawings.length === 0) return;
+
+    this.drawings.forEach(drawing => {
+      this.drawSingleDrawing(drawing);
+    });
+  }
+
+  /**
+   * Draw preview of current drawing
+   */
+  drawPreview(drawing) {
+    if (!this.ctx || !drawing) return;
+
+    // Draw with lower opacity for preview
+    const originalAlpha = this.ctx.globalAlpha;
+    this.ctx.globalAlpha = 0.5;
+    this.drawSingleDrawing(drawing);
+    this.ctx.globalAlpha = originalAlpha;
+  }
+
+  /**
+   * Draw a single drawing (used for both completed and preview)
+   */
+  drawSingleDrawing(drawing) {
+    if (!drawing || !drawing.action) return;
+
+    const ctx = this.ctx;
+
+    // Route to specific drawing method based on action
+    if (drawing.action.includes('trend-line')) {
+      this.drawTrendLine(drawing);
+    } else if (drawing.action.includes('horizontal-line')) {
+      this.drawHorizontalLine(drawing);
+    } else if (drawing.action.includes('vertical-line')) {
+      this.drawVerticalLine(drawing);
+    } else if (drawing.action.includes('ray-line')) {
+      this.drawRayLine(drawing);
+    } else if (drawing.action.includes('extended-line')) {
+      this.drawExtendedLine(drawing);
+    } else if (drawing.action.includes('parallel-channel')) {
+      this.drawParallelChannel(drawing);
+    } else if (drawing.action.includes('fibonacci-retracement')) {
+      this.drawFibonacciRetracement(drawing);
+    } else if (drawing.action.includes('fibonacci-extension')) {
+      this.drawFibonacciExtension(drawing);
+    } else if (drawing.action.includes('fibonacci-fan')) {
+      this.drawFibonacciFan(drawing);
+    } else if (drawing.action.includes('fibonacci-arcs')) {
+      this.drawFibonacciArcs(drawing);
+    } else if (drawing.action.includes('fibonacci-time-zones')) {
+      this.drawFibonacciTimeZones(drawing);
+    } else if (drawing.action.includes('fibonacci-spiral')) {
+      this.drawFibonacciSpiral(drawing);
+    } else if (drawing.action.includes('gann-fan')) {
+      this.drawGannFan(drawing);
+    } else if (drawing.action.includes('gann-box')) {
+      this.drawGannBox(drawing);
+    } else if (drawing.action.includes('gann-square')) {
+      this.drawGannSquare(drawing);
+    } else if (drawing.action.includes('gann-angles')) {
+      this.drawGannAngles(drawing);
+    } else if (drawing.action.includes('head-and-shoulders')) {
+      this.drawHeadAndShoulders(drawing);
+    } else if (drawing.action.includes('triangle')) {
+      this.drawTriangle(drawing);
+    } else if (drawing.action.includes('wedge')) {
+      this.drawWedge(drawing);
+    } else if (drawing.action.includes('double-top-bottom')) {
+      this.drawDoubleTopBottom(drawing);
+    } else if (drawing.action.includes('rectangle')) {
+      this.drawRectangle(drawing);
+    } else if (drawing.action.includes('circle')) {
+      this.drawCircle(drawing);
+    } else if (drawing.action.includes('ellipse')) {
+      this.drawEllipse(drawing);
+    } else if (drawing.action.includes('polygon')) {
+      this.drawPolygon(drawing);
+    } else if (drawing.action.includes('text-label')) {
+      this.drawTextLabel(drawing);
+    } else if (drawing.action.includes('callout')) {
+      this.drawCallout(drawing);
+    } else if (drawing.action.includes('note')) {
+      this.drawNote(drawing);
+    } else if (drawing.action.includes('price-label')) {
+      this.drawPriceLabel(drawing);
+    }
+  }
+
+  // ==================== TREND LINE DRAWING METHODS ====================
+
+  /**
+   * Draw a trend line
+   */
+  drawTrendLine(drawing) {
+    const ctx = this.ctx;
+    const { lineColor, lineWidth, style } = drawing;
+
+    // Convert chart coordinates to screen coordinates
+    let startX, startY, endX, endY;
+
+    if (drawing.startIndex !== undefined && drawing.startPrice !== undefined) {
+      // Use chart coordinates (anchored to data)
+      startX = this.indexToX(drawing.startIndex);
+      startY = this.priceToY(drawing.startPrice);
+      endX = this.indexToX(drawing.endIndex);
+      endY = this.priceToY(drawing.endPrice);
+
+      console.log('📍 Drawing trend line with chart coords:', {
+        chart: `[${drawing.startIndex}, $${drawing.startPrice}] → [${drawing.endIndex}, $${drawing.endPrice}]`,
+        screen: `(${startX}, ${startY}) → (${endX}, ${endY})`
+      });
+    } else {
+      // Fallback to screen coordinates (legacy)
+      startX = drawing.startX;
+      startY = drawing.startY;
+      endX = drawing.endX;
+      endY = drawing.endY;
+
+      console.log('📍 Drawing trend line with screen coords:', {
+        screen: `(${startX}, ${startY}) → (${endX}, ${endY})`
+      });
+    }
+
+    if (startX === undefined || startY === undefined || endX === undefined || endY === undefined) {
+      console.error('❌ Invalid coordinates for trend line:', drawing);
+      return;
+    }
+
+    ctx.strokeStyle = lineColor || '#2196f3';
+    ctx.lineWidth = lineWidth || 2;
+
+    // Set line style
+    if (style === 'dashed') {
+      ctx.setLineDash([10, 5]);
+    } else if (style === 'dotted') {
+      ctx.setLineDash([2, 3]);
+    } else {
+      ctx.setLineDash([]);
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /**
+   * Draw horizontal line
+   */
+  drawHorizontalLine(drawing) {
+    const ctx = this.ctx;
+    const { y, lineColor, lineWidth, style } = drawing;
+    const chartLeft = this.margin.left;
+    const chartRight = this.width - this.margin.right;
+
+    ctx.strokeStyle = lineColor || '#ff9800';
+    ctx.lineWidth = lineWidth || 2;
+
+    if (style === 'dashed') {
+      ctx.setLineDash([10, 5]);
+    } else if (style === 'dotted') {
+      ctx.setLineDash([2, 3]);
+    } else {
+      ctx.setLineDash([]);
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(chartLeft, y);
+    ctx.lineTo(chartRight, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /**
+   * Draw vertical line
+   */
+  drawVerticalLine(drawing) {
+    const ctx = this.ctx;
+    const { x, lineColor, lineWidth, style } = drawing;
+    const chartTop = this.margin.top;
+    const chartBottom = this.height - this.margin.bottom;
+
+    ctx.strokeStyle = lineColor || '#9c27b0';
+    ctx.lineWidth = lineWidth || 2;
+
+    if (style === 'dashed') {
+      ctx.setLineDash([10, 5]);
+    } else if (style === 'dotted') {
+      ctx.setLineDash([2, 3]);
+    } else {
+      ctx.setLineDash([]);
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(x, chartTop);
+    ctx.lineTo(x, chartBottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /**
+   * Draw ray line (extends infinitely in one direction)
+   */
+  drawRayLine(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, lineColor, lineWidth, style } = drawing;
+
+    // Calculate direction and extend to edge
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const chartRight = this.width - this.margin.right;
+    const chartBottom = this.height - this.margin.bottom;
+
+    // Extend line to edge of chart
+    const extendX = dx > 0 ? chartRight : this.margin.left;
+    const slope = dy / dx;
+    const extendY = startY + slope * (extendX - startX);
+
+    ctx.strokeStyle = lineColor || '#4caf50';
+    ctx.lineWidth = lineWidth || 2;
+
+    if (style === 'dashed') {
+      ctx.setLineDash([10, 5]);
+    } else if (style === 'dotted') {
+      ctx.setLineDash([2, 3]);
+    } else {
+      ctx.setLineDash([]);
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(extendX, extendY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /**
+   * Draw extended line (extends infinitely in both directions)
+   */
+  drawExtendedLine(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, lineColor, lineWidth, style } = drawing;
+
+    // Calculate slope
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const slope = dy / dx;
+
+    // Extend to both edges
+    const chartLeft = this.margin.left;
+    const chartRight = this.width - this.margin.right;
+
+    const y1 = startY + slope * (chartLeft - startX);
+    const y2 = startY + slope * (chartRight - startX);
+
+    ctx.strokeStyle = lineColor || '#f44336';
+    ctx.lineWidth = lineWidth || 2;
+
+    if (style === 'dashed') {
+      ctx.setLineDash([10, 5]);
+    } else if (style === 'dotted') {
+      ctx.setLineDash([2, 3]);
+    } else {
+      ctx.setLineDash([]);
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(chartLeft, y1);
+    ctx.lineTo(chartRight, y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /**
+   * Draw parallel channel
+   */
+  drawParallelChannel(drawing) {
+    const ctx = this.ctx;
+    const { line1Start, line1End, parallelY, lineColor, lineWidth, fillOpacity } = drawing;
+
+    // Draw first line
+    ctx.strokeStyle = lineColor || '#00bcd4';
+    ctx.lineWidth = lineWidth || 2;
+    ctx.beginPath();
+    ctx.moveTo(line1Start.x, line1Start.y);
+    ctx.lineTo(line1End.x, line1End.y);
+    ctx.stroke();
+
+    // Calculate parallel line offset
+    const offset = parallelY - line1Start.y;
+
+    // Draw second line (parallel)
+    ctx.beginPath();
+    ctx.moveTo(line1Start.x, line1Start.y + offset);
+    ctx.lineTo(line1End.x, line1End.y + offset);
+    ctx.stroke();
+
+    // Fill channel
+    if (fillOpacity && fillOpacity > 0) {
+      ctx.fillStyle = `${lineColor}${Math.floor(fillOpacity * 255).toString(16)}`;
+      ctx.beginPath();
+      ctx.moveTo(line1Start.x, line1Start.y);
+      ctx.lineTo(line1End.x, line1End.y);
+      ctx.lineTo(line1End.x, line1End.y + offset);
+      ctx.lineTo(line1Start.x, line1Start.y + offset);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // ==================== FIBONACCI DRAWING METHODS ====================
+
+  /**
+   * Draw Fibonacci retracement
+   */
+  drawFibonacciRetracement(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, levels, levelColors, lineColor, lineWidth, showLabels } = drawing;
+
+    const dy = endY - startY;
+
+    // Draw main line
+    ctx.strokeStyle = lineColor || '#2196f3';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    // Draw each Fibonacci level
+    levels.forEach(level => {
+      const y = startY + dy * level;
+      const color = levelColors[level] || lineColor;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth || 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(startX, y);
+      ctx.lineTo(endX, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw label
+      if (showLabels) {
+        ctx.fillStyle = color;
+        ctx.font = '11px Arial';
+        ctx.fillText(`${(level * 100).toFixed(1)}%`, endX + 5, y + 4);
+      }
+    });
+  }
+
+  /**
+   * Draw Fibonacci extension
+   */
+  drawFibonacciExtension(drawing) {
+    const ctx = this.ctx;
+    const { point1, point2, point3, levels, levelColors, lineColor, lineWidth, showLabels } = drawing;
+
+    // Calculate swing range
+    const swingHeight = point2.y - point1.y;
+
+    // Draw connecting lines
+    ctx.strokeStyle = lineColor || '#9c27b0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(point1.x, point1.y);
+    ctx.lineTo(point2.x, point2.y);
+    ctx.lineTo(point3.x, point3.y);
+    ctx.stroke();
+
+    // Draw extension levels
+    levels.forEach(level => {
+      const y = point3.y + swingHeight * level;
+      const color = levelColors[level] || lineColor;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth || 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(point3.x, y);
+      ctx.lineTo(point3.x + 100, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (showLabels) {
+        ctx.fillStyle = color;
+        ctx.font = '11px Arial';
+        ctx.fillText(`${(level * 100).toFixed(1)}%`, point3.x + 105, y + 4);
+      }
+    });
+  }
+
+  /**
+   * Draw Fibonacci fan
+   */
+  drawFibonacciFan(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, levels, levelColors, lineColor, lineWidth } = drawing;
+
+    const dx = endX - startX;
+    const dy = endY - startY;
+
+    // Draw main line
+    ctx.strokeStyle = lineColor || '#00bcd4';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    // Draw fan lines
+    levels.forEach(level => {
+      const fanY = startY + dy * level;
+      const color = levelColors[level] || lineColor;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth || 1;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, fanY);
+      ctx.stroke();
+    });
+  }
+
+  /**
+   * Draw Fibonacci arcs
+   */
+  drawFibonacciArcs(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, levels, levelColors, lineColor, lineWidth } = drawing;
+
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const radius = Math.sqrt(dx * dx + dy * dy);
+
+    // Draw each arc
+    levels.forEach(level => {
+      const arcRadius = radius * level;
+      const color = levelColors[level] || lineColor;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth || 1;
+      ctx.beginPath();
+      ctx.arc(startX, startY, arcRadius, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+  }
+
+  /**
+   * Draw Fibonacci time zones
+   */
+  drawFibonacciTimeZones(drawing) {
+    const ctx = this.ctx;
+    const { x, sequence, lineColor, lineWidth } = drawing;
+    const chartTop = this.margin.top;
+    const chartBottom = this.height - this.margin.bottom;
+
+    // Assume each candle represents 1 time unit
+    const candleWidth = (this.width - this.margin.left - this.margin.right) / (this.endIndex - this.startIndex + 1);
+
+    sequence.forEach((fib, index) => {
+      const lineX = x + (fib * candleWidth);
+
+      if (lineX >= this.margin.left && lineX <= this.width - this.margin.right) {
+        ctx.strokeStyle = lineColor || '#673ab7';
+        ctx.lineWidth = lineWidth || 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(lineX, chartTop);
+        ctx.lineTo(lineX, chartBottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    });
+  }
+
+  /**
+   * Draw Fibonacci spiral
+   */
+  drawFibonacciSpiral(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, lineColor, lineWidth, showSquares } = drawing;
+
+    // Simplified spiral - draw golden ratio rectangles
+    ctx.strokeStyle = lineColor || '#e91e63';
+    ctx.lineWidth = lineWidth || 2;
+
+    const width = Math.abs(endX - startX);
+    const height = Math.abs(endY - startY);
+    const goldenRatio = 1.618;
+
+    // Draw main rectangle
+    ctx.strokeRect(Math.min(startX, endX), Math.min(startY, endY), width, height);
+
+    // Draw spiral curve (simplified)
+    ctx.beginPath();
+    ctx.arc(startX, startY, width / 2, 0, Math.PI / 2);
+    ctx.stroke();
+  }
+
+  // ==================== GANN DRAWING METHODS ====================
+
+  /**
+   * Draw Gann fan
+   */
+  drawGannFan(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, angles, lineColor, lineWidth } = drawing;
+
+    const chartRight = this.width - this.margin.right;
+    const trendDirection = endY < startY ? -1 : 1;
+
+    Object.entries(angles).forEach(([name, ratio]) => {
+      const dx = chartRight - startX;
+      const dy = dx * ratio * trendDirection;
+
+      ctx.strokeStyle = lineColor || '#ff9800';
+      ctx.lineWidth = lineWidth || 1;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(startX + dx, startY + dy);
+      ctx.stroke();
+    });
+  }
+
+  /**
+   * Draw Gann box
+   */
+  drawGannBox(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, lineColor, lineWidth, showDiagonals, showQuarters } = drawing;
+
+    const width = endX - startX;
+    const height = endY - startY;
+
+    // Draw box outline
+    ctx.strokeStyle = lineColor || '#00bcd4';
+    ctx.lineWidth = lineWidth || 1;
+    ctx.strokeRect(startX, startY, width, height);
+
+    // Draw quarter divisions
+    if (showQuarters) {
+      ctx.beginPath();
+      ctx.moveTo(startX + width / 2, startY);
+      ctx.lineTo(startX + width / 2, endY);
+      ctx.moveTo(startX, startY + height / 2);
+      ctx.lineTo(endX, startY + height / 2);
+      ctx.stroke();
+    }
+
+    // Draw diagonals
+    if (showDiagonals) {
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.moveTo(endX, startY);
+      ctx.lineTo(startX, endY);
+      ctx.stroke();
+    }
+  }
+
+  /**
+   * Draw Gann square
+   */
+  drawGannSquare(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, lineColor, lineWidth, divisions } = drawing;
+
+    const width = endX - startX;
+    const height = endY - startY;
+    const size = Math.min(width, height);
+
+    // Draw square
+    ctx.strokeStyle = lineColor || '#4caf50';
+    ctx.lineWidth = lineWidth || 1;
+    ctx.strokeRect(startX, startY, size, size);
+
+    // Draw grid divisions
+    const cellSize = size / divisions;
+    for (let i = 1; i < divisions; i++) {
+      // Vertical lines
+      ctx.beginPath();
+      ctx.moveTo(startX + i * cellSize, startY);
+      ctx.lineTo(startX + i * cellSize, startY + size);
+      ctx.stroke();
+
+      // Horizontal lines
+      ctx.beginPath();
+      ctx.moveTo(startX, startY + i * cellSize);
+      ctx.lineTo(startX + size, startY + i * cellSize);
+      ctx.stroke();
+    }
+  }
+
+  /**
+   * Draw Gann angles
+   */
+  drawGannAngles(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, angleType, lineColor, lineWidth, extendBoth } = drawing;
+
+    // Calculate angle based on type
+    const angleRatios = {
+      '1x8': 1/8, '1x4': 1/4, '1x3': 1/3, '1x2': 1/2,
+      '1x1': 1, '2x1': 2, '3x1': 3, '4x1': 4, '8x1': 8
+    };
+
+    const ratio = angleRatios[angleType] || 1;
+    const direction = endY < startY ? -1 : 1;
+    const chartRight = this.width - this.margin.right;
+    const dx = chartRight - startX;
+    const dy = dx * ratio * direction;
+
+    ctx.strokeStyle = lineColor || '#f44336';
+    ctx.lineWidth = lineWidth || 2;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(startX + dx, startY + dy);
+    ctx.stroke();
+  }
+
+  // ==================== PATTERN DRAWING METHODS ====================
+
+  /**
+   * Draw head and shoulders pattern
+   */
+  drawHeadAndShoulders(drawing) {
+    const ctx = this.ctx;
+    const { points, lineColor, lineWidth, showLabels } = drawing;
+
+    if (!points || points.length < 5) return;
+
+    ctx.strokeStyle = lineColor || '#ff5722';
+    ctx.lineWidth = lineWidth || 2;
+
+    // Connect the pattern points
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    points.forEach(point => {
+      ctx.lineTo(point.x, point.y);
+    });
+    ctx.stroke();
+
+    // Draw neckline
+    if (points.length >= 5) {
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      ctx.lineTo(points[4].x, points[4].y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Labels
+    if (showLabels && points.length >= 5) {
+      ctx.fillStyle = lineColor;
+      ctx.font = '11px Arial';
+      ctx.fillText('LS', points[0].x, points[0].y - 5);
+      ctx.fillText('H', points[2].x, points[2].y - 5);
+      ctx.fillText('RS', points[4].x, points[4].y - 5);
+    }
+  }
+
+  /**
+   * Draw triangle pattern
+   */
+  drawTriangle(drawing) {
+    const ctx = this.ctx;
+    const { points, lineColor, lineWidth, fillOpacity } = drawing;
+
+    if (!points || points.length < 4) return;
+
+    ctx.strokeStyle = lineColor || '#9c27b0';
+    ctx.lineWidth = lineWidth || 2;
+
+    // Draw two trend lines
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    ctx.lineTo(points[2].x, points[2].y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(points[1].x, points[1].y);
+    ctx.lineTo(points[3].x, points[3].y);
+    ctx.stroke();
+
+    // Fill
+    if (fillOpacity && fillOpacity > 0) {
+      ctx.fillStyle = `${lineColor}${Math.floor(fillOpacity * 255).toString(16)}`;
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      ctx.lineTo(points[2].x, points[2].y);
+      ctx.lineTo(points[3].x, points[3].y);
+      ctx.lineTo(points[1].x, points[1].y);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  /**
+   * Draw wedge pattern
+   */
+  drawWedge(drawing) {
+    this.drawTriangle(drawing); // Same rendering as triangle
+  }
+
+  /**
+   * Draw double top/bottom pattern
+   */
+  drawDoubleTopBottom(drawing) {
+    const ctx = this.ctx;
+    const { points, lineColor, lineWidth, showLabels, patternType } = drawing;
+
+    if (!points || points.length < 3) return;
+
+    ctx.strokeStyle = lineColor || '#f44336';
+    ctx.lineWidth = lineWidth || 2;
+
+    // Connect points
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    points.forEach(point => {
+      ctx.lineTo(point.x, point.y);
+    });
+    ctx.stroke();
+
+    // Draw neckline
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[1].y);
+    ctx.lineTo(points[2].x, points[1].y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    if (showLabels) {
+      ctx.fillStyle = lineColor;
+      ctx.font = '11px Arial';
+      const label = patternType === 'top' ? 'Double Top' : 'Double Bottom';
+      ctx.fillText(label, points[1].x, points[1].y - 10);
+    }
+  }
+
+  // ==================== SHAPE DRAWING METHODS ====================
+
+  /**
+   * Draw rectangle
+   */
+  drawRectangle(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, lineColor, lineWidth, fillColor, filled } = drawing;
+
+    const width = endX - startX;
+    const height = endY - startY;
+
+    if (filled && fillColor) {
+      ctx.fillStyle = fillColor;
+      ctx.fillRect(startX, startY, width, height);
+    }
+
+    ctx.strokeStyle = lineColor || '#2196f3';
+    ctx.lineWidth = lineWidth || 2;
+    ctx.strokeRect(startX, startY, width, height);
+  }
+
+  /**
+   * Draw circle
+   */
+  drawCircle(drawing) {
+    const ctx = this.ctx;
+    const { centerX, centerY, radius, lineColor, lineWidth, fillColor, filled } = drawing;
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+
+    if (filled && fillColor) {
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = lineColor || '#00c853';
+    ctx.lineWidth = lineWidth || 2;
+    ctx.stroke();
+  }
+
+  /**
+   * Draw ellipse
+   */
+  drawEllipse(drawing) {
+    const ctx = this.ctx;
+    const { startX, startY, endX, endY, lineColor, lineWidth, fillColor, filled } = drawing;
+
+    const centerX = (startX + endX) / 2;
+    const centerY = (startY + endY) / 2;
+    const radiusX = Math.abs(endX - startX) / 2;
+    const radiusY = Math.abs(endY - startY) / 2;
+
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+
+    if (filled && fillColor) {
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = lineColor || '#ff9800';
+    ctx.lineWidth = lineWidth || 2;
+    ctx.stroke();
+  }
+
+  /**
+   * Draw polygon
+   */
+  drawPolygon(drawing) {
+    const ctx = this.ctx;
+    const { points, lineColor, lineWidth, fillColor, filled } = drawing;
+
+    if (!points || points.length < 3) return;
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    points.forEach(point => {
+      ctx.lineTo(point.x, point.y);
+    });
+    ctx.closePath();
+
+    if (filled && fillColor) {
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = lineColor || '#9c27b0';
+    ctx.lineWidth = lineWidth || 2;
+    ctx.stroke();
+  }
+
+  // ==================== ANNOTATION DRAWING METHODS ====================
+
+  /**
+   * Draw text label
+   */
+  drawTextLabel(drawing) {
+    const ctx = this.ctx;
+    const { x, y, text, fontSize, fontFamily, textColor, backgroundColor, showBackground } = drawing;
+
+    ctx.font = `${fontSize || 14}px ${fontFamily || 'Arial'}`;
+
+    if (showBackground && backgroundColor) {
+      const metrics = ctx.measureText(text);
+      const padding = 4;
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(x - padding, y - fontSize - padding, metrics.width + padding * 2, fontSize + padding * 2);
+    }
+
+    ctx.fillStyle = textColor || '#ffffff';
+    ctx.fillText(text || 'Text', x, y);
+  }
+
+  /**
+   * Draw callout
+   */
+  drawCallout(drawing) {
+    const ctx = this.ctx;
+    const { pointerX, pointerY, textX, textY, text, textColor, backgroundColor, borderColor, fontSize } = drawing;
+
+    // Draw arrow from pointer to text box
+    ctx.strokeStyle = borderColor || '#2196f3';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pointerX, pointerY);
+    ctx.lineTo(textX, textY);
+    ctx.stroke();
+
+    // Draw text box
+    ctx.font = `${fontSize || 14}px Arial`;
+    const metrics = ctx.measureText(text || 'Callout');
+    const padding = 8;
+    const boxWidth = metrics.width + padding * 2;
+    const boxHeight = fontSize + padding * 2;
+
+    ctx.fillStyle = backgroundColor || 'rgba(33, 150, 243, 0.9)';
+    ctx.fillRect(textX - boxWidth / 2, textY - boxHeight / 2, boxWidth, boxHeight);
+
+    ctx.strokeStyle = borderColor || '#2196f3';
+    ctx.strokeRect(textX - boxWidth / 2, textY - boxHeight / 2, boxWidth, boxHeight);
+
+    ctx.fillStyle = textColor || '#ffffff';
+    ctx.fillText(text || 'Callout', textX - metrics.width / 2, textY + fontSize / 3);
+  }
+
+  /**
+   * Draw note
+   */
+  drawNote(drawing) {
+    const ctx = this.ctx;
+    const { x, y, text, noteColor, textColor, fontSize, width, height } = drawing;
+
+    // Draw note background
+    ctx.fillStyle = noteColor || '#ffeb3b';
+    ctx.fillRect(x, y, width || 150, height || 100);
+
+    ctx.strokeStyle = '#daa520';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width || 150, height || 100);
+
+    // Draw text
+    ctx.fillStyle = textColor || '#000000';
+    ctx.font = `${fontSize || 12}px Arial`;
+    ctx.fillText(text || 'Note', x + 10, y + 20);
+  }
+
+  /**
+   * Draw price label
+   */
+  drawPriceLabel(drawing) {
+    const ctx = this.ctx;
+    const { x, y, labelColor, textColor, fontSize, showLine } = drawing;
+    const chartLeft = this.margin.left;
+    const chartRight = this.width - this.margin.right;
+
+    // Draw horizontal line
+    if (showLine) {
+      ctx.strokeStyle = labelColor || '#00c853';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(chartLeft, y);
+      ctx.lineTo(chartRight, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Draw price label
+    const price = this.yToPrice(y);
+    const priceText = price.toFixed(2);
+
+    ctx.fillStyle = labelColor || '#00c853';
+    ctx.fillRect(chartRight - 60, y - 12, 55, 24);
+
+    ctx.fillStyle = textColor || '#ffffff';
+    ctx.font = `${fontSize || 12}px Arial`;
+    ctx.fillText(priceText, chartRight - 55, y + 4);
   }
 
   /**

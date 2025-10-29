@@ -1,0 +1,331 @@
+/**
+ * Drawing Tools Panel - Collapsible left sidebar
+ * ThinkorSwim-style tool panel with minimize/expand functionality
+ */
+
+/* Position tools panel to the right of left panel */
+.tos-tools-panel {
+  width: 48px;
+  background: var(--tos-bg-secondary);
+  border-right: 1px solid var(--tos-border-color);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease, margin-left 0.3s ease;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: visible;
+}
+
+.tos-tools-panel.collapsed {
+  width: 0;
+  margin-left: -1px;
+  border-right: none;
+}
+
+/* Tools Panel Header */
+.tos-tools-header {
+  padding: 12px 8px;
+  background: var(--tos-bg-primary);
+  border-bottom: 1px solid var(--tos-border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.tos-tools-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--tos-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* Tool Category Buttons */
+.tos-tools-list {
+  flex: 1;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.tos-tool-category-btn {
+  width: 40px;
+  height: 40px;
+  background: var(--tos-bg-primary);
+  border: 1px solid var(--tos-border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  position: relative;
+  color: var(--tos-text-secondary);
+}
+
+.tos-tool-category-btn:hover {
+  background: var(--tos-bg-hover);
+  border-color: var(--tos-accent-blue);
+  color: var(--tos-text-primary);
+}
+
+.tos-tool-category-btn.active {
+  background: var(--tos-accent-blue);
+  border-color: var(--tos-accent-blue);
+  color: white;
+}
+
+.tos-tool-category-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* Tooltip for category buttons */
+.tos-tool-category-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.95);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.tos-tool-category-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Dropdown/Flyout Panel */
+.tos-tool-dropdown {
+  position: absolute;
+  left: calc(100% + 1px);
+  top: 0;
+  min-width: 200px;
+  background: var(--tos-bg-secondary);
+  border: 1px solid var(--tos-border-color);
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.3);
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1000;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.tos-tool-dropdown.visible {
+  display: flex;
+}
+
+.tos-tool-dropdown-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tos-text-primary);
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--tos-border-color);
+  margin-bottom: 4px;
+}
+
+.tos-tool-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--tos-bg-primary);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--tos-text-primary);
+}
+
+.tos-tool-item:hover {
+  background: var(--tos-bg-hover);
+  border-color: var(--tos-accent-blue);
+}
+
+.tos-tool-item.active {
+  background: var(--tos-accent-blue);
+  border-color: var(--tos-accent-blue);
+  color: white;
+}
+
+.tos-tool-item-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tos-tool-item-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.tos-tool-item-label {
+  font-size: 12px;
+  flex: 1;
+}
+
+/* Collapse/Expand Button */
+.tos-tools-collapse-btn {
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 40px;
+  background: var(--tos-bg-secondary);
+  border: 1px solid var(--tos-border-color);
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tos-text-secondary);
+  transition: all 0.2s;
+  z-index: 101;
+}
+
+.tos-tools-collapse-btn:hover {
+  background: var(--tos-bg-hover);
+  color: var(--tos-accent-blue);
+}
+
+.tos-tools-collapse-btn svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+  transition: transform 0.3s;
+}
+
+.tos-tools-panel.collapsed .tos-tools-collapse-btn {
+  right: -15px;
+  border-radius: 0 4px 4px 0;
+}
+
+.tos-tools-panel.collapsed .tos-tools-collapse-btn svg {
+  transform: rotate(180deg);
+}
+
+/* Draggable resize handle */
+.tos-tools-resize-handle {
+  position: absolute;
+  right: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 99;
+}
+
+.tos-tools-resize-handle:hover {
+  background: rgba(33, 150, 243, 0.2);
+}
+
+/* No margin adjustments needed - tools panel is part of flex layout */
+
+/* Category Separators */
+.tos-tool-separator {
+  height: 1px;
+  background: var(--tos-border-color);
+  margin: 4px 8px;
+}
+
+.tos-tool-category-label {
+  font-size: 9px;
+  color: var(--tos-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 4px 4px;
+  text-align: center;
+}
+
+/* Tool Options Panel (for tools with settings) */
+.tos-tool-options {
+  position: absolute;
+  left: 60px;
+  bottom: 0;
+  width: 200px;
+  background: var(--tos-bg-secondary);
+  border: 1px solid var(--tos-border-color);
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+  display: none;
+  z-index: 200;
+}
+
+.tos-tool-options.visible {
+  display: block;
+}
+
+.tos-tool-option-group {
+  margin-bottom: 12px;
+}
+
+.tos-tool-option-label {
+  font-size: 11px;
+  color: var(--tos-text-secondary);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.tos-tool-option-input {
+  width: 100%;
+  padding: 6px;
+  background: var(--tos-bg-primary);
+  border: 1px solid var(--tos-border-color);
+  color: var(--tos-text-primary);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.tos-tool-option-color {
+  width: 100%;
+  height: 32px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+/* Scrollbar styling for tools list */
+.tos-tools-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tos-tools-list::-webkit-scrollbar-track {
+  background: var(--tos-bg-primary);
+}
+
+.tos-tools-list::-webkit-scrollbar-thumb {
+  background: var(--tos-border-color);
+  border-radius: 2px;
+}
+
+.tos-tools-list::-webkit-scrollbar-thumb:hover {
+  background: var(--tos-text-muted);
+}

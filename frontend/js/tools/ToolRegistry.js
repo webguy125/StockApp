@@ -31,7 +31,7 @@ export class ToolRegistry {
     }
 
     this.categories[category].push(tool);
-    console.log(`✅ Registered tool: ${tool.name} in ${category}`);
+    // console.log(`✅ Registered tool: ${tool.name} in ${category}`);
     return true;
   }
 
@@ -54,7 +54,7 @@ export class ToolRegistry {
    */
   setActiveTool(tool) {
     this.activeTool = tool;
-    console.log(`🖊️ Active tool: ${tool ? tool.name : 'none'}`);
+    // console.log(`🖊️ Active tool: ${tool ? tool.name : 'none'}`);
   }
 
   /**
