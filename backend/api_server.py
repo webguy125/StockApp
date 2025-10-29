@@ -173,21 +173,13 @@ def get_chart_data(symbol):
 
     # Route minute-level intervals to Coinbase for crypto (proper OHLC data)
     minute_intervals = ['1m', '5m', '15m', '30m', '1h']
-    with open('backend/debug.log', 'a') as f:
-        f.write(f"\n[ROUTE] symbol={symbol}, interval={interval}, in_list={interval in minute_intervals}\n")
 
     if interval in minute_intervals:
-        with open('backend/debug.log', 'a') as f:
-            f.write(f"[ROUTING] Using Coinbase for {symbol} {interval}\n")
         print(f"[ROUTING] Using Coinbase for {symbol} {interval}")
         try:
             candles = fetch_coinbase_candles(symbol, interval, period or '1d')
-            with open('backend/debug.log', 'a') as f:
-                f.write(f"[SUCCESS] Got {len(candles)} candles\n")
             return jsonify(candles)
         except Exception as e:
-            with open('backend/debug.log', 'a') as f:
-                f.write(f"[ERROR] {e}\n")
             print(f"[COINBASE ERROR] {e}")
             return jsonify([])
 

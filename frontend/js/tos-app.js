@@ -10,6 +10,7 @@ import { initializeWatchlist } from './components/watchlist.js';
 import { initializeNewsFeed } from './components/news-feed.js';
 import { initializeActiveTrader } from './components/active-trader.js';
 import { initializeChartSettings } from './components/chart-settings.js';
+import { initializeToolPanel } from './components/tool-panel.js';
 import { CanvasRenderer } from './chart-renderers/canvas-renderer.js';
 import { TimeframeRegistry } from './timeframes/TimeframeRegistry.js';
 import { TickChartRegistry } from './tick-charts/TickChartRegistry.js';
@@ -26,6 +27,7 @@ class TOSApp {
     this.activeTrader = null;
     this.resizablePanels = null;
     this.chartSettings = null; // Chart settings manager
+    this.toolPanel = null; // Drawing tools panel
 
     // Load last used settings from localStorage, or use defaults
     this.currentSymbol = localStorage.getItem('lastSymbol') || null;
@@ -850,6 +852,9 @@ class TOSApp {
 
     // Initialize chart settings
     this.chartSettings = initializeChartSettings();
+
+    // Initialize drawing tools panel
+    this.toolPanel = initializeToolPanel();
 
     // Initialize chart controls
     this.initializeChartControls();
@@ -2444,6 +2449,7 @@ class TOSApp {
     if (this.watchlist) this.watchlist.destroy();
     if (this.newsFeed) this.newsFeed.destroy();
     if (this.activeTrader) this.activeTrader.destroy();
+    if (this.toolPanel) this.toolPanel = null;
     if (this.timeframeRegistry) this.timeframeRegistry.destroy();
     if (this.tickChartRegistry) this.tickChartRegistry.destroy();
     if (this.timeframeSelector) this.timeframeSelector.destroy();
