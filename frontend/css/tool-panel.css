@@ -44,6 +44,38 @@
   text-orientation: mixed;
 }
 
+/* Persistent Mode Toggle */
+.tos-persistent-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tos-persistent-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--tos-accent-green);
+}
+
+.tos-persistent-toggle .toggle-label {
+  font-size: 8px;
+  color: var(--tos-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  white-space: nowrap;
+}
+
+.tos-persistent-toggle input[type="checkbox"]:checked + .toggle-label {
+  color: var(--tos-accent-green);
+  font-weight: 600;
+}
+
 /* Tool Category Buttons */
 .tos-tools-list {
   flex: 1;
@@ -328,4 +360,84 @@
 
 .tos-tools-list::-webkit-scrollbar-thumb:hover {
   background: var(--tos-text-muted);
+}
+
+/* Drawing Context Menu (right-click menu) */
+.drawing-context-menu {
+  position: fixed;
+  background: var(--tos-bg-secondary);
+  border: 1px solid var(--tos-border-color);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  min-width: 150px;
+  padding: 4px 0;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--tos-text-primary);
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+.context-menu-item:hover {
+  background: var(--tos-bg-hover);
+}
+
+.context-menu-item svg {
+  flex-shrink: 0;
+  color: var(--tos-text-secondary);
+}
+
+.context-menu-item:hover svg {
+  color: var(--tos-accent-blue);
+}
+
+.context-menu-item span {
+  flex: 1;
+}
+
+.context-menu-divider {
+  height: 1px;
+  background: var(--tos-border-color);
+  margin: 4px 0;
+}
+
+.context-menu-toggle {
+  position: relative;
+}
+
+.context-menu-toggle .toggle-indicator {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--tos-text-secondary);
+  border-radius: 3px;
+  margin-left: auto;
+  transition: all 0.2s;
+}
+
+.context-menu-toggle.active .toggle-indicator {
+  background: var(--tos-accent-green);
+  border-color: var(--tos-accent-green);
+}
+
+.context-menu-toggle.active .toggle-indicator::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translate(-1px, -2px);
+  margin-left: 3px;
+  margin-top: 0px;
+}
+
+.context-menu-toggle.active svg {
+  color: var(--tos-accent-green);
 }

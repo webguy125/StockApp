@@ -33,44 +33,32 @@ export class DefaultCursor {
    * Handle mouse down
    */
   onMouseDown(event, chartState) {
-    // Default behavior: start panning
-    return {
-      action: 'pan-start',
-      x: event.clientX,
-      y: event.clientY
-    };
+    // Return null to let canvas-renderer handle panning and selection
+    // SelectionManager will handle clicks on drawings
+    return null;
   }
 
   /**
    * Handle mouse move
    */
   onMouseMove(event, chartState) {
-    // Update cursor position for hover detection
-    return {
-      action: 'hover',
-      x: event.clientX,
-      y: event.clientY
-    };
+    // Return null to let canvas-renderer handle hover/crosshair
+    return null;
   }
 
   /**
    * Handle mouse up
    */
   onMouseUp(event, chartState) {
-    return {
-      action: 'pan-end'
-    };
+    // Return null to let canvas-renderer handle pan end
+    return null;
   }
 
   /**
    * Handle click (for selection)
    */
   onClick(event, chartState) {
-    // Check if clicked on a drawing
-    return {
-      action: 'check-selection',
-      x: event.clientX,
-      y: event.clientY
-    };
+    // Return null to let SelectionManager handle selection
+    return null;
   }
 }

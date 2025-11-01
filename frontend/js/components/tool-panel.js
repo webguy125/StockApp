@@ -57,9 +57,16 @@ export class ToolPanel {
     this.container = containerElement;
     this.canvas = null; // Will be set when canvas is available
     this.registry = new ToolRegistry();
+
+    // Expose registry globally so SelectionManager can access it
+    window.toolRegistry = this.registry;
+    // Also expose this panel instance for persistent mode access
+    this.registry.toolPanel = this;
+
     this.isCollapsed = false;
     this.panelElement = null;
     this.currentTool = null;
+    this.persistentMode = false; // Persistent tool selection mode
 
     this.initializeTools();
     this.initializeUI();
@@ -177,6 +184,10 @@ export class ToolPanel {
     this.panelElement.innerHTML = `
       <div class="tos-tools-header">
         <div class="tos-tools-title">TOOLS</div>
+        <label class="tos-persistent-toggle" title="Keep tool active after use (ESC to deactivate)">
+          <input type="checkbox" id="persistent-mode-toggle">
+          <span class="toggle-label">Keep Active</span>
+        </label>
       </div>
 
       <div class="tos-tools-list">
@@ -392,10 +403,31 @@ export class ToolPanel {
       this.toggleCollapse();
     });
 
+    // Persistent mode toggle in header
+    const persistentToggle = this.panelElement.querySelector('#persistent-mode-toggle');
+    if (persistentToggle) {
+      persistentToggle.addEventListener('change', (e) => {
+        this.persistentMode = e.target.checked;
+        this.updatePersistentModeUI();
+        console.log(`✅ Keep Tool Active: ${this.persistentMode ? 'ON' : 'OFF'}`);
+      });
+    }
+
     // Click outside to close dropdowns
     document.addEventListener('click', (e) => {
       if (!this.panelElement.contains(e.target)) {
         this.hideAllDropdowns();
+      }
+    });
+
+    // ESC key to deactivate persistent mode and return to default cursor
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.persistentMode) {
+        this.persistentMode = false;
+        this.updatePersistentModeUI();
+        this.setActiveTool('default');
+        this.updateActiveToolItem('default');
+        console.log('✅ Persistent mode disabled (ESC key)');
       }
     });
 
@@ -485,6 +517,9 @@ export class ToolPanel {
         this.handleToolAction(result);
       }
     });
+
+    // Note: Right-click context menu handling is done in SelectionManager
+    // We removed the auto-toggle on right-click to avoid confusion
   }
 
   /**
@@ -513,10 +548,14 @@ export class ToolPanel {
     ];
 
     if (completedActions.includes(result.action)) {
-      // Auto-switch back to default tool (pan mode)
-      console.log('✅ Drawing completed, switching to default tool');
-      this.setActiveTool('default');
-      this.updateActiveToolItem('default');
+      // Auto-switch back to default tool (pan mode) ONLY if persistent mode is OFF
+      if (!this.persistentMode) {
+        console.log('✅ Drawing completed, switching to default tool');
+        this.setActiveTool('default');
+        this.updateActiveToolItem('default');
+      } else {
+        console.log('✅ Drawing completed, staying in current tool (persistent mode ON)');
+      }
     }
 
     // console.log('🔧 Tool action:', result.action, result);
@@ -532,19 +571,22 @@ export class ToolPanel {
       return;
     }
 
+    console.log(`🔄 Switching to tool: ${toolName} (current: ${this.currentTool?.id || 'none'})`);
+
     // Deactivate current tool
     if (this.currentTool) {
+      console.log(`⏹️ Deactivating current tool: ${this.currentTool.name}`);
       this.currentTool.deactivate(this.canvas);
     }
 
     // Activate new tool
     const newTool = this.tools[toolName];
     if (newTool) {
+      console.log(`▶️ Activating new tool: ${newTool.name}`);
       this.registry.setActiveTool(newTool);
       newTool.activate(this.canvas);
       this.currentTool = newTool;
       this.saveState();
-      // console.log(`✅ Activated tool: ${newTool.name}`);
     } else {
       console.error(`❌ Tool not found: ${toolName}`);
     }
@@ -565,6 +607,21 @@ export class ToolPanel {
         }
       });
     });
+  }
+
+  /**
+   * Update persistent mode UI (called when mode changes)
+   * Syncs both header checkbox and context menu indicator
+   */
+  updatePersistentModeUI() {
+    // Update header checkbox
+    const persistentToggle = this.panelElement?.querySelector('#persistent-mode-toggle');
+    if (persistentToggle) {
+      persistentToggle.checked = this.persistentMode;
+    }
+
+    // Update context menu indicator (via SelectionManager)
+    // The SelectionManager will pick up the change when the menu is next shown
   }
 
   /**

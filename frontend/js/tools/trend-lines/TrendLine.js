@@ -27,13 +27,18 @@ export class TrendLine {
    */
   activate(canvas) {
     this.isActive = true;
+    this.isDrawing = false;  // Reset drawing state
+    this.startPoint = null;  // Clear any previous points
+    this.endPoint = null;
     canvas.style.cursor = this.cursorStyle;
+    console.log('✅ Trend line tool activated');
   }
 
   /**
    * Deactivate this tool
    */
   deactivate(canvas) {
+    console.log('🛑 Trend line tool deactivated');
     this.isActive = false;
     canvas.style.cursor = 'default';
     this.isDrawing = false;
@@ -45,14 +50,22 @@ export class TrendLine {
    * Handle mouse down - start drawing
    */
   onMouseDown(event, chartState) {
+    if (!this.isActive) {
+      console.warn('⚠️ Trend line tool not active!');
+      return null;
+    }
+
     // Use canvas-relative coordinates
     const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
     const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
+    console.log(`🖱️ Mouse down at (${x}, ${y}), isDrawing: ${this.isDrawing}`);
 
     if (!this.isDrawing) {
       // First click - start the line
       this.isDrawing = true;
       this.startPoint = { x, y };
+      console.log('✏️ Started drawing trend line');
       return {
         action: 'start-trend-line',
         x,
@@ -60,6 +73,7 @@ export class TrendLine {
       };
     } else {
       // Second click - finish the line
+      console.log('✅ Finishing trend line drawing');
       this.isDrawing = false;
       this.endPoint = { x, y };
 

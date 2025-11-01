@@ -12,7 +12,7 @@ export class ArrowCursor {
     this.isActive = false;
 
     // Arrow properties
-    this.arrowColor = '#00c851';
+    this.arrowColor = null; // Let canvas-renderer auto-color based on direction
     this.arrowSize = 20;
     this.direction = 'up'; // 'up', 'down', 'left', 'right'
   }

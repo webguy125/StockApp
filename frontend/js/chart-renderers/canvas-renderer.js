@@ -5,6 +5,8 @@
  * Updated: 2025-10-24 - TradingView-style unified price scale (candles can appear in volume area)
  */
 
+import { SelectionManager } from './SelectionManager.js?v=20251030-fix';
+
 export class CanvasRenderer {
   constructor(timeframeInterval = '1d') {
     this.containerId = 'tos-plot';
@@ -62,6 +64,10 @@ export class CanvasRenderer {
     // Drawing tools storage
     this.drawings = []; // Store all completed drawings
     this.previewDrawing = null; // Current drawing being previewed
+    this.eraserHoveredDrawing = null; // Drawing hovered by eraser tool
+
+    // Selection manager for editing drawings
+    this.selectionManager = null; // Initialized after canvas is created
 
     // Colors
     this.colors = {
@@ -175,8 +181,97 @@ export class CanvasRenderer {
       this.eventsSetup = true;
     }
 
+    // Load saved drawings for this symbol (only on first render or symbol change)
+    if (!this.drawingsLoaded || this.lastLoadedSymbol !== symbol) {
+      this.lastLoadedSymbol = symbol;
+      this.drawingsLoaded = true;
+      await this.loadDrawings();
+    }
+
     // console.log('✅ Canvas chart rendered successfully');
     return true;
+  }
+
+  // ==================== DRAWING PERSISTENCE METHODS ====================
+
+  /**
+   * Load saved drawings for current symbol from backend
+   */
+  async loadDrawings() {
+    if (!this.symbol) {
+      console.warn('⚠️ No symbol set, skipping drawing load');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/drawings/${this.symbol}`);
+      if (response.ok) {
+        const drawings = await response.json();
+        this.drawings = drawings;
+        console.log(`✅ Loaded ${drawings.length} drawings for ${this.symbol}`);
+        this.draw(); // Redraw with loaded drawings
+      }
+    } catch (error) {
+      console.error('❌ Error loading drawings:', error);
+    }
+  }
+
+  /**
+   * Save a drawing to backend
+   */
+  async saveDrawing(drawing) {
+    if (!this.symbol) {
+      console.warn('⚠️ No symbol set, skipping drawing save');
+      return;
+    }
+
+    try {
+      const response = await fetch('/save_drawing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: this.symbol,
+          drawing: drawing
+        })
+      });
+
+      if (response.ok) {
+        console.log(`💾 Saved drawing: ${drawing.id} (${drawing.action})`);
+      } else {
+        console.error('❌ Failed to save drawing:', await response.text());
+      }
+    } catch (error) {
+      console.error('❌ Error saving drawing:', error);
+    }
+  }
+
+  /**
+   * Delete a drawing from backend
+   */
+  async deleteDrawing(drawingId) {
+    if (!this.symbol) {
+      console.warn('⚠️ No symbol set, skipping drawing delete');
+      return;
+    }
+
+    try {
+      const response = await fetch('/delete_drawing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: this.symbol,
+          drawing_id: drawingId
+        })
+      });
+
+      if (response.ok) {
+        console.log(`🗑️ Deleted drawing from backend: ${drawingId}`);
+      } else {
+        console.error('❌ Failed to delete drawing:', await response.text());
+      }
+    } catch (error) {
+      console.error('❌ Error deleting drawing:', error);
+    }
   }
 
   /**
@@ -200,7 +295,7 @@ export class CanvasRenderer {
     this.canvas.style.height = '100%';
     this.canvas.style.display = 'block';
     this.canvas.style.backgroundColor = '#1a1a1a';
-    this.canvas.style.cursor = 'grab'; // Indicate chart is draggable
+    this.canvas.style.cursor = 'default'; // Let tools manage cursor
     container.appendChild(this.canvas);
 
     // Set canvas size
@@ -353,6 +448,77 @@ export class CanvasRenderer {
   }
 
   /**
+   * Detect if a horizontal line at a given price is acting as support or resistance
+   * Returns 'support' (green), 'resistance' (red), or 'neutral' (orange)
+   *
+   * Algorithm:
+   * - Look at candles near the line (within a price tolerance)
+   * - Count bounces: candles that approach the line but don't cross significantly
+   * - Determine direction: if more candles are above the line, it's support; if below, it's resistance
+   *
+   * @param {number} price - The price level of the horizontal line
+   * @param {number} lookbackBars - Number of bars to analyze (default 50)
+   * @returns {string} 'support', 'resistance', or 'neutral'
+   */
+  detectSupportResistance(price, lookbackBars = 50) {
+    if (!this.data || this.data.length === 0) return 'neutral';
+
+    // Define price tolerance (e.g., 0.5% of the price for detecting touches)
+    const tolerance = price * 0.005; // 0.5% tolerance
+
+    // Get visible or recent candles
+    const startIdx = Math.max(0, Math.floor(this.endIndex) - lookbackBars);
+    const endIdx = Math.min(this.data.length - 1, Math.ceil(this.endIndex));
+    const candlesToAnalyze = this.data.slice(startIdx, endIdx + 1);
+
+    let candlesAbove = 0;  // Candles mostly above the line
+    let candlesBelow = 0;  // Candles mostly below the line
+    let touches = 0;       // Candles that touch/bounce off the line
+
+    for (const candle of candlesToAnalyze) {
+      const high = candle.High;
+      const low = candle.Low;
+      const close = candle.Close;
+
+      // Check if candle touches the line (within tolerance)
+      const touchesLine = (low <= price + tolerance && high >= price - tolerance);
+
+      if (touchesLine) {
+        touches++;
+
+        // Determine if it's a bounce from above (resistance) or below (support)
+        if (close < price) {
+          // Candle closed below line - likely tested resistance
+          candlesBelow++;
+        } else {
+          // Candle closed above line - likely tested support
+          candlesAbove++;
+        }
+      } else {
+        // Candle doesn't touch - just count which side it's on
+        if (low > price + tolerance) {
+          candlesAbove++;
+        } else if (high < price - tolerance) {
+          candlesBelow++;
+        }
+      }
+    }
+
+    // Decision logic:
+    // If more candles are above the line, it's acting as support (holding price up)
+    // If more candles are below the line, it's acting as resistance (holding price down)
+    const ratio = candlesAbove / (candlesAbove + candlesBelow || 1);
+
+    if (ratio > 0.6) {
+      return 'support';      // Green - most candles above, line supports price
+    } else if (ratio < 0.4) {
+      return 'resistance';   // Red - most candles below, line resists price
+    } else {
+      return 'neutral';      // Orange - unclear or equal distribution
+    }
+  }
+
+  /**
    * Main draw function
    */
   draw() {
@@ -388,6 +554,11 @@ export class CanvasRenderer {
 
     // Draw all completed drawings
     this.drawAllDrawings();
+
+    // Draw selection highlight (on top of drawings, below preview)
+    if (this.selectionManager) {
+      this.selectionManager.drawSelection();
+    }
 
     // Draw preview of current drawing
     if (this.previewDrawing) {
@@ -1049,8 +1220,10 @@ export class CanvasRenderer {
     const chartWidth = this.width - this.margin.left - this.margin.right;
     const visibleCandles = this.endIndex - this.startIndex + 1;
     const totalWidth = chartWidth / visibleCandles; // Must match drawing logic
+    const spacing = totalWidth - (totalWidth * 0.7); // Match candle spacing
+    const offset = spacing / 2 + (totalWidth * 0.7) / 2; // Center offset (matches indexToX)
 
-    const relativeX = x - chartLeft;
+    const relativeX = x - chartLeft - offset; // Account for centering offset
     const candleIndex = Math.floor(relativeX / totalWidth);
     const index = this.startIndex + candleIndex;
 
@@ -1074,6 +1247,12 @@ export class CanvasRenderer {
    * Setup mouse events
    */
   setupEvents() {
+    // Initialize selection manager for drawing editing
+    if (!this.selectionManager) {
+      this.selectionManager = new SelectionManager(this);
+      console.log('✅ SelectionManager initialized');
+    }
+
     this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
     this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
     this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
@@ -1100,6 +1279,11 @@ export class CanvasRenderer {
     const rect = this.canvas.getBoundingClientRect();
     this.mouseX = e.clientX - rect.left;
     this.mouseY = e.clientY - rect.top;
+
+    // Let SelectionManager handle first (for drawing move/resize)
+    if (this.selectionManager && this.selectionManager.onMouseMove(e, this.mouseX, this.mouseY)) {
+      return; // SelectionManager handled the event
+    }
 
     // Y-axis expand/compress
     if (this.isDraggingYAxis) {
@@ -1185,6 +1369,72 @@ export class CanvasRenderer {
     } else {
       // Update hovered candle
       this.hoveredIndex = this.xToIndex(this.mouseX);
+
+      // Update cursor based on active tool (when not dragging)
+      const activeTool = window.toolRegistry?.getActiveTool();
+
+      // Special handling for eraser tool - highlight drawing under cursor
+      if (activeTool && activeTool.id === 'eraser-cursor' && this.selectionManager) {
+        const hoveredDrawing = this.selectionManager.findDrawingAtPoint(this.mouseX, this.mouseY);
+        if (hoveredDrawing) {
+          this.canvas.style.cursor = 'pointer'; // Show clickable cursor
+          // Store for highlight rendering
+          this.eraserHoveredDrawing = hoveredDrawing;
+        } else {
+          this.canvas.style.cursor = activeTool.cursorStyle || 'default';
+          this.eraserHoveredDrawing = null;
+        }
+      }
+      // Special handling for dot/arrow cursor - show preview
+      else if (activeTool && (activeTool.id === 'dot-cursor' || activeTool.id === 'arrow-cursor')) {
+        this.eraserHoveredDrawing = null;
+
+        // Get preview from tool's onMouseMove
+        const result = activeTool.onMouseMove({ clientX: this.mouseX + this.canvas.getBoundingClientRect().left, clientY: this.mouseY + this.canvas.getBoundingClientRect().top }, {});
+        if (result) {
+          // Convert to chart coordinates
+          const chartX = this.xToIndex(this.mouseX);
+          const chartY = this.yToPrice(this.mouseY);
+          result.chartIndex = chartX;
+          result.chartPrice = chartY;
+
+          // Auto-detect arrow direction for preview
+          if (result.action === 'preview-arrow' && this.data.length > 0) {
+            const nearestIndex = Math.round(chartX);
+            if (nearestIndex >= 0 && nearestIndex < this.data.length) {
+              const candle = this.data[nearestIndex];
+              const candleHigh = candle.High;
+              const candleLow = candle.Low;
+
+              // If arrow is below the candle, point up (bullish)
+              // If arrow is above the candle, point down (bearish)
+              if (chartY < candleLow) {
+                result.direction = 'up';
+              } else if (chartY > candleHigh) {
+                result.direction = 'down';
+              } else {
+                // If inside the candle body, use proximity to decide
+                const candleMid = (candleHigh + candleLow) / 2;
+                result.direction = chartY < candleMid ? 'up' : 'down';
+              }
+            }
+          }
+
+          // Store as preview
+          this.previewDrawing = result;
+        }
+
+        this.canvas.style.cursor = activeTool.cursorStyle;
+      }
+      else {
+        this.eraserHoveredDrawing = null;
+        this.previewDrawing = null; // Clear preview when switching tools
+        if (activeTool && activeTool.cursorStyle) {
+          this.canvas.style.cursor = activeTool.cursorStyle;
+        } else {
+          this.canvas.style.cursor = 'default';
+        }
+      }
     }
 
     this.draw();
@@ -1197,6 +1447,116 @@ export class CanvasRenderer {
     const rect = this.canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
+
+    // Check if eraser tool is active
+    const activeTool = window.toolRegistry?.getActiveTool();
+    if (activeTool && activeTool.id === 'eraser-cursor' && this.selectionManager) {
+      // Eraser mode: delete drawing on click
+      const deletedDrawing = this.selectionManager.findDrawingAtPoint(mouseX, mouseY);
+      if (deletedDrawing) {
+        const index = this.drawings.indexOf(deletedDrawing);
+        if (index > -1) {
+          this.drawings.splice(index, 1);
+          console.log(`🗑️ Eraser deleted drawing at index ${index} (${this.drawings.length} remaining)`);
+
+          // Delete from backend
+          this.deleteDrawing(deletedDrawing.id);
+
+          this.draw();
+          return; // Handled by eraser
+        }
+      }
+    }
+
+    // Check if horizontal or vertical line tool is active
+    if (activeTool && (activeTool.id === 'horizontal-line' || activeTool.id === 'vertical-line')) {
+      const result = activeTool.onClick(e, {});
+      if (result) {
+        // Convert to chart coordinates
+        if (result.action === 'place-horizontal-line') {
+          result.price = this.yToPrice(mouseY);
+          delete result.y; // Remove screen coordinate
+
+          // Smart support/resistance detection
+          const srType = this.detectSupportResistance(result.price);
+          if (srType === 'support') {
+            result.lineColor = '#00c851'; // Green for support
+          } else if (srType === 'resistance') {
+            result.lineColor = '#ff4444'; // Red for resistance
+          } else {
+            result.lineColor = '#ff9800'; // Orange for neutral
+          }
+          console.log(`✅ Horizontal line detected as: ${srType}`);
+        } else if (result.action === 'place-vertical-line') {
+          result.chartIndex = this.xToIndex(mouseX);
+          delete result.x; // Remove screen coordinate
+        }
+
+        // Store as a completed drawing
+        this.drawings.push(result);
+        console.log(`✅ Placed ${activeTool.id} at chart coords`);
+
+        // Save to backend
+        this.saveDrawing(result);
+
+        this.draw();
+        return; // Handled
+      }
+    }
+
+    // Check if dot or arrow cursor is active (place markers on click)
+    if (activeTool && (activeTool.id === 'dot-cursor' || activeTool.id === 'arrow-cursor')) {
+      // Get the result from the tool's onClick handler
+      const result = activeTool.onClick(e, {});
+      if (result) {
+        // Convert to chart coordinates
+        const chartX = this.xToIndex(mouseX);
+        const chartY = this.yToPrice(mouseY);
+
+        // Add chart coordinates to the action
+        result.chartIndex = chartX;
+        result.chartPrice = chartY;
+
+        // Auto-detect arrow direction based on position relative to candles
+        if (result.action === 'place-arrow' && this.data.length > 0) {
+          const nearestIndex = Math.round(chartX);
+          if (nearestIndex >= 0 && nearestIndex < this.data.length) {
+            const candle = this.data[nearestIndex];
+            const candleHigh = candle.High;
+            const candleLow = candle.Low;
+
+            // If arrow is below the candle, point up (bullish)
+            // If arrow is above the candle, point down (bearish)
+            if (chartY < candleLow) {
+              result.direction = 'up';
+            } else if (chartY > candleHigh) {
+              result.direction = 'down';
+            } else {
+              // If inside the candle body, use proximity to decide
+              const candleMid = (candleHigh + candleLow) / 2;
+              result.direction = chartY < candleMid ? 'up' : 'down';
+            }
+          }
+        }
+
+        // Store as a completed drawing
+        this.drawings.push(result);
+        console.log(`✅ Placed ${activeTool.id} at chart coords [${chartX}, $${chartY?.toFixed(2)}]`, result.direction ? `direction: ${result.direction}` : '');
+
+        // Save to backend
+        this.saveDrawing(result);
+
+        this.draw();
+        return; // Handled
+      }
+    }
+
+    // Let SelectionManager handle first (for drawing selection/editing)
+    if (this.selectionManager && this.selectionManager.onMouseDown(e, mouseX, mouseY)) {
+      console.log('✅ SelectionManager handled mouseDown');
+      return; // SelectionManager handled the event
+    }
+    console.log('⏭️ SelectionManager did not handle mouseDown, continuing to pan/zoom logic');
 
     // Check if clicking on Y-axis (price axis on right)
     const chartRight = this.width - this.margin.right;
@@ -1241,10 +1601,25 @@ export class CanvasRenderer {
    * Mouse up handler
    */
   onMouseUp(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Let SelectionManager handle first (for finishing drawing move/resize)
+    if (this.selectionManager && this.selectionManager.onMouseUp(e, mouseX, mouseY)) {
+      return; // SelectionManager handled the event
+    }
+
     this.isDragging = false;
     this.isDraggingYAxis = false;
     this.isDraggingXAxis = false;
-    this.canvas.style.cursor = 'grab';
+    // Restore cursor based on active tool
+    const activeTool = window.toolRegistry?.getActiveTool();
+    if (activeTool && activeTool.cursorStyle) {
+      this.canvas.style.cursor = activeTool.cursorStyle;
+    } else {
+      this.canvas.style.cursor = 'default';
+    }
   }
 
   /**
@@ -1257,7 +1632,13 @@ export class CanvasRenderer {
     this.isDragging = false;
     this.isDraggingYAxis = false;
     this.isDraggingXAxis = false;
-    this.canvas.style.cursor = 'grab';
+    // Restore cursor based on active tool
+    const activeTool = window.toolRegistry?.getActiveTool();
+    if (activeTool && activeTool.cursorStyle) {
+      this.canvas.style.cursor = activeTool.cursorStyle;
+    } else {
+      this.canvas.style.cursor = 'default';
+    }
     this.draw();
   }
 
@@ -1274,10 +1655,13 @@ export class CanvasRenderer {
 
     console.log('🎨 Tool action received:', action.action, action);
 
-    // Ignore "start" actions - they're just the first click
-    const ignoreActions = ['start-trend-line', 'start-ray-line', 'start-extended-line'];
+    // Ignore "start" actions, "hover" actions, "cancel" actions, and cursor actions
+    const ignoreActions = [
+      'start-trend-line', 'start-ray-line', 'start-extended-line',
+      'hover', 'cancel-drawing', 'check-selection'
+    ];
     if (ignoreActions.includes(action.action)) {
-      console.log('⏭️ Ignoring start action');
+      console.log('⏭️ Ignoring action:', action.action);
       return;
     }
 
@@ -1286,9 +1670,12 @@ export class CanvasRenderer {
                       action.action.includes('-point-') ||
                       action.action === 'update-polygon';
 
-    // Convert screen coordinates to chart coordinates for trend lines
+    // Convert screen coordinates to chart coordinates for line-based drawings
     let convertedAction = action;
-    if (action.action.includes('trend-line')) {
+    if (action.action.includes('trend-line') ||
+        action.action.includes('ray-line') ||
+        action.action.includes('extended-line') ||
+        action.action.includes('parallel-channel')) {
       convertedAction = this.convertToChartCoordinates(action);
       console.log('🔄 Action after conversion:', convertedAction);
     }
@@ -1302,6 +1689,9 @@ export class CanvasRenderer {
       this.drawings.push(convertedAction);
       this.previewDrawing = null; // Clear preview
       console.log(`✅ Drawing added: ${convertedAction.action} (total: ${this.drawings.length})`, convertedAction);
+
+      // Save to backend
+      this.saveDrawing(convertedAction);
     }
 
     // Redraw chart with new drawing/preview
@@ -1314,22 +1704,42 @@ export class CanvasRenderer {
   convertToChartCoordinates(action) {
     const converted = { ...action };
 
-    // Convert start point
-    if (action.startX !== undefined && action.startY !== undefined) {
-      converted.startIndex = this.xToIndex(action.startX);
-      converted.startPrice = this.yToPrice(action.startY);
-    }
+    // Handle parallel channel structure (line1Start, line1End, parallelY)
+    if (action.action && action.action.includes('parallel-channel')) {
+      if (action.line1Start) {
+        converted.startIndex = this.xToIndex(action.line1Start.x);
+        converted.startPrice = this.yToPrice(action.line1Start.y);
+      }
+      if (action.line1End) {
+        converted.endIndex = this.xToIndex(action.line1End.x);
+        converted.endPrice = this.yToPrice(action.line1End.y);
+      }
+      if (action.parallelY !== undefined) {
+        converted.parallelPrice = this.yToPrice(action.parallelY);
+      }
+      console.log('🔄 Converted parallel channel:', {
+        screen: `Line1: (${action.line1Start?.x}, ${action.line1Start?.y}) → (${action.line1End?.x}, ${action.line1End?.y}), parallelY: ${action.parallelY}`,
+        chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}], parallelPrice: $${converted.parallelPrice?.toFixed(2)}`
+      });
+    } else {
+      // Handle standard line structure (startX/Y, endX/Y)
+      // Convert start point
+      if (action.startX !== undefined && action.startY !== undefined) {
+        converted.startIndex = this.xToIndex(action.startX);
+        converted.startPrice = this.yToPrice(action.startY);
+      }
 
-    // Convert end point
-    if (action.endX !== undefined && action.endY !== undefined) {
-      converted.endIndex = this.xToIndex(action.endX);
-      converted.endPrice = this.yToPrice(action.endY);
-    }
+      // Convert end point
+      if (action.endX !== undefined && action.endY !== undefined) {
+        converted.endIndex = this.xToIndex(action.endX);
+        converted.endPrice = this.yToPrice(action.endY);
+      }
 
-    console.log('🔄 Converted coordinates:', {
-      screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
-      chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`
-    });
+      console.log('🔄 Converted coordinates:', {
+        screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
+        chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`
+      });
+    }
 
     return converted;
   }
@@ -1414,7 +1824,21 @@ export class CanvasRenderer {
     if (!this.ctx || this.drawings.length === 0) return;
 
     this.drawings.forEach(drawing => {
-      this.drawSingleDrawing(drawing);
+      // Highlight drawing if hovered by eraser tool
+      const isEraserHovered = this.eraserHoveredDrawing === drawing;
+
+      // Use yellow for dots/arrows (so we don't confuse with red arrows)
+      // Use red for trend lines (original behavior)
+      let highlightColor = null;
+      if (isEraserHovered) {
+        if (drawing.action === 'place-dot' || drawing.action === 'place-arrow') {
+          highlightColor = '#ffeb3b'; // Yellow
+        } else {
+          highlightColor = '#ff4444'; // Red
+        }
+      }
+
+      this.drawSingleDrawing(drawing, highlightColor);
     });
   }
 
@@ -1433,25 +1857,31 @@ export class CanvasRenderer {
 
   /**
    * Draw a single drawing (used for both completed and preview)
+   * @param {Object} drawing - Drawing object to render
+   * @param {string|null} overrideColor - Optional color override (for eraser highlight)
    */
-  drawSingleDrawing(drawing) {
+  drawSingleDrawing(drawing, overrideColor = null) {
     if (!drawing || !drawing.action) return;
 
     const ctx = this.ctx;
 
     // Route to specific drawing method based on action
     if (drawing.action.includes('trend-line')) {
-      this.drawTrendLine(drawing);
+      this.drawTrendLine(drawing, overrideColor);
+    } else if (drawing.action === 'place-dot' || drawing.action === 'preview-dot') {
+      this.drawDot(drawing, overrideColor);
+    } else if (drawing.action === 'place-arrow' || drawing.action === 'preview-arrow') {
+      this.drawArrowMarker(drawing, overrideColor);
     } else if (drawing.action.includes('horizontal-line')) {
-      this.drawHorizontalLine(drawing);
+      this.drawHorizontalLine(drawing, overrideColor);
     } else if (drawing.action.includes('vertical-line')) {
-      this.drawVerticalLine(drawing);
+      this.drawVerticalLine(drawing, overrideColor);
     } else if (drawing.action.includes('ray-line')) {
-      this.drawRayLine(drawing);
+      this.drawRayLine(drawing, overrideColor);
     } else if (drawing.action.includes('extended-line')) {
-      this.drawExtendedLine(drawing);
+      this.drawExtendedLine(drawing, overrideColor);
     } else if (drawing.action.includes('parallel-channel')) {
-      this.drawParallelChannel(drawing);
+      this.drawParallelChannel(drawing, overrideColor);
     } else if (drawing.action.includes('fibonacci-retracement')) {
       this.drawFibonacciRetracement(drawing);
     } else if (drawing.action.includes('fibonacci-extension')) {
@@ -1499,12 +1929,94 @@ export class CanvasRenderer {
     }
   }
 
+  // ==================== CURSOR MARKER METHODS ====================
+
+  /**
+   * Draw a dot marker
+   * @param {Object} drawing - Drawing object with dot properties
+   * @param {string|null} overrideColor - Optional color override (for eraser highlight)
+   */
+  drawDot(drawing, overrideColor = null) {
+    const ctx = this.ctx;
+    const { color, size, chartIndex, chartPrice } = drawing;
+
+    // Convert chart coordinates to screen coordinates
+    const x = this.indexToX(chartIndex);
+    const y = this.priceToY(chartPrice);
+
+    ctx.fillStyle = overrideColor || color || '#00bfff';
+    ctx.beginPath();
+    ctx.arc(x, y, size || 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /**
+   * Draw an arrow marker
+   * @param {Object} drawing - Drawing object with arrow properties
+   * @param {string|null} overrideColor - Optional color override (for eraser highlight)
+   */
+  drawArrowMarker(drawing, overrideColor = null) {
+    const ctx = this.ctx;
+    const { color, size, direction, chartIndex, chartPrice } = drawing;
+
+    // Convert chart coordinates to screen coordinates
+    const x = this.indexToX(chartIndex);
+    const y = this.priceToY(chartPrice);
+
+    const arrowSize = size || 20;
+    const halfSize = arrowSize / 2;
+
+    // Determine arrow color
+    let arrowColor = overrideColor; // Override takes precedence (for eraser highlight)
+    if (!arrowColor) {
+      // Use custom color if provided, otherwise auto-color based on direction
+      arrowColor = color || (direction === 'down' ? '#ff4444' : '#00c851');
+    }
+
+    ctx.fillStyle = arrowColor;
+    ctx.beginPath();
+
+    // Draw arrow based on direction
+    switch (direction) {
+      case 'up':
+        ctx.moveTo(x, y - halfSize);
+        ctx.lineTo(x + halfSize * 0.6, y + halfSize);
+        ctx.lineTo(x - halfSize * 0.6, y + halfSize);
+        break;
+      case 'down':
+        ctx.moveTo(x, y + halfSize);
+        ctx.lineTo(x + halfSize * 0.6, y - halfSize);
+        ctx.lineTo(x - halfSize * 0.6, y - halfSize);
+        break;
+      case 'left':
+        ctx.moveTo(x - halfSize, y);
+        ctx.lineTo(x + halfSize, y + halfSize * 0.6);
+        ctx.lineTo(x + halfSize, y - halfSize * 0.6);
+        break;
+      case 'right':
+        ctx.moveTo(x + halfSize, y);
+        ctx.lineTo(x - halfSize, y + halfSize * 0.6);
+        ctx.lineTo(x - halfSize, y - halfSize * 0.6);
+        break;
+      default:
+        // Default to up arrow
+        ctx.moveTo(x, y - halfSize);
+        ctx.lineTo(x + halfSize * 0.6, y + halfSize);
+        ctx.lineTo(x - halfSize * 0.6, y + halfSize);
+    }
+
+    ctx.closePath();
+    ctx.fill();
+  }
+
   // ==================== TREND LINE DRAWING METHODS ====================
 
   /**
    * Draw a trend line
+   * @param {Object} drawing - Drawing object
+   * @param {string|null} overrideColor - Optional color override (for eraser highlight)
    */
-  drawTrendLine(drawing) {
+  drawTrendLine(drawing, overrideColor = null) {
     const ctx = this.ctx;
     const { lineColor, lineWidth, style } = drawing;
 
@@ -1539,7 +2051,8 @@ export class CanvasRenderer {
       return;
     }
 
-    ctx.strokeStyle = lineColor || '#2196f3';
+    // Use override color if provided (for eraser highlight), otherwise use drawing's color
+    ctx.strokeStyle = overrideColor || lineColor || '#2196f3';
     ctx.lineWidth = lineWidth || 2;
 
     // Set line style
@@ -1556,18 +2069,54 @@ export class CanvasRenderer {
     ctx.lineTo(endX, endY);
     ctx.stroke();
     ctx.setLineDash([]);
+
+    // Draw arrows at both ends pointing in opposite directions
+    const arrowSize = 12;
+    const angle = Math.atan2(endY - startY, endX - startX);
+
+    // Arrow at start point (pointing backward/left)
+    this.drawArrow(ctx, startX, startY, angle + Math.PI, arrowSize, lineColor || '#2196f3');
+
+    // Arrow at end point (pointing forward/right)
+    this.drawArrow(ctx, endX, endY, angle, arrowSize, lineColor || '#2196f3');
+  }
+
+  /**
+   * Draw an arrow at a specific point
+   */
+  drawArrow(ctx, x, y, angle, size, color) {
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    // Draw arrow triangle
+    ctx.beginPath();
+    ctx.moveTo(0, 0); // Arrow tip at the endpoint
+    ctx.lineTo(-size, -size / 2); // Top wing
+    ctx.lineTo(-size, size / 2); // Bottom wing
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
   }
 
   /**
    * Draw horizontal line
+   * @param {Object} drawing - Drawing object with price coordinate
+   * @param {string|null} overrideColor - Optional color override (for eraser highlight)
    */
-  drawHorizontalLine(drawing) {
+  drawHorizontalLine(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { y, lineColor, lineWidth, style } = drawing;
+    const { price, lineColor, lineWidth, style } = drawing;
+
+    // Convert price to screen Y coordinate
+    const y = this.priceToY(price);
+
     const chartLeft = this.margin.left;
     const chartRight = this.width - this.margin.right;
 
-    ctx.strokeStyle = lineColor || '#ff9800';
+    ctx.strokeStyle = overrideColor || lineColor || '#ff9800';
     ctx.lineWidth = lineWidth || 2;
 
     if (style === 'dashed') {
@@ -1587,14 +2136,20 @@ export class CanvasRenderer {
 
   /**
    * Draw vertical line
+   * @param {Object} drawing - Drawing object with chartIndex coordinate
+   * @param {string|null} overrideColor - Optional color override (for eraser highlight)
    */
-  drawVerticalLine(drawing) {
+  drawVerticalLine(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { x, lineColor, lineWidth, style } = drawing;
+    const { chartIndex, lineColor, lineWidth, style } = drawing;
+
+    // Convert chartIndex to screen X coordinate
+    const x = this.indexToX(chartIndex);
+
     const chartTop = this.margin.top;
     const chartBottom = this.height - this.margin.bottom;
 
-    ctx.strokeStyle = lineColor || '#9c27b0';
+    ctx.strokeStyle = overrideColor || lineColor || '#9c27b0';
     ctx.lineWidth = lineWidth || 2;
 
     if (style === 'dashed') {
@@ -1614,23 +2169,31 @@ export class CanvasRenderer {
 
   /**
    * Draw ray line (extends infinitely in one direction)
+   * @param {Object} drawing - Drawing object with chart coordinates
+   * @param {string|null} overrideColor - Optional color override (for eraser highlight)
    */
-  drawRayLine(drawing) {
+  drawRayLine(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, lineColor, lineWidth, style } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, lineColor, lineWidth, style } = drawing;
+
+    // Convert chart coordinates to screen coordinates
+    const startX = this.indexToX(startIndex);
+    const startY = this.priceToY(startPrice);
+    const endX = this.indexToX(endIndex);
+    const endY = this.priceToY(endPrice);
 
     // Calculate direction and extend to edge
     const dx = endX - startX;
     const dy = endY - startY;
     const chartRight = this.width - this.margin.right;
-    const chartBottom = this.height - this.margin.bottom;
+    const chartLeft = this.margin.left;
 
-    // Extend line to edge of chart
-    const extendX = dx > 0 ? chartRight : this.margin.left;
+    // Extend line to edge of chart in the direction of the ray
+    const extendX = dx > 0 ? chartRight : chartLeft;
     const slope = dy / dx;
     const extendY = startY + slope * (extendX - startX);
 
-    ctx.strokeStyle = lineColor || '#4caf50';
+    ctx.strokeStyle = overrideColor || lineColor || '#4caf50';
     ctx.lineWidth = lineWidth || 2;
 
     if (style === 'dashed') {
@@ -1650,10 +2213,18 @@ export class CanvasRenderer {
 
   /**
    * Draw extended line (extends infinitely in both directions)
+   * @param {Object} drawing - Drawing object with chart coordinates
+   * @param {string|null} overrideColor - Optional color override (for eraser highlight)
    */
-  drawExtendedLine(drawing) {
+  drawExtendedLine(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, lineColor, lineWidth, style } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, lineColor, lineWidth, style } = drawing;
+
+    // Convert chart coordinates to screen coordinates
+    const startX = this.indexToX(startIndex);
+    const startY = this.priceToY(startPrice);
+    const endX = this.indexToX(endIndex);
+    const endY = this.priceToY(endPrice);
 
     // Calculate slope
     const dx = endX - startX;
@@ -1667,7 +2238,7 @@ export class CanvasRenderer {
     const y1 = startY + slope * (chartLeft - startX);
     const y2 = startY + slope * (chartRight - startX);
 
-    ctx.strokeStyle = lineColor || '#f44336';
+    ctx.strokeStyle = overrideColor || lineColor || '#f44336';
     ctx.lineWidth = lineWidth || 2;
 
     if (style === 'dashed') {
@@ -1687,36 +2258,45 @@ export class CanvasRenderer {
 
   /**
    * Draw parallel channel
+   * @param {Object} drawing - Drawing object with chart coordinates
+   * @param {string|null} overrideColor - Optional color override (for eraser highlight)
    */
-  drawParallelChannel(drawing) {
+  drawParallelChannel(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { line1Start, line1End, parallelY, lineColor, lineWidth, fillOpacity } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, parallelPrice, lineColor, lineWidth, fillOpacity } = drawing;
+
+    // Convert chart coordinates to screen coordinates for line 1
+    const line1StartX = this.indexToX(startIndex);
+    const line1StartY = this.priceToY(startPrice);
+    const line1EndX = this.indexToX(endIndex);
+    const line1EndY = this.priceToY(endPrice);
+
+    // Calculate parallel line offset (in screen coordinates)
+    const parallelY = this.priceToY(parallelPrice);
+    const offset = parallelY - line1StartY;
 
     // Draw first line
-    ctx.strokeStyle = lineColor || '#00bcd4';
+    ctx.strokeStyle = overrideColor || lineColor || '#00bcd4';
     ctx.lineWidth = lineWidth || 2;
     ctx.beginPath();
-    ctx.moveTo(line1Start.x, line1Start.y);
-    ctx.lineTo(line1End.x, line1End.y);
+    ctx.moveTo(line1StartX, line1StartY);
+    ctx.lineTo(line1EndX, line1EndY);
     ctx.stroke();
-
-    // Calculate parallel line offset
-    const offset = parallelY - line1Start.y;
 
     // Draw second line (parallel)
     ctx.beginPath();
-    ctx.moveTo(line1Start.x, line1Start.y + offset);
-    ctx.lineTo(line1End.x, line1End.y + offset);
+    ctx.moveTo(line1StartX, line1StartY + offset);
+    ctx.lineTo(line1EndX, line1EndY + offset);
     ctx.stroke();
 
     // Fill channel
-    if (fillOpacity && fillOpacity > 0) {
-      ctx.fillStyle = `${lineColor}${Math.floor(fillOpacity * 255).toString(16)}`;
+    if (!overrideColor && fillOpacity && fillOpacity > 0) {
+      ctx.fillStyle = `${lineColor || '#00bcd4'}${Math.floor(fillOpacity * 255).toString(16).padStart(2, '0')}`;
       ctx.beginPath();
-      ctx.moveTo(line1Start.x, line1Start.y);
-      ctx.lineTo(line1End.x, line1End.y);
-      ctx.lineTo(line1End.x, line1End.y + offset);
-      ctx.lineTo(line1Start.x, line1Start.y + offset);
+      ctx.moveTo(line1StartX, line1StartY);
+      ctx.lineTo(line1EndX, line1EndY);
+      ctx.lineTo(line1EndX, line1EndY + offset);
+      ctx.lineTo(line1StartX, line1StartY + offset);
       ctx.closePath();
       ctx.fill();
     }
