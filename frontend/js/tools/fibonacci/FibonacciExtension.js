@@ -64,25 +64,29 @@ export class FibonacciExtension {
    * Handle mouse down - progress through 3-point drawing
    */
   onMouseDown(event, chartState) {
+    // Use canvas-relative coordinates (provided by tool panel)
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     if (this.drawingStep === 0) {
       // First click - set point 1
       this.drawingStep = 1;
-      this.point1 = { x: event.clientX, y: event.clientY };
+      this.point1 = { x, y };
       return {
         action: 'start-fibonacci-extension-p1',
-        x: event.clientX,
-        y: event.clientY
+        x,
+        y
       };
     } else if (this.drawingStep === 1) {
       // Second click - set point 2
       this.drawingStep = 2;
-      this.point2 = { x: event.clientX, y: event.clientY };
+      this.point2 = { x, y };
       return {
         action: 'start-fibonacci-extension-p2',
         x1: this.point1.x,
         y1: this.point1.y,
-        x2: event.clientX,
-        y2: event.clientY
+        x2: x,
+        y2: y
       };
     } else if (this.drawingStep === 2) {
       // Third click - set point 3 and finish
@@ -92,7 +96,7 @@ export class FibonacciExtension {
         action: 'finish-fibonacci-extension',
         point1: this.point1,
         point2: this.point2,
-        point3: { x: event.clientX, y: event.clientY },
+        point3: { x, y },
         levels: this.levels,
         levelColors: this.levelColors,
         lineColor: this.lineColor,
@@ -111,20 +115,24 @@ export class FibonacciExtension {
    * Handle mouse move - show preview
    */
   onMouseMove(event, chartState) {
+    // Use canvas-relative coordinates (provided by tool panel)
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     if (this.drawingStep === 1 && this.point1) {
       return {
         action: 'preview-fibonacci-extension-p1',
         x1: this.point1.x,
         y1: this.point1.y,
-        x2: event.clientX,
-        y2: event.clientY
+        x2: x,
+        y2: y
       };
     } else if (this.drawingStep === 2 && this.point2) {
       return {
         action: 'preview-fibonacci-extension',
         point1: this.point1,
         point2: this.point2,
-        point3: { x: event.clientX, y: event.clientY },
+        point3: { x, y },
         levels: this.levels,
         levelColors: this.levelColors,
         lineColor: this.lineColor,

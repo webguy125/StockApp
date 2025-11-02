@@ -44,14 +44,18 @@ export class FibonacciSpiral {
    * Handle mouse down - start or finish drawing
    */
   onMouseDown(event, chartState) {
+    // Use canvas-relative coordinates (provided by tool panel)
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     if (!this.isDrawing) {
       // First click - start the spiral
       this.isDrawing = true;
-      this.startPoint = { x: event.clientX, y: event.clientY };
+      this.startPoint = { x, y };
       return {
         action: 'start-fibonacci-spiral',
-        x: event.clientX,
-        y: event.clientY
+        x,
+        y
       };
     } else {
       // Second click - finish the spiral
@@ -61,8 +65,8 @@ export class FibonacciSpiral {
         action: 'finish-fibonacci-spiral',
         startX: this.startPoint.x,
         startY: this.startPoint.y,
-        endX: event.clientX,
-        endY: event.clientY,
+        endX: x,
+        endY: y,
         lineColor: this.lineColor,
         lineWidth: this.lineWidth,
         showSquares: this.showSquares,
@@ -80,12 +84,16 @@ export class FibonacciSpiral {
    */
   onMouseMove(event, chartState) {
     if (this.isDrawing && this.startPoint) {
+      // Use canvas-relative coordinates (provided by tool panel)
+      const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+      const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
       return {
         action: 'preview-fibonacci-spiral',
         startX: this.startPoint.x,
         startY: this.startPoint.y,
-        endX: event.clientX,
-        endY: event.clientY,
+        endX: x,
+        endY: y,
         lineColor: this.lineColor,
         lineWidth: this.lineWidth,
         showSquares: this.showSquares,

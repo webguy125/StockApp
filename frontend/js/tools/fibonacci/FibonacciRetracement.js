@@ -57,14 +57,18 @@ export class FibonacciRetracement {
    * Handle mouse down - start or finish drawing
    */
   onMouseDown(event, chartState) {
+    // Use canvas-relative coordinates (provided by tool panel)
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     if (!this.isDrawing) {
       // First click - start the retracement
       this.isDrawing = true;
-      this.startPoint = { x: event.clientX, y: event.clientY };
+      this.startPoint = { x, y };
       return {
         action: 'start-fibonacci-retracement',
-        x: event.clientX,
-        y: event.clientY
+        x,
+        y
       };
     } else {
       // Second click - finish the retracement
@@ -74,8 +78,8 @@ export class FibonacciRetracement {
         action: 'finish-fibonacci-retracement',
         startX: this.startPoint.x,
         startY: this.startPoint.y,
-        endX: event.clientX,
-        endY: event.clientY,
+        endX: x,
+        endY: y,
         levels: this.levels,
         levelColors: this.levelColors,
         lineColor: this.lineColor,
@@ -95,12 +99,16 @@ export class FibonacciRetracement {
    */
   onMouseMove(event, chartState) {
     if (this.isDrawing && this.startPoint) {
+      // Use canvas-relative coordinates (provided by tool panel)
+      const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+      const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
       return {
         action: 'preview-fibonacci-retracement',
         startX: this.startPoint.x,
         startY: this.startPoint.y,
-        endX: event.clientX,
-        endY: event.clientY,
+        endX: x,
+        endY: y,
         levels: this.levels,
         levelColors: this.levelColors,
         lineColor: this.lineColor,

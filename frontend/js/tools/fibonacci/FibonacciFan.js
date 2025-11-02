@@ -52,14 +52,18 @@ export class FibonacciFan {
    * Handle mouse down - start or finish drawing
    */
   onMouseDown(event, chartState) {
+    // Use canvas-relative coordinates (provided by tool panel)
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     if (!this.isDrawing) {
       // First click - start the fan
       this.isDrawing = true;
-      this.startPoint = { x: event.clientX, y: event.clientY };
+      this.startPoint = { x, y };
       return {
         action: 'start-fibonacci-fan',
-        x: event.clientX,
-        y: event.clientY
+        x,
+        y
       };
     } else {
       // Second click - finish the fan
@@ -69,8 +73,8 @@ export class FibonacciFan {
         action: 'finish-fibonacci-fan',
         startX: this.startPoint.x,
         startY: this.startPoint.y,
-        endX: event.clientX,
-        endY: event.clientY,
+        endX: x,
+        endY: y,
         levels: this.levels,
         levelColors: this.levelColors,
         lineColor: this.lineColor,
@@ -89,12 +93,16 @@ export class FibonacciFan {
    */
   onMouseMove(event, chartState) {
     if (this.isDrawing && this.startPoint) {
+      // Use canvas-relative coordinates (provided by tool panel)
+      const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+      const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
       return {
         action: 'preview-fibonacci-fan',
         startX: this.startPoint.x,
         startY: this.startPoint.y,
-        endX: event.clientX,
-        endY: event.clientY,
+        endX: x,
+        endY: y,
         levels: this.levels,
         levelColors: this.levelColors,
         lineColor: this.lineColor,

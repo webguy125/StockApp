@@ -41,10 +41,14 @@ export class FibonacciTimeZones {
    * Handle click - place time zones starting point
    */
   onClick(event, chartState) {
+    // Use canvas-relative coordinates (provided by tool panel)
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     return {
-      action: 'place-fibonacci-time-zones',
-      x: event.clientX,
-      y: event.clientY,
+      action: 'finish-fibonacci-time-zones',
+      x,
+      y,
       sequence: this.sequence,
       lineColor: this.lineColor,
       lineWidth: this.lineWidth,
@@ -57,10 +61,14 @@ export class FibonacciTimeZones {
    * Handle mouse move - show preview
    */
   onMouseMove(event, chartState) {
+    // Use canvas-relative coordinates (provided by tool panel)
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     return {
       action: 'preview-fibonacci-time-zones',
-      x: event.clientX,
-      y: event.clientY,
+      x,
+      y,
       sequence: this.sequence,
       lineColor: this.lineColor,
       lineWidth: this.lineWidth,

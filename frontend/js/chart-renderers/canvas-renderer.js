@@ -1675,7 +1675,8 @@ export class CanvasRenderer {
     if (action.action.includes('trend-line') ||
         action.action.includes('ray-line') ||
         action.action.includes('extended-line') ||
-        action.action.includes('parallel-channel')) {
+        action.action.includes('parallel-channel') ||
+        action.action.includes('fibonacci-')) {
       convertedAction = this.convertToChartCoordinates(action);
       console.log('🔄 Action after conversion:', convertedAction);
     }
@@ -1709,17 +1710,42 @@ export class CanvasRenderer {
       if (action.line1Start) {
         converted.startIndex = this.xToIndex(action.line1Start.x);
         converted.startPrice = this.yToPrice(action.line1Start.y);
+        delete converted.line1Start;
       }
       if (action.line1End) {
         converted.endIndex = this.xToIndex(action.line1End.x);
         converted.endPrice = this.yToPrice(action.line1End.y);
+        delete converted.line1End;
       }
       if (action.parallelY !== undefined) {
         converted.parallelPrice = this.yToPrice(action.parallelY);
+        delete converted.parallelY;
+        delete converted.parallelX;
       }
       console.log('🔄 Converted parallel channel:', {
         screen: `Line1: (${action.line1Start?.x}, ${action.line1Start?.y}) → (${action.line1End?.x}, ${action.line1End?.y}), parallelY: ${action.parallelY}`,
         chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}], parallelPrice: $${converted.parallelPrice?.toFixed(2)}`
+      });
+    } else if (action.action && action.action.includes('fibonacci-extension')) {
+      // Handle Fibonacci Extension 3-point structure (point1, point2, point3)
+      if (action.point1) {
+        converted.point1Index = this.xToIndex(action.point1.x);
+        converted.point1Price = this.yToPrice(action.point1.y);
+        delete converted.point1;
+      }
+      if (action.point2) {
+        converted.point2Index = this.xToIndex(action.point2.x);
+        converted.point2Price = this.yToPrice(action.point2.y);
+        delete converted.point2;
+      }
+      if (action.point3) {
+        converted.point3Index = this.xToIndex(action.point3.x);
+        converted.point3Price = this.yToPrice(action.point3.y);
+        delete converted.point3;
+      }
+      console.log('🔄 Converted Fibonacci Extension:', {
+        screen: `P1(${action.point1?.x}, ${action.point1?.y}) P2(${action.point2?.x}, ${action.point2?.y}) P3(${action.point3?.x}, ${action.point3?.y})`,
+        chart: `P1[${converted.point1Index}, $${converted.point1Price?.toFixed(2)}] P2[${converted.point2Index}, $${converted.point2Price?.toFixed(2)}] P3[${converted.point3Index}, $${converted.point3Price?.toFixed(2)}]`
       });
     } else {
       // Handle standard line structure (startX/Y, endX/Y)
@@ -1727,18 +1753,47 @@ export class CanvasRenderer {
       if (action.startX !== undefined && action.startY !== undefined) {
         converted.startIndex = this.xToIndex(action.startX);
         converted.startPrice = this.yToPrice(action.startY);
+        // Remove screen coordinates to avoid confusion
+        delete converted.startX;
+        delete converted.startY;
       }
 
       // Convert end point
       if (action.endX !== undefined && action.endY !== undefined) {
         converted.endIndex = this.xToIndex(action.endX);
         converted.endPrice = this.yToPrice(action.endY);
+        // Remove screen coordinates to avoid confusion
+        delete converted.endX;
+        delete converted.endY;
       }
 
-      console.log('🔄 Converted coordinates:', {
-        screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
-        chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`
-      });
+      // Handle single point tools (like Fibonacci Time Zones) - x, y only
+      if (action.x !== undefined && action.y !== undefined && !action.startX && !action.endX) {
+        converted.chartIndex = this.xToIndex(action.x);
+        converted.chartPrice = this.yToPrice(action.y);
+        // Remove screen coordinates to avoid confusion
+        delete converted.x;
+        delete converted.y;
+      }
+
+      if (action.action.includes('fibonacci')) {
+        console.log('🔄 Converted Fibonacci coordinates:', {
+          action: action.action,
+          screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
+          chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`,
+          hasRequiredProps: {
+            startIndex: converted.startIndex !== undefined,
+            startPrice: converted.startPrice !== undefined,
+            endIndex: converted.endIndex !== undefined,
+            endPrice: converted.endPrice !== undefined
+          }
+        });
+      } else {
+        console.log('🔄 Converted coordinates:', {
+          screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
+          chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`
+        });
+      }
     }
 
     return converted;
@@ -1823,14 +1878,23 @@ export class CanvasRenderer {
   drawAllDrawings() {
     if (!this.ctx || this.drawings.length === 0) return;
 
+    // Get the currently selected drawing from SelectionManager
+    const selectedDrawing = this.selectionManager?.getSelectedDrawing();
+
     this.drawings.forEach(drawing => {
+      // Highlight drawing if selected (turns yellow)
+      const isSelected = selectedDrawing === drawing;
+
       // Highlight drawing if hovered by eraser tool
       const isEraserHovered = this.eraserHoveredDrawing === drawing;
 
-      // Use yellow for dots/arrows (so we don't confuse with red arrows)
-      // Use red for trend lines (original behavior)
+      // Priority: selected > eraser hovered
       let highlightColor = null;
-      if (isEraserHovered) {
+      if (isSelected) {
+        highlightColor = '#ffeb3b'; // Yellow for selected
+      } else if (isEraserHovered) {
+        // Use yellow for dots/arrows (so we don't confuse with red arrows)
+        // Use red for trend lines (original behavior)
         if (drawing.action === 'place-dot' || drawing.action === 'place-arrow') {
           highlightColor = '#ffeb3b'; // Yellow
         } else {
@@ -1883,17 +1947,17 @@ export class CanvasRenderer {
     } else if (drawing.action.includes('parallel-channel')) {
       this.drawParallelChannel(drawing, overrideColor);
     } else if (drawing.action.includes('fibonacci-retracement')) {
-      this.drawFibonacciRetracement(drawing);
+      this.drawFibonacciRetracement(drawing, overrideColor);
     } else if (drawing.action.includes('fibonacci-extension')) {
-      this.drawFibonacciExtension(drawing);
+      this.drawFibonacciExtension(drawing, overrideColor);
     } else if (drawing.action.includes('fibonacci-fan')) {
-      this.drawFibonacciFan(drawing);
+      this.drawFibonacciFan(drawing, overrideColor);
     } else if (drawing.action.includes('fibonacci-arcs')) {
-      this.drawFibonacciArcs(drawing);
+      this.drawFibonacciArcs(drawing, overrideColor);
     } else if (drawing.action.includes('fibonacci-time-zones')) {
-      this.drawFibonacciTimeZones(drawing);
+      this.drawFibonacciTimeZones(drawing, overrideColor);
     } else if (drawing.action.includes('fibonacci-spiral')) {
-      this.drawFibonacciSpiral(drawing);
+      this.drawFibonacciSpiral(drawing, overrideColor);
     } else if (drawing.action.includes('gann-fan')) {
       this.drawGannFan(drawing);
     } else if (drawing.action.includes('gann-box')) {
@@ -2307,39 +2371,57 @@ export class CanvasRenderer {
   /**
    * Draw Fibonacci retracement
    */
-  drawFibonacciRetracement(drawing) {
+  drawFibonacciRetracement(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, levels, levelColors, lineColor, lineWidth, showLabels } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, levels, levelColors, lineColor, lineWidth, showLabels } = drawing;
 
-    const dy = endY - startY;
+    // Safety check for required properties
+    if (startIndex === undefined || startPrice === undefined || endIndex === undefined || endPrice === undefined) {
+      console.error('❌ Fibonacci Retracement missing required coordinates:', drawing);
+      return;
+    }
 
-    // Draw main line
-    ctx.strokeStyle = lineColor || '#2196f3';
-    ctx.lineWidth = 1;
+    // Convert chart coordinates to screen coordinates
+    const startX = this.indexToX(startIndex);
+    const startY = this.priceToY(startPrice);
+    const endX = this.indexToX(endIndex);
+    const endY = this.priceToY(endPrice);
+
+    const priceRange = endPrice - startPrice;
+
+    // Draw main line from start to end
+    ctx.strokeStyle = overrideColor || lineColor || '#2196f3';
+    ctx.lineWidth = overrideColor ? 3 : 1;
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
     ctx.stroke();
 
-    // Draw each Fibonacci level
+    // Get chart boundaries
+    const chartLeft = this.margin.left;
+    const chartRight = this.width - this.margin.right;
+
+    // Draw each Fibonacci level as horizontal lines across the chart
     levels.forEach(level => {
-      const y = startY + dy * level;
-      const color = levelColors[level] || lineColor;
+      const levelPrice = startPrice + priceRange * level;
+      const levelY = this.priceToY(levelPrice);
+      const color = overrideColor || levelColors[level] || lineColor;
 
       ctx.strokeStyle = color;
-      ctx.lineWidth = lineWidth || 1;
+      ctx.lineWidth = overrideColor ? 3 : (lineWidth || 1);
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.moveTo(startX, y);
-      ctx.lineTo(endX, y);
+      ctx.moveTo(chartLeft, levelY);
+      ctx.lineTo(chartRight, levelY);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Draw label
-      if (showLabels) {
+      // Draw label on the right side
+      if (showLabels && !overrideColor) {
         ctx.fillStyle = color;
         ctx.font = '11px Arial';
-        ctx.fillText(`${(level * 100).toFixed(1)}%`, endX + 5, y + 4);
+        const labelText = `${(level * 100).toFixed(1)}% (${levelPrice.toFixed(2)})`;
+        ctx.fillText(labelText, chartRight + 5, levelY + 4);
       }
     });
   }
@@ -2347,40 +2429,63 @@ export class CanvasRenderer {
   /**
    * Draw Fibonacci extension
    */
-  drawFibonacciExtension(drawing) {
+  drawFibonacciExtension(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { point1, point2, point3, levels, levelColors, lineColor, lineWidth, showLabels } = drawing;
+    const { point1Index, point1Price, point2Index, point2Price, point3Index, point3Price,
+            levels, levelColors, lineColor, lineWidth, showLabels } = drawing;
 
-    // Calculate swing range
-    const swingHeight = point2.y - point1.y;
+    // Safety check for required properties
+    if (point1Index === undefined || point1Price === undefined ||
+        point2Index === undefined || point2Price === undefined ||
+        point3Index === undefined || point3Price === undefined) {
+      console.error('❌ Fibonacci Extension missing required coordinates:', drawing);
+      return;
+    }
 
-    // Draw connecting lines
-    ctx.strokeStyle = lineColor || '#9c27b0';
-    ctx.lineWidth = 1;
+    // Convert chart coordinates to screen coordinates
+    const p1X = this.indexToX(point1Index);
+    const p1Y = this.priceToY(point1Price);
+    const p2X = this.indexToX(point2Index);
+    const p2Y = this.priceToY(point2Price);
+    const p3X = this.indexToX(point3Index);
+    const p3Y = this.priceToY(point3Price);
+
+    // Calculate swing range in price
+    const swingPrice = point2Price - point1Price;
+
+    // Draw connecting lines (P1 → P2 → P3)
+    ctx.strokeStyle = overrideColor || lineColor || '#9c27b0';
+    ctx.lineWidth = overrideColor ? 3 : 1;
     ctx.beginPath();
-    ctx.moveTo(point1.x, point1.y);
-    ctx.lineTo(point2.x, point2.y);
-    ctx.lineTo(point3.x, point3.y);
+    ctx.moveTo(p1X, p1Y);
+    ctx.lineTo(p2X, p2Y);
+    ctx.lineTo(p3X, p3Y);
     ctx.stroke();
 
-    // Draw extension levels
+    // Get chart boundaries
+    const chartLeft = this.margin.left;
+    const chartRight = this.width - this.margin.right;
+
+    // Draw extension levels as horizontal lines from P3
     levels.forEach(level => {
-      const y = point3.y + swingHeight * level;
-      const color = levelColors[level] || lineColor;
+      const levelPrice = point3Price + swingPrice * level;
+      const levelY = this.priceToY(levelPrice);
+      const color = overrideColor || levelColors[level] || lineColor;
 
       ctx.strokeStyle = color;
-      ctx.lineWidth = lineWidth || 1;
+      ctx.lineWidth = overrideColor ? 3 : (lineWidth || 1);
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.moveTo(point3.x, y);
-      ctx.lineTo(point3.x + 100, y);
+      ctx.moveTo(p3X, levelY);
+      ctx.lineTo(chartRight, levelY);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      if (showLabels) {
+      if (showLabels && !overrideColor) {
         ctx.fillStyle = color;
         ctx.font = '11px Arial';
-        ctx.fillText(`${(level * 100).toFixed(1)}%`, point3.x + 105, y + 4);
+        const labelText = `${(level * 100).toFixed(1)}% (${levelPrice.toFixed(2)})`;
+        ctx.fillText(labelText, chartRight + 5, levelY + 4);
       }
     });
   }
@@ -2388,31 +2493,48 @@ export class CanvasRenderer {
   /**
    * Draw Fibonacci fan
    */
-  drawFibonacciFan(drawing) {
+  drawFibonacciFan(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, levels, levelColors, lineColor, lineWidth } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, levels, levelColors, lineColor, lineWidth } = drawing;
 
-    const dx = endX - startX;
-    const dy = endY - startY;
+    // Safety check for required properties
+    if (startIndex === undefined || startPrice === undefined || endIndex === undefined || endPrice === undefined) {
+      console.error('❌ Fibonacci Fan missing required coordinates:', drawing);
+      return;
+    }
+
+    // Convert chart coordinates to screen coordinates
+    const startX = this.indexToX(startIndex);
+    const startY = this.priceToY(startPrice);
+    const endX = this.indexToX(endIndex);
+    const endY = this.priceToY(endPrice);
+
+    const priceRange = endPrice - startPrice;
+    const chartRight = this.width - this.margin.right;
 
     // Draw main line
-    ctx.strokeStyle = lineColor || '#00bcd4';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = overrideColor || lineColor || '#00bcd4';
+    ctx.lineWidth = overrideColor ? 3 : 1;
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
     ctx.stroke();
 
-    // Draw fan lines
+    // Draw fan lines from start point to various levels at end X position
     levels.forEach(level => {
-      const fanY = startY + dy * level;
-      const color = levelColors[level] || lineColor;
+      const fanPrice = startPrice + priceRange * level;
+      const fanY = this.priceToY(fanPrice);
+      const color = overrideColor || levelColors[level] || lineColor;
 
       ctx.strokeStyle = color;
-      ctx.lineWidth = lineWidth || 1;
+      ctx.lineWidth = overrideColor ? 3 : (lineWidth || 1);
       ctx.beginPath();
       ctx.moveTo(startX, startY);
-      ctx.lineTo(endX, fanY);
+
+      // Extend the fan line to the right edge of the chart
+      const slope = (fanY - startY) / (endX - startX);
+      const extendedY = startY + slope * (chartRight - startX);
+      ctx.lineTo(chartRight, extendedY);
       ctx.stroke();
     });
   }
@@ -2420,21 +2542,33 @@ export class CanvasRenderer {
   /**
    * Draw Fibonacci arcs
    */
-  drawFibonacciArcs(drawing) {
+  drawFibonacciArcs(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, levels, levelColors, lineColor, lineWidth } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, levels, levelColors, lineColor, lineWidth } = drawing;
+
+    // Safety check for required properties
+    if (startIndex === undefined || startPrice === undefined || endIndex === undefined || endPrice === undefined) {
+      console.error('❌ Fibonacci Arcs missing required coordinates:', drawing);
+      return;
+    }
+
+    // Convert chart coordinates to screen coordinates
+    const startX = this.indexToX(startIndex);
+    const startY = this.priceToY(startPrice);
+    const endX = this.indexToX(endIndex);
+    const endY = this.priceToY(endPrice);
 
     const dx = endX - startX;
     const dy = endY - startY;
     const radius = Math.sqrt(dx * dx + dy * dy);
 
-    // Draw each arc
+    // Draw each arc centered at the start point
     levels.forEach(level => {
       const arcRadius = radius * level;
-      const color = levelColors[level] || lineColor;
+      const color = overrideColor || levelColors[level] || lineColor;
 
       ctx.strokeStyle = color;
-      ctx.lineWidth = lineWidth || 1;
+      ctx.lineWidth = overrideColor ? 3 : (lineWidth || 1);
       ctx.beginPath();
       ctx.arc(startX, startY, arcRadius, 0, Math.PI * 2);
       ctx.stroke();
@@ -2444,27 +2578,40 @@ export class CanvasRenderer {
   /**
    * Draw Fibonacci time zones
    */
-  drawFibonacciTimeZones(drawing) {
+  drawFibonacciTimeZones(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { x, sequence, lineColor, lineWidth } = drawing;
+    const { chartIndex, sequence, lineColor, lineWidth } = drawing;
+
+    // Safety check for required properties
+    if (chartIndex === undefined) {
+      console.error('❌ Fibonacci Time Zones missing required coordinates:', drawing);
+      return;
+    }
+
     const chartTop = this.margin.top;
     const chartBottom = this.height - this.margin.bottom;
 
-    // Assume each candle represents 1 time unit
-    const candleWidth = (this.width - this.margin.left - this.margin.right) / (this.endIndex - this.startIndex + 1);
-
+    // Draw vertical lines at Fibonacci sequence intervals from the start index
     sequence.forEach((fib, index) => {
-      const lineX = x + (fib * candleWidth);
+      const fibIndex = chartIndex + fib;
 
-      if (lineX >= this.margin.left && lineX <= this.width - this.margin.right) {
-        ctx.strokeStyle = lineColor || '#673ab7';
-        ctx.lineWidth = lineWidth || 1;
+      // Only draw if within visible range
+      if (fibIndex >= this.startIndex && fibIndex <= this.endIndex) {
+        const lineX = this.indexToX(fibIndex);
+
+        ctx.strokeStyle = overrideColor || lineColor || '#673ab7';
+        ctx.lineWidth = overrideColor ? 3 : (lineWidth || 1);
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
         ctx.moveTo(lineX, chartTop);
         ctx.lineTo(lineX, chartBottom);
         ctx.stroke();
         ctx.setLineDash([]);
+
+        // Draw label at the top
+        ctx.fillStyle = lineColor || '#673ab7';
+        ctx.font = '10px Arial';
+        ctx.fillText(fib.toString(), lineX + 3, chartTop + 12);
       }
     });
   }
@@ -2472,13 +2619,25 @@ export class CanvasRenderer {
   /**
    * Draw Fibonacci spiral
    */
-  drawFibonacciSpiral(drawing) {
+  drawFibonacciSpiral(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, lineColor, lineWidth, showSquares } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, lineColor, lineWidth, showSquares } = drawing;
+
+    // Safety check for required properties
+    if (startIndex === undefined || startPrice === undefined || endIndex === undefined || endPrice === undefined) {
+      console.error('❌ Fibonacci Spiral missing required coordinates:', drawing);
+      return;
+    }
+
+    // Convert chart coordinates to screen coordinates
+    const startX = this.indexToX(startIndex);
+    const startY = this.priceToY(startPrice);
+    const endX = this.indexToX(endIndex);
+    const endY = this.priceToY(endPrice);
 
     // Simplified spiral - draw golden ratio rectangles
-    ctx.strokeStyle = lineColor || '#e91e63';
-    ctx.lineWidth = lineWidth || 2;
+    ctx.strokeStyle = overrideColor || lineColor || '#e91e63';
+    ctx.lineWidth = overrideColor ? 3 : (lineWidth || 2);
 
     const width = Math.abs(endX - startX);
     const height = Math.abs(endY - startY);

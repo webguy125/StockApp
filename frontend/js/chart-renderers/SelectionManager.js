@@ -186,6 +186,25 @@ export class SelectionManager {
       copy.startPrice += priceOffset;
       copy.endPrice += priceOffset;
       copy.parallelPrice += priceOffset;
+    } else if (copy.action && copy.action.includes('fibonacci-extension')) {
+      // Fibonacci Extension has 3 points
+      copy.point1Index += offset;
+      copy.point2Index += offset;
+      copy.point3Index += offset;
+      const priceOffset = offset * (this.renderer.maxPrice - this.renderer.minPrice) / 100;
+      copy.point1Price += priceOffset;
+      copy.point2Price += priceOffset;
+      copy.point3Price += priceOffset;
+    } else if (copy.action && copy.action.includes('fibonacci-time-zones')) {
+      // Fibonacci Time Zones only has chartIndex
+      copy.chartIndex += offset;
+    } else if (copy.action && copy.action.includes('fibonacci-')) {
+      // Other Fibonacci tools (Retracement, Fan, Arcs, Spiral)
+      copy.startIndex += offset;
+      copy.endIndex += offset;
+      const priceOffset = offset * (this.renderer.maxPrice - this.renderer.minPrice) / 100;
+      copy.startPrice += priceOffset;
+      copy.endPrice += priceOffset;
     }
 
     // Add to drawings array
@@ -233,12 +252,24 @@ export class SelectionManager {
     // Get the active tool from ToolRegistry
     const activeTool = window.toolRegistry?.getActiveTool();
 
-    // Only handle selection when default tool is active
-    if (!activeTool || (activeTool.id !== 'default' && activeTool.id !== 'default-cursor')) {
+    // Check if clicking on any drawing
+    const clickedDrawing = this.findDrawingAtPoint(mouseX, mouseY);
+
+    // If no drawing clicked and we have a selection, deselect it
+    if (!clickedDrawing && this.selectedDrawing) {
+      this.selectedDrawing = null;
+      this.renderer.draw();
+      // Continue to let other tools handle the click
+    }
+
+    // Only handle selection/movement when default tool is active
+    const isDefaultTool = !activeTool || activeTool.id === 'default' || activeTool.id === 'default-cursor';
+
+    if (!isDefaultTool) {
       return false; // Let the active tool handle it
     }
 
-    // Check if clicking on selected drawing's handle
+    // Check if clicking on selected drawing's handle (only with default tool)
     if (this.selectedDrawing) {
       const handle = this.getHandleAtPoint(this.selectedDrawing, mouseX, mouseY);
       if (handle) {
@@ -248,15 +279,24 @@ export class SelectionManager {
       }
     }
 
-    // Check if clicking on any drawing
-    const clickedDrawing = this.findDrawingAtPoint(mouseX, mouseY);
-
+    // Handle clicking on a drawing (only with default tool)
     if (clickedDrawing) {
       this.selectedDrawing = clickedDrawing;
       this.isMovingDrawing = true;
 
       // Calculate offset from drawing start point
-      const screenStart = this.drawingToScreen(clickedDrawing.startIndex, clickedDrawing.startPrice);
+      // Handle different coordinate structures
+      let screenStart;
+      if (clickedDrawing.startIndex !== undefined && clickedDrawing.startPrice !== undefined) {
+        screenStart = this.drawingToScreen(clickedDrawing.startIndex, clickedDrawing.startPrice);
+      } else if (clickedDrawing.chartIndex !== undefined && clickedDrawing.chartPrice !== undefined) {
+        screenStart = this.drawingToScreen(clickedDrawing.chartIndex, clickedDrawing.chartPrice);
+      } else if (clickedDrawing.point1Index !== undefined && clickedDrawing.point1Price !== undefined) {
+        screenStart = this.drawingToScreen(clickedDrawing.point1Index, clickedDrawing.point1Price);
+      } else {
+        screenStart = { x: mouseX, y: mouseY }; // Fallback
+      }
+
       this.dragOffset = {
         x: mouseX - screenStart.x,
         y: mouseY - screenStart.y
@@ -264,14 +304,9 @@ export class SelectionManager {
 
       this.renderer.draw(); // Redraw with selection highlight
       return true; // Handled
-    } else {
-      // Clicked on empty space - deselect
-      if (this.selectedDrawing) {
-        this.selectedDrawing = null;
-        this.renderer.draw();
-      }
-      return false; // Not handled
     }
+
+    return false; // Not handled
   }
 
   /**
@@ -351,6 +386,23 @@ export class SelectionManager {
         drawing.startPrice += deltaPrice;
         drawing.endPrice += deltaPrice;
         drawing.parallelPrice += deltaPrice;
+      } else if (drawing.action && drawing.action.includes('fibonacci-extension')) {
+        // Fibonacci Extension - move all 3 points
+        drawing.point1Index += deltaIndex;
+        drawing.point1Price += deltaPrice;
+        drawing.point2Index += deltaIndex;
+        drawing.point2Price += deltaPrice;
+        drawing.point3Index += deltaIndex;
+        drawing.point3Price += deltaPrice;
+      } else if (drawing.action && drawing.action.includes('fibonacci-time-zones')) {
+        // Fibonacci Time Zones - move start index only
+        drawing.chartIndex += deltaIndex;
+      } else if (drawing.action && drawing.action.includes('fibonacci-')) {
+        // Other Fibonacci tools (Retracement, Fan, Arcs, Spiral) use startIndex/endIndex
+        drawing.startIndex += deltaIndex;
+        drawing.endIndex += deltaIndex;
+        drawing.startPrice += deltaPrice;
+        drawing.endPrice += deltaPrice;
       } else {
         // Trend lines, ray, extended line use startIndex/endIndex
         drawing.startIndex += deltaIndex;
@@ -499,8 +551,38 @@ export class SelectionManager {
         if (hit) {
           return drawing;
         }
+      } else if (drawing.action.includes('fibonacci-retracement')) {
+        const hit = this.isFibonacciRetracementHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('fibonacci-extension')) {
+        const hit = this.isFibonacciExtensionHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('fibonacci-fan')) {
+        const hit = this.isFibonacciFanHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('fibonacci-arcs')) {
+        const hit = this.isFibonacciArcsHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('fibonacci-time-zones')) {
+        const hit = this.isFibonacciTimeZonesHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('fibonacci-spiral')) {
+        const hit = this.isFibonacciSpiralHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
       }
-      // TODO: Add hit detection for other drawing types (rectangles, fibonacci, etc.)
+      // TODO: Add hit detection for other drawing types (Gann, Patterns, Shapes, etc.)
     }
 
     return null;
@@ -572,6 +654,127 @@ export class SelectionManager {
     const offset = parallelY - line1Start.y;
     const distance2 = this.pointToLineDistance(x, y, line1Start.x, line1Start.y + offset, line1End.x, line1End.y + offset);
     return distance2 < this.hitThreshold;
+  }
+
+  /**
+   * Check if Fibonacci Retracement is hit
+   */
+  isFibonacciRetracementHit(drawing, x, y) {
+    // Check main diagonal line
+    const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
+    const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
+    const distance = this.pointToLineDistance(x, y, start.x, start.y, end.x, end.y);
+    if (distance < this.hitThreshold) return true;
+
+    // Check any horizontal level lines
+    const priceRange = drawing.endPrice - drawing.startPrice;
+    for (const level of drawing.levels) {
+      const levelPrice = drawing.startPrice + priceRange * level;
+      const levelY = this.renderer.priceToY(levelPrice);
+      if (Math.abs(y - levelY) < this.hitThreshold) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if Fibonacci Extension is hit
+   */
+  isFibonacciExtensionHit(drawing, x, y) {
+    // Check connecting lines P1→P2→P3
+    const p1 = this.drawingToScreen(drawing.point1Index, drawing.point1Price);
+    const p2 = this.drawingToScreen(drawing.point2Index, drawing.point2Price);
+    const p3 = this.drawingToScreen(drawing.point3Index, drawing.point3Price);
+
+    const distance1 = this.pointToLineDistance(x, y, p1.x, p1.y, p2.x, p2.y);
+    if (distance1 < this.hitThreshold) return true;
+
+    const distance2 = this.pointToLineDistance(x, y, p2.x, p2.y, p3.x, p3.y);
+    if (distance2 < this.hitThreshold) return true;
+
+    // Check extension level lines
+    const swingPrice = drawing.point2Price - drawing.point1Price;
+    for (const level of drawing.levels) {
+      const levelPrice = drawing.point3Price + swingPrice * level;
+      const levelY = this.renderer.priceToY(levelPrice);
+      if (Math.abs(y - levelY) < this.hitThreshold && x >= p3.x) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if Fibonacci Fan is hit
+   */
+  isFibonacciFanHit(drawing, x, y) {
+    // Check main line
+    const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
+    const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
+    const distance = this.pointToLineDistance(x, y, start.x, start.y, end.x, end.y);
+    if (distance < this.hitThreshold) return true;
+
+    // Check fan lines
+    const priceRange = drawing.endPrice - drawing.startPrice;
+    const chartRight = this.renderer.width - this.renderer.margin.right;
+    for (const level of drawing.levels) {
+      const fanPrice = drawing.startPrice + priceRange * level;
+      const fanY = this.renderer.priceToY(fanPrice);
+      const slope = (fanY - start.y) / (end.x - start.x);
+      const extendedY = start.y + slope * (chartRight - start.x);
+      const fanDistance = this.pointToLineDistance(x, y, start.x, start.y, chartRight, extendedY);
+      if (fanDistance < this.hitThreshold) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if Fibonacci Arcs is hit
+   */
+  isFibonacciArcsHit(drawing, x, y) {
+    const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
+    const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const radius = Math.sqrt(dx * dx + dy * dy);
+
+    // Check if point is near any arc
+    const pointDistance = Math.sqrt((x - start.x) ** 2 + (y - start.y) ** 2);
+    for (const level of drawing.levels) {
+      const arcRadius = radius * level;
+      if (Math.abs(pointDistance - arcRadius) < this.hitThreshold) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if Fibonacci Time Zones is hit
+   */
+  isFibonacciTimeZonesHit(drawing, x, y) {
+    // Check if near any vertical time zone line
+    for (const fib of drawing.sequence) {
+      const fibIndex = drawing.chartIndex + fib;
+      const lineX = this.renderer.indexToX(fibIndex);
+      if (Math.abs(x - lineX) < this.hitThreshold) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if Fibonacci Spiral is hit
+   */
+  isFibonacciSpiralHit(drawing, x, y) {
+    // Check main rectangle
+    const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
+    const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
+
+    const left = Math.min(start.x, end.x);
+    const right = Math.max(start.x, end.x);
+    const top = Math.min(start.y, end.y);
+    const bottom = Math.max(start.y, end.y);
+
+    // Check if near rectangle edges
+    if (x >= left && x <= right && (Math.abs(y - top) < this.hitThreshold || Math.abs(y - bottom) < this.hitThreshold)) return true;
+    if (y >= top && y <= bottom && (Math.abs(x - left) < this.hitThreshold || Math.abs(x - right) < this.hitThreshold)) return true;
+
+    return false;
   }
 
   /**
