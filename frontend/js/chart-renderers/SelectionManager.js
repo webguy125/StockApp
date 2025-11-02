@@ -205,6 +205,13 @@ export class SelectionManager {
       const priceOffset = offset * (this.renderer.maxPrice - this.renderer.minPrice) / 100;
       copy.startPrice += priceOffset;
       copy.endPrice += priceOffset;
+    } else if (copy.action && copy.action.includes('gann-')) {
+      // Gann tools (Fan, Box, Square, Angles)
+      copy.startIndex += offset;
+      copy.endIndex += offset;
+      const priceOffset = offset * (this.renderer.maxPrice - this.renderer.minPrice) / 100;
+      copy.startPrice += priceOffset;
+      copy.endPrice += priceOffset;
     }
 
     // Add to drawings array
@@ -403,6 +410,12 @@ export class SelectionManager {
         drawing.endIndex += deltaIndex;
         drawing.startPrice += deltaPrice;
         drawing.endPrice += deltaPrice;
+      } else if (drawing.action && drawing.action.includes('gann-')) {
+        // Gann tools (Fan, Box, Square, Angles) use startIndex/endIndex
+        drawing.startIndex += deltaIndex;
+        drawing.endIndex += deltaIndex;
+        drawing.startPrice += deltaPrice;
+        drawing.endPrice += deltaPrice;
       } else {
         // Trend lines, ray, extended line use startIndex/endIndex
         drawing.startIndex += deltaIndex;
@@ -581,8 +594,28 @@ export class SelectionManager {
         if (hit) {
           return drawing;
         }
+      } else if (drawing.action.includes('gann-fan')) {
+        const hit = this.isGannFanHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('gann-box')) {
+        const hit = this.isGannBoxHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('gann-square')) {
+        const hit = this.isGannSquareHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('gann-angles')) {
+        const hit = this.isGannAnglesHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
       }
-      // TODO: Add hit detection for other drawing types (Gann, Patterns, Shapes, etc.)
+      // TODO: Add hit detection for other drawing types (Patterns, Shapes, etc.)
     }
 
     return null;
@@ -775,6 +808,117 @@ export class SelectionManager {
     if (y >= top && y <= bottom && (Math.abs(x - left) < this.hitThreshold || Math.abs(x - right) < this.hitThreshold)) return true;
 
     return false;
+  }
+
+  /**
+   * Check if Gann Fan is hit
+   */
+  isGannFanHit(drawing, x, y) {
+    const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
+    const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
+    const trendDirection = end.y < start.y ? -1 : 1;
+    const chartRight = this.renderer.width - this.renderer.margin.right;
+
+    // Check each Gann angle line
+    for (const [name, ratio] of Object.entries(drawing.angles)) {
+      const dx = chartRight - start.x;
+      const dy = dx * ratio * trendDirection;
+      const distance = this.pointToLineDistance(x, y, start.x, start.y, start.x + dx, start.y + dy);
+      if (distance < this.hitThreshold) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if Gann Box is hit
+   */
+  isGannBoxHit(drawing, x, y) {
+    const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
+    const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
+
+    const left = Math.min(start.x, end.x);
+    const right = Math.max(start.x, end.x);
+    const top = Math.min(start.y, end.y);
+    const bottom = Math.max(start.y, end.y);
+
+    // Check box outline
+    if (x >= left && x <= right && (Math.abs(y - top) < this.hitThreshold || Math.abs(y - bottom) < this.hitThreshold)) return true;
+    if (y >= top && y <= bottom && (Math.abs(x - left) < this.hitThreshold || Math.abs(x - right) < this.hitThreshold)) return true;
+
+    // Check quarter divisions if enabled
+    if (drawing.showQuarters) {
+      const midX = (left + right) / 2;
+      const midY = (top + bottom) / 2;
+      if (x >= left && x <= right && Math.abs(y - midY) < this.hitThreshold) return true;
+      if (y >= top && y <= bottom && Math.abs(x - midX) < this.hitThreshold) return true;
+    }
+
+    // Check diagonals if enabled
+    if (drawing.showDiagonals) {
+      const dist1 = this.pointToLineDistance(x, y, left, top, right, bottom);
+      const dist2 = this.pointToLineDistance(x, y, right, top, left, bottom);
+      if (dist1 < this.hitThreshold || dist2 < this.hitThreshold) return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if Gann Square is hit
+   */
+  isGannSquareHit(drawing, x, y) {
+    const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
+    const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
+
+    const width = end.x - start.x;
+    const height = end.y - start.y;
+    const size = Math.min(Math.abs(width), Math.abs(height));
+
+    const left = start.x;
+    const right = start.x + size;
+    const top = start.y;
+    const bottom = start.y + size;
+
+    // Check square outline
+    if (x >= left && x <= right && (Math.abs(y - top) < this.hitThreshold || Math.abs(y - bottom) < this.hitThreshold)) return true;
+    if (y >= top && y <= bottom && (Math.abs(x - left) < this.hitThreshold || Math.abs(x - right) < this.hitThreshold)) return true;
+
+    // Check grid divisions
+    const cellSize = size / drawing.divisions;
+    for (let i = 1; i < drawing.divisions; i++) {
+      // Check vertical lines
+      const lineX = start.x + i * cellSize;
+      if (y >= top && y <= bottom && Math.abs(x - lineX) < this.hitThreshold) return true;
+
+      // Check horizontal lines
+      const lineY = start.y + i * cellSize;
+      if (x >= left && x <= right && Math.abs(y - lineY) < this.hitThreshold) return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if Gann Angles is hit
+   */
+  isGannAnglesHit(drawing, x, y) {
+    const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
+    const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
+
+    // Calculate angle based on type
+    const angleRatios = {
+      '1x8': 1/8, '1x4': 1/4, '1x3': 1/3, '1x2': 1/2,
+      '1x1': 1, '2x1': 2, '3x1': 3, '4x1': 4, '8x1': 8
+    };
+
+    const ratio = angleRatios[drawing.angleType] || 1;
+    const direction = end.y < start.y ? -1 : 1;
+    const chartRight = this.renderer.width - this.renderer.margin.right;
+    const dx = chartRight - start.x;
+    const dy = dx * ratio * direction;
+
+    const distance = this.pointToLineDistance(x, y, start.x, start.y, start.x + dx, start.y + dy);
+    return distance < this.hitThreshold;
   }
 
   /**

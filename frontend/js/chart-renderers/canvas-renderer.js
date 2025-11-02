@@ -1676,7 +1676,8 @@ export class CanvasRenderer {
         action.action.includes('ray-line') ||
         action.action.includes('extended-line') ||
         action.action.includes('parallel-channel') ||
-        action.action.includes('fibonacci-')) {
+        action.action.includes('fibonacci-') ||
+        action.action.includes('gann-')) {
       convertedAction = this.convertToChartCoordinates(action);
       console.log('🔄 Action after conversion:', convertedAction);
     }
@@ -1778,6 +1779,18 @@ export class CanvasRenderer {
 
       if (action.action.includes('fibonacci')) {
         console.log('🔄 Converted Fibonacci coordinates:', {
+          action: action.action,
+          screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
+          chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`,
+          hasRequiredProps: {
+            startIndex: converted.startIndex !== undefined,
+            startPrice: converted.startPrice !== undefined,
+            endIndex: converted.endIndex !== undefined,
+            endPrice: converted.endPrice !== undefined
+          }
+        });
+      } else if (action.action.includes('gann')) {
+        console.log('🔄 Converted Gann coordinates:', {
           action: action.action,
           screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
           chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`,
@@ -1959,13 +1972,13 @@ export class CanvasRenderer {
     } else if (drawing.action.includes('fibonacci-spiral')) {
       this.drawFibonacciSpiral(drawing, overrideColor);
     } else if (drawing.action.includes('gann-fan')) {
-      this.drawGannFan(drawing);
+      this.drawGannFan(drawing, overrideColor);
     } else if (drawing.action.includes('gann-box')) {
-      this.drawGannBox(drawing);
+      this.drawGannBox(drawing, overrideColor);
     } else if (drawing.action.includes('gann-square')) {
-      this.drawGannSquare(drawing);
+      this.drawGannSquare(drawing, overrideColor);
     } else if (drawing.action.includes('gann-angles')) {
-      this.drawGannAngles(drawing);
+      this.drawGannAngles(drawing, overrideColor);
     } else if (drawing.action.includes('head-and-shoulders')) {
       this.drawHeadAndShoulders(drawing);
     } else if (drawing.action.includes('triangle')) {
@@ -2657,9 +2670,21 @@ export class CanvasRenderer {
   /**
    * Draw Gann fan
    */
-  drawGannFan(drawing) {
+  drawGannFan(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, angles, lineColor, lineWidth } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, angles, lineColor, lineWidth, showLabels } = drawing;
+
+    // Safety check for required properties
+    if (startIndex === undefined || startPrice === undefined || endIndex === undefined || endPrice === undefined) {
+      console.error('❌ Gann Fan missing required coordinates:', drawing);
+      return;
+    }
+
+    // Convert chart coordinates to screen coordinates
+    const startX = this.indexToX(startIndex);
+    const startY = this.priceToY(startPrice);
+    const endX = this.indexToX(endIndex);
+    const endY = this.priceToY(endPrice);
 
     const chartRight = this.width - this.margin.right;
     const trendDirection = endY < startY ? -1 : 1;
@@ -2668,7 +2693,7 @@ export class CanvasRenderer {
       const dx = chartRight - startX;
       const dy = dx * ratio * trendDirection;
 
-      ctx.strokeStyle = lineColor || '#ff9800';
+      ctx.strokeStyle = overrideColor || lineColor || '#ff9800';
       ctx.lineWidth = lineWidth || 1;
       ctx.beginPath();
       ctx.moveTo(startX, startY);
@@ -2680,15 +2705,27 @@ export class CanvasRenderer {
   /**
    * Draw Gann box
    */
-  drawGannBox(drawing) {
+  drawGannBox(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, lineColor, lineWidth, showDiagonals, showQuarters } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, lineColor, lineWidth, showDiagonals, showQuarters } = drawing;
+
+    // Safety check for required properties
+    if (startIndex === undefined || startPrice === undefined || endIndex === undefined || endPrice === undefined) {
+      console.error('❌ Gann Box missing required coordinates:', drawing);
+      return;
+    }
+
+    // Convert chart coordinates to screen coordinates
+    const startX = this.indexToX(startIndex);
+    const startY = this.priceToY(startPrice);
+    const endX = this.indexToX(endIndex);
+    const endY = this.priceToY(endPrice);
 
     const width = endX - startX;
     const height = endY - startY;
 
     // Draw box outline
-    ctx.strokeStyle = lineColor || '#00bcd4';
+    ctx.strokeStyle = overrideColor || lineColor || '#00bcd4';
     ctx.lineWidth = lineWidth || 1;
     ctx.strokeRect(startX, startY, width, height);
 
@@ -2716,16 +2753,28 @@ export class CanvasRenderer {
   /**
    * Draw Gann square
    */
-  drawGannSquare(drawing) {
+  drawGannSquare(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, lineColor, lineWidth, divisions } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, lineColor, lineWidth, divisions, showLabels } = drawing;
+
+    // Safety check for required properties
+    if (startIndex === undefined || startPrice === undefined || endIndex === undefined || endPrice === undefined) {
+      console.error('❌ Gann Square missing required coordinates:', drawing);
+      return;
+    }
+
+    // Convert chart coordinates to screen coordinates
+    const startX = this.indexToX(startIndex);
+    const startY = this.priceToY(startPrice);
+    const endX = this.indexToX(endIndex);
+    const endY = this.priceToY(endPrice);
 
     const width = endX - startX;
     const height = endY - startY;
-    const size = Math.min(width, height);
+    const size = Math.min(Math.abs(width), Math.abs(height));
 
     // Draw square
-    ctx.strokeStyle = lineColor || '#4caf50';
+    ctx.strokeStyle = overrideColor || lineColor || '#4caf50';
     ctx.lineWidth = lineWidth || 1;
     ctx.strokeRect(startX, startY, size, size);
 
@@ -2749,9 +2798,21 @@ export class CanvasRenderer {
   /**
    * Draw Gann angles
    */
-  drawGannAngles(drawing) {
+  drawGannAngles(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, angleType, lineColor, lineWidth, extendBoth } = drawing;
+    const { startIndex, startPrice, endIndex, endPrice, angleType, lineColor, lineWidth, extendBoth } = drawing;
+
+    // Safety check for required properties
+    if (startIndex === undefined || startPrice === undefined || endIndex === undefined || endPrice === undefined) {
+      console.error('❌ Gann Angles missing required coordinates:', drawing);
+      return;
+    }
+
+    // Convert chart coordinates to screen coordinates
+    const startX = this.indexToX(startIndex);
+    const startY = this.priceToY(startPrice);
+    const endX = this.indexToX(endIndex);
+    const endY = this.priceToY(endPrice);
 
     // Calculate angle based on type
     const angleRatios = {
@@ -2765,7 +2826,7 @@ export class CanvasRenderer {
     const dx = chartRight - startX;
     const dy = dx * ratio * direction;
 
-    ctx.strokeStyle = lineColor || '#f44336';
+    ctx.strokeStyle = overrideColor || lineColor || '#f44336';
     ctx.lineWidth = lineWidth || 2;
     ctx.beginPath();
     ctx.moveTo(startX, startY);

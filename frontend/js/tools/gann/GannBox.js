@@ -45,14 +45,18 @@ export class GannBox {
    * Handle mouse down - start or finish drawing
    */
   onMouseDown(event, chartState) {
+    // Use canvas-relative coordinates (provided by tool panel)
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     if (!this.isDrawing) {
       // First click - start the box
       this.isDrawing = true;
-      this.startPoint = { x: event.clientX, y: event.clientY };
+      this.startPoint = { x, y };
       return {
         action: 'start-gann-box',
-        x: event.clientX,
-        y: event.clientY
+        x,
+        y
       };
     } else {
       // Second click - finish the box
@@ -62,8 +66,8 @@ export class GannBox {
         action: 'finish-gann-box',
         startX: this.startPoint.x,
         startY: this.startPoint.y,
-        endX: event.clientX,
-        endY: event.clientY,
+        endX: x,
+        endY: y,
         lineColor: this.lineColor,
         lineWidth: this.lineWidth,
         showDiagonals: this.showDiagonals,
@@ -81,12 +85,16 @@ export class GannBox {
    */
   onMouseMove(event, chartState) {
     if (this.isDrawing && this.startPoint) {
+      // Use canvas-relative coordinates (provided by tool panel)
+      const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+      const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
       return {
         action: 'preview-gann-box',
         startX: this.startPoint.x,
         startY: this.startPoint.y,
-        endX: event.clientX,
-        endY: event.clientY,
+        endX: x,
+        endY: y,
         lineColor: this.lineColor,
         lineWidth: this.lineWidth,
         showDiagonals: this.showDiagonals,
