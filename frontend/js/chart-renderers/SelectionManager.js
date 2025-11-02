@@ -18,7 +18,7 @@ export class SelectionManager {
     // UI settings
     this.selectionColor = '#ffeb3b'; // Yellow highlight
     this.handleRadius = 6;
-    this.hitThreshold = 50; // Pixels for click detection (increased for testing)
+    this.hitThreshold = 20; // Pixels for click detection (balanced for selection and deselection)
 
     // Last mouse position (for delta calculations)
     this.lastMouseX = 0;
@@ -212,6 +212,31 @@ export class SelectionManager {
       const priceOffset = offset * (this.renderer.maxPrice - this.renderer.minPrice) / 100;
       copy.startPrice += priceOffset;
       copy.endPrice += priceOffset;
+    } else if (copy.chartPoints && (
+      copy.action.includes('head-and-shoulders') ||
+      copy.action.includes('triangle') ||
+      copy.action.includes('wedge') ||
+      copy.action.includes('double-top-bottom') ||
+      copy.action.includes('polygon')
+    )) {
+      // Pattern tools and polygon use chartPoints array
+      const priceOffset = offset * (this.renderer.maxPrice - this.renderer.minPrice) / 100;
+      copy.chartPoints = copy.chartPoints.map(point => ({
+        chartIndex: point.chartIndex + offset,
+        chartPrice: point.chartPrice + priceOffset
+      }));
+    } else if (copy.action && copy.action.includes('circle')) {
+      // Circle uses centerIndex/centerPrice
+      copy.centerIndex += offset;
+      const priceOffset = offset * (this.renderer.maxPrice - this.renderer.minPrice) / 100;
+      copy.centerPrice += priceOffset;
+    } else if (copy.action && (copy.action.includes('rectangle') || copy.action.includes('ellipse'))) {
+      // Rectangle and Ellipse use startIndex/endIndex
+      copy.startIndex += offset;
+      copy.endIndex += offset;
+      const priceOffset = offset * (this.renderer.maxPrice - this.renderer.minPrice) / 100;
+      copy.startPrice += priceOffset;
+      copy.endPrice += priceOffset;
     }
 
     // Add to drawings array
@@ -266,7 +291,7 @@ export class SelectionManager {
     if (!clickedDrawing && this.selectedDrawing) {
       this.selectedDrawing = null;
       this.renderer.draw();
-      // Continue to let other tools handle the click
+      return true; // Handled - we deselected the drawing
     }
 
     // Only handle selection/movement when default tool is active
@@ -294,12 +319,23 @@ export class SelectionManager {
       // Calculate offset from drawing start point
       // Handle different coordinate structures
       let screenStart;
-      if (clickedDrawing.startIndex !== undefined && clickedDrawing.startPrice !== undefined) {
+      if (clickedDrawing.centerIndex !== undefined && clickedDrawing.centerPrice !== undefined) {
+        // Circle uses centerIndex/centerPrice
+        screenStart = this.drawingToScreen(clickedDrawing.centerIndex, clickedDrawing.centerPrice);
+      } else if (clickedDrawing.startIndex !== undefined && clickedDrawing.startPrice !== undefined) {
+        // Rectangle, Ellipse, and standard lines use startIndex/startPrice
         screenStart = this.drawingToScreen(clickedDrawing.startIndex, clickedDrawing.startPrice);
       } else if (clickedDrawing.chartIndex !== undefined && clickedDrawing.chartPrice !== undefined) {
         screenStart = this.drawingToScreen(clickedDrawing.chartIndex, clickedDrawing.chartPrice);
       } else if (clickedDrawing.point1Index !== undefined && clickedDrawing.point1Price !== undefined) {
         screenStart = this.drawingToScreen(clickedDrawing.point1Index, clickedDrawing.point1Price);
+      } else if (clickedDrawing.chartPoints && clickedDrawing.chartPoints.length > 0) {
+        // Pattern tools and Polygon with chartPoints array
+        const firstPoint = clickedDrawing.chartPoints[0];
+        screenStart = this.drawingToScreen(firstPoint.chartIndex, firstPoint.chartPrice);
+      } else if (clickedDrawing.points && clickedDrawing.points.length > 0) {
+        // Fallback for old pattern drawings with screen points
+        screenStart = { x: clickedDrawing.points[0].x, y: clickedDrawing.points[0].y };
       } else {
         screenStart = { x: mouseX, y: mouseY }; // Fallback
       }
@@ -416,6 +452,33 @@ export class SelectionManager {
         drawing.endIndex += deltaIndex;
         drawing.startPrice += deltaPrice;
         drawing.endPrice += deltaPrice;
+      } else if (drawing.chartPoints && (
+        drawing.action.includes('head-and-shoulders') ||
+        drawing.action.includes('triangle') ||
+        drawing.action.includes('wedge') ||
+        drawing.action.includes('double-top-bottom') ||
+        drawing.action.includes('polygon')
+      )) {
+        // Pattern tools and polygon use chartPoints array
+        drawing.chartPoints.forEach(point => {
+          point.chartIndex += deltaIndex;
+          point.chartPrice += deltaPrice;
+        });
+      } else if (drawing.action && drawing.action.includes('circle')) {
+        // Circle uses centerIndex/centerPrice
+        if (drawing.centerIndex !== undefined && drawing.centerPrice !== undefined) {
+          drawing.centerIndex += deltaIndex;
+          drawing.centerPrice += deltaPrice;
+        }
+      } else if (drawing.action && (drawing.action.includes('rectangle') || drawing.action.includes('ellipse'))) {
+        // Rectangle and Ellipse use startIndex/endIndex
+        if (drawing.startIndex !== undefined && drawing.startPrice !== undefined &&
+            drawing.endIndex !== undefined && drawing.endPrice !== undefined) {
+          drawing.startIndex += deltaIndex;
+          drawing.endIndex += deltaIndex;
+          drawing.startPrice += deltaPrice;
+          drawing.endPrice += deltaPrice;
+        }
       } else {
         // Trend lines, ray, extended line use startIndex/endIndex
         drawing.startIndex += deltaIndex;
@@ -433,10 +496,22 @@ export class SelectionManager {
 
     // Handle dragging handle to resize
     if (this.isDraggingHandle && this.selectedDrawing) {
-      const newIndex = this.renderer.xToIndex(mouseX);
-      const newPrice = this.renderer.yToPrice(mouseY);
+      let newIndex = this.renderer.xToIndex(mouseX);
+      let newPrice = this.renderer.yToPrice(mouseY);
 
-      if (this.draggedHandle === 'start') {
+      // Check if dragging a pattern point - apply snapping
+      if (this.draggedHandle && typeof this.draggedHandle === 'object' && this.draggedHandle.type === 'point') {
+        // Dragging individual point of a pattern - snap to nearest candle
+        const snapped = this.snapToCandle(newIndex, newPrice);
+        newIndex = snapped.index;
+        newPrice = snapped.price;
+
+        const pointIndex = this.draggedHandle.index;
+        if (this.selectedDrawing.chartPoints && this.selectedDrawing.chartPoints[pointIndex]) {
+          this.selectedDrawing.chartPoints[pointIndex].chartIndex = newIndex;
+          this.selectedDrawing.chartPoints[pointIndex].chartPrice = newPrice;
+        }
+      } else if (this.draggedHandle === 'start') {
         this.selectedDrawing.startIndex = newIndex;
         this.selectedDrawing.startPrice = newPrice;
       } else if (this.draggedHandle === 'end') {
@@ -614,8 +689,48 @@ export class SelectionManager {
         if (hit) {
           return drawing;
         }
+      } else if (drawing.action.includes('head-and-shoulders')) {
+        const hit = this.isHeadAndShouldersHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('triangle')) {
+        const hit = this.isTriangleHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('wedge')) {
+        const hit = this.isWedgeHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('double-top-bottom')) {
+        const hit = this.isDoubleTopBottomHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('rectangle')) {
+        const hit = this.isRectangleHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('circle')) {
+        const hit = this.isCircleHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('ellipse')) {
+        const hit = this.isEllipseHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('polygon')) {
+        const hit = this.isPolygonHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
       }
-      // TODO: Add hit detection for other drawing types (Patterns, Shapes, etc.)
+      // TODO: Add hit detection for other drawing types (Annotations, etc.)
     }
 
     return null;
@@ -693,6 +808,13 @@ export class SelectionManager {
    * Check if Fibonacci Retracement is hit
    */
   isFibonacciRetracementHit(drawing, x, y) {
+    // Safety check - drawing must have chart coordinates
+    if (drawing.startIndex === undefined || drawing.startPrice === undefined ||
+        drawing.endIndex === undefined || drawing.endPrice === undefined) {
+      console.warn('⚠️ Fibonacci Retracement missing chart coordinates, skipping hit detection');
+      return false;
+    }
+
     // Check main diagonal line
     const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
     const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
@@ -700,6 +822,7 @@ export class SelectionManager {
     if (distance < this.hitThreshold) return true;
 
     // Check any horizontal level lines
+    // Note: These extend across the chart like TradingView, so we only check Y distance
     const priceRange = drawing.endPrice - drawing.startPrice;
     for (const level of drawing.levels) {
       const levelPrice = drawing.startPrice + priceRange * level;
@@ -713,6 +836,14 @@ export class SelectionManager {
    * Check if Fibonacci Extension is hit
    */
   isFibonacciExtensionHit(drawing, x, y) {
+    // Safety check - drawing must have chart coordinates
+    if (drawing.point1Index === undefined || drawing.point1Price === undefined ||
+        drawing.point2Index === undefined || drawing.point2Price === undefined ||
+        drawing.point3Index === undefined || drawing.point3Price === undefined) {
+      console.warn('⚠️ Fibonacci Extension missing chart coordinates, skipping hit detection');
+      return false;
+    }
+
     // Check connecting lines P1→P2→P3
     const p1 = this.drawingToScreen(drawing.point1Index, drawing.point1Price);
     const p2 = this.drawingToScreen(drawing.point2Index, drawing.point2Price);
@@ -724,12 +855,14 @@ export class SelectionManager {
     const distance2 = this.pointToLineDistance(x, y, p2.x, p2.y, p3.x, p3.y);
     if (distance2 < this.hitThreshold) return true;
 
-    // Check extension level lines
+    // Check extension level lines (limited to reasonable range from p3)
+    const chartRight = this.renderer.width - this.renderer.margin.right;
     const swingPrice = drawing.point2Price - drawing.point1Price;
     for (const level of drawing.levels) {
       const levelPrice = drawing.point3Price + swingPrice * level;
       const levelY = this.renderer.priceToY(levelPrice);
-      if (Math.abs(y - levelY) < this.hitThreshold && x >= p3.x) return true;
+      // Only detect hit between p3 and right edge of chart
+      if (Math.abs(y - levelY) < this.hitThreshold && x >= p3.x && x <= chartRight) return true;
     }
     return false;
   }
@@ -738,6 +871,13 @@ export class SelectionManager {
    * Check if Fibonacci Fan is hit
    */
   isFibonacciFanHit(drawing, x, y) {
+    // Safety check - drawing must have chart coordinates
+    if (drawing.startIndex === undefined || drawing.startPrice === undefined ||
+        drawing.endIndex === undefined || drawing.endPrice === undefined) {
+      console.warn('⚠️ Fibonacci Fan missing chart coordinates, skipping hit detection');
+      return false;
+    }
+
     // Check main line
     const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
     const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
@@ -762,6 +902,13 @@ export class SelectionManager {
    * Check if Fibonacci Arcs is hit
    */
   isFibonacciArcsHit(drawing, x, y) {
+    // Safety check - drawing must have chart coordinates
+    if (drawing.startIndex === undefined || drawing.startPrice === undefined ||
+        drawing.endIndex === undefined || drawing.endPrice === undefined) {
+      console.warn('⚠️ Fibonacci Arcs missing chart coordinates, skipping hit detection');
+      return false;
+    }
+
     const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
     const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
     const dx = end.x - start.x;
@@ -781,6 +928,12 @@ export class SelectionManager {
    * Check if Fibonacci Time Zones is hit
    */
   isFibonacciTimeZonesHit(drawing, x, y) {
+    // Safety check - drawing must have chart coordinates
+    if (drawing.chartIndex === undefined) {
+      console.warn('⚠️ Fibonacci Time Zones missing chart coordinates, skipping hit detection');
+      return false;
+    }
+
     // Check if near any vertical time zone line
     for (const fib of drawing.sequence) {
       const fibIndex = drawing.chartIndex + fib;
@@ -794,6 +947,13 @@ export class SelectionManager {
    * Check if Fibonacci Spiral is hit
    */
   isFibonacciSpiralHit(drawing, x, y) {
+    // Safety check - drawing must have chart coordinates
+    if (drawing.startIndex === undefined || drawing.startPrice === undefined ||
+        drawing.endIndex === undefined || drawing.endPrice === undefined) {
+      console.warn('⚠️ Fibonacci Spiral missing chart coordinates, skipping hit detection');
+      return false;
+    }
+
     // Check main rectangle
     const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
     const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
@@ -814,6 +974,13 @@ export class SelectionManager {
    * Check if Gann Fan is hit
    */
   isGannFanHit(drawing, x, y) {
+    // Safety check - drawing must have chart coordinates
+    if (drawing.startIndex === undefined || drawing.startPrice === undefined ||
+        drawing.endIndex === undefined || drawing.endPrice === undefined) {
+      console.warn('⚠️ Gann Fan missing chart coordinates, skipping hit detection');
+      return false;
+    }
+
     const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
     const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
     const trendDirection = end.y < start.y ? -1 : 1;
@@ -833,6 +1000,13 @@ export class SelectionManager {
    * Check if Gann Box is hit
    */
   isGannBoxHit(drawing, x, y) {
+    // Safety check - drawing must have chart coordinates
+    if (drawing.startIndex === undefined || drawing.startPrice === undefined ||
+        drawing.endIndex === undefined || drawing.endPrice === undefined) {
+      console.warn('⚠️ Gann Box missing chart coordinates, skipping hit detection');
+      return false;
+    }
+
     const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
     const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
 
@@ -867,6 +1041,13 @@ export class SelectionManager {
    * Check if Gann Square is hit
    */
   isGannSquareHit(drawing, x, y) {
+    // Safety check - drawing must have chart coordinates
+    if (drawing.startIndex === undefined || drawing.startPrice === undefined ||
+        drawing.endIndex === undefined || drawing.endPrice === undefined) {
+      console.warn('⚠️ Gann Square missing chart coordinates, skipping hit detection');
+      return false;
+    }
+
     const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
     const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
 
@@ -902,6 +1083,13 @@ export class SelectionManager {
    * Check if Gann Angles is hit
    */
   isGannAnglesHit(drawing, x, y) {
+    // Safety check - drawing must have chart coordinates
+    if (drawing.startIndex === undefined || drawing.startPrice === undefined ||
+        drawing.endIndex === undefined || drawing.endPrice === undefined) {
+      console.warn('⚠️ Gann Angles missing chart coordinates, skipping hit detection');
+      return false;
+    }
+
     const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
     const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
 
@@ -922,10 +1110,241 @@ export class SelectionManager {
   }
 
   /**
+   * Check if Head and Shoulders pattern is hit
+   */
+  isHeadAndShouldersHit(drawing, x, y) {
+    // Get screen points (either from chartPoints or fallback to points for old drawings)
+    let points;
+    if (drawing.chartPoints && drawing.chartPoints.length >= 5) {
+      points = drawing.chartPoints.map(p => this.drawingToScreen(p.chartIndex, p.chartPrice));
+    } else if (drawing.points && drawing.points.length >= 5) {
+      // Fallback for old drawings with screen coordinates
+      points = drawing.points;
+    } else {
+      return false;
+    }
+
+    // Check if hit on any line segment connecting the points
+    for (let i = 0; i < points.length - 1; i++) {
+      const distance = this.pointToLineDistance(x, y, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
+      if (distance < this.hitThreshold) return true;
+    }
+
+    // Check neckline (first to last point)
+    const neckDist = this.pointToLineDistance(x, y, points[0].x, points[0].y, points[4].x, points[4].y);
+    return neckDist < this.hitThreshold;
+  }
+
+  /**
+   * Check if Triangle pattern is hit
+   */
+  isTriangleHit(drawing, x, y) {
+    // Get screen points (either from chartPoints or fallback to points for old drawings)
+    let points;
+    if (drawing.chartPoints && drawing.chartPoints.length >= 4) {
+      points = drawing.chartPoints.map(p => this.drawingToScreen(p.chartIndex, p.chartPrice));
+    } else if (drawing.points && drawing.points.length >= 4) {
+      // Fallback for old drawings with screen coordinates
+      points = drawing.points;
+    } else {
+      return false;
+    }
+
+    // Check first trend line (point 0 to point 2)
+    const dist1 = this.pointToLineDistance(x, y, points[0].x, points[0].y, points[2].x, points[2].y);
+    if (dist1 < this.hitThreshold) return true;
+
+    // Check second trend line (point 1 to point 3)
+    const dist2 = this.pointToLineDistance(x, y, points[1].x, points[1].y, points[3].x, points[3].y);
+    return dist2 < this.hitThreshold;
+  }
+
+  /**
+   * Check if Wedge pattern is hit (same as triangle)
+   */
+  isWedgeHit(drawing, x, y) {
+    return this.isTriangleHit(drawing, x, y);
+  }
+
+  /**
+   * Check if Double Top/Bottom pattern is hit
+   */
+  isDoubleTopBottomHit(drawing, x, y) {
+    // Get screen points (either from chartPoints or fallback to points for old drawings)
+    let points;
+    if (drawing.chartPoints && drawing.chartPoints.length >= 3) {
+      points = drawing.chartPoints.map(p => this.drawingToScreen(p.chartIndex, p.chartPrice));
+    } else if (drawing.points && drawing.points.length >= 3) {
+      // Fallback for old drawings with screen coordinates
+      points = drawing.points;
+    } else {
+      return false;
+    }
+
+    // Check if hit on any line segment connecting the points
+    for (let i = 0; i < points.length - 1; i++) {
+      const distance = this.pointToLineDistance(x, y, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
+      if (distance < this.hitThreshold) return true;
+    }
+
+    // Check neckline (horizontal line at middle point's y)
+    const neckDist = this.pointToLineDistance(x, y, points[0].x, points[1].y, points[2].x, points[1].y);
+    return neckDist < this.hitThreshold;
+  }
+
+  /**
+   * Check if rectangle is hit by point
+   */
+  isRectangleHit(drawing, x, y) {
+    // Get screen coordinates
+    let startX, startY, endX, endY;
+
+    if (drawing.startIndex !== undefined && drawing.startPrice !== undefined) {
+      const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
+      const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
+      startX = start.x;
+      startY = start.y;
+      endX = end.x;
+      endY = end.y;
+    } else {
+      // Fallback to screen coordinates
+      startX = drawing.startX;
+      startY = drawing.startY;
+      endX = drawing.endX;
+      endY = drawing.endY;
+    }
+
+    // Check all four edges of rectangle
+    const topDist = this.pointToLineDistance(x, y, startX, startY, endX, startY);
+    const bottomDist = this.pointToLineDistance(x, y, startX, endY, endX, endY);
+    const leftDist = this.pointToLineDistance(x, y, startX, startY, startX, endY);
+    const rightDist = this.pointToLineDistance(x, y, endX, startY, endX, endY);
+
+    return topDist < this.hitThreshold || bottomDist < this.hitThreshold ||
+           leftDist < this.hitThreshold || rightDist < this.hitThreshold;
+  }
+
+  /**
+   * Check if circle is hit by point
+   */
+  isCircleHit(drawing, x, y) {
+    // Get screen coordinates
+    let centerX, centerY, radius;
+
+    if (drawing.centerIndex !== undefined && drawing.centerPrice !== undefined && drawing.radiusInPriceUnits !== undefined) {
+      const center = this.drawingToScreen(drawing.centerIndex, drawing.centerPrice);
+      centerX = center.x;
+      centerY = center.y;
+      // Convert radius from price units to screen pixels
+      const priceRange = this.renderer.maxPrice - this.renderer.minPrice;
+      const canvasHeight = this.renderer.canvas.height;
+      radius = (drawing.radiusInPriceUnits / priceRange) * canvasHeight;
+    } else {
+      // Fallback to screen coordinates
+      centerX = drawing.centerX;
+      centerY = drawing.centerY;
+      radius = drawing.radius;
+    }
+
+    // Check if point is near the circle's edge
+    const distFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+    return Math.abs(distFromCenter - radius) < this.hitThreshold;
+  }
+
+  /**
+   * Check if ellipse is hit by point
+   */
+  isEllipseHit(drawing, x, y) {
+    // Get screen coordinates
+    let startX, startY, endX, endY;
+
+    if (drawing.startIndex !== undefined && drawing.startPrice !== undefined) {
+      const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
+      const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
+      startX = start.x;
+      startY = start.y;
+      endX = end.x;
+      endY = end.y;
+    } else {
+      // Fallback to screen coordinates
+      startX = drawing.startX;
+      startY = drawing.startY;
+      endX = drawing.endX;
+      endY = drawing.endY;
+    }
+
+    // Calculate ellipse parameters
+    const centerX = (startX + endX) / 2;
+    const centerY = (startY + endY) / 2;
+    const radiusX = Math.abs(endX - startX) / 2;
+    const radiusY = Math.abs(endY - startY) / 2;
+
+    // Calculate normalized distance from center using ellipse equation
+    const dx = (x - centerX) / radiusX;
+    const dy = (y - centerY) / radiusY;
+    const distNormalized = Math.sqrt(dx * dx + dy * dy);
+
+    // Check if point is near the ellipse's edge (distance ≈ 1)
+    // Allow some threshold for easier clicking
+    const normalizedThreshold = this.hitThreshold / Math.min(radiusX, radiusY);
+    return Math.abs(distNormalized - 1) < normalizedThreshold;
+  }
+
+  /**
+   * Check if polygon is hit by point
+   */
+  isPolygonHit(drawing, x, y) {
+    // Get screen points (either from chartPoints or fallback to points for old drawings)
+    let points;
+    if (drawing.chartPoints && drawing.chartPoints.length >= 3) {
+      points = drawing.chartPoints.map(p => this.drawingToScreen(p.chartIndex, p.chartPrice));
+    } else if (drawing.points && drawing.points.length >= 3) {
+      // Fallback for old drawings with screen coordinates
+      points = drawing.points;
+    } else {
+      return false;
+    }
+
+    // Check if hit on any edge of the polygon
+    for (let i = 0; i < points.length; i++) {
+      const nextIdx = (i + 1) % points.length; // Wrap around to close the polygon
+      const distance = this.pointToLineDistance(x, y, points[i].x, points[i].y, points[nextIdx].x, points[nextIdx].y);
+      if (distance < this.hitThreshold) return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Get handle at point (for resizing)
    */
   getHandleAtPoint(drawing, x, y) {
     if (!drawing) return null;
+
+    // Check for pattern drawings with chartPoints array
+    if (drawing.chartPoints && drawing.chartPoints.length > 0 && (
+      drawing.action.includes('head-and-shoulders') ||
+      drawing.action.includes('triangle') ||
+      drawing.action.includes('wedge') ||
+      drawing.action.includes('double-top-bottom')
+    )) {
+      // Check each point in the pattern
+      for (let i = 0; i < drawing.chartPoints.length; i++) {
+        const point = drawing.chartPoints[i];
+        const screen = this.drawingToScreen(point.chartIndex, point.chartPrice);
+        const dist = Math.sqrt((x - screen.x) ** 2 + (y - screen.y) ** 2);
+
+        if (dist < this.handleRadius * 2) {
+          return { type: 'point', index: i }; // Return point index
+        }
+      }
+      return null;
+    }
+
+    // Standard two-point drawings (trend lines, etc.)
+    if (drawing.startIndex === undefined || drawing.endIndex === undefined) {
+      return null; // Drawing doesn't have start/end points
+    }
 
     const start = this.drawingToScreen(drawing.startIndex, drawing.startPrice);
     const end = this.drawingToScreen(drawing.endIndex, drawing.endPrice);
@@ -946,6 +1365,44 @@ export class SelectionManager {
     const x = this.renderer.indexToX(dataIndex);
     const y = this.renderer.priceToY(price);
     return { x, y };
+  }
+
+  /**
+   * Snap price to nearest candle high/low
+   * Returns { index, price } snapped to the nearest candle
+   * Only snaps if within threshold distance
+   */
+  snapToCandle(index, price) {
+    const data = this.renderer.data;
+    if (!data || data.length === 0) {
+      return { index, price }; // No data to snap to
+    }
+
+    // Round index to nearest candle
+    const snappedIndex = Math.max(0, Math.min(Math.round(index), data.length - 1));
+    const candle = data[snappedIndex];
+
+    if (!candle) {
+      return { index: snappedIndex, price };
+    }
+
+    // Check distance to high and low
+    const distToHigh = Math.abs(price - candle.High);
+    const distToLow = Math.abs(price - candle.Low);
+
+    // Calculate snap threshold (5% of visible price range)
+    const priceRange = this.renderer.maxPrice - this.renderer.minPrice;
+    const snapThreshold = priceRange * 0.05;
+
+    // Only snap if close enough to either high or low
+    const closestDist = Math.min(distToHigh, distToLow);
+    if (closestDist < snapThreshold) {
+      const snappedPrice = distToHigh < distToLow ? candle.High : candle.Low;
+      return { index: snappedIndex, price: snappedPrice };
+    }
+
+    // Too far from candle extremes - don't snap
+    return { index: snappedIndex, price };
   }
 
   /**
@@ -1005,6 +1462,11 @@ export class SelectionManager {
       this.drawTrendLineSelection(ctx, drawing); // Ray and extended use same selection as trend line
     } else if (drawing.action.includes('parallel-channel')) {
       this.drawParallelChannelSelection(ctx, drawing);
+    } else if (drawing.action.includes('head-and-shoulders') ||
+               drawing.action.includes('triangle') ||
+               drawing.action.includes('wedge') ||
+               drawing.action.includes('double-top-bottom')) {
+      this.drawPatternSelection(ctx, drawing);
     }
     // TODO: Add selection drawing for other types
   }
@@ -1305,6 +1767,38 @@ export class SelectionManager {
     // Handles on line 1
     this.drawArrowHandle(ctx, line1Start.x, line1Start.y, angle, arrowSize);
     this.drawArrowHandle(ctx, line1End.x, line1End.y, angle, arrowSize);
+
+    ctx.restore();
+  }
+
+  /**
+   * Draw selection highlight for pattern drawings (multi-point)
+   */
+  drawPatternSelection(ctx, drawing) {
+    if (!drawing.chartPoints || drawing.chartPoints.length === 0) return;
+
+    ctx.save();
+
+    // Draw handles on each point
+    drawing.chartPoints.forEach((point, index) => {
+      const screen = this.drawingToScreen(point.chartIndex, point.chartPrice);
+
+      // Draw handle circle
+      ctx.fillStyle = this.selectionColor;
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, this.handleRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw point number label
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 10px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText((index + 1).toString(), screen.x, screen.y);
+    });
 
     ctx.restore();
   }

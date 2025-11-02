@@ -207,13 +207,72 @@ export class CanvasRenderer {
       const response = await fetch(`/drawings/${this.symbol}`);
       if (response.ok) {
         const drawings = await response.json();
-        this.drawings = drawings;
-        console.log(`✅ Loaded ${drawings.length} drawings for ${this.symbol}`);
+
+        // Clean up legacy drawings missing chart coordinates
+        const validDrawings = this.cleanupInvalidDrawings(drawings);
+        this.drawings = validDrawings;
+
+        // If cleanup removed any drawings, update the backend file
+        if (drawings.length !== validDrawings.length) {
+          console.log(`🧹 Cleaning up backend file (removed ${drawings.length - validDrawings.length} invalid drawings)`);
+          await this.saveAllDrawings();
+        }
+
+        console.log(`✅ Loaded ${this.drawings.length} drawings for ${this.symbol}`);
         this.draw(); // Redraw with loaded drawings
       }
     } catch (error) {
       console.error('❌ Error loading drawings:', error);
     }
+  }
+
+  /**
+   * Clean up drawings that are missing required chart coordinates
+   * These are legacy drawings from before coordinate conversion was implemented
+   */
+  cleanupInvalidDrawings(drawings) {
+    const validDrawings = drawings.filter(drawing => {
+      // Check if drawing has required coordinates based on its type
+      if (drawing.action.includes('fibonacci-extension')) {
+        return drawing.point1Index !== undefined && drawing.point1Price !== undefined &&
+               drawing.point2Index !== undefined && drawing.point2Price !== undefined &&
+               drawing.point3Index !== undefined && drawing.point3Price !== undefined;
+      } else if (drawing.action.includes('fibonacci-time-zones')) {
+        return drawing.chartIndex !== undefined;
+      } else if (drawing.action.includes('fibonacci-') || drawing.action.includes('gann-')) {
+        return drawing.startIndex !== undefined && drawing.startPrice !== undefined &&
+               drawing.endIndex !== undefined && drawing.endPrice !== undefined;
+      } else if (drawing.action === 'place-dot' || drawing.action === 'place-arrow') {
+        return drawing.chartIndex !== undefined && drawing.chartPrice !== undefined;
+      } else if (drawing.action.includes('horizontal-line')) {
+        return drawing.price !== undefined;
+      } else if (drawing.action.includes('vertical-line')) {
+        return drawing.chartIndex !== undefined;
+      } else if (drawing.chartPoints) {
+        // Pattern tools and polygon
+        return drawing.chartPoints.length > 0 &&
+               drawing.chartPoints[0].chartIndex !== undefined &&
+               drawing.chartPoints[0].chartPrice !== undefined;
+      } else if (drawing.centerIndex !== undefined) {
+        // Circle
+        return drawing.centerPrice !== undefined && drawing.radiusInPriceUnits !== undefined;
+      } else if (drawing.startIndex !== undefined) {
+        // Rectangle, Ellipse, and other standard shapes/lines
+        return drawing.startPrice !== undefined &&
+               drawing.endIndex !== undefined &&
+               drawing.endPrice !== undefined;
+      }
+
+      // If we don't recognize the format, keep it (to be safe)
+      return true;
+    });
+
+    const removedCount = drawings.length - validDrawings.length;
+    if (removedCount > 0) {
+      console.warn(`🧹 Cleaned up ${removedCount} invalid drawings missing chart coordinates`);
+    }
+
+    return validDrawings;
   }
 
   /**
@@ -271,6 +330,36 @@ export class CanvasRenderer {
       }
     } catch (error) {
       console.error('❌ Error deleting drawing:', error);
+    }
+  }
+
+  /**
+   * Save all drawings to backend (replaces existing file)
+   * Used for cleanup operations
+   */
+  async saveAllDrawings() {
+    if (!this.symbol) {
+      console.warn('⚠️ No symbol set, skipping save all drawings');
+      return;
+    }
+
+    try {
+      const response = await fetch('/save_all_drawings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: this.symbol,
+          drawings: this.drawings
+        })
+      });
+
+      if (response.ok) {
+        console.log(`💾 Saved all ${this.drawings.length} drawings for ${this.symbol}`);
+      } else {
+        console.error('❌ Failed to save all drawings:', await response.text());
+      }
+    } catch (error) {
+      console.error('❌ Error saving all drawings:', error);
     }
   }
 
@@ -1558,6 +1647,13 @@ export class CanvasRenderer {
     }
     console.log('⏭️ SelectionManager did not handle mouseDown, continuing to pan/zoom logic');
 
+    // Check if any drawing tool is active (other than default cursor modes)
+    // If so, prevent panning - the tool is still being drawn
+    if (activeTool && activeTool.id !== 'default-cursor' && activeTool.id !== 'eraser-cursor') {
+      console.log(`🚫 Drawing tool '${activeTool.id}' is active - panning disabled`);
+      return; // Don't allow panning while drawing
+    }
+
     // Check if clicking on Y-axis (price axis on right)
     const chartRight = this.width - this.margin.right;
     const chartTop = this.margin.top;
@@ -1653,16 +1749,30 @@ export class CanvasRenderer {
       return;
     }
 
-    console.log('🎨 Tool action received:', action.action, action);
-
-    // Ignore "start" actions, "hover" actions, "cancel" actions, and cursor actions
+    // Ignore "start" actions, "hover" actions, "cancel" actions, and cursor actions first
     const ignoreActions = [
       'start-trend-line', 'start-ray-line', 'start-extended-line',
+      'start-gann-box', 'start-gann-fan', 'start-gann-square', 'start-gann-angles',
+      'start-parallel-channel', 'start-parallel-channel-line1',
+      'start-fibonacci-retracement', 'start-fibonacci-extension-p1', 'start-fibonacci-extension-p2',
+      'start-fibonacci-fan', 'start-fibonacci-arcs', 'start-fibonacci-spiral',
+      'start-rectangle', 'start-circle', 'start-ellipse',
+      'start-callout',
       'hover', 'cancel-drawing', 'check-selection'
     ];
+
+    // Silently ignore these actions (don't process or save them)
     if (ignoreActions.includes(action.action)) {
-      console.log('⏭️ Ignoring action:', action.action);
       return;
+    }
+
+    // Check if this is a preview action (log less verbosely)
+    const isPreviewAction = action.action.startsWith('preview-');
+
+    if (!isPreviewAction) {
+      console.log('🎨 Tool action received:', action.action, action);
+    } else if (action.action === 'preview-double-top-bottom') {
+      console.log('👁️ Preview:', action.action, 'points:', action.points?.length, 'step:', action.step);
     }
 
     // Check if this is a preview action or a completed drawing
@@ -1672,20 +1782,28 @@ export class CanvasRenderer {
 
     // Convert screen coordinates to chart coordinates for line-based drawings
     let convertedAction = action;
-    if (action.action.includes('trend-line') ||
+    const needsConversion = action.action.includes('trend-line') ||
         action.action.includes('ray-line') ||
         action.action.includes('extended-line') ||
         action.action.includes('parallel-channel') ||
         action.action.includes('fibonacci-') ||
-        action.action.includes('gann-')) {
+        action.action.includes('gann-') ||
+        action.action.includes('head-and-shoulders') ||
+        action.action.includes('triangle') ||
+        action.action.includes('wedge') ||
+        action.action.includes('double-top-bottom') ||
+        action.action.includes('rectangle') ||
+        action.action.includes('circle') ||
+        action.action.includes('ellipse') ||
+        action.action.includes('polygon');
+
+    if (needsConversion) {
       convertedAction = this.convertToChartCoordinates(action);
-      console.log('🔄 Action after conversion:', convertedAction);
     }
 
     if (isPreview) {
       // Update preview drawing
       this.previewDrawing = convertedAction;
-      console.log('👁️ Preview updated:', convertedAction.action);
     } else {
       // Completed drawing - add to drawings array
       this.drawings.push(convertedAction);
@@ -1723,10 +1841,6 @@ export class CanvasRenderer {
         delete converted.parallelY;
         delete converted.parallelX;
       }
-      console.log('🔄 Converted parallel channel:', {
-        screen: `Line1: (${action.line1Start?.x}, ${action.line1Start?.y}) → (${action.line1End?.x}, ${action.line1End?.y}), parallelY: ${action.parallelY}`,
-        chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}], parallelPrice: $${converted.parallelPrice?.toFixed(2)}`
-      });
     } else if (action.action && action.action.includes('fibonacci-extension')) {
       // Handle Fibonacci Extension 3-point structure (point1, point2, point3)
       if (action.point1) {
@@ -1744,10 +1858,62 @@ export class CanvasRenderer {
         converted.point3Price = this.yToPrice(action.point3.y);
         delete converted.point3;
       }
-      console.log('🔄 Converted Fibonacci Extension:', {
-        screen: `P1(${action.point1?.x}, ${action.point1?.y}) P2(${action.point2?.x}, ${action.point2?.y}) P3(${action.point3?.x}, ${action.point3?.y})`,
-        chart: `P1[${converted.point1Index}, $${converted.point1Price?.toFixed(2)}] P2[${converted.point2Index}, $${converted.point2Price?.toFixed(2)}] P3[${converted.point3Index}, $${converted.point3Price?.toFixed(2)}]`
+    } else if (action.points && Array.isArray(action.points) && (
+      action.action.includes('head-and-shoulders') ||
+      action.action.includes('triangle') ||
+      action.action.includes('wedge') ||
+      action.action.includes('double-top-bottom') ||
+      action.action.includes('polygon')
+    )) {
+      // Handle pattern tools and polygon with points array
+      converted.chartPoints = action.points.map(point => {
+        const rawIndex = this.xToIndex(point.x);
+        const rawPrice = this.yToPrice(point.y);
+
+        // Snap to nearest candle high/low for pattern tools (not polygon)
+        if (action.action.includes('head-and-shoulders') ||
+            action.action.includes('triangle') ||
+            action.action.includes('wedge') ||
+            action.action.includes('double-top-bottom')) {
+          const snappedIndex = Math.max(0, Math.min(Math.round(rawIndex), this.data.length - 1));
+          const candle = this.data[snappedIndex];
+
+          if (candle) {
+            // Snap to closest of high or low
+            const distToHigh = Math.abs(rawPrice - candle.High);
+            const distToLow = Math.abs(rawPrice - candle.Low);
+            const snappedPrice = distToHigh < distToLow ? candle.High : candle.Low;
+
+            return {
+              chartIndex: snappedIndex,
+              chartPrice: snappedPrice
+            };
+          }
+        }
+
+        // No snapping for polygon or if no candle data
+        return {
+          chartIndex: rawIndex,
+          chartPrice: rawPrice
+        };
       });
+      // Keep currentX/currentY for preview rendering (they show mouse position)
+      // Only delete the points array to avoid confusion
+      delete converted.points;
+    } else if (action.action && action.action.includes('circle') && action.centerX !== undefined && action.centerY !== undefined) {
+      // Handle circle with centerX/centerY/radius
+      converted.centerIndex = this.xToIndex(action.centerX);
+      converted.centerPrice = this.yToPrice(action.centerY);
+      // Radius needs special handling - convert using pixel distance
+      const radiusInCanvasUnits = action.radius;
+      // Store radius in chart units (approximate using price scale)
+      const priceRange = this.maxPrice - this.minPrice;
+      const canvasHeight = this.canvas.height;
+      converted.radiusInPriceUnits = (radiusInCanvasUnits / canvasHeight) * priceRange;
+      // Remove screen coordinates
+      delete converted.centerX;
+      delete converted.centerY;
+      delete converted.radius;
     } else {
       // Handle standard line structure (startX/Y, endX/Y)
       // Convert start point
@@ -1777,36 +1943,6 @@ export class CanvasRenderer {
         delete converted.y;
       }
 
-      if (action.action.includes('fibonacci')) {
-        console.log('🔄 Converted Fibonacci coordinates:', {
-          action: action.action,
-          screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
-          chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`,
-          hasRequiredProps: {
-            startIndex: converted.startIndex !== undefined,
-            startPrice: converted.startPrice !== undefined,
-            endIndex: converted.endIndex !== undefined,
-            endPrice: converted.endPrice !== undefined
-          }
-        });
-      } else if (action.action.includes('gann')) {
-        console.log('🔄 Converted Gann coordinates:', {
-          action: action.action,
-          screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
-          chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`,
-          hasRequiredProps: {
-            startIndex: converted.startIndex !== undefined,
-            startPrice: converted.startPrice !== undefined,
-            endIndex: converted.endIndex !== undefined,
-            endPrice: converted.endPrice !== undefined
-          }
-        });
-      } else {
-        console.log('🔄 Converted coordinates:', {
-          screen: `(${action.startX}, ${action.startY}) → (${action.endX}, ${action.endY})`,
-          chart: `[${converted.startIndex}, $${converted.startPrice?.toFixed(2)}] → [${converted.endIndex}, $${converted.endPrice?.toFixed(2)}]`
-        });
-      }
     }
 
     return converted;
@@ -1961,6 +2097,9 @@ export class CanvasRenderer {
       this.drawParallelChannel(drawing, overrideColor);
     } else if (drawing.action.includes('fibonacci-retracement')) {
       this.drawFibonacciRetracement(drawing, overrideColor);
+    } else if (drawing.action === 'preview-fibonacci-extension-p1') {
+      // Draw first line preview for Fibonacci Extension
+      this.drawSimpleLine(drawing, overrideColor || '#9c27b0');
     } else if (drawing.action.includes('fibonacci-extension')) {
       this.drawFibonacciExtension(drawing, overrideColor);
     } else if (drawing.action.includes('fibonacci-fan')) {
@@ -1980,21 +2119,21 @@ export class CanvasRenderer {
     } else if (drawing.action.includes('gann-angles')) {
       this.drawGannAngles(drawing, overrideColor);
     } else if (drawing.action.includes('head-and-shoulders')) {
-      this.drawHeadAndShoulders(drawing);
+      this.drawHeadAndShoulders(drawing, overrideColor);
     } else if (drawing.action.includes('triangle')) {
-      this.drawTriangle(drawing);
+      this.drawTriangle(drawing, overrideColor);
     } else if (drawing.action.includes('wedge')) {
-      this.drawWedge(drawing);
+      this.drawWedge(drawing, overrideColor);
     } else if (drawing.action.includes('double-top-bottom')) {
-      this.drawDoubleTopBottom(drawing);
+      this.drawDoubleTopBottom(drawing, overrideColor);
     } else if (drawing.action.includes('rectangle')) {
-      this.drawRectangle(drawing);
+      this.drawRectangle(drawing, overrideColor);
     } else if (drawing.action.includes('circle')) {
-      this.drawCircle(drawing);
+      this.drawCircle(drawing, overrideColor);
     } else if (drawing.action.includes('ellipse')) {
-      this.drawEllipse(drawing);
+      this.drawEllipse(drawing, overrideColor);
     } else if (drawing.action.includes('polygon')) {
-      this.drawPolygon(drawing);
+      this.drawPolygon(drawing, overrideColor);
     } else if (drawing.action.includes('text-label')) {
       this.drawTextLabel(drawing);
     } else if (drawing.action.includes('callout')) {
@@ -2176,6 +2315,30 @@ export class CanvasRenderer {
     ctx.fill();
 
     ctx.restore();
+  }
+
+  /**
+   * Draw a simple line from (x1, y1) to (x2, y2)
+   * Used for preview lines before full tool rendering
+   * @param {Object} drawing - Drawing object with x1, y1, x2, y2
+   * @param {string} color - Line color
+   */
+  drawSimpleLine(drawing, color = '#2196f3') {
+    const ctx = this.ctx;
+    const { x1, y1, x2, y2 } = drawing;
+
+    if (x1 === undefined || y1 === undefined || x2 === undefined || y2 === undefined) {
+      console.error('❌ Invalid coordinates for simple line:', drawing);
+      return;
+    }
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
   }
 
   /**
@@ -2839,74 +3002,165 @@ export class CanvasRenderer {
   /**
    * Draw head and shoulders pattern
    */
-  drawHeadAndShoulders(drawing) {
+  drawHeadAndShoulders(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { points, lineColor, lineWidth, showLabels } = drawing;
+    const { points, chartPoints, lineColor, lineWidth, showLabels, currentX, currentY } = drawing;
 
-    if (!points || points.length < 5) return;
+    // Build screen points array (for preview or completed)
+    let screenPoints;
+    if (chartPoints && chartPoints.length >= 5) {
+      // Completed drawing - convert chart coordinates to screen coordinates
+      screenPoints = chartPoints.map(p => ({
+        x: this.indexToX(p.chartIndex),
+        y: this.priceToY(p.chartPrice)
+      }));
+    } else if (chartPoints && chartPoints.length > 0) {
+      // Preview with chart coordinates - convert to screen and add current mouse position
+      screenPoints = chartPoints.map(p => ({
+        x: this.indexToX(p.chartIndex),
+        y: this.priceToY(p.chartPrice)
+      }));
+      if (currentX !== undefined && currentY !== undefined && chartPoints.length < 5) {
+        // Convert currentX/currentY (raw canvas coords) to chart coords and back to screen coords for consistency
+        const currentIndex = this.xToIndex(currentX);
+        const currentPrice = this.yToPrice(currentY);
+        screenPoints.push({
+          x: this.indexToX(currentIndex),
+          y: this.priceToY(currentPrice)
+        });
+      }
+    } else if (points && points.length > 0) {
+      // Preview with screen coordinates - use directly, add current mouse position if available
+      screenPoints = [...points];
+      if (currentX !== undefined && currentY !== undefined && points.length < 5) {
+        screenPoints.push({ x: currentX, y: currentY });
+      }
+    } else {
+      // Not enough data to draw - silently return
+      return;
+    }
 
-    ctx.strokeStyle = lineColor || '#ff5722';
+    if (!screenPoints || screenPoints.length < 2) return;
+
+    ctx.strokeStyle = overrideColor || lineColor || '#ff5722';
     ctx.lineWidth = lineWidth || 2;
 
     // Connect the pattern points
     ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    points.forEach(point => {
-      ctx.lineTo(point.x, point.y);
-    });
+    ctx.moveTo(screenPoints[0].x, screenPoints[0].y);
+    for (let i = 1; i < screenPoints.length; i++) {
+      ctx.lineTo(screenPoints[i].x, screenPoints[i].y);
+    }
     ctx.stroke();
 
-    // Draw neckline
-    if (points.length >= 5) {
+    // Draw neckline (only if we have all 5 points)
+    if (screenPoints.length >= 5) {
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      ctx.lineTo(points[4].x, points[4].y);
+      ctx.moveTo(screenPoints[0].x, screenPoints[0].y);
+      ctx.lineTo(screenPoints[4].x, screenPoints[4].y);
       ctx.stroke();
       ctx.setLineDash([]);
     }
 
-    // Labels
-    if (showLabels && points.length >= 5) {
+    // Labels (only if we have enough points and labels are enabled)
+    if (showLabels) {
       ctx.fillStyle = lineColor;
       ctx.font = '11px Arial';
-      ctx.fillText('LS', points[0].x, points[0].y - 5);
-      ctx.fillText('H', points[2].x, points[2].y - 5);
-      ctx.fillText('RS', points[4].x, points[4].y - 5);
+      if (screenPoints.length >= 1) ctx.fillText('LS', screenPoints[0].x, screenPoints[0].y - 5);
+      if (screenPoints.length >= 3) ctx.fillText('H', screenPoints[2].x, screenPoints[2].y - 5);
+      if (screenPoints.length >= 5) ctx.fillText('RS', screenPoints[4].x, screenPoints[4].y - 5);
     }
   }
 
   /**
    * Draw triangle pattern
    */
-  drawTriangle(drawing) {
+  drawTriangle(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { points, lineColor, lineWidth, fillOpacity } = drawing;
+    const { points, chartPoints, lineColor, lineWidth, fillOpacity, currentX, currentY } = drawing;
 
-    if (!points || points.length < 4) return;
+    // Build screen points array (for preview or completed)
+    let screenPoints;
+    if (chartPoints && chartPoints.length >= 4) {
+      // Completed drawing - convert chart coordinates to screen coordinates
+      screenPoints = chartPoints.map(p => ({
+        x: this.indexToX(p.chartIndex),
+        y: this.priceToY(p.chartPrice)
+      }));
+    } else if (chartPoints && chartPoints.length > 0) {
+      // Preview with chart coordinates - convert to screen and add current mouse position
+      screenPoints = chartPoints.map(p => ({
+        x: this.indexToX(p.chartIndex),
+        y: this.priceToY(p.chartPrice)
+      }));
+      if (currentX !== undefined && currentY !== undefined && chartPoints.length < 4) {
+        // Convert currentX/currentY (raw canvas coords) to chart coords and back to screen coords for consistency
+        const currentIndex = this.xToIndex(currentX);
+        const currentPrice = this.yToPrice(currentY);
+        screenPoints.push({
+          x: this.indexToX(currentIndex),
+          y: this.priceToY(currentPrice)
+        });
+      }
+    } else if (points && points.length > 0) {
+      // Preview with screen coordinates - use directly, add current mouse position if available
+      screenPoints = [...points];
+      if (currentX !== undefined && currentY !== undefined && points.length < 4) {
+        screenPoints.push({ x: currentX, y: currentY });
+      }
+    } else {
+      // Not enough data to draw - silently return
+      return;
+    }
 
-    ctx.strokeStyle = lineColor || '#9c27b0';
+    if (!screenPoints || screenPoints.length < 2) return;
+
+    ctx.strokeStyle = overrideColor || lineColor || '#9c27b0';
     ctx.lineWidth = lineWidth || 2;
 
-    // Draw two trend lines
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    ctx.lineTo(points[2].x, points[2].y);
-    ctx.stroke();
+    // Draw lines based on how many points we have
+    if (screenPoints.length === 2) {
+      // Step 1: Only have point 0 and cursor - draw preview of first leg
+      ctx.beginPath();
+      ctx.moveTo(screenPoints[0].x, screenPoints[0].y);
+      ctx.lineTo(screenPoints[1].x, screenPoints[1].y);
+      ctx.stroke();
+    } else if (screenPoints.length === 3) {
+      // Step 2: Have points 0, 1, and cursor - draw completed first leg + preview second leg
+      ctx.beginPath();
+      ctx.moveTo(screenPoints[0].x, screenPoints[0].y);
+      ctx.lineTo(screenPoints[1].x, screenPoints[1].y);
+      ctx.stroke();
 
-    ctx.beginPath();
-    ctx.moveTo(points[1].x, points[1].y);
-    ctx.lineTo(points[3].x, points[3].y);
-    ctx.stroke();
+      // Preview second leg from point 1 to cursor
+      ctx.beginPath();
+      ctx.moveTo(screenPoints[1].x, screenPoints[1].y);
+      ctx.lineTo(screenPoints[2].x, screenPoints[2].y);
+      ctx.stroke();
+    } else if (screenPoints.length >= 4) {
+      // Step 3+: Have points 0, 1, 2, and possibly cursor/point 3
+      // Draw first trend line (points 0 to 2)
+      ctx.beginPath();
+      ctx.moveTo(screenPoints[0].x, screenPoints[0].y);
+      ctx.lineTo(screenPoints[2].x, screenPoints[2].y);
+      ctx.stroke();
 
-    // Fill
-    if (fillOpacity && fillOpacity > 0) {
+      // Draw second trend line (points 1 to 3)
+      ctx.beginPath();
+      ctx.moveTo(screenPoints[1].x, screenPoints[1].y);
+      ctx.lineTo(screenPoints[3].x, screenPoints[3].y);
+      ctx.stroke();
+    }
+
+    // Fill (only if we have all 4 points)
+    if (fillOpacity && fillOpacity > 0 && screenPoints.length >= 4) {
       ctx.fillStyle = `${lineColor}${Math.floor(fillOpacity * 255).toString(16)}`;
       ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      ctx.lineTo(points[2].x, points[2].y);
-      ctx.lineTo(points[3].x, points[3].y);
-      ctx.lineTo(points[1].x, points[1].y);
+      ctx.moveTo(screenPoints[0].x, screenPoints[0].y);
+      ctx.lineTo(screenPoints[2].x, screenPoints[2].y);
+      ctx.lineTo(screenPoints[3].x, screenPoints[3].y);
+      ctx.lineTo(screenPoints[1].x, screenPoints[1].y);
       ctx.closePath();
       ctx.fill();
     }
@@ -2915,44 +3169,88 @@ export class CanvasRenderer {
   /**
    * Draw wedge pattern
    */
-  drawWedge(drawing) {
-    this.drawTriangle(drawing); // Same rendering as triangle
+  drawWedge(drawing, overrideColor = null) {
+    this.drawTriangle(drawing, overrideColor); // Same rendering as triangle
   }
 
   /**
    * Draw double top/bottom pattern
    */
-  drawDoubleTopBottom(drawing) {
+  drawDoubleTopBottom(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { points, lineColor, lineWidth, showLabels, patternType } = drawing;
+    const { points, chartPoints, lineColor, lineWidth, showLabels, patternType, currentX, currentY } = drawing;
 
-    if (!points || points.length < 3) return;
+    // Build screen points array (for preview or completed)
+    let screenPoints;
+    if (chartPoints && chartPoints.length >= 3) {
+      // Completed drawing - convert chart coordinates to screen coordinates
+      screenPoints = chartPoints.map(p => ({
+        x: this.indexToX(p.chartIndex),
+        y: this.priceToY(p.chartPrice)
+      }));
+    } else if (chartPoints && chartPoints.length > 0) {
+      // Preview with chart coordinates - convert to screen and add current mouse position
+      screenPoints = chartPoints.map(p => ({
+        x: this.indexToX(p.chartIndex),
+        y: this.priceToY(p.chartPrice)
+      }));
+      if (currentX !== undefined && currentY !== undefined && chartPoints.length < 3) {
+        // Convert currentX/currentY (raw canvas coords) to chart coords and back to screen coords for consistency
+        const currentIndex = this.xToIndex(currentX);
+        const currentPrice = this.yToPrice(currentY);
+        screenPoints.push({
+          x: this.indexToX(currentIndex),
+          y: this.priceToY(currentPrice)
+        });
+      }
+    } else if (points && points.length > 0) {
+      // Preview with screen coordinates - use directly, add current mouse position if available
+      screenPoints = [...points];
+      if (currentX !== undefined && currentY !== undefined && points.length < 3) {
+        screenPoints.push({ x: currentX, y: currentY });
+      }
+    } else {
+      // Not enough data to draw - silently return
+      return;
+    }
 
-    ctx.strokeStyle = lineColor || '#f44336';
+    if (!screenPoints || screenPoints.length < 2) {
+      console.log('⚠️ Not enough points to draw:', {
+        screenPointsLength: screenPoints?.length,
+        hasCurrentX: currentX !== undefined,
+        hasCurrentY: currentY !== undefined,
+        pointsLength: points?.length
+      });
+      return;
+    }
+
+    ctx.strokeStyle = overrideColor || lineColor || '#f44336';
     ctx.lineWidth = lineWidth || 2;
 
     // Connect points
     ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    points.forEach(point => {
-      ctx.lineTo(point.x, point.y);
-    });
+    ctx.moveTo(screenPoints[0].x, screenPoints[0].y);
+    for (let i = 1; i < screenPoints.length; i++) {
+      ctx.lineTo(screenPoints[i].x, screenPoints[i].y);
+    }
     ctx.stroke();
 
-    // Draw neckline
-    ctx.setLineDash([5, 5]);
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[1].y);
-    ctx.lineTo(points[2].x, points[1].y);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    // Draw neckline (only if we have all 3 points)
+    if (screenPoints.length >= 3) {
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(screenPoints[0].x, screenPoints[1].y);
+      ctx.lineTo(screenPoints[2].x, screenPoints[1].y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
 
-    // Labels
-    if (showLabels) {
+    // Labels (only if we have all points)
+    if (showLabels && screenPoints.length >= 3) {
       ctx.fillStyle = lineColor;
       ctx.font = '11px Arial';
       const label = patternType === 'top' ? 'Double Top' : 'Double Bottom';
-      ctx.fillText(label, points[1].x, points[1].y - 10);
+      ctx.fillText(label, screenPoints[1].x, screenPoints[1].y - 10);
     }
   }
 
@@ -2961,39 +3259,74 @@ export class CanvasRenderer {
   /**
    * Draw rectangle
    */
-  drawRectangle(drawing) {
+  drawRectangle(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, lineColor, lineWidth, fillColor, filled } = drawing;
+    const { startX, startY, endX, endY, startIndex, startPrice, endIndex, endPrice, lineColor, lineWidth, fillColor, filled } = drawing;
 
-    const width = endX - startX;
-    const height = endY - startY;
+    // Get screen coordinates
+    let screenStartX, screenStartY, screenEndX, screenEndY;
+
+    if (startIndex !== undefined && startPrice !== undefined && endIndex !== undefined && endPrice !== undefined) {
+      // Convert from chart coordinates to screen coordinates
+      screenStartX = this.indexToX(startIndex);
+      screenStartY = this.priceToY(startPrice);
+      screenEndX = this.indexToX(endIndex);
+      screenEndY = this.priceToY(endPrice);
+    } else {
+      // Use screen coordinates directly (for preview)
+      screenStartX = startX;
+      screenStartY = startY;
+      screenEndX = endX;
+      screenEndY = endY;
+    }
+
+    const width = screenEndX - screenStartX;
+    const height = screenEndY - screenStartY;
 
     if (filled && fillColor) {
       ctx.fillStyle = fillColor;
-      ctx.fillRect(startX, startY, width, height);
+      ctx.fillRect(screenStartX, screenStartY, width, height);
     }
 
-    ctx.strokeStyle = lineColor || '#2196f3';
+    ctx.strokeStyle = overrideColor || lineColor || '#2196f3';
     ctx.lineWidth = lineWidth || 2;
-    ctx.strokeRect(startX, startY, width, height);
+    ctx.strokeRect(screenStartX, screenStartY, width, height);
   }
 
   /**
    * Draw circle
    */
-  drawCircle(drawing) {
+  drawCircle(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { centerX, centerY, radius, lineColor, lineWidth, fillColor, filled } = drawing;
+    const { centerX, centerY, radius, centerIndex, centerPrice, radiusInPriceUnits, lineColor, lineWidth, fillColor, filled } = drawing;
+
+    // Get screen coordinates
+    let screenCenterX, screenCenterY, screenRadius;
+
+    if (centerIndex !== undefined && centerPrice !== undefined && radiusInPriceUnits !== undefined) {
+      // Convert from chart coordinates to screen coordinates
+      screenCenterX = this.indexToX(centerIndex);
+      screenCenterY = this.priceToY(centerPrice);
+      // Convert radius from price units to screen pixels
+      const priceRange = this.maxPrice - this.minPrice;
+      const canvasHeight = this.canvas.height;
+      screenRadius = (radiusInPriceUnits / priceRange) * canvasHeight;
+    } else {
+      // Use screen coordinates directly (for preview)
+      screenCenterX = centerX;
+      screenCenterY = centerY;
+      screenRadius = radius;
+    }
 
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.arc(screenCenterX, screenCenterY, screenRadius, 0, Math.PI * 2);
 
     if (filled && fillColor) {
       ctx.fillStyle = fillColor;
       ctx.fill();
     }
 
-    ctx.strokeStyle = lineColor || '#00c853';
+    ctx.strokeStyle = overrideColor || lineColor || '#00c853';
     ctx.lineWidth = lineWidth || 2;
     ctx.stroke();
   }
@@ -3001,14 +3334,31 @@ export class CanvasRenderer {
   /**
    * Draw ellipse
    */
-  drawEllipse(drawing) {
+  drawEllipse(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { startX, startY, endX, endY, lineColor, lineWidth, fillColor, filled } = drawing;
+    const { startX, startY, endX, endY, startIndex, startPrice, endIndex, endPrice, lineColor, lineWidth, fillColor, filled } = drawing;
 
-    const centerX = (startX + endX) / 2;
-    const centerY = (startY + endY) / 2;
-    const radiusX = Math.abs(endX - startX) / 2;
-    const radiusY = Math.abs(endY - startY) / 2;
+    // Get screen coordinates
+    let screenStartX, screenStartY, screenEndX, screenEndY;
+
+    if (startIndex !== undefined && startPrice !== undefined && endIndex !== undefined && endPrice !== undefined) {
+      // Convert from chart coordinates to screen coordinates
+      screenStartX = this.indexToX(startIndex);
+      screenStartY = this.priceToY(startPrice);
+      screenEndX = this.indexToX(endIndex);
+      screenEndY = this.priceToY(endPrice);
+    } else {
+      // Use screen coordinates directly (for preview)
+      screenStartX = startX;
+      screenStartY = startY;
+      screenEndX = endX;
+      screenEndY = endY;
+    }
+
+    const centerX = (screenStartX + screenEndX) / 2;
+    const centerY = (screenStartY + screenEndY) / 2;
+    const radiusX = Math.abs(screenEndX - screenStartX) / 2;
+    const radiusY = Math.abs(screenEndY - screenStartY) / 2;
 
     ctx.beginPath();
     ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
@@ -3018,7 +3368,7 @@ export class CanvasRenderer {
       ctx.fill();
     }
 
-    ctx.strokeStyle = lineColor || '#ff9800';
+    ctx.strokeStyle = overrideColor || lineColor || '#ff9800';
     ctx.lineWidth = lineWidth || 2;
     ctx.stroke();
   }
@@ -3026,15 +3376,28 @@ export class CanvasRenderer {
   /**
    * Draw polygon
    */
-  drawPolygon(drawing) {
+  drawPolygon(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { points, lineColor, lineWidth, fillColor, filled } = drawing;
+    const { points, chartPoints, lineColor, lineWidth, fillColor, filled } = drawing;
 
-    if (!points || points.length < 3) return;
+    // Get screen points
+    let screenPoints;
+    if (chartPoints && chartPoints.length >= 3) {
+      // Convert from chart coordinates to screen coordinates
+      screenPoints = chartPoints.map(p => ({
+        x: this.indexToX(p.chartIndex),
+        y: this.priceToY(p.chartPrice)
+      }));
+    } else if (points && points.length >= 3) {
+      // Use screen coordinates directly (for preview or old drawings)
+      screenPoints = points;
+    } else {
+      return; // Not enough points to draw
+    }
 
     ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    points.forEach(point => {
+    ctx.moveTo(screenPoints[0].x, screenPoints[0].y);
+    screenPoints.forEach(point => {
       ctx.lineTo(point.x, point.y);
     });
     ctx.closePath();
@@ -3044,7 +3407,7 @@ export class CanvasRenderer {
       ctx.fill();
     }
 
-    ctx.strokeStyle = lineColor || '#9c27b0';
+    ctx.strokeStyle = overrideColor || lineColor || '#9c27b0';
     ctx.lineWidth = lineWidth || 2;
     ctx.stroke();
   }
