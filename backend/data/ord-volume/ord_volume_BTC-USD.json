@@ -1,0 +1,299 @@
+{
+  "symbol": "BTC-USD",
+  "analysis": {
+    "mode": "auto",
+    "trendlines": [
+      {
+        "x1": 4041,
+        "y1": 104582.4140625,
+        "x2": 4044,
+        "y2": 116020.484375,
+        "label": "Initial",
+        "color": "#2196f3",
+        "lineWidth": 2
+      },
+      {
+        "x1": 4044,
+        "y1": 116020.484375,
+        "x2": 4048,
+        "y2": 103598.4296875,
+        "label": "Correction",
+        "color": "#2196f3",
+        "lineWidth": 2
+      },
+      {
+        "x1": 4048,
+        "y1": 103598.4296875,
+        "x2": 4052,
+        "y2": 113996.34375,
+        "label": "Retest",
+        "color": "#2196f3",
+        "lineWidth": 2
+      },
+      {
+        "x1": 4052,
+        "y1": 113996.34375,
+        "x2": 4053,
+        "y2": 106778,
+        "label": "Wave 4",
+        "color": "#2196f3",
+        "lineWidth": 2
+      },
+      {
+        "x1": 4053,
+        "y1": 106778,
+        "x2": 4058,
+        "y2": 116273.3125,
+        "label": "Wave 5",
+        "color": "#2196f3",
+        "lineWidth": 2
+      },
+      {
+        "x1": 4058,
+        "y1": 116273.3125,
+        "x2": 4061,
+        "y2": 106376.6875,
+        "label": "Wave 6",
+        "color": "#2196f3",
+        "lineWidth": 2
+      },
+      {
+        "x1": 4061,
+        "y1": 106376.6875,
+        "x2": 4064,
+        "y2": 111167.3125,
+        "label": "Wave 7",
+        "color": "#2196f3",
+        "lineWidth": 2
+      }
+    ],
+    "labels": [
+      {
+        "x": 4042.5,
+        "y": 111445.25625,
+        "text": "AvgVolInitial: 107.16B",
+        "color": "#ffffff",
+        "backgroundColor": "rgba(0, 0, 0, 0.7)",
+        "fontSize": 12,
+        "draggable": true
+      },
+      {
+        "x": 4046,
+        "y": 108567.2515625,
+        "text": "AvgVolCorrection: 84.68B",
+        "color": "#ffffff",
+        "backgroundColor": "rgba(0, 0, 0, 0.7)",
+        "fontSize": 12,
+        "draggable": true
+      },
+      {
+        "x": 4050,
+        "y": 109837.178125,
+        "text": "AvgVolRetest: 69.97B",
+        "color": "#ffffff",
+        "backgroundColor": "rgba(0, 0, 0, 0.7)",
+        "fontSize": 12,
+        "draggable": true
+      },
+      {
+        "x": 4052.5,
+        "y": 109665.3375,
+        "text": "AvgVolWave 4: 91.00B",
+        "color": "#ffffff",
+        "backgroundColor": "rgba(0, 0, 0, 0.7)",
+        "fontSize": 12,
+        "draggable": true
+      },
+      {
+        "x": 4055.5,
+        "y": 112475.1875,
+        "text": "AvgVolWave 5: 52.01B",
+        "color": "#ffffff",
+        "backgroundColor": "rgba(0, 0, 0, 0.7)",
+        "fontSize": 12,
+        "draggable": true
+      },
+      {
+        "x": 4059.5,
+        "y": 110335.3375,
+        "text": "AvgVolWave 6: 64.54B",
+        "color": "#ffffff",
+        "backgroundColor": "rgba(0, 0, 0, 0.7)",
+        "fontSize": 12,
+        "draggable": true
+      },
+      {
+        "x": 4062.5,
+        "y": 109251.0625,
+        "text": "AvgVolWave 7: 47.48B",
+        "color": "#ffffff",
+        "backgroundColor": "rgba(0, 0, 0, 0.7)",
+        "fontSize": 12,
+        "draggable": true
+      },
+      {
+        "x": 4050,
+        "y": 110876.96953125,
+        "text": "RetestStrength: Weak",
+        "color": "#ff1744",
+        "backgroundColor": "rgba(0, 0, 0, 0.8)",
+        "fontSize": 14,
+        "fontWeight": "bold",
+        "draggable": true
+      }
+    ],
+    "strength": "Weak",
+    "color": "red",
+    "waveData": [
+      {
+        "index": 0,
+        "label": "Initial",
+        "line": [
+          4041,
+          104582.4140625,
+          4044,
+          116020.484375
+        ],
+        "startIdx": 4041,
+        "endIdx": 4044,
+        "candleCount": 4,
+        "totalVolume": 428654394038,
+        "avgVolume": 107163598509.5
+      },
+      {
+        "index": 1,
+        "label": "Correction",
+        "line": [
+          4044,
+          116020.484375,
+          4048,
+          103598.4296875
+        ],
+        "startIdx": 4044,
+        "endIdx": 4048,
+        "candleCount": 5,
+        "totalVolume": 423378551733,
+        "avgVolume": 84675710346.6
+      },
+      {
+        "index": 2,
+        "label": "Retest",
+        "line": [
+          4048,
+          103598.4296875,
+          4052,
+          113996.34375
+        ],
+        "startIdx": 4048,
+        "endIdx": 4052,
+        "candleCount": 5,
+        "totalVolume": 349842134465,
+        "avgVolume": 69968426893
+      },
+      {
+        "index": 3,
+        "label": "Wave 4",
+        "line": [
+          4052,
+          113996.34375,
+          4053,
+          106778
+        ],
+        "startIdx": 4052,
+        "endIdx": 4053,
+        "candleCount": 2,
+        "totalVolume": 182001388698,
+        "avgVolume": 91000694349
+      },
+      {
+        "index": 4,
+        "label": "Wave 5",
+        "line": [
+          4053,
+          106778,
+          4058,
+          116273.3125
+        ],
+        "startIdx": 4053,
+        "endIdx": 4058,
+        "candleCount": 6,
+        "totalVolume": 312089456439,
+        "avgVolume": 52014909406.5
+      },
+      {
+        "index": 5,
+        "label": "Wave 6",
+        "line": [
+          4058,
+          116273.3125,
+          4061,
+          106376.6875
+        ],
+        "startIdx": 4058,
+        "endIdx": 4061,
+        "candleCount": 4,
+        "totalVolume": 258155433520,
+        "avgVolume": 64538858380
+      },
+      {
+        "index": 6,
+        "label": "Wave 7",
+        "line": [
+          4061,
+          106376.6875,
+          4064,
+          111167.3125
+        ],
+        "startIdx": 4061,
+        "endIdx": 4064,
+        "candleCount": 4,
+        "totalVolume": 189920202595,
+        "avgVolume": 47480050648.75
+      }
+    ],
+    "lines": [
+      [
+        4041,
+        104582.4140625,
+        4044,
+        116020.484375
+      ],
+      [
+        4044,
+        116020.484375,
+        4048,
+        103598.4296875
+      ],
+      [
+        4048,
+        103598.4296875,
+        4052,
+        113996.34375
+      ],
+      [
+        4052,
+        113996.34375,
+        4053,
+        106778
+      ],
+      [
+        4053,
+        106778,
+        4058,
+        116273.3125
+      ],
+      [
+        4058,
+        116273.3125,
+        4061,
+        106376.6875
+      ],
+      [
+        4061,
+        106376.6875,
+        4064,
+        111167.3125
+      ]
+    ]
+  }
+}

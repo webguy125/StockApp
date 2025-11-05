@@ -663,6 +663,12 @@ export class CanvasRenderer {
     if (this.hoveredIndex >= 0) {
       this.drawHoverInfo();
     }
+
+    // Draw ORD Volume overlays (segregated feature)
+    if (window.ordVolumeBridge && window.ordVolumeBridge.isActiveAnalysis()) {
+      window.ordVolumeBridge.setChartRenderer(this);
+      window.ordVolumeBridge.drawOverlays(this.ctx, this);
+    }
   }
 
   /**
@@ -1346,6 +1352,7 @@ export class CanvasRenderer {
     this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
     this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
     this.canvas.addEventListener('mouseleave', (e) => this.onMouseLeave(e));
+    this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
     this.canvas.addEventListener('wheel', (e) => this.onWheel(e));
 
     // Listen for drawing tool actions from tool panel
@@ -1739,6 +1746,20 @@ export class CanvasRenderer {
   }
 
   /**
+   * Handle double-click - enter text editing mode for text annotations
+   */
+  onDoubleClick(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Let SelectionManager handle double-click for text editing
+    if (this.selectionManager) {
+      this.selectionManager.onDoubleClick(e, mouseX, mouseY);
+    }
+  }
+
+  /**
    * Handle drawing tool actions from tool panel
    */
   onToolAction(e) {
@@ -1795,7 +1816,11 @@ export class CanvasRenderer {
         action.action.includes('rectangle') ||
         action.action.includes('circle') ||
         action.action.includes('ellipse') ||
-        action.action.includes('polygon');
+        action.action.includes('polygon') ||
+        action.action.includes('text-label') ||
+        action.action.includes('callout') ||
+        action.action.includes('note') ||
+        action.action.includes('price-label');
 
     if (needsConversion) {
       convertedAction = this.convertToChartCoordinates(action);
@@ -1914,6 +1939,17 @@ export class CanvasRenderer {
       delete converted.centerX;
       delete converted.centerY;
       delete converted.radius;
+    } else if (action.action && action.action.includes('callout') && action.pointerX !== undefined) {
+      // Handle callout with pointer and text positions
+      converted.pointerIndex = this.xToIndex(action.pointerX);
+      converted.pointerPrice = this.yToPrice(action.pointerY);
+      converted.textIndex = this.xToIndex(action.textX);
+      converted.textPrice = this.yToPrice(action.textY);
+      // Remove screen coordinates
+      delete converted.pointerX;
+      delete converted.pointerY;
+      delete converted.textX;
+      delete converted.textY;
     } else {
       // Handle standard line structure (startX/Y, endX/Y)
       // Convert start point
@@ -2029,9 +2065,10 @@ export class CanvasRenderer {
 
     // Get the currently selected drawing from SelectionManager
     const selectedDrawing = this.selectionManager?.getSelectedDrawing();
+    const isEditingText = this.selectionManager?.isEditingText;
 
     this.drawings.forEach(drawing => {
-      // Highlight drawing if selected (turns yellow)
+      // Highlight drawing if selected (turns yellow), but NOT if we're editing text
       const isSelected = selectedDrawing === drawing;
 
       // Highlight drawing if hovered by eraser tool
@@ -2039,7 +2076,8 @@ export class CanvasRenderer {
 
       // Priority: selected > eraser hovered
       let highlightColor = null;
-      if (isSelected) {
+      if (isSelected && !isEditingText) {
+        // Don't show yellow highlight when editing text
         highlightColor = '#ffeb3b'; // Yellow for selected
       } else if (isEraserHovered) {
         // Use yellow for dots/arrows (so we don't confuse with red arrows)
@@ -2135,13 +2173,13 @@ export class CanvasRenderer {
     } else if (drawing.action.includes('polygon')) {
       this.drawPolygon(drawing, overrideColor);
     } else if (drawing.action.includes('text-label')) {
-      this.drawTextLabel(drawing);
+      this.drawTextLabel(drawing, overrideColor);
     } else if (drawing.action.includes('callout')) {
-      this.drawCallout(drawing);
+      this.drawCallout(drawing, overrideColor);
     } else if (drawing.action.includes('note')) {
-      this.drawNote(drawing);
+      this.drawNote(drawing, overrideColor);
     } else if (drawing.action.includes('price-label')) {
-      this.drawPriceLabel(drawing);
+      this.drawPriceLabel(drawing, overrideColor);
     }
   }
 
@@ -3417,32 +3455,95 @@ export class CanvasRenderer {
   /**
    * Draw text label
    */
-  drawTextLabel(drawing) {
+  drawTextLabel(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { x, y, text, fontSize, fontFamily, textColor, backgroundColor, showBackground } = drawing;
+    const { chartIndex, chartPrice, text, fontSize, fontFamily, textColor, backgroundColor, showBackground } = drawing;
 
-    ctx.font = `${fontSize || 14}px ${fontFamily || 'Arial'}`;
-
-    if (showBackground && backgroundColor) {
-      const metrics = ctx.measureText(text);
-      const padding = 4;
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(x - padding, y - fontSize - padding, metrics.width + padding * 2, fontSize + padding * 2);
+    // Safety check
+    if (chartIndex === undefined || chartPrice === undefined) {
+      console.error('❌ Text Label missing required coordinates:', drawing);
+      return;
     }
 
+    // Convert chart coordinates to screen coordinates
+    const x = this.indexToX(chartIndex);
+    const y = this.priceToY(chartPrice);
+
+    ctx.font = `${fontSize || 14}px ${fontFamily || 'Arial'}`;
+    const displayText = text || 'Text';
+    const metrics = ctx.measureText(displayText);
+    const padding = 4;
+    const boxX = x - padding;
+    const boxY = y - fontSize - padding;
+    const boxWidth = metrics.width + padding * 2;
+    const boxHeight = fontSize + padding * 2;
+
+    // Draw background
+    if (showBackground && backgroundColor) {
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+    }
+
+    // Draw border if selected (instead of yellow fill)
+    if (overrideColor) {
+      ctx.strokeStyle = overrideColor;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+    }
+
+    // Draw text
     ctx.fillStyle = textColor || '#ffffff';
-    ctx.fillText(text || 'Text', x, y);
+    ctx.fillText(displayText, x, y);
+
+    // Draw blinking cursor if editing
+    const isEditing = this.selectionManager?.isEditingText && this.selectionManager?.editingDrawing === drawing;
+    if (isEditing) {
+      // Get cursor position in text
+      const cursorPos = this.selectionManager?.textCursorPosition || 0;
+      const textBeforeCursor = displayText.substring(0, cursorPos);
+      const metricsBeforeCursor = ctx.measureText(textBeforeCursor);
+
+      const cursorX = x + metricsBeforeCursor.width;
+      const cursorY = y - fontSize;
+      const cursorHeight = fontSize;
+
+      // Blink cursor every 500ms
+      const shouldShowCursor = Math.floor(Date.now() / 500) % 2 === 0;
+      if (shouldShowCursor) {
+        ctx.strokeStyle = textColor || '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cursorX, cursorY);
+        ctx.lineTo(cursorX, cursorY + cursorHeight);
+        ctx.stroke();
+      }
+
+      // Request animation frame to keep cursor blinking
+      requestAnimationFrame(() => this.draw());
+    }
   }
 
   /**
    * Draw callout
    */
-  drawCallout(drawing) {
+  drawCallout(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { pointerX, pointerY, textX, textY, text, textColor, backgroundColor, borderColor, fontSize } = drawing;
+    const { pointerIndex, pointerPrice, textIndex, textPrice, text, textColor, backgroundColor, borderColor, fontSize } = drawing;
+
+    // Safety check
+    if (pointerIndex === undefined || pointerPrice === undefined || textIndex === undefined || textPrice === undefined) {
+      console.error('❌ Callout missing required coordinates:', drawing);
+      return;
+    }
+
+    // Convert chart coordinates to screen coordinates
+    const pointerX = this.indexToX(pointerIndex);
+    const pointerY = this.priceToY(pointerPrice);
+    const textX = this.indexToX(textIndex);
+    const textY = this.priceToY(textPrice);
 
     // Draw arrow from pointer to text box
-    ctx.strokeStyle = borderColor || '#2196f3';
+    ctx.strokeStyle = overrideColor || borderColor || '#2196f3';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(pointerX, pointerY);
@@ -3451,55 +3552,140 @@ export class CanvasRenderer {
 
     // Draw text box
     ctx.font = `${fontSize || 14}px Arial`;
-    const metrics = ctx.measureText(text || 'Callout');
+    const displayText = text || 'Callout';
+    const metrics = ctx.measureText(displayText);
     const padding = 8;
     const boxWidth = metrics.width + padding * 2;
     const boxHeight = fontSize + padding * 2;
+    const boxX = textX - boxWidth / 2;
+    const boxY = textY - boxHeight / 2;
 
+    // Draw background
     ctx.fillStyle = backgroundColor || 'rgba(33, 150, 243, 0.9)';
-    ctx.fillRect(textX - boxWidth / 2, textY - boxHeight / 2, boxWidth, boxHeight);
+    ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
-    ctx.strokeStyle = borderColor || '#2196f3';
-    ctx.strokeRect(textX - boxWidth / 2, textY - boxHeight / 2, boxWidth, boxHeight);
+    // Draw border (always present, highlighted if selected)
+    ctx.strokeStyle = overrideColor || borderColor || '#2196f3';
+    ctx.lineWidth = overrideColor ? 3 : 2; // Thicker border when selected
+    ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
 
+    // Draw text
     ctx.fillStyle = textColor || '#ffffff';
-    ctx.fillText(text || 'Callout', textX - metrics.width / 2, textY + fontSize / 3);
+    ctx.fillText(displayText, textX - metrics.width / 2, textY + fontSize / 3);
+
+    // Draw blinking cursor if editing
+    const isEditing = this.selectionManager?.isEditingText && this.selectionManager?.editingDrawing === drawing;
+    if (isEditing) {
+      // Get cursor position in text
+      const cursorPos = this.selectionManager?.textCursorPosition || 0;
+      const textBeforeCursor = displayText.substring(0, cursorPos);
+      const metricsBeforeCursor = ctx.measureText(textBeforeCursor);
+
+      const cursorX = textX - metrics.width / 2 + metricsBeforeCursor.width;
+      const cursorY = textY - fontSize / 2;
+      const cursorHeight = fontSize;
+
+      // Blink cursor every 500ms
+      const shouldShowCursor = Math.floor(Date.now() / 500) % 2 === 0;
+      if (shouldShowCursor) {
+        ctx.strokeStyle = textColor || '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cursorX, cursorY);
+        ctx.lineTo(cursorX, cursorY + cursorHeight);
+        ctx.stroke();
+      }
+
+      // Request animation frame to keep cursor blinking
+      requestAnimationFrame(() => this.draw());
+    }
   }
 
   /**
    * Draw note
    */
-  drawNote(drawing) {
+  drawNote(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { x, y, text, noteColor, textColor, fontSize, width, height } = drawing;
+    const { chartIndex, chartPrice, text, noteColor, textColor, fontSize, width, height } = drawing;
+
+    // Safety check
+    if (chartIndex === undefined || chartPrice === undefined) {
+      console.error('❌ Note missing required coordinates:', drawing);
+      return;
+    }
+
+    // Convert chart coordinates to screen coordinates
+    const x = this.indexToX(chartIndex);
+    const y = this.priceToY(chartPrice);
+
+    const noteWidth = width || 150;
+    const noteHeight = height || 100;
 
     // Draw note background
     ctx.fillStyle = noteColor || '#ffeb3b';
-    ctx.fillRect(x, y, width || 150, height || 100);
+    ctx.fillRect(x, y, noteWidth, noteHeight);
 
-    ctx.strokeStyle = '#daa520';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, width || 150, height || 100);
+    // Draw border (highlighted if selected)
+    ctx.strokeStyle = overrideColor || '#daa520';
+    ctx.lineWidth = overrideColor ? 3 : 2; // Thicker border when selected
+    ctx.strokeRect(x, y, noteWidth, noteHeight);
 
     // Draw text
+    const displayText = text || 'Note';
     ctx.fillStyle = textColor || '#000000';
     ctx.font = `${fontSize || 12}px Arial`;
-    ctx.fillText(text || 'Note', x + 10, y + 20);
+    ctx.fillText(displayText, x + 10, y + 20);
+
+    // Draw blinking cursor if editing
+    const isEditing = this.selectionManager?.isEditingText && this.selectionManager?.editingDrawing === drawing;
+    if (isEditing) {
+      // Get cursor position in text
+      const cursorPos = this.selectionManager?.textCursorPosition || 0;
+      const textBeforeCursor = displayText.substring(0, cursorPos);
+      const metricsBeforeCursor = ctx.measureText(textBeforeCursor);
+
+      const cursorX = x + 10 + metricsBeforeCursor.width;
+      const cursorY = y + 20 - (fontSize || 12);
+      const cursorHeight = fontSize || 12;
+
+      // Blink cursor every 500ms
+      const shouldShowCursor = Math.floor(Date.now() / 500) % 2 === 0;
+      if (shouldShowCursor) {
+        ctx.strokeStyle = textColor || '#000000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cursorX, cursorY);
+        ctx.lineTo(cursorX, cursorY + cursorHeight);
+        ctx.stroke();
+      }
+
+      // Request animation frame to keep cursor blinking
+      requestAnimationFrame(() => this.draw());
+    }
   }
 
   /**
    * Draw price label
    */
-  drawPriceLabel(drawing) {
+  drawPriceLabel(drawing, overrideColor = null) {
     const ctx = this.ctx;
-    const { x, y, labelColor, textColor, fontSize, showLine } = drawing;
+    const { chartIndex, chartPrice, labelColor, textColor, fontSize, showLine } = drawing;
+
+    // Safety check
+    if (chartPrice === undefined) {
+      console.error('❌ Price Label missing required coordinates:', drawing);
+      return;
+    }
+
+    // Convert chart coordinates to screen coordinates
+    const y = this.priceToY(chartPrice);
     const chartLeft = this.margin.left;
     const chartRight = this.width - this.margin.right;
 
     // Draw horizontal line
     if (showLine) {
-      ctx.strokeStyle = labelColor || '#00c853';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = overrideColor || labelColor || '#00c853';
+      ctx.lineWidth = overrideColor ? 2 : 1; // Thicker line when selected
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
       ctx.moveTo(chartLeft, y);
@@ -3508,13 +3694,25 @@ export class CanvasRenderer {
       ctx.setLineDash([]);
     }
 
-    // Draw price label
-    const price = this.yToPrice(y);
-    const priceText = price.toFixed(2);
+    // Draw price label box
+    const boxX = chartRight - 60;
+    const boxY = y - 12;
+    const boxWidth = 55;
+    const boxHeight = 24;
+    const priceText = chartPrice.toFixed(2);
 
+    // Fill background
     ctx.fillStyle = labelColor || '#00c853';
-    ctx.fillRect(chartRight - 60, y - 12, 55, 24);
+    ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
+    // Draw border if selected
+    if (overrideColor) {
+      ctx.strokeStyle = overrideColor;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+    }
+
+    // Draw text
     ctx.fillStyle = textColor || '#ffffff';
     ctx.font = `${fontSize || 12}px Arial`;
     ctx.fillText(priceText, chartRight - 55, y + 4);

@@ -411,6 +411,112 @@ def get_lines(symbol):
         print(f"No line file found for {symbol}")
         return jsonify([])
 
+# ==================== DRAWING PERSISTENCE ENDPOINTS ====================
+# Universal endpoints for all drawing types (trend lines, dots, arrows, etc.)
+
+@app.route("/save_drawing", methods=["POST"])
+def save_drawing():
+    """Save a single drawing (trend line, dot, arrow, etc.)"""
+    data = request.get_json()
+    symbol = data.get("symbol", "").upper()
+    drawing = data.get("drawing")
+
+    if not symbol or not drawing or "id" not in drawing:
+        print("Missing symbol or drawing ID")
+        return jsonify({"error": "Missing symbol or drawing ID"}), 400
+
+    filename = os.path.join(DATA_DIR, f"drawings_{symbol}.json")
+    drawings = []
+
+    if os.path.exists(filename):
+        try:
+            with open(filename, "r") as f:
+                drawings = json.load(f)
+        except Exception as e:
+            print("Error reading drawings file:", e)
+
+    # Remove old version of this drawing (if exists) and add new version
+    drawings = [d for d in drawings if d["id"] != drawing["id"]]
+    drawings.append(drawing)
+
+    try:
+        with open(filename, "w") as f:
+            json.dump(drawings, f, indent=2)
+        print(f"Saved drawing for {symbol}: {drawing['id']} (type: {drawing.get('action', 'unknown')})")
+        return jsonify({"success": True})
+    except Exception as e:
+        print("Error saving drawing:", e)
+        return jsonify({"error": "Failed to save drawing"}), 500
+
+@app.route("/drawings/<symbol>")
+def get_drawings(symbol):
+    """Load all drawings for a symbol"""
+    symbol = symbol.upper()
+    filename = os.path.join(DATA_DIR, f"drawings_{symbol}.json")
+
+    if os.path.exists(filename):
+        try:
+            with open(filename, "r") as f:
+                drawings = json.load(f)
+            print(f"Loaded {len(drawings)} drawings for {symbol}")
+            return jsonify(drawings)
+        except Exception as e:
+            print("Error loading drawings:", e)
+            return jsonify([])
+    else:
+        print(f"No drawings file found for {symbol}")
+        return jsonify([])
+
+@app.route("/delete_drawing", methods=["POST"])
+def delete_drawing():
+    """Delete a single drawing by ID"""
+    data = request.get_json()
+    symbol = data.get("symbol", "").upper()
+    drawing_id = data.get("drawing_id")
+
+    if not symbol or not drawing_id:
+        print("Missing symbol or drawing ID for deletion")
+        return jsonify({"error": "Missing symbol or drawing ID"}), 400
+
+    filename = os.path.join(DATA_DIR, f"drawings_{symbol}.json")
+    if not os.path.exists(filename):
+        print(f"No drawings file found for {symbol}")
+        return jsonify({"success": True})
+
+    try:
+        with open(filename, "r") as f:
+            drawings = json.load(f)
+        drawings = [d for d in drawings if d["id"] != drawing_id]
+        with open(filename, "w") as f:
+            json.dump(drawings, f, indent=2)
+        print(f"Deleted drawing {drawing_id} for {symbol}")
+        return jsonify({"success": True})
+    except Exception as e:
+        print("Error deleting drawing:", e)
+        return jsonify({"error": "Failed to delete drawing"}), 500
+
+@app.route("/save_all_drawings", methods=["POST"])
+def save_all_drawings():
+    """Replace all drawings for a symbol (used for cleanup)"""
+    data = request.get_json()
+    symbol = data.get("symbol", "").upper()
+    drawings = data.get("drawings", [])
+
+    if not symbol:
+        print("Missing symbol for save_all_drawings")
+        return jsonify({"error": "Missing symbol"}), 400
+
+    filename = os.path.join(DATA_DIR, f"drawings_{symbol}.json")
+
+    try:
+        with open(filename, "w") as f:
+            json.dump(drawings, f, indent=2)
+        print(f"Saved {len(drawings)} drawings for {symbol} (full replace)")
+        return jsonify({"success": True})
+    except Exception as e:
+        print("Error saving all drawings:", e)
+        return jsonify({"error": "Failed to save drawings"}), 500
+
 @app.route("/news/market")
 def get_market_news():
     limit = request.args.get('limit', 20, type=int)
@@ -753,6 +859,84 @@ def trade_emit_worker():
             eventlet.sleep(0.1)  # Brief pause on error
 
 # Old yfinance polling removed - now using real Coinbase WebSocket for tick-by-tick updates
+
+# =============================================================================
+# ORD VOLUME ENDPOINTS (COMPLETELY SEGREGATED - NO SHARED CODE)
+# =============================================================================
+
+# Segregated data directory for ORD Volume
+ORD_VOLUME_DATA_DIR = os.path.join(DATA_DIR, 'ord-volume')
+os.makedirs(ORD_VOLUME_DATA_DIR, exist_ok=True)
+
+def get_ord_volume_file_path_segregated(symbol):
+    """Get file path for ORD Volume analysis (segregated function)"""
+    filename = f"ord_volume_{symbol}.json"
+    return os.path.join(ORD_VOLUME_DATA_DIR, filename)
+
+@app.route('/ord-volume/save', methods=['POST'])
+def save_ord_volume_segregated():
+    """Save ORD Volume analysis (completely segregated endpoint)"""
+    try:
+        data = request.get_json()
+        if not data or 'symbol' not in data or 'analysis' not in data:
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        symbol = data['symbol']
+        analysis = data['analysis']
+        file_path = get_ord_volume_file_path_segregated(symbol)
+
+        with open(file_path, 'w') as f:
+            json.dump({'symbol': symbol, 'analysis': analysis}, f, indent=2)
+
+        return jsonify({'success': True, 'message': f'ORD Volume analysis saved for {symbol}'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/ord-volume/load/<symbol>', methods=['GET'])
+def load_ord_volume_segregated(symbol):
+    """Load ORD Volume analysis (completely segregated endpoint)"""
+    try:
+        file_path = get_ord_volume_file_path_segregated(symbol)
+        if not os.path.exists(file_path):
+            return jsonify({'error': f'No ORD Volume analysis found for {symbol}'}), 404
+
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/ord-volume/delete/<symbol>', methods=['DELETE'])
+def delete_ord_volume_segregated(symbol):
+    """Delete ORD Volume analysis (completely segregated endpoint)"""
+    try:
+        file_path = get_ord_volume_file_path_segregated(symbol)
+        if not os.path.exists(file_path):
+            return jsonify({'error': f'No ORD Volume analysis found for {symbol}'}), 404
+
+        os.remove(file_path)
+        return jsonify({'success': True, 'message': f'ORD Volume analysis deleted for {symbol}'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/ord-volume/list', methods=['GET'])
+def list_ord_volume_segregated():
+    """List all symbols with ORD Volume analyses (completely segregated endpoint)"""
+    try:
+        files = os.listdir(ORD_VOLUME_DATA_DIR)
+        symbols = []
+        for filename in files:
+            if filename.startswith('ord_volume_') and filename.endswith('.json'):
+                symbol = filename.replace('ord_volume_', '').replace('.json', '')
+                symbols.append(symbol)
+        return jsonify({'symbols': symbols, 'count': len(symbols)}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# =============================================================================
+# END OF ORD VOLUME ENDPOINTS
+# =============================================================================
 
 if __name__ == "__main__":
     # Use socketio.run instead of app.run for WebSocket support
