@@ -15,6 +15,11 @@ export class SelectionManager {
     this.draggedHandle = null; // 'start' or 'end'
     this.dragOffset = { x: 0, y: 0 };
 
+    // Text editing state
+    this.isEditingText = false;
+    this.editingDrawing = null;
+    this.textCursorPosition = 0;
+
     // UI settings
     this.selectionColor = '#ffeb3b'; // Yellow highlight
     this.handleRadius = 6;
@@ -281,6 +286,24 @@ export class SelectionManager {
     this.lastMouseX = mouseX;
     this.lastMouseY = mouseY;
 
+    // If we're in text editing mode, check if clicking outside the text box
+    if (this.isEditingText && this.editingDrawing) {
+      const clickedOnEditingDrawing = this.findDrawingAtPoint(mouseX, mouseY) === this.editingDrawing;
+
+      if (!clickedOnEditingDrawing) {
+        // Clicked outside the text box - exit edit mode and save
+        this.isEditingText = false;
+        this.renderer.saveDrawing(this.editingDrawing);
+        this.editingDrawing = null;
+        this.renderer.draw();
+        console.log('📝 Exited text editing mode (clicked outside)');
+        // Continue to handle the click normally
+      } else {
+        // Clicked inside the text box - stay in edit mode
+        return true; // Handled
+      }
+    }
+
     // Get the active tool from ToolRegistry
     const activeTool = window.toolRegistry?.getActiveTool();
 
@@ -479,6 +502,15 @@ export class SelectionManager {
           drawing.startPrice += deltaPrice;
           drawing.endPrice += deltaPrice;
         }
+      } else if (drawing.action && (drawing.action.includes('text-label') || drawing.action.includes('note') || drawing.action.includes('price-label'))) {
+        // Text annotations use single chartIndex/chartPrice
+        if (drawing.chartIndex !== undefined) drawing.chartIndex += deltaIndex;
+        if (drawing.chartPrice !== undefined) drawing.chartPrice += deltaPrice;
+      } else if (drawing.action && drawing.action.includes('callout')) {
+        // Callout - when dragging (not using handle), only move text box (pointer stays fixed)
+        // This allows you to drag the text box around while keeping the arrow pointing at the same spot
+        if (drawing.textIndex !== undefined) drawing.textIndex += deltaIndex;
+        if (drawing.textPrice !== undefined) drawing.textPrice += deltaPrice;
       } else {
         // Trend lines, ray, extended line use startIndex/endIndex
         drawing.startIndex += deltaIndex;
@@ -511,6 +543,10 @@ export class SelectionManager {
           this.selectedDrawing.chartPoints[pointIndex].chartIndex = newIndex;
           this.selectedDrawing.chartPoints[pointIndex].chartPrice = newPrice;
         }
+      } else if (this.draggedHandle === 'pointer') {
+        // Callout pointer handle - move only the pointer
+        this.selectedDrawing.pointerIndex = newIndex;
+        this.selectedDrawing.pointerPrice = newPrice;
       } else if (this.draggedHandle === 'start') {
         this.selectedDrawing.startIndex = newIndex;
         this.selectedDrawing.startPrice = newPrice;
@@ -551,10 +587,121 @@ export class SelectionManager {
   }
 
   /**
-   * Handle keyboard events (Delete key)
+   * Handle double-click - enter text editing mode for text annotations
+   */
+  onDoubleClick(e, mouseX, mouseY) {
+    // Check if double-clicking on a text annotation
+    const clickedDrawing = this.findDrawingAtPoint(mouseX, mouseY);
+
+    if (clickedDrawing && this.isTextAnnotation(clickedDrawing)) {
+      // Enter text editing mode
+      this.isEditingText = true;
+      this.editingDrawing = clickedDrawing;
+      this.selectedDrawing = clickedDrawing;
+      this.textCursorPosition = clickedDrawing.text ? clickedDrawing.text.length : 0;
+      this.renderer.draw();
+      console.log('📝 Entered text editing mode');
+    }
+  }
+
+  /**
+   * Check if drawing is a text annotation
+   */
+  isTextAnnotation(drawing) {
+    return drawing.action && (
+      drawing.action.includes('text-label') ||
+      drawing.action.includes('callout') ||
+      drawing.action.includes('note') ||
+      drawing.action.includes('price-label')
+    );
+  }
+
+  /**
+   * Handle keyboard events (Delete key and text editing)
    */
   onKeyDown(e) {
-    if (e.key === 'Delete' && this.selectedDrawing) {
+    // Handle text editing
+    if (this.isEditingText && this.editingDrawing) {
+      const drawing = this.editingDrawing;
+
+      if (e.key === 'Escape') {
+        // Exit edit mode
+        this.isEditingText = false;
+        this.editingDrawing = null;
+        this.renderer.draw();
+        e.preventDefault();
+        return;
+      } else if (e.key === 'Enter') {
+        // Exit edit mode and save
+        this.isEditingText = false;
+        this.editingDrawing = null;
+        this.renderer.saveDrawing(drawing);
+        this.renderer.draw();
+        e.preventDefault();
+        return;
+      } else if (e.key === 'ArrowLeft') {
+        // Move cursor left
+        if (this.textCursorPosition > 0) {
+          this.textCursorPosition--;
+          this.renderer.draw();
+        }
+        e.preventDefault();
+        return;
+      } else if (e.key === 'ArrowRight') {
+        // Move cursor right
+        const textLength = drawing.text ? drawing.text.length : 0;
+        if (this.textCursorPosition < textLength) {
+          this.textCursorPosition++;
+          this.renderer.draw();
+        }
+        e.preventDefault();
+        return;
+      } else if (e.key === 'Home') {
+        // Move cursor to start
+        this.textCursorPosition = 0;
+        this.renderer.draw();
+        e.preventDefault();
+        return;
+      } else if (e.key === 'End') {
+        // Move cursor to end
+        this.textCursorPosition = drawing.text ? drawing.text.length : 0;
+        this.renderer.draw();
+        e.preventDefault();
+        return;
+      } else if (e.key === 'Backspace') {
+        // Delete character before cursor
+        if (drawing.text && this.textCursorPosition > 0) {
+          drawing.text = drawing.text.slice(0, this.textCursorPosition - 1) +
+                        drawing.text.slice(this.textCursorPosition);
+          this.textCursorPosition--;
+          this.renderer.draw();
+        }
+        e.preventDefault();
+        return;
+      } else if (e.key === 'Delete') {
+        // Delete character after cursor
+        if (drawing.text && this.textCursorPosition < drawing.text.length) {
+          drawing.text = drawing.text.slice(0, this.textCursorPosition) +
+                        drawing.text.slice(this.textCursorPosition + 1);
+          this.renderer.draw();
+        }
+        e.preventDefault();
+        return;
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+        // Add typed character at cursor position
+        if (!drawing.text) drawing.text = '';
+        drawing.text = drawing.text.slice(0, this.textCursorPosition) +
+                      e.key +
+                      drawing.text.slice(this.textCursorPosition);
+        this.textCursorPosition++;
+        this.renderer.draw();
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // Handle Delete key for selected drawing
+    if (e.key === 'Delete' && this.selectedDrawing && !this.isEditingText) {
       const drawingId = this.selectedDrawing.id;
       const index = this.renderer.drawings.indexOf(this.selectedDrawing);
       if (index !== -1) {
@@ -726,6 +873,26 @@ export class SelectionManager {
         }
       } else if (drawing.action.includes('polygon')) {
         const hit = this.isPolygonHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('text-label')) {
+        const hit = this.isTextLabelHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('callout')) {
+        const hit = this.isCalloutHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('note')) {
+        const hit = this.isNoteHit(drawing, x, y);
+        if (hit) {
+          return drawing;
+        }
+      } else if (drawing.action.includes('price-label')) {
+        const hit = this.isPriceLabelHit(drawing, x, y);
         if (hit) {
           return drawing;
         }
@@ -1321,6 +1488,17 @@ export class SelectionManager {
   getHandleAtPoint(drawing, x, y) {
     if (!drawing) return null;
 
+    // Check for callout (only check pointer handle, text box is draggable directly)
+    if (drawing.action && drawing.action.includes('callout')) {
+      const pointer = this.drawingToScreen(drawing.pointerIndex, drawing.pointerPrice);
+
+      const distPointer = Math.sqrt((x - pointer.x) ** 2 + (y - pointer.y) ** 2);
+
+      if (distPointer < this.handleRadius * 2) return 'pointer';
+
+      return null; // Text box doesn't have a handle - drag it directly
+    }
+
     // Check for pattern drawings with chartPoints array
     if (drawing.chartPoints && drawing.chartPoints.length > 0 && (
       drawing.action.includes('head-and-shoulders') ||
@@ -1462,6 +1640,8 @@ export class SelectionManager {
       this.drawTrendLineSelection(ctx, drawing); // Ray and extended use same selection as trend line
     } else if (drawing.action.includes('parallel-channel')) {
       this.drawParallelChannelSelection(ctx, drawing);
+    } else if (drawing.action.includes('callout')) {
+      this.drawCalloutSelection(ctx, drawing);
     } else if (drawing.action.includes('head-and-shoulders') ||
                drawing.action.includes('triangle') ||
                drawing.action.includes('wedge') ||
@@ -1613,6 +1793,25 @@ export class SelectionManager {
 
     // Draw tooltip with date and stock info
     this.drawVerticalLineTooltip(ctx, drawing, x, chartTop);
+  }
+
+  /**
+   * Draw selection highlight for callout
+   */
+  drawCalloutSelection(ctx, drawing) {
+    const pointer = this.drawingToScreen(drawing.pointerIndex, drawing.pointerPrice);
+
+    ctx.save();
+
+    // Draw handle only at pointer (not at text box - drag text box directly)
+    ctx.fillStyle = this.selectionColor;
+
+    // Pointer handle (circle)
+    ctx.beginPath();
+    ctx.arc(pointer.x, pointer.y, this.handleRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   }
 
   /**
@@ -1818,5 +2017,82 @@ export class SelectionManager {
    */
   getSelectedDrawing() {
     return this.selectedDrawing;
+  }
+
+  /**
+   * Check if text label is hit by point
+   */
+  isTextLabelHit(drawing, x, y) {
+    const pos = this.drawingToScreen(drawing.chartIndex, drawing.chartPrice);
+    const ctx = this.renderer.ctx;
+    const text = drawing.text || 'Text';
+    const fontSize = drawing.fontSize || 14;
+    const fontFamily = drawing.fontFamily || 'Arial';
+
+    ctx.font = `${fontSize}px ${fontFamily}`;
+    const metrics = ctx.measureText(text);
+    const padding = 4;
+
+    const boxX = pos.x - padding;
+    const boxY = pos.y - fontSize - padding;
+    const boxWidth = metrics.width + padding * 2;
+    const boxHeight = fontSize + padding * 2;
+
+    return x >= boxX && x <= boxX + boxWidth && y >= boxY && y <= boxY + boxHeight;
+  }
+
+  /**
+   * Check if callout is hit by point
+   */
+  isCalloutHit(drawing, x, y) {
+    const pointerPos = this.drawingToScreen(drawing.pointerIndex, drawing.pointerPrice);
+    const textPos = this.drawingToScreen(drawing.textIndex, drawing.textPrice);
+    const ctx = this.renderer.ctx;
+    const text = drawing.text || 'Callout';
+    const fontSize = drawing.fontSize || 14;
+    const padding = 8;
+
+    ctx.font = `${fontSize}px Arial`;
+    const metrics = ctx.measureText(text);
+    const boxWidth = metrics.width + padding * 2;
+    const boxHeight = fontSize + padding * 2;
+
+    const boxX = textPos.x - boxWidth / 2;
+    const boxY = textPos.y - boxHeight / 2;
+
+    // Check if clicking on text box
+    if (x >= boxX && x <= boxX + boxWidth && y >= boxY && y <= boxY + boxHeight) {
+      return true;
+    }
+
+    // Check if clicking on pointer line
+    const distance = this.pointToLineDistance(x, y, pointerPos.x, pointerPos.y, textPos.x, textPos.y);
+    return distance < this.hitThreshold;
+  }
+
+  /**
+   * Check if note is hit by point
+   */
+  isNoteHit(drawing, x, y) {
+    const pos = this.drawingToScreen(drawing.chartIndex, drawing.chartPrice);
+    const width = drawing.width || 150;
+    const height = drawing.height || 100;
+
+    return x >= pos.x && x <= pos.x + width && y >= pos.y && y <= pos.y + height;
+  }
+
+  /**
+   * Check if price label is hit by point
+   */
+  isPriceLabelHit(drawing, x, y) {
+    const yPos = this.renderer.priceToY(drawing.chartPrice);
+    const chartRight = this.renderer.width - this.renderer.margin.right;
+
+    const boxX = chartRight - 60;
+    const boxY = yPos - 12;
+    const boxWidth = 55;
+    const boxHeight = 24;
+
+    return x >= boxX && x <= boxX + boxWidth && y >= boxY && y <= boxY + boxHeight;
   }
 }

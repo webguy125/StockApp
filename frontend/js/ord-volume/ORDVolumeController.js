@@ -375,12 +375,41 @@ export class ORDVolumeController {
       document.getElementById('ord-line-count-group').style.display = 'none';
       document.getElementById('ord-draw-instructions').style.display = 'block';
       document.getElementById('ord-auto-instructions').style.display = 'none';
+
+      // In draw mode, close the modal and start drawing
+      console.log('[ORD Volume] Entering draw mode - closing modal');
+      this.modal.style.display = 'none';
+
+      // Enable drawing mode on renderer
+      if (this.renderer) {
+        this.renderer.enableDrawMode();
+
+        // Set callback to update line counter
+        this.renderer.onLineDrawn = (count) => {
+          this._updateLineCounter();
+        };
+
+        console.log('[ORD Volume] Draw mode enabled - draw lines on chart, then press Enter or click ORD Volume button again to analyze');
+      }
+
+      // Show instructions on screen
+      this._showDrawingInstructions();
+
     } else {
       this.autoModeBtn.classList.add('active');
       this.drawModeBtn.classList.remove('active');
       document.getElementById('ord-line-count-group').style.display = 'block';
       document.getElementById('ord-auto-instructions').style.display = 'block';
       document.getElementById('ord-draw-instructions').style.display = 'none';
+
+      // In auto mode, show the analyze button
+      this.analyzeBtn.style.display = 'block';
+
+      // Disable drawing mode on renderer
+      if (this.renderer) {
+        this.renderer.clearDrawingMode();
+        console.log('[ORD Volume] Auto mode enabled');
+      }
     }
   }
 
@@ -507,5 +536,111 @@ export class ORDVolumeController {
       console.error('Error loading ORD Volume analysis:', error);
       return null;
     }
+  }
+
+  /**
+   * Show on-screen drawing instructions
+   * @private
+   */
+  _showDrawingInstructions() {
+    // Create floating instruction panel
+    let panel = document.getElementById('ord-draw-panel');
+
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'ord-draw-panel';
+      panel.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        border: 2px solid #2196f3;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+        min-width: 300px;
+      `;
+      panel.innerHTML = `
+        <h3 style="margin: 0 0 15px 0; color: #2196f3;">ORD Volume - Draw Mode</h3>
+        <p style="margin: 5px 0;">📍 Click and drag to draw trendlines</p>
+        <p style="margin: 5px 0;">✏️ Draw at least 3 lines (Initial, Correction, Retest)</p>
+        <p style="margin: 5px 0;">⌨️ Press ESC to cancel current line</p>
+        <p style="margin: 5px 0; padding-top: 10px; border-top: 1px solid #444;">
+          <strong>Lines drawn: <span id="ord-line-counter">0</span>/3</strong>
+        </p>
+        <button id="ord-finish-drawing" style="
+          width: 100%;
+          margin-top: 15px;
+          padding: 10px;
+          background: #2196f3;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: bold;
+        ">Finish & Analyze</button>
+      `;
+      document.body.appendChild(panel);
+
+      // Bind finish button
+      document.getElementById('ord-finish-drawing').addEventListener('click', () => {
+        this._finishDrawing();
+      });
+    }
+
+    panel.style.display = 'block';
+    this._updateLineCounter();
+  }
+
+  /**
+   * Hide drawing instructions panel
+   * @private
+   */
+  _hideDrawingInstructions() {
+    const panel = document.getElementById('ord-draw-panel');
+    if (panel) {
+      panel.style.display = 'none';
+    }
+  }
+
+  /**
+   * Update line counter in drawing panel
+   * @private
+   */
+  _updateLineCounter() {
+    const counter = document.getElementById('ord-line-counter');
+    if (counter && this.renderer) {
+      const lineCount = this.renderer.getDrawnLines().length;
+      counter.textContent = lineCount;
+
+      // Update finish button state
+      const finishBtn = document.getElementById('ord-finish-drawing');
+      if (finishBtn) {
+        if (lineCount >= 3) {
+          finishBtn.disabled = false;
+          finishBtn.style.opacity = '1';
+        } else {
+          finishBtn.disabled = true;
+          finishBtn.style.opacity = '0.5';
+        }
+      }
+    }
+  }
+
+  /**
+   * Finish drawing and perform analysis
+   * @private
+   */
+  _finishDrawing() {
+    console.log('[ORD Volume] Finishing drawing mode');
+
+    // Hide drawing panel
+    this._hideDrawingInstructions();
+
+    // Perform analysis
+    this.analyze();
   }
 }

@@ -39,10 +39,14 @@ export class TextLabel {
    * Handle click - place text label
    */
   onClick(event, chartState) {
+    // Fix cursor offset - use canvas coordinates
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     return {
       action: 'place-text-label',
-      x: event.clientX,
-      y: event.clientY,
+      x,
+      y,
       text: 'Text', // Default text, will be editable
       fontSize: this.fontSize,
       fontFamily: this.fontFamily,

@@ -28,6 +28,9 @@ export class ORDVolumeRenderer {
     this.isDragging = false;
     this.dragOffset = { x: 0, y: 0 };
 
+    // Callback for line count updates
+    this.onLineDrawn = null;
+
     // Bind methods
     this._onMouseDown = this._onMouseDown.bind(this);
     this._onMouseMove = this._onMouseMove.bind(this);
@@ -39,18 +42,20 @@ export class ORDVolumeRenderer {
    * Enable draw mode for manual trendline drawing
    */
   enableDrawMode() {
+    console.log('[ORD Renderer] enableDrawMode() called');
     this.isDrawMode = true;
     this.drawnLines = [];
     this.currentLine = null;
     this.startPoint = null;
 
-    // Add event listeners
-    this.canvas.addEventListener('mousedown', this._onMouseDown);
-    this.canvas.addEventListener('mousemove', this._onMouseMove);
-    this.canvas.addEventListener('mouseup', this._onMouseUp);
+    // Add event listeners with CAPTURE phase to intercept before chart handlers
+    this.canvas.addEventListener('mousedown', this._onMouseDown, true);
+    this.canvas.addEventListener('mousemove', this._onMouseMove, true);
+    this.canvas.addEventListener('mouseup', this._onMouseUp, true);
     document.addEventListener('keydown', this._onKeyDown);
 
     this.canvas.style.cursor = 'crosshair';
+    console.log('[ORD Renderer] Draw mode enabled, cursor set to crosshair, canvas:', this.canvas);
   }
 
   /**
@@ -62,10 +67,10 @@ export class ORDVolumeRenderer {
     this.currentLine = null;
     this.startPoint = null;
 
-    // Remove event listeners
-    this.canvas.removeEventListener('mousedown', this._onMouseDown);
-    this.canvas.removeEventListener('mousemove', this._onMouseMove);
-    this.canvas.removeEventListener('mouseup', this._onMouseUp);
+    // Remove event listeners (with same capture flag as when added)
+    this.canvas.removeEventListener('mousedown', this._onMouseDown, true);
+    this.canvas.removeEventListener('mousemove', this._onMouseMove, true);
+    this.canvas.removeEventListener('mouseup', this._onMouseUp, true);
     document.removeEventListener('keydown', this._onKeyDown);
 
     this.canvas.style.cursor = 'default';
@@ -76,19 +81,30 @@ export class ORDVolumeRenderer {
    * @private
    */
   _onMouseDown(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Convert to chart coordinates
-    const chartX = this._screenToChartX(x);
-    const chartY = this._screenToChartY(y);
+    console.log('[ORD Renderer] Mouse down, isDrawMode:', this.isDrawMode);
 
     if (this.isDrawMode) {
+      // CRITICAL: Stop the event from reaching the chart's pan/zoom handlers
+      e.stopPropagation();
+      e.preventDefault();
+
+      const rect = this.canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Convert to chart coordinates
+      const chartX = this._screenToChartX(x);
+      const chartY = this._screenToChartY(y);
+
       // Start new line
       this.startPoint = { x: chartX, y: chartY };
       this.currentLine = [chartX, chartY, chartX, chartY];
+      console.log('[ORD Renderer] Started new line at', chartX, chartY);
     } else {
+      const rect = this.canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
       // Check if clicking on a label for dragging
       const label = this._findLabelAtPoint(x, y);
       if (label) {
@@ -107,19 +123,31 @@ export class ORDVolumeRenderer {
    * @private
    */
   _onMouseMove(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const chartX = this._screenToChartX(x);
-    const chartY = this._screenToChartY(y);
-
     if (this.isDrawMode && this.currentLine && this.startPoint) {
+      // CRITICAL: Prevent chart panning while drawing
+      e.stopPropagation();
+      e.preventDefault();
+
+      const rect = this.canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const chartX = this._screenToChartX(x);
+      const chartY = this._screenToChartY(y);
+
       // Update current line end point
       this.currentLine[2] = chartX;
       this.currentLine[3] = chartY;
+
+      // Update preview with current line
+      this._updateDrawModePreview(true);
+
       this._redraw();
     } else if (this.isDragging && this.selectedLabel) {
+      const rect = this.canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
       // Drag label
       const newX = x - this.dragOffset.x;
       const newY = y - this.dragOffset.y;
@@ -135,8 +163,35 @@ export class ORDVolumeRenderer {
    */
   _onMouseUp(e) {
     if (this.isDrawMode && this.currentLine && this.startPoint) {
-      // Finish line
-      this.drawnLines.push([...this.currentLine]);
+      // CRITICAL: Prevent chart from handling this event
+      e.stopPropagation();
+      e.preventDefault();
+
+      const [x1, y1, x2, y2] = this.currentLine;
+
+      // Only save line if it has some length (not a point click)
+      const dx = Math.abs(x2 - x1);
+      const dy = Math.abs(y2 - y1);
+      const minLength = 5; // Minimum 5 candles or 5 price units
+
+      console.log('[ORD Renderer] Line length:', {dx, dy, minLength});
+
+      if (dx >= minLength || dy >= minLength) {
+        // Finish line
+        this.drawnLines.push([...this.currentLine]);
+        console.log('[ORD Renderer] Line saved:', this.currentLine);
+
+        // IMPORTANT: Immediately create a "preview" analysis for the bridge
+        this._updateDrawModePreview();
+
+        // Notify callback that a line was drawn
+        if (this.onLineDrawn) {
+          this.onLineDrawn(this.drawnLines.length);
+        }
+      } else {
+        console.log('[ORD Renderer] Line too short, discarded');
+      }
+
       this.currentLine = null;
       this.startPoint = null;
       this._redraw();
@@ -145,6 +200,59 @@ export class ORDVolumeRenderer {
       this.isDragging = false;
       this.selectedLabel = null;
     }
+  }
+
+  /**
+   * Update draw mode preview - convert drawn lines to analysis format
+   * This makes the bridge draw them the same way as auto mode
+   * @private
+   * @param {Boolean} includeCurrentLine - Whether to include the line being drawn
+   */
+  _updateDrawModePreview(includeCurrentLine = false) {
+    if (!window.ordVolumeBridge) {
+      return;
+    }
+
+    // Convert completed lines to the format the bridge expects (same as auto mode)
+    const trendlines = this.drawnLines.map((line, i) => {
+      const [x1, y1, x2, y2] = line;
+      return {
+        x1: x1,
+        y1: y1,
+        x2: x2,
+        y2: y2,
+        label: `Line ${i + 1}`,
+        color: '#00c853', // Green for completed lines
+        lineWidth: 3
+      };
+    });
+
+    // Add current line being drawn (yellow dashed)
+    if (includeCurrentLine && this.currentLine) {
+      const [x1, y1, x2, y2] = this.currentLine;
+      trendlines.push({
+        x1: x1,
+        y1: y1,
+        x2: x2,
+        y2: y2,
+        label: 'Drawing...',
+        color: '#ffd600', // Yellow for current line
+        lineWidth: 2,
+        dash: [5, 5] // Dashed line
+      });
+    }
+
+    // Create a preview analysis in the same format as auto mode
+    const previewAnalysis = {
+      mode: 'draw-preview',
+      trendlines: trendlines,
+      labels: [] // No labels during drawing
+    };
+
+    // Store in bridge (same as auto mode does)
+    window.ordVolumeBridge.setAnalysis(previewAnalysis);
+
+    console.log('[ORD Renderer] Updated draw preview with', trendlines.length, 'lines (includesCurrent:', includeCurrentLine, ')');
   }
 
   /**
@@ -165,6 +273,18 @@ export class ORDVolumeRenderer {
    */
   getDrawnLines() {
     return this.drawnLines;
+  }
+
+  /**
+   * Get current drawing state (includes in-progress line)
+   * @returns {Object} Drawing state for rendering
+   */
+  getDrawingState() {
+    return {
+      drawnLines: this.drawnLines,
+      currentLine: this.currentLine,
+      isDrawMode: this.isDrawMode
+    };
   }
 
   /**
@@ -213,12 +333,23 @@ export class ORDVolumeRenderer {
    * @private
    */
   _redraw() {
-    // Note: In a real integration, this would trigger the main chart redraw
-    // For now, we'll draw on top of existing canvas
-    this._drawTrendlines();
-    this._drawLabels();
-    this._drawCurrentLine();
-    this._drawDrawnLines();
+    // Trigger main chart redraw to show our overlays
+    if (this.chartState && this.chartState.draw) {
+      this.chartState.draw();
+    } else if (window.tosApp && window.tosApp.activeChartType) {
+      // Fallback: trigger redraw on active chart
+      if (window.tosApp.activeChartType === 'timeframe') {
+        const currentTimeframe = window.tosApp.timeframeRegistry?.get(window.tosApp.currentTimeframeId);
+        if (currentTimeframe && currentTimeframe.renderer && currentTimeframe.renderer.draw) {
+          currentTimeframe.renderer.draw();
+        }
+      } else if (window.tosApp.activeChartType === 'tick') {
+        const currentTickChart = window.tosApp.tickChartRegistry?.get(window.tosApp.currentTickChartId);
+        if (currentTickChart && currentTickChart.renderer && currentTickChart.renderer.draw) {
+          currentTickChart.renderer.draw();
+        }
+      }
+    }
   }
 
   /**
@@ -392,9 +523,12 @@ export class ORDVolumeRenderer {
   _screenToChartX(screenX) {
     // Simple linear mapping (customize based on actual chart state)
     if (this.chartState && this.chartState.xToIndex) {
-      return this.chartState.xToIndex(screenX);
+      const result = this.chartState.xToIndex(screenX);
+      console.log(`[ORD Renderer] screenX ${screenX} → index ${result}`);
+      return result;
     }
     // Fallback: assume direct mapping
+    console.warn('[ORD Renderer] No xToIndex function, using fallback');
     return screenX;
   }
 
@@ -407,9 +541,12 @@ export class ORDVolumeRenderer {
   _screenToChartY(screenY) {
     // Simple linear mapping (customize based on actual chart state)
     if (this.chartState && this.chartState.yToPrice) {
-      return this.chartState.yToPrice(screenY);
+      const result = this.chartState.yToPrice(screenY);
+      console.log(`[ORD Renderer] screenY ${screenY} → price ${result}`);
+      return result;
     }
     // Fallback: assume direct mapping
+    console.warn('[ORD Renderer] No yToPrice function, using fallback');
     return screenY;
   }
 

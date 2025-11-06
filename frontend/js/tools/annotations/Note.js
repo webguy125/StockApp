@@ -39,10 +39,14 @@ export class Note {
    * Handle click - place note
    */
   onClick(event, chartState) {
+    // Fix cursor offset - use canvas coordinates
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     return {
       action: 'place-note',
-      x: event.clientX,
-      y: event.clientY,
+      x,
+      y,
       text: 'Note', // Default text, will be editable
       noteColor: this.noteColor,
       textColor: this.textColor,
@@ -57,10 +61,14 @@ export class Note {
    * Handle mouse move - show preview
    */
   onMouseMove(event, chartState) {
+    // Fix cursor offset - use canvas coordinates
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     return {
       action: 'preview-note',
-      x: event.clientX,
-      y: event.clientY,
+      x,
+      y,
       noteColor: this.noteColor,
       width: this.width,
       height: this.height

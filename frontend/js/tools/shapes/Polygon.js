@@ -52,8 +52,12 @@ export class Polygon {
    * Handle mouse down - add point
    */
   onMouseDown(event, chartState) {
+    // Fix cursor offset - use canvas coordinates
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     this.isDrawing = true;
-    this.points.push({ x: event.clientX, y: event.clientY });
+    this.points.push({ x: x, y: y });
 
     return {
       action: 'polygon-add-point',
@@ -87,11 +91,15 @@ export class Polygon {
    */
   onMouseMove(event, chartState) {
     if (this.isDrawing && this.points.length > 0) {
+      // Fix cursor offset - use canvas coordinates
+      const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+      const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
       return {
         action: 'preview-polygon',
         points: [...this.points],
-        currentX: event.clientX,
-        currentY: event.clientY,
+        currentX: x,
+        currentY: y,
         lineColor: this.lineColor,
         lineWidth: this.lineWidth,
         fillColor: this.fillColor,

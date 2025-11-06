@@ -18,26 +18,77 @@
     "instructions": {
       "chart_features": {
         "timeline": {
-          "description": "Add a timeline below the volume chart anchored to the last candle. When panning left, the timeline moves with the chart."
+          "description": "Add a timeline below the volume chart anchored to the last candle. When panning left, the timeline moves with the chart.",
+          "status": "✅ DONE"
         },
         "yaxis_expand_compress": {
-          "description": "Enable expand/compress on the Y-axis. Trigger expand up when left-click + slide up along price bar; contract down when left-click + slide down."
+          "description": "Enable expand/compress on the Y-axis. Trigger expand up when left-click + slide up along price bar; contract down when left-click + slide down.",
+          "status": "✅ DONE"
         },
         "xaxis_expand_compress": {
-          "description": "Enable expand/compress on the X-axis. Trigger expand out when left-click + slide left along time bar; contract in when left-click + slide right."
+          "description": "Enable expand/compress on the X-axis. Trigger expand out when left-click + slide left along time bar; contract in when left-click + slide right.",
+          "status": "✅ DONE"
         }
       },
       "trading_tools": {
-        "reference": "Tradepoint / TradingView style tools (not indicators).",
-        "tools_to_build": [
-          "Trend lines",
-          "Fibonacci retracements",
-          "Gann box",
-          "Gann squares"
-        ],
+        "reference": "TradingView style drawing tools",
+        "status_update_oct_29_2025": {
+          "completed": [
+            "✅ Created 29 TradingView-style drawing tools",
+            "✅ Built canvas rendering system (~900 lines)",
+            "✅ Implemented chart coordinate anchoring (drawings stay fixed to price levels when panning/zooming)",
+            "✅ FIXED trend line drawing - now works for multiple drawings!",
+            "✅ Auto-switch to default tool after drawing completion"
+          ],
+          "current_priority": {
+            "task": "Add selection and editing capability for drawn trend lines",
+            "description": "Enable users to select a drawn trend line by left-clicking on it, then move or redraw it",
+            "requirements": [
+              "Left-click on a trend line to select it (highlight in yellow)",
+              "Drag the entire line to move it to a different position",
+              "Drag the endpoints (handles) to resize/redraw the line",
+              "Press Delete key to remove selected line",
+              "Visual feedback with handles at endpoints when selected"
+            ],
+            "implementation_file": "frontend/js/chart-renderers/canvas-renderer.js",
+            "features_needed": [
+              "Hit detection: findDrawingAtPoint(x, y) to detect clicks on lines",
+              "Handle detection: getHandleAtPoint() to detect clicks on endpoints",
+              "Selection state: this.selectedDrawing property",
+              "Drag state: this.isMovingDrawing and this.isDraggingHandle flags",
+              "Visual highlight: Yellow color for selected line with circular handles",
+              "Mouse event handlers: onMouseDown, onMouseMove, onMouseUp for dragging",
+              "Keyboard handler: Delete key to remove selected drawing",
+              "Helper function: pointToLineDistance() for click detection"
+            ],
+            "detailed_implementation": "See tomorrow_start_here.md for complete code examples"
+          },
+          "next_priorities": [
+            "2. Test other 28 drawing tools (Horizontal Line, Fibonacci, Gann, etc.)",
+            "3. Add drawing persistence (save/load to backend)",
+            "4. Implement properties panel (color, width, style customization)"
+          ]
+        },
+        "tools_built": {
+          "trend_lines": ["Trend Line ✅ WORKING", "Horizontal Line", "Vertical Line", "Ray Line", "Extended Line", "Parallel Channel"],
+          "fibonacci": ["Retracement", "Extension", "Fan", "Arcs", "Time Zones", "Spiral"],
+          "gann": ["Fan", "Box", "Square", "Angles"],
+          "patterns": ["Head & Shoulders", "Triangle", "Wedge", "Double Top/Bottom"],
+          "shapes": ["Rectangle", "Circle", "Ellipse", "Polygon"],
+          "annotations": ["Text Label", "Callout", "Note", "Price Label"]
+        },
         "storage": {
-          "directory": "c:\\stockapp\\tools",
-          "rule": "Each tool must have its own file to prevent corruption during updates."
+          "directory": "frontend/js/tools/",
+          "structure": {
+            "cursors": "frontend/js/tools/cursors/",
+            "trend_lines": "frontend/js/tools/trend-lines/",
+            "fibonacci": "frontend/js/tools/fibonacci/",
+            "gann": "frontend/js/tools/gann/",
+            "patterns": "frontend/js/tools/patterns/",
+            "shapes": "frontend/js/tools/shapes/",
+            "annotations": "frontend/js/tools/annotations/"
+          },
+          "rule": "Each tool has its own file to prevent corruption during updates."
         }
       }
     },

@@ -37,8 +37,10 @@ export class ORDVolumeAnalysis {
       throw new Error('Draw mode requires at least 3 trendlines (Initial, Correction, Retest)');
     }
 
+    // If more than 7 lines, use only the first 7
     if (waveLines.length > 7) {
-      throw new Error('Maximum 7 trendlines supported');
+      console.warn(`[ORD Volume] ${waveLines.length} lines drawn, using first 7 only`);
+      waveLines = waveLines.slice(0, 7);
     }
 
     // Validate each line
@@ -193,24 +195,94 @@ export class ORDVolumeAnalysis {
    */
   _generateTrendlines(swingPoints, lineCount) {
     const lines = [];
+    const rightmostCandleIndex = this.candles.length - 1;
 
-    // Use most recent swing points (reverse order for recent data)
-    const recentSwings = swingPoints.slice(-lineCount - 1);
+    // PREDICTIVE MODE: Always grab the LAST N legs from the end of the data
+    // For 3 lines, we need the last 3-4 swing points
+    const numPointsNeeded = lineCount;
+    const startIndex = Math.max(0, swingPoints.length - numPointsNeeded);
+    const recentSwings = swingPoints.slice(startIndex);
 
-    // Create lines connecting consecutive swing points
-    for (let i = 0; i < recentSwings.length - 1 && lines.length < lineCount; i++) {
+    console.log('[ORD Volume] Total swing points:', swingPoints.length);
+    console.log('[ORD Volume] Rightmost candle index:', rightmostCandleIndex);
+    console.log('[ORD Volume] Taking last', numPointsNeeded, 'swing points starting at index', startIndex);
+    console.log('[ORD Volume] Recent swings:', recentSwings.map(s => `${s.type} at index ${s.index}`));
+
+    // IMPORTANT: Build lines in REVERSE order (from right to left)
+    // This ensures the first line (Retest) starts at the rightmost candle
+
+    // Line 1 (Retest): From last swing point TO rightmost candle
+    if (recentSwings.length >= 1) {
+      const lastSwing = recentSwings[recentSwings.length - 1];
+      const price1 = this._snapPriceToCandle(lastSwing.index, lastSwing.price);
+      const price2 = this._snapPriceToCandle(rightmostCandleIndex, this.candles[rightmostCandleIndex].close);
+
+      lines.push([
+        lastSwing.index,
+        price1,
+        rightmostCandleIndex,
+        price2
+      ]);
+
+      console.log(`[ORD Volume] Line 0 (Retest): candle ${lastSwing.index} @ ${price1} → candle ${rightmostCandleIndex} @ ${price2}`);
+    }
+
+    // Remaining lines: Connect consecutive swing points (working backward)
+    for (let i = recentSwings.length - 2; i >= 0 && lines.length < lineCount; i--) {
       const point1 = recentSwings[i];
       const point2 = recentSwings[i + 1];
 
+      const price1 = this._snapPriceToCandle(point1.index, point1.price);
+      const price2 = this._snapPriceToCandle(point2.index, point2.price);
+
       lines.push([
         point1.index,
-        point1.price,
+        price1,
         point2.index,
-        point2.price
+        price2
       ]);
+
+      console.log(`[ORD Volume] Line ${lines.length - 1}: candle ${point1.index} @ ${price1} → candle ${point2.index} @ ${price2}`);
     }
 
+    // IMPORTANT: Reverse the lines array so they're in correct order (Initial, Correction, Retest)
+    lines.reverse();
+
+    console.log('[ORD Volume] Generated', lines.length, 'trendlines');
+    console.log('[ORD Volume] Last line ends at candle index:', lines[lines.length - 1][2]);
+
     return lines;
+  }
+
+  /**
+   * Snap a price to the nearest OHLC value of a candle
+   * Ensures trendlines anchor to actual price data, not floating coordinates
+   * @private
+   * @param {Number} candleIndex - Index of the candle
+   * @param {Number} targetPrice - The price to snap
+   * @returns {Number} The closest OHLC value
+   */
+  _snapPriceToCandle(candleIndex, targetPrice) {
+    if (candleIndex < 0 || candleIndex >= this.candles.length) {
+      return targetPrice; // Out of bounds
+    }
+
+    const candle = this.candles[candleIndex];
+    const ohlc = [candle.open, candle.high, candle.low, candle.close];
+
+    // Find the OHLC value closest to the target price
+    let closestPrice = ohlc[0];
+    let minDistance = Math.abs(targetPrice - closestPrice);
+
+    for (const price of ohlc) {
+      const distance = Math.abs(targetPrice - price);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestPrice = price;
+      }
+    }
+
+    return closestPrice;
   }
 
   /**

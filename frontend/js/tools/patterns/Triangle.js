@@ -53,7 +53,11 @@ export class Triangle {
    * Handle mouse down - collect 4 points
    */
   onMouseDown(event, chartState) {
-    this.points.push({ x: event.clientX, y: event.clientY });
+    // Fix cursor offset - use canvas coordinates
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
+    this.points.push({ x, y });
     this.drawingStep++;
 
     if (this.drawingStep < 4) {
@@ -84,11 +88,15 @@ export class Triangle {
    */
   onMouseMove(event, chartState) {
     if (this.drawingStep > 0) {
+      // Fix cursor offset - use canvas coordinates
+      const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+      const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
       return {
         action: 'preview-triangle',
         points: [...this.points],
-        currentX: event.clientX,
-        currentY: event.clientY,
+        currentX: x,
+        currentY: y,
         step: this.drawingStep,
         lineColor: this.lineColor,
         lineWidth: this.lineWidth,

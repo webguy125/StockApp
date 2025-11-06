@@ -43,14 +43,18 @@ export function initializeORDVolume() {
       return;
     }
 
-    // Create renderer if not exists
-    if (!ordVolumeRenderer || !canvas) {
-      if (canvas) {
-        ordVolumeRenderer = new ORDVolumeRenderer(canvas, chartState);
-      } else {
-        alert('Chart canvas not found');
-        return;
+    // ALWAYS recreate renderer to ensure we have the latest canvas/chartState
+    if (canvas) {
+      ordVolumeRenderer = new ORDVolumeRenderer(canvas, chartState);
+
+      // Register renderer with bridge for draw mode
+      if (window.ordVolumeBridge) {
+        window.ordVolumeBridge.setORDVolumeRenderer(ordVolumeRenderer);
+        console.log('[ORD Volume] Renderer created and registered with bridge');
       }
+    } else {
+      alert('Chart canvas not found');
+      return;
     }
 
     // Open ORD Volume modal

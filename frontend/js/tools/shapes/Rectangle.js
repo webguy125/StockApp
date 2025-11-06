@@ -44,14 +44,18 @@ export class Rectangle {
    * Handle mouse down - start or finish drawing
    */
   onMouseDown(event, chartState) {
+    // Fix cursor offset - use canvas coordinates
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     if (!this.isDrawing) {
       // First click - start the rectangle
       this.isDrawing = true;
-      this.startPoint = { x: event.clientX, y: event.clientY };
+      this.startPoint = { x, y };
       return {
         action: 'start-rectangle',
-        x: event.clientX,
-        y: event.clientY
+        x,
+        y
       };
     } else {
       // Second click - finish the rectangle
@@ -61,8 +65,8 @@ export class Rectangle {
         action: 'finish-rectangle',
         startX: this.startPoint.x,
         startY: this.startPoint.y,
-        endX: event.clientX,
-        endY: event.clientY,
+        endX: x,
+        endY: y,
         lineColor: this.lineColor,
         lineWidth: this.lineWidth,
         fillColor: this.fillColor,
@@ -80,12 +84,16 @@ export class Rectangle {
    */
   onMouseMove(event, chartState) {
     if (this.isDrawing && this.startPoint) {
+      // Fix cursor offset - use canvas coordinates
+      const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+      const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
       return {
         action: 'preview-rectangle',
         startX: this.startPoint.x,
         startY: this.startPoint.y,
-        endX: event.clientX,
-        endY: event.clientY,
+        endX: x,
+        endY: y,
         lineColor: this.lineColor,
         lineWidth: this.lineWidth,
         fillColor: this.fillColor,

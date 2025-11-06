@@ -11,6 +11,8 @@ export class ORDVolumeBridge {
     this.currentAnalysis = null;
     this.isActive = false;
     this.chartRenderer = null;
+    this._hasLoggedDrawing = false;
+    this.ordVolumeRenderer = null; // Reference to ORD Volume renderer for draw mode
   }
 
   /**
@@ -21,11 +23,20 @@ export class ORDVolumeBridge {
   }
 
   /**
+   * Set the ORD Volume renderer (for draw mode)
+   */
+  setORDVolumeRenderer(renderer) {
+    this.ordVolumeRenderer = renderer;
+    console.log('[ORD Bridge] Renderer set:', !!renderer, 'isDrawMode:', renderer?.isDrawMode);
+  }
+
+  /**
    * Store analysis result for persistent rendering
    */
   setAnalysis(analysisResult) {
     this.currentAnalysis = analysisResult;
     this.isActive = true;
+    this._hasLoggedDrawing = false; // Reset flag for new analysis
   }
 
   /**
@@ -41,6 +52,24 @@ export class ORDVolumeBridge {
    * Called after main chart renders
    */
   drawOverlays(ctx, chartState) {
+    // Draw manual drawing lines (if in draw mode) - PRIORITY CHECK
+    if (this.ordVolumeRenderer) {
+      const drawingState = this.ordVolumeRenderer.getDrawingState();
+
+      console.log('[ORD Bridge] drawOverlays called, drawingState:', {
+        hasRenderer: !!this.ordVolumeRenderer,
+        isDrawMode: drawingState.isDrawMode,
+        drawnLines: drawingState.drawnLines?.length || 0,
+        hasCurrent: !!drawingState.currentLine
+      });
+
+      if (drawingState.isDrawMode) {
+        this._drawManualLines(ctx, chartState, drawingState);
+        return; // Don't draw analysis overlays while drawing
+      }
+    }
+
+    // Draw analysis overlays
     if (!this.isActive || !this.currentAnalysis) {
       return;
     }
@@ -53,6 +82,66 @@ export class ORDVolumeBridge {
   }
 
   /**
+   * Draw manual drawing lines
+   * @private
+   */
+  _drawManualLines(ctx, chartState, drawingState) {
+    console.log('[ORD Bridge] Drawing manual lines:', {
+      drawnCount: drawingState.drawnLines.length,
+      hasCurrent: !!drawingState.currentLine,
+      canvasSize: `${ctx.canvas.width}x${ctx.canvas.height}`
+    });
+
+    ctx.save();
+
+    // Draw completed lines
+    for (let i = 0; i < drawingState.drawnLines.length; i++) {
+      const line = drawingState.drawnLines[i];
+      const [x1, y1, x2, y2] = line;
+
+      console.log(`[ORD Bridge] Line ${i} raw:`, {x1, y1, x2, y2});
+
+      const sx1 = this._indexToX(x1, chartState);
+      const sy1 = this._priceToY(y1, chartState);
+      const sx2 = this._indexToX(x2, chartState);
+      const sy2 = this._priceToY(y2, chartState);
+
+      console.log(`[ORD Bridge] Line ${i} screen:`, {sx1, sy1, sx2, sy2});
+
+      ctx.strokeStyle = '#00c853'; // Green for completed lines
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(sx1, sy1);
+      ctx.lineTo(sx2, sy2);
+      ctx.stroke();
+
+      console.log(`[ORD Bridge] ✅ Line ${i} drawn`);
+    }
+
+    // Draw current line being drawn (if any)
+    if (drawingState.currentLine) {
+      const [x1, y1, x2, y2] = drawingState.currentLine;
+      const sx1 = this._indexToX(x1, chartState);
+      const sy1 = this._priceToY(y1, chartState);
+      const sx2 = this._indexToX(x2, chartState);
+      const sy2 = this._priceToY(y2, chartState);
+
+      console.log('[ORD Bridge] Current line:', {x1, y1, x2, y2}, '→', {sx1, sy1, sx2, sy2});
+
+      ctx.strokeStyle = '#ffd600'; // Yellow for current line
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]); // Dashed
+      ctx.beginPath();
+      ctx.moveTo(sx1, sy1);
+      ctx.lineTo(sx2, sy2);
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset dash
+    }
+
+    ctx.restore();
+  }
+
+  /**
    * Draw trendlines
    * @private
    */
@@ -61,6 +150,12 @@ export class ORDVolumeBridge {
 
     ctx.save();
 
+    // Only log once when first activated
+    const shouldLog = !this._hasLoggedDrawing;
+    if (shouldLog) {
+      console.log('[ORD Bridge] First draw - trendlines:', this.currentAnalysis.trendlines.length);
+    }
+
     for (const line of this.currentAnalysis.trendlines) {
       // Convert indices to screen coordinates
       const x1 = this._indexToX(line.x1, chartState);
@@ -68,18 +163,41 @@ export class ORDVolumeBridge {
       const x2 = this._indexToX(line.x2, chartState);
       const y2 = this._priceToY(line.y2, chartState);
 
+      // Log first time only
+      if (shouldLog) {
+        console.log(`[ORD Bridge] Line: candle ${line.x1}-${line.x2} → screen ${x1.toFixed(0)},${y1.toFixed(0)} to ${x2.toFixed(0)},${y2.toFixed(0)} | canvas ${ctx.canvas.width}x${ctx.canvas.height}`);
+      }
+
       // Skip if off-screen
       if (!this._isOnScreen(x1, y1, x2, y2, ctx.canvas)) {
+        if (shouldLog) {
+          console.log(`[ORD Bridge] ↑ Line OFF-SCREEN, skipped`);
+        }
         continue;
       }
 
-      // Draw line
-      ctx.strokeStyle = line.color || '#2196f3';
-      ctx.lineWidth = line.lineWidth || 2;
+      // Draw line with specified color and style
+      ctx.strokeStyle = line.color || '#00FF00';
+      ctx.lineWidth = line.lineWidth || 4;
+
+      // Set dash pattern if specified
+      if (line.dash) {
+        ctx.setLineDash(line.dash);
+      }
+
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
+
+      // Reset dash
+      if (line.dash) {
+        ctx.setLineDash([]);
+      }
+
+      if (shouldLog) {
+        console.log(`[ORD Bridge] ✅ Line drawn successfully`);
+      }
 
       // Draw label near line start
       if (line.label) {
@@ -92,6 +210,11 @@ export class ORDVolumeBridge {
         ctx.fillText(line.label, textX, textY);
         ctx.shadowBlur = 0;
       }
+    }
+
+    // Mark as logged after first draw
+    if (shouldLog) {
+      this._hasLoggedDrawing = true;
     }
 
     ctx.restore();
@@ -201,7 +324,22 @@ export class ORDVolumeBridge {
    * Check if ORD Volume is active
    */
   isActiveAnalysis() {
-    return this.isActive;
+    // Active if there's an analysis OR if we're in draw mode
+    if (this.isActive) {
+      console.log('[ORD Bridge] isActiveAnalysis: true (has analysis)');
+      return true;
+    }
+
+    // Also active if renderer is in draw mode
+    if (this.ordVolumeRenderer) {
+      const drawingState = this.ordVolumeRenderer.getDrawingState();
+      if (drawingState.isDrawMode) {
+        console.log('[ORD Bridge] isActiveAnalysis: true (draw mode active)');
+        return true;
+      }
+    }
+
+    return false;
   }
 }
 

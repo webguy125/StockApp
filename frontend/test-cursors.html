@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cursor Tools Test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+
+    .toolbar {
+      background: #2a2a2a;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .tool-button {
+      padding: 10px 20px;
+      background: #3a3a3a;
+      border: 2px solid #4a4a4a;
+      border-radius: 5px;
+      color: #e0e0e0;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tool-button:hover {
+      background: #4a4a4a;
+      border-color: #00bfff;
+    }
+
+    .tool-button.active {
+      background: #00bfff;
+      border-color: #00bfff;
+      color: #1a1a1a;
+    }
+
+    #test-canvas {
+      width: 100%;
+      height: 600px;
+      background: #1a1a1a;
+      border: 2px solid #4a4a4a;
+      border-radius: 5px;
+    }
+
+    .info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #2a2a2a;
+      border-radius: 5px;
+    }
+
+    .info h3 {
+      margin-top: 0;
+      color: #00bfff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🖱️ Cursor Tools Test</h1>
+
+  <div class="toolbar">
+    <button class="tool-button active" data-tool="default">Default</button>
+    <button class="tool-button" data-tool="crosshair">Crosshair</button>
+    <button class="tool-button" data-tool="eraser">Eraser</button>
+    <button class="tool-button" data-tool="dot">Dot</button>
+    <button class="tool-button" data-tool="arrow">Arrow</button>
+  </div>
+
+  <canvas id="test-canvas"></canvas>
+
+  <div class="info">
+    <h3>Active Tool: <span id="active-tool">Default Cursor</span></h3>
+    <p id="tool-info">Click and drag to pan. Click on drawings to select them.</p>
+    <h4>Placed Items:</h4>
+    <ul id="items-list"></ul>
+  </div>
+
+  <script type="module">
+    import { ToolRegistry } from './js/tools/ToolRegistry.js';
+    import {
+      DefaultCursor,
+      CrosshairCursor,
+      EraserCursor,
+      DotCursor,
+      ArrowCursor
+    } from './js/tools/cursors/index.js';
+
+    // Initialize
+    const canvas = document.getElementById('test-canvas');
+    const ctx = canvas.getContext('2d');
+    const registry = new ToolRegistry();
+
+    // Set canvas size
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+    // Register cursor tools
+    const defaultCursor = new DefaultCursor();
+    const crosshairCursor = new CrosshairCursor();
+    const eraserCursor = new EraserCursor();
+    const dotCursor = new DotCursor();
+    const arrowCursor = new ArrowCursor();
+
+    registry.register('cursors', defaultCursor);
+    registry.register('cursors', crosshairCursor);
+    registry.register('cursors', eraserCursor);
+    registry.register('cursors', dotCursor);
+    registry.register('cursors', arrowCursor);
+
+    // Activate default cursor
+    registry.setActiveTool(defaultCursor);
+    defaultCursor.activate(canvas);
+
+    // Store placed items
+    const placedItems = [];
+
+    // Handle toolbar clicks
+    document.querySelectorAll('.tool-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const toolName = button.dataset.tool;
+
+        // Remove active class from all buttons
+        document.querySelectorAll('.tool-button').forEach(b => b.classList.remove('active'));
+        button.classList.add('active');
+
+        // Deactivate current tool
+        const currentTool = registry.getActiveTool();
+        if (currentTool) {
+          currentTool.deactivate(canvas);
+        }
+
+        // Activate new tool
+        let newTool;
+        switch(toolName) {
+          case 'default': newTool = defaultCursor; break;
+          case 'crosshair': newTool = crosshairCursor; break;
+          case 'eraser': newTool = eraserCursor; break;
+          case 'dot': newTool = dotCursor; break;
+          case 'arrow': newTool = arrowCursor; break;
+        }
+
+        if (newTool) {
+          registry.setActiveTool(newTool);
+          newTool.activate(canvas);
+          document.getElementById('active-tool').textContent = newTool.name;
+          updateToolInfo(newTool);
+        }
+      });
+    });
+
+    // Handle canvas events
+    canvas.addEventListener('click', (e) => {
+      const tool = registry.getActiveTool();
+      if (!tool) return;
+
+      const result = tool.onClick(e, {});
+      handleToolAction(result);
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      const tool = registry.getActiveTool();
+      if (!tool) return;
+
+      const result = tool.onMouseMove(e, {});
+      handleToolAction(result);
+    });
+
+    // Handle tool actions
+    function handleToolAction(result) {
+      if (!result) return;
+
+      switch(result.action) {
+        case 'draw-crosshair':
+          drawCrosshair(result.x, result.y);
+          break;
+        case 'place-dot':
+          placeDot(result);
+          break;
+        case 'preview-dot':
+          previewDot(result);
+          break;
+        case 'place-arrow':
+          placeArrow(result);
+          break;
+        case 'preview-arrow':
+          previewArrow(result);
+          break;
+        case 'delete-drawing':
+          deleteDrawing(result.x, result.y);
+          break;
+      }
+    }
+
+    // Drawing functions
+    function drawCrosshair(x, y) {
+      redraw();
+      ctx.strokeStyle = '#666666';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+
+      // Horizontal line
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.offsetWidth, y);
+      ctx.stroke();
+
+      // Vertical line
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.offsetHeight);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+    }
+
+    function placeDot(data) {
+      placedItems.push({ type: 'dot', ...data });
+      redraw();
+      updateItemsList();
+    }
+
+    function previewDot(data) {
+      redraw();
+      ctx.fillStyle = data.color;
+      ctx.beginPath();
+      ctx.arc(data.x, data.y, data.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function placeArrow(data) {
+      placedItems.push({ type: 'arrow', ...data });
+      redraw();
+      updateItemsList();
+    }
+
+    function previewArrow(data) {
+      redraw();
+      drawArrow(data.x, data.y, data.size, data.direction, data.color, 0.5);
+    }
+
+    function drawArrow(x, y, size, direction, color, alpha = 1) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+
+      ctx.translate(x, y);
+      if (direction === 'down') ctx.rotate(Math.PI);
+      if (direction === 'left') ctx.rotate(-Math.PI / 2);
+      if (direction === 'right') ctx.rotate(Math.PI / 2);
+
+      // Draw arrow
+      ctx.beginPath();
+      ctx.moveTo(0, -size);
+      ctx.lineTo(-size/2, 0);
+      ctx.lineTo(-size/4, 0);
+      ctx.lineTo(-size/4, size/2);
+      ctx.lineTo(size/4, size/2);
+      ctx.lineTo(size/4, 0);
+      ctx.lineTo(size/2, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function deleteDrawing(x, y) {
+      const indexToDelete = placedItems.findIndex(item => {
+        const dx = item.x - x;
+        const dy = item.y - y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < 20; // Detection radius
+      });
+
+      if (indexToDelete !== -1) {
+        placedItems.splice(indexToDelete, 1);
+        redraw();
+        updateItemsList();
+      }
+    }
+
+    function redraw() {
+      // Clear canvas
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+
+      // Draw all placed items
+      placedItems.forEach(item => {
+        if (item.type === 'dot') {
+          ctx.fillStyle = item.color;
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, item.size, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (item.type === 'arrow') {
+          drawArrow(item.x, item.y, item.size, item.direction, item.color);
+        }
+      });
+    }
+
+    function updateItemsList() {
+      const list = document.getElementById('items-list');
+      list.innerHTML = placedItems.map((item, i) =>
+        `<li>${item.type} at (${Math.round(item.x)}, ${Math.round(item.y)})</li>`
+      ).join('');
+    }
+
+    function updateToolInfo(tool) {
+      const infoText = {
+        'Default Cursor': 'Click and drag to pan. Click on drawings to select them.',
+        'Crosshair': 'Move to see precise crosshair. Click to lock position.',
+        'Eraser': 'Click on drawings to delete them.',
+        'Dot': 'Click to place dots on the chart.',
+        'Arrow': 'Click to place directional arrows.'
+      };
+      document.getElementById('tool-info').textContent = infoText[tool.name] || '';
+    }
+
+    // Initial draw
+    redraw();
+
+    console.log('✅ Cursor tools test loaded');
+    console.log('Registry:', registry);
+  </script>
+</body>
+</html>

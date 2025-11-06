@@ -38,10 +38,14 @@ export class PriceLabel {
    * Handle click - place price label
    */
   onClick(event, chartState) {
+    // Fix cursor offset - use canvas coordinates
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     return {
       action: 'place-price-label',
-      x: event.clientX,
-      y: event.clientY,
+      x,
+      y,
       labelColor: this.labelColor,
       textColor: this.textColor,
       fontSize: this.fontSize,
@@ -54,9 +58,12 @@ export class PriceLabel {
    * Handle mouse move - show preview
    */
   onMouseMove(event, chartState) {
+    // Fix cursor offset - use canvas coordinates
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     return {
       action: 'preview-price-label',
-      y: event.clientY,
+      y,
       labelColor: this.labelColor,
       textColor: this.textColor,
       fontSize: this.fontSize,

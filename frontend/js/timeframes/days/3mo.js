@@ -35,7 +35,7 @@ export class Timeframe3mo {
    * Initialize the timeframe for a specific symbol
    */
   async initialize(symbol, socket) {
-    console.log(`📊 [3MO] Initializing for ${symbol}`);
+    // console.log(`📊 [3MO] Initializing for ${symbol}`);
 
     this.symbol = symbol;
     this.socket = socket;
@@ -60,7 +60,7 @@ export class Timeframe3mo {
    */
   async loadHistoricalData() {
     const url = `/data/${this.symbol}?interval=${this.interval}&period=${this.period}`;
-    console.log(`📥 [3MO] Fetching: ${url}`);
+    // console.log(`📥 [3MO] Fetching: ${url}`);
 
     try {
       const response = await fetch(url);
@@ -74,17 +74,17 @@ export class Timeframe3mo {
         throw new Error(`No data returned for ${this.symbol}`);
       }
 
-      console.log(`✅ [3MO] Loaded ${this.data.length} 3-month candles`);
+      // console.log(`✅ [3MO] Loaded ${this.data.length} 3-month candles`);
 
       // Render the data
       const success = await this.renderer.render(this.data, this.symbol);
 
       if (success) {
-        console.log('✅ [3MO] Chart rendered successfully');
+        // console.log('✅ [3MO] Chart rendered successfully');
 
         // Apply any ticker update that arrived during chart load (1D pattern)
         if (this.lastTickerUpdate && this.lastTickerUpdate.symbol === this.symbol) {
-          console.log(`🔄 [3MO] Applying pending ticker update: ${this.lastTickerUpdate.symbol} = $${this.lastTickerUpdate.price}`);
+          // console.log(`🔄 [3MO] Applying pending ticker update: ${this.lastTickerUpdate.symbol} = $${this.lastTickerUpdate.price}`);
           const volumeBTC = this.lastTickerUpdate.volume_today || 0;
           this.renderer.updateLivePrice(this.lastTickerUpdate.price, volumeBTC);
         }
@@ -102,7 +102,7 @@ export class Timeframe3mo {
    */
   subscribeToLiveData() {
     if (!this.socket) {
-      console.warn(`⚠️ [3MO] No socket connection available`);
+      // console.warn(`⚠️ [3MO] No socket connection available`);
       return;
     }
 
@@ -112,14 +112,14 @@ export class Timeframe3mo {
       channels: ['ticker', 'matches']
     });
 
-    console.log(`🔔 [3MO] Subscribed to ${this.symbol}`);
+    // console.log(`🔔 [3MO] Subscribed to ${this.symbol}`);
   }
 
   /**
    * Handle live ticker update from WebSocket (1D pattern)
    */
   handleTickerUpdate(data) {
-    console.log(`📈 [3MO] Received ticker: ${data.symbol} = $${data.price}, isActive=${this.isActive}`);
+    // console.log(`📈 [3MO] Received ticker: ${data.symbol} = $${data.price}, isActive=${this.isActive}`);
 
     // Check if this ticker is for our symbol
     const symbolMatches = data.symbol && this.symbol &&
@@ -146,7 +146,7 @@ export class Timeframe3mo {
 
     // Update the chart renderer with live price
     if (this.data.length > 0) {
-      console.log(`  🖼️ [3MO] Updating renderer with live price`);
+      // console.log(`  🖼️ [3MO] Updating renderer with live price`);
       this.renderer.updateLivePrice(price, volumeBTC);
     } else {
       // console.log(`  ⚠️ [, ticker stored for later`);
@@ -164,7 +164,7 @@ export class Timeframe3mo {
    * Deactivate this timeframe
    */
   deactivate() {
-    console.log(`⏸️ [3MO] Deactivating`);
+    // console.log(`⏸️ [3MO] Deactivating`);
 
     this.isActive = false;
 
@@ -202,7 +202,7 @@ export class Timeframe3mo {
    * Reload chart data (full refresh)
    */
   async reload() {
-    console.log(`🔄 [3MO] Reloading...`);
+    // console.log(`🔄 [3MO] Reloading...`);
     await this.loadHistoricalData();
   }
 

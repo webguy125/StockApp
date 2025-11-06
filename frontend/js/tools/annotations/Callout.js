@@ -44,14 +44,18 @@ export class Callout {
    * Handle mouse down - set pointer or text box position
    */
   onMouseDown(event, chartState) {
+    // Fix cursor offset - use canvas coordinates
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     if (!this.isDrawing) {
       // First click - set pointer position
       this.isDrawing = true;
-      this.pointerPoint = { x: event.clientX, y: event.clientY };
+      this.pointerPoint = { x, y };
       return {
         action: 'start-callout',
-        x: event.clientX,
-        y: event.clientY
+        x,
+        y
       };
     } else {
       // Second click - set text box position and finish
@@ -61,8 +65,8 @@ export class Callout {
         action: 'finish-callout',
         pointerX: this.pointerPoint.x,
         pointerY: this.pointerPoint.y,
-        textX: event.clientX,
-        textY: event.clientY,
+        textX: x,
+        textY: y,
         text: 'Callout', // Default text, will be editable
         textColor: this.textColor,
         backgroundColor: this.backgroundColor,
@@ -81,12 +85,16 @@ export class Callout {
    */
   onMouseMove(event, chartState) {
     if (this.isDrawing && this.pointerPoint) {
+      // Fix cursor offset - use canvas coordinates
+      const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+      const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
       return {
         action: 'preview-callout',
         pointerX: this.pointerPoint.x,
         pointerY: this.pointerPoint.y,
-        textX: event.clientX,
-        textY: event.clientY,
+        textX: x,
+        textY: y,
         text: 'Callout',
         textColor: this.textColor,
         backgroundColor: this.backgroundColor,

@@ -44,21 +44,25 @@ export class Circle {
    * Handle mouse down - start or finish drawing
    */
   onMouseDown(event, chartState) {
+    // Fix cursor offset - use canvas coordinates
+    const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+    const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
     if (!this.isDrawing) {
       // First click - set center
       this.isDrawing = true;
-      this.centerPoint = { x: event.clientX, y: event.clientY };
+      this.centerPoint = { x: x, y: y };
       return {
         action: 'start-circle',
-        x: event.clientX,
-        y: event.clientY
+        x: x,
+        y: y
       };
     } else {
       // Second click - set radius and finish
       this.isDrawing = false;
 
-      const dx = event.clientX - this.centerPoint.x;
-      const dy = event.clientY - this.centerPoint.y;
+      const dx = x - this.centerPoint.x;
+      const dy = y - this.centerPoint.y;
       const radius = Math.sqrt(dx * dx + dy * dy);
 
       const circle = {
@@ -83,8 +87,12 @@ export class Circle {
    */
   onMouseMove(event, chartState) {
     if (this.isDrawing && this.centerPoint) {
-      const dx = event.clientX - this.centerPoint.x;
-      const dy = event.clientY - this.centerPoint.y;
+      // Fix cursor offset - use canvas coordinates
+      const x = event.canvasX !== undefined ? event.canvasX : event.clientX;
+      const y = event.canvasY !== undefined ? event.canvasY : event.clientY;
+
+      const dx = x - this.centerPoint.x;
+      const dy = y - this.centerPoint.y;
       const radius = Math.sqrt(dx * dx + dy * dy);
 
       return {

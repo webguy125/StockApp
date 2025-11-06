@@ -23,10 +23,16 @@ export class TickChart500t {
     this.isActive = false; // Chart is visible and rendering
     this.isAccumulating = false; // Chart is processing trades (can be true even when not visible)
 
-    // Trade accumulator for current bar
+    // Trade accumulator for current bar (incremental OHLCV calculation - memory efficient)
     this.currentBar = {
-      trades: [],
-      tickCount: 0
+      tickCount: 0,
+      open: null,
+      high: -Infinity,
+      low: Infinity,
+      close: null,
+      volume: 0,
+      firstTime: null,
+      lastTime: null
     };
   }
 
@@ -34,7 +40,7 @@ export class TickChart500t {
    * Initialize the tick chart for a specific symbol
    */
   async initialize(symbol, socket) {
-    console.log(`📊 [500T] Initializing for ${symbol}`);
+    // console.log(`📊 [500T] Initializing for ${symbol}`);
 
     this.symbol = symbol;
     this.socket = socket;
@@ -59,7 +65,7 @@ export class TickChart500t {
    */
   async loadHistoricalBars() {
     const url = `/data/tick/${this.symbol}/${this.tickThreshold}`;
-    console.log(`📥 [500T] Fetching: ${url}`);
+    // console.log(`📥 [500T] Fetching: ${url}`);
 
     try {
       const response = await fetch(url);
@@ -75,10 +81,10 @@ export class TickChart500t {
       if (this.data.length > 0) {
         const success = await this.renderer.render(this.data, this.symbol);
         if (success) {
-          console.log('✅ [500T] Chart rendered successfully');
+          // console.log('✅ [500T] Chart rendered successfully');
         }
       } else {
-        console.log('⚠️ [500T] No historical data, starting fresh');
+        // console.log('⚠️ [500T] No historical data, starting fresh');
         // Initialize empty chart
         await this.renderer.render([], this.symbol);
       }
@@ -99,14 +105,14 @@ export class TickChart500t {
    */
   subscribeToTrades() {
     if (!this.socket) {
-      console.warn(`⚠️ [500T] No socket connection available`);
+      // console.warn(`⚠️ [500T] No socket connection available`);
       return;
     }
 
     // No need to emit subscribe - backend handles Coinbase subscription centrally
     // Trade updates will arrive via 'trade_update' events routed through handleTradeUpdate()
 
-    console.log(`🔔 [500T] Ready to receive ${this.symbol} trades`);
+    // console.log(`🔔 [500T] Ready to receive ${this.symbol} trades`);
   }
 
   /**
@@ -114,7 +120,7 @@ export class TickChart500t {
    * Used for background streaming so charts are ready when user switches to them
    */
   async startAccumulating(symbol, socket) {
-    console.log(`🔄 [500T] Starting background accumulation for ${symbol}`);
+    // console.log(`🔄 [500T] Starting background accumulation for ${symbol}`);
 
     this.symbol = symbol;
     this.socket = socket;
@@ -126,7 +132,7 @@ export class TickChart500t {
       const response = await fetch(url);
       if (response.ok) {
         this.data = await response.json();
-        console.log(`✅ [500T] Loaded ${this.data.length} tick bars (background)`);
+        // console.log(`✅ [500T] Loaded ${this.data.length} tick bars (background)`);
       } else {
         this.data = [];
       }
@@ -146,7 +152,7 @@ export class TickChart500t {
    * Activate this chart (make it visible and start rendering)
    */
   async activate() {
-    console.log(`▶️ [500T] Activating chart`);
+    // console.log(`▶️ [500T] Activating chart`);
 
     this.isActive = true;
 
@@ -154,11 +160,11 @@ export class TickChart500t {
     if (this.data.length > 0) {
       const success = await this.renderer.render(this.data, this.symbol);
       if (success) {
-        console.log(`✅ [500T] Chart rendered with ${this.data.length} bars`);
+        // console.log(`✅ [500T] Chart rendered with ${this.data.length} bars`);
       }
       return success;
     } else {
-      console.log(`⚠️ [500T] No data yet, rendering empty chart`);
+      // console.log(`⚠️ [500T] No data yet, rendering empty chart`);
       await this.renderer.render([], this.symbol);
       return true;
     }
@@ -182,12 +188,25 @@ export class TickChart500t {
 
     // console.log(`📈 [500T] Trade received: ${data.product_id} price=${data.price} size=${data.size}`);
 
-    // Add trade to current bar
-    this.currentBar.trades.push({
-      price: parseFloat(data.price),
-      size: parseFloat(data.size),
-      time: data.time
-    });
+    // Incrementally update OHLCV (memory-efficient - no array storage)
+    const price = parseFloat(data.price);
+    const size = parseFloat(data.size);
+    const time = data.time;
+
+    if (this.currentBar.tickCount === 0) {
+      // First trade in bar
+      this.currentBar.open = price;
+      this.currentBar.firstTime = time;
+    }
+
+    // Update high/low
+    this.currentBar.high = Math.max(this.currentBar.high, price);
+    this.currentBar.low = Math.min(this.currentBar.low, price);
+
+    // Update close and volume
+    this.currentBar.close = price;
+    this.currentBar.volume += size;
+    this.currentBar.lastTime = time;
     this.currentBar.tickCount++;
 
     // console.log(`  📊 [500T] Current bar: ${this.currentBar.tickCount}/${this.tickThreshold} trades`);
@@ -204,17 +223,15 @@ export class TickChart500t {
   async completeBar() {
     // console.log(`✅ [500T] Completing bar with ${this.currentBar.tickCount} trades`);
 
-    const trades = this.currentBar.trades;
-
-    // Construct OHLCV bar
+    // Construct OHLCV bar from incremental data (already calculated)
     const bar = {
-      Date: trades[trades.length - 1].time, // Use last trade timestamp
-      Open: trades[0].price,
-      High: Math.max(...trades.map(t => t.price)),
-      Low: Math.min(...trades.map(t => t.price)),
-      Close: trades[trades.length - 1].price,
-      Volume: trades.reduce((sum, t) => sum + t.size, 0),
-      TickCount: trades.length
+      Date: this.currentBar.lastTime, // Use last trade timestamp
+      Open: this.currentBar.open,
+      High: this.currentBar.high,
+      Low: this.currentBar.low,
+      Close: this.currentBar.close,
+      Volume: this.currentBar.volume,
+      TickCount: this.currentBar.tickCount
     };
 
     // console.log(`  📦 [500T] Bar created: O=${bar.Open} H=${bar.High} L=${bar.Low} C=${bar.Close} V=${bar.Volume.toFixed(4)}`);
@@ -233,10 +250,16 @@ export class TickChart500t {
     // Persist to backend (async, don't wait)
     this.saveBarToBackend(bar);
 
-    // Reset accumulator
+    // Reset accumulator (memory-efficient reset)
     this.currentBar = {
-      trades: [],
-      tickCount: 0
+      tickCount: 0,
+      open: null,
+      high: -Infinity,
+      low: Infinity,
+      close: null,
+      volume: 0,
+      firstTime: null,
+      lastTime: null
     };
 
     // console.log(`🔄 [500T] Bar complete, accumulator reset`);
@@ -270,7 +293,7 @@ export class TickChart500t {
    * Deactivate this tick chart (hide it, but continue accumulating in background)
    */
   deactivate() {
-    console.log(`⏸️ [500T] Deactivating (still accumulating in background)`);
+    // console.log(`⏸️ [500T] Deactivating (still accumulating in background)`);
 
     this.isActive = false;
 
@@ -294,7 +317,16 @@ export class TickChart500t {
     }
 
     this.data = [];
-    this.currentBar = { trades: [], tickCount: 0 };
+    this.currentBar = {
+      tickCount: 0,
+      open: null,
+      high: -Infinity,
+      low: Infinity,
+      close: null,
+      volume: 0,
+      firstTime: null,
+      lastTime: null
+    };
     this.symbol = null;
     this.socket = null;
     this.isActive = false;
@@ -305,7 +337,7 @@ export class TickChart500t {
    * Reload chart data (full refresh)
    */
   async reload() {
-    console.log(`🔄 [500T] Reloading...`);
+    // console.log(`🔄 [500T] Reloading...`);
     await this.loadHistoricalBars();
   }
 

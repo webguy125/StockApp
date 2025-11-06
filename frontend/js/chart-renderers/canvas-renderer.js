@@ -3459,9 +3459,12 @@ export class CanvasRenderer {
     const ctx = this.ctx;
     const { chartIndex, chartPrice, text, fontSize, fontFamily, textColor, backgroundColor, showBackground } = drawing;
 
-    // Safety check
+    // Safety check - only log once per drawing
     if (chartIndex === undefined || chartPrice === undefined) {
-      console.error('❌ Text Label missing required coordinates:', drawing);
+      if (!drawing._coordinateErrorLogged) {
+        console.error('❌ Text Label missing required coordinates (old drawing, will be ignored):', drawing.id);
+        drawing._coordinateErrorLogged = true;
+      }
       return;
     }
 
@@ -3530,9 +3533,12 @@ export class CanvasRenderer {
     const ctx = this.ctx;
     const { pointerIndex, pointerPrice, textIndex, textPrice, text, textColor, backgroundColor, borderColor, fontSize } = drawing;
 
-    // Safety check
+    // Safety check - only log once per drawing
     if (pointerIndex === undefined || pointerPrice === undefined || textIndex === undefined || textPrice === undefined) {
-      console.error('❌ Callout missing required coordinates:', drawing);
+      if (!drawing._coordinateErrorLogged) {
+        console.error('❌ Callout missing required coordinates (old drawing, will be ignored):', drawing.id);
+        drawing._coordinateErrorLogged = true;
+      }
       return;
     }
 
@@ -3608,9 +3614,12 @@ export class CanvasRenderer {
     const ctx = this.ctx;
     const { chartIndex, chartPrice, text, noteColor, textColor, fontSize, width, height } = drawing;
 
-    // Safety check
+    // Safety check - only log once per drawing
     if (chartIndex === undefined || chartPrice === undefined) {
-      console.error('❌ Note missing required coordinates:', drawing);
+      if (!drawing._coordinateErrorLogged) {
+        console.error('❌ Note missing required coordinates (old drawing, will be ignored):', drawing.id);
+        drawing._coordinateErrorLogged = true;
+      }
       return;
     }
 
@@ -3671,9 +3680,12 @@ export class CanvasRenderer {
     const ctx = this.ctx;
     const { chartIndex, chartPrice, labelColor, textColor, fontSize, showLine } = drawing;
 
-    // Safety check
+    // Safety check - only log once per drawing
     if (chartPrice === undefined) {
-      console.error('❌ Price Label missing required coordinates:', drawing);
+      if (!drawing._coordinateErrorLogged) {
+        console.error('❌ Price Label missing required coordinates (old drawing, will be ignored):', drawing.id);
+        drawing._coordinateErrorLogged = true;
+      }
       return;
     }
 

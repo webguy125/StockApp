@@ -29,7 +29,7 @@ export class Timeframe5m {
    * Initialize the timeframe for a specific symbol
    */
   async initialize(symbol, socket) {
-    console.log(`📊 [5M] Initializing for ${symbol}`);
+    // console.log(`📊 [5M] Initializing for ${symbol}`);
 
     this.symbol = symbol;
     this.socket = socket;
@@ -54,7 +54,7 @@ export class Timeframe5m {
    */
   async loadHistoricalData() {
     const url = `/data/${this.symbol}?interval=${this.interval}&period=${this.period}`;
-    console.log(`📥 [5M] Fetching: ${url}`);
+    // console.log(`📥 [5M] Fetching: ${url}`);
 
     try {
       const response = await fetch(url);
@@ -68,17 +68,17 @@ export class Timeframe5m {
         throw new Error(`No data returned for ${this.symbol}`);
       }
 
-      console.log(`✅ [5M] Loaded ${this.data.length} 5-minute candles`);
+      // console.log(`✅ [5M] Loaded ${this.data.length} 5-minute candles`);
 
       // Render the data
       const success = await this.renderer.render(this.data, this.symbol);
 
       if (success) {
-        console.log('✅ [5M] Chart rendered successfully');
+        // console.log('✅ [5M] Chart rendered successfully');
 
         // Apply any ticker update that arrived during chart load
         if (this.lastTickerUpdate && this.lastTickerUpdate.symbol === this.symbol) {
-          console.log(`🔄 [5M] Applying pending ticker update: ${this.lastTickerUpdate.symbol} = $${this.lastTickerUpdate.price}`);
+          // console.log(`🔄 [5M] Applying pending ticker update: ${this.lastTickerUpdate.symbol} = $${this.lastTickerUpdate.price}`);
           const volumeBTC = this.lastTickerUpdate.volume_today || 0;
           this.renderer.updateLivePrice(this.lastTickerUpdate.price, volumeBTC);
         }
@@ -96,7 +96,7 @@ export class Timeframe5m {
    */
   subscribeToLiveData() {
     if (!this.socket) {
-      console.warn(`⚠️ [5M] No socket connection available`);
+      // console.warn(`⚠️ [5M] No socket connection available`);
       return;
     }
 
@@ -106,7 +106,7 @@ export class Timeframe5m {
       channels: ['ticker', 'matches']
     });
 
-    console.log(`🔔 [5M] Subscribed to ${this.symbol}`);
+    // console.log(`🔔 [5M] Subscribed to ${this.symbol}`);
   }
 
   /**
@@ -158,7 +158,7 @@ export class Timeframe5m {
    * Deactivate this timeframe
    */
   deactivate() {
-    console.log(`⏸️ [5M] Deactivating`);
+    // console.log(`⏸️ [5M] Deactivating`);
 
     this.isActive = false;
 
@@ -196,7 +196,7 @@ export class Timeframe5m {
    * Reload chart data (full refresh)
    */
   async reload() {
-    console.log(`🔄 [5M] Reloading...`);
+    // console.log(`🔄 [5M] Reloading...`);
     await this.loadHistoricalData();
   }
 
