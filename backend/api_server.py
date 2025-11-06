@@ -13,9 +13,14 @@ import websocket
 import threading
 import requests
 import time
+import logging
 
 app = Flask(__name__)
 CORS(app)
+
+# Disable Flask's default request logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)  # Only show errors, not requests
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
@@ -941,4 +946,6 @@ def list_ord_volume_segregated():
 if __name__ == "__main__":
     # Use socketio.run instead of app.run for WebSocket support
     # Ticker emit worker will start automatically when first client connects
-    socketio.run(app, debug=True, host='127.0.0.1', port=5000, allow_unsafe_werkzeug=True)
+    print("Flask server starting on http://127.0.0.1:5000")
+    print("Logging: QUIET MODE (errors only)")
+    socketio.run(app, debug=False, host='127.0.0.1', port=5000, allow_unsafe_werkzeug=True, log_output=False)
