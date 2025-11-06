@@ -20,8 +20,8 @@ socketio = SocketIO(
     app,
     cors_allowed_origins="*",
     async_mode='eventlet',
-    logger=True,
-    engineio_logger=True,
+    logger=False,  # Disabled verbose SocketIO logging
+    engineio_logger=False,  # Disabled verbose EngineIO logging
     ping_timeout=120,  # 2 minutes before considering connection dead
     ping_interval=25    # Send ping every 25 seconds to keep connection alive
 )
@@ -89,7 +89,7 @@ def fetch_coinbase_candles(symbol, interval, period):
     product_id = symbol  # Already in format 'BTC-USD'
     url = f"https://api.exchange.coinbase.com/products/{product_id}/candles"
 
-    print(f"[COINBASE] Fetching {interval} candles for {symbol} from {start_dt} to {end_dt}")
+    # print(f"[COINBASE] Fetching {interval} candles for {symbol} from {start_dt} to {end_dt}")
 
     params = {
         'granularity': granularity,
@@ -104,7 +104,7 @@ def fetch_coinbase_candles(symbol, interval, period):
         response.raise_for_status()
         all_candles = response.json()
 
-        print(f"[COINBASE] Received {len(all_candles)} candles")
+        # print(f"[COINBASE] Received {len(all_candles)} candles")
 
     except requests.exceptions.RequestException as e:
         print(f"[COINBASE ERROR] Failed to fetch candles: {e}")
@@ -132,7 +132,7 @@ def fetch_coinbase_candles(symbol, interval, period):
     # Sort by date (oldest first)
     transformed.sort(key=lambda x: x['Date'])
 
-    print(f"[COINBASE] Returning {len(transformed)} candles")
+    # print(f"[COINBASE] Returning {len(transformed)} candles")
     return transformed
 
 @app.route("/")
@@ -175,7 +175,7 @@ def get_chart_data(symbol):
     minute_intervals = ['1m', '5m', '15m', '30m', '1h']
 
     if interval in minute_intervals:
-        print(f"[ROUTING] Using Coinbase for {symbol} {interval}")
+        # print(f"[ROUTING] Using Coinbase for {symbol} {interval}")
         try:
             candles = fetch_coinbase_candles(symbol, interval, period or '1d')
             return jsonify(candles)
@@ -184,7 +184,7 @@ def get_chart_data(symbol):
             return jsonify([])
 
     # Use yfinance for daily and above (unchanged)
-    print(f"[ROUTING] Using yfinance for {symbol} {interval}")
+    # print(f"[ROUTING] Using yfinance for {symbol} {interval}")
     kwargs = {'interval': interval}
     if start and end:
         kwargs['start'] = start
@@ -197,7 +197,7 @@ def get_chart_data(symbol):
     data = yf.download(symbol, **kwargs)
 
     if data.empty:
-        print(f"No data found for {symbol}.")
+        # print(f"No data found for {symbol}.")
         return jsonify([])
 
     # Flatten multi-level columns if present
@@ -217,13 +217,13 @@ def calculate_volume():
     end_date = data["end_date"]
     interval = data.get("interval", "1d")
 
-    print(f"Volume request received: {symbol} from {start_date} to {end_date} interval {interval}")
+    # print(f"Volume request received: {symbol} from {start_date} to {end_date} interval {interval}")
 
     try:
         start_dt = dateutil.parser.isoparse(start_date)
         end_dt = dateutil.parser.isoparse(end_date)
     except Exception as e:
-        print("Date parsing error:", e)
+        # print("Date parsing error:", e)
         return jsonify({"avg_volume": 0})
 
     if start_dt > end_dt:
@@ -235,7 +235,7 @@ def calculate_volume():
     df = yf.download(symbol, start=start_str, end=end_str, interval=interval)
 
     if df.empty:
-        print(f"No data found in range: {start_str} to {end_str}")
+        # print(f"No data found in range: {start_str} to {end_str}")
         return jsonify({"avg_volume": 0})
 
     # Flatten multi-level columns if present
@@ -247,7 +247,7 @@ def calculate_volume():
     df = df.dropna(subset=["Volume"])
     avg_volume = df["Volume"].mean() if not df.empty else 0
 
-    print(f"Avg volume for {symbol} between {start_date} and {end_date}: {avg_volume:.2f}")
+    # print(f"Avg volume for {symbol} between {start_date} and {end_date}: {avg_volume:.2f}")
     return jsonify({"avg_volume": avg_volume})
 
 # ========================================
@@ -260,10 +260,10 @@ def get_tick_bars(symbol, threshold):
     symbol = symbol.upper()
     tick_file = os.path.join(DATA_DIR, "tick_bars", f"tick_{threshold}_{symbol}.json")
 
-    print(f"[TICK] Loading tick bars: {symbol} threshold={threshold}")
+    # print(f"[TICK] Loading tick bars: {symbol} threshold={threshold}")
 
     if not os.path.exists(tick_file):
-        print(f"[TICK] No tick bar file found, returning empty array")
+        # print(f"[TICK] No tick bar file found, returning empty array")
         return jsonify([])
 
     try:
@@ -272,7 +272,7 @@ def get_tick_bars(symbol, threshold):
 
         # Return only last 300 bars for performance
         bars = bars[-300:] if len(bars) > 300 else bars
-        print(f"[TICK] Loaded {len(bars)} tick bars for {symbol}")
+        # print(f"[TICK] Loaded {len(bars)} tick bars for {symbol}")
         return jsonify(bars)
 
     except Exception as e:
@@ -312,7 +312,7 @@ def save_tick_bar(symbol, threshold):
         with open(tick_file, 'w') as f:
             json.dump(bars, f, indent=2)
 
-        print(f"[TICK] Saved bar for {symbol} threshold={threshold}, total bars={len(bars)}")
+        # print(f"[TICK] Saved bar for {symbol} threshold={threshold}, total bars={len(bars)}")
         return jsonify({"success": True, "total_bars": len(bars)})
 
     except Exception as e:
@@ -326,7 +326,7 @@ def save_line():
     line = data.get("line")
 
     if not symbol or not line or "id" not in line:
-        print("Missing symbol or line ID")
+        # print("Missing symbol or line ID")
         return jsonify({"error": "Missing symbol or line ID"}), 400
 
     filename = os.path.join(DATA_DIR, f"lines_{symbol}.json")
@@ -337,7 +337,7 @@ def save_line():
             with open(filename, "r") as f:
                 lines = json.load(f)
         except Exception as e:
-            print("Error reading line file:", e)
+            pass  # print("Error reading line file:", e)
 
     lines = [l for l in lines if l["id"] != line["id"]]
     lines.append(line)
@@ -345,7 +345,7 @@ def save_line():
     try:
         with open(filename, "w") as f:
             json.dump(lines, f)
-        print(f"Saved line for {symbol}: {line['id']}")
+        # print(f"Saved line for {symbol}: {line['id']}")
         return jsonify({"success": True})
     except Exception as e:
         print("Error saving line:", e)
@@ -358,12 +358,12 @@ def delete_line():
     line_id = data.get("line_id")
 
     if not symbol or not line_id:
-        print("Missing symbol or line ID for deletion")
+        # print("Missing symbol or line ID for deletion")
         return jsonify({"error": "Missing symbol or line ID"}), 400
 
     filename = os.path.join(DATA_DIR, f"lines_{symbol}.json")
     if not os.path.exists(filename):
-        print(f"No line file found for {symbol}")
+        # print(f"No line file found for {symbol}")
         return jsonify({"success": True})
 
     try:
@@ -372,7 +372,7 @@ def delete_line():
         lines = [l for l in lines if l["id"] != line_id]
         with open(filename, "w") as f:
             json.dump(lines, f)
-        print(f"Deleted line {line_id} for {symbol}")
+        # print(f"Deleted line {line_id} for {symbol}")
         return jsonify({"success": True})
     except Exception as e:
         print("Error deleting line:", e)
@@ -387,7 +387,7 @@ def clear_lines():
     try:
         with open(filename, "w") as f:
             json.dump([], f)
-        print(f"Cleared all lines for {symbol}")
+        # print(f"Cleared all lines for {symbol}")
         return jsonify({"success": True})
     except Exception as e:
         print("Error clearing lines:", e)
@@ -402,13 +402,13 @@ def get_lines(symbol):
         try:
             with open(filename, "r") as f:
                 lines = json.load(f)
-            print(f"Loaded {len(lines)} lines for {symbol}")
+            # print(f"Loaded {len(lines)} lines for {symbol}")
             return jsonify(lines)
         except Exception as e:
             print("Error loading lines:", e)
             return jsonify([])
     else:
-        print(f"No line file found for {symbol}")
+        # print(f"No line file found for {symbol}")
         return jsonify([])
 
 # ==================== DRAWING PERSISTENCE ENDPOINTS ====================
@@ -422,7 +422,7 @@ def save_drawing():
     drawing = data.get("drawing")
 
     if not symbol or not drawing or "id" not in drawing:
-        print("Missing symbol or drawing ID")
+        # print("Missing symbol or drawing ID")
         return jsonify({"error": "Missing symbol or drawing ID"}), 400
 
     filename = os.path.join(DATA_DIR, f"drawings_{symbol}.json")
@@ -433,7 +433,7 @@ def save_drawing():
             with open(filename, "r") as f:
                 drawings = json.load(f)
         except Exception as e:
-            print("Error reading drawings file:", e)
+            pass  # print("Error reading drawings file:", e)
 
     # Remove old version of this drawing (if exists) and add new version
     drawings = [d for d in drawings if d["id"] != drawing["id"]]
@@ -442,7 +442,7 @@ def save_drawing():
     try:
         with open(filename, "w") as f:
             json.dump(drawings, f, indent=2)
-        print(f"Saved drawing for {symbol}: {drawing['id']} (type: {drawing.get('action', 'unknown')})")
+        # print(f"Saved drawing for {symbol}: {drawing['id']} (type: {drawing.get('action', 'unknown')})")
         return jsonify({"success": True})
     except Exception as e:
         print("Error saving drawing:", e)
@@ -458,13 +458,13 @@ def get_drawings(symbol):
         try:
             with open(filename, "r") as f:
                 drawings = json.load(f)
-            print(f"Loaded {len(drawings)} drawings for {symbol}")
+            # print(f"Loaded {len(drawings)} drawings for {symbol}")
             return jsonify(drawings)
         except Exception as e:
             print("Error loading drawings:", e)
             return jsonify([])
     else:
-        print(f"No drawings file found for {symbol}")
+        # print(f"No drawings file found for {symbol}")
         return jsonify([])
 
 @app.route("/delete_drawing", methods=["POST"])
@@ -475,12 +475,12 @@ def delete_drawing():
     drawing_id = data.get("drawing_id")
 
     if not symbol or not drawing_id:
-        print("Missing symbol or drawing ID for deletion")
+        # print("Missing symbol or drawing ID for deletion")
         return jsonify({"error": "Missing symbol or drawing ID"}), 400
 
     filename = os.path.join(DATA_DIR, f"drawings_{symbol}.json")
     if not os.path.exists(filename):
-        print(f"No drawings file found for {symbol}")
+        # print(f"No drawings file found for {symbol}")
         return jsonify({"success": True})
 
     try:
@@ -489,7 +489,7 @@ def delete_drawing():
         drawings = [d for d in drawings if d["id"] != drawing_id]
         with open(filename, "w") as f:
             json.dump(drawings, f, indent=2)
-        print(f"Deleted drawing {drawing_id} for {symbol}")
+        # print(f"Deleted drawing {drawing_id} for {symbol}")
         return jsonify({"success": True})
     except Exception as e:
         print("Error deleting drawing:", e)
@@ -503,7 +503,7 @@ def save_all_drawings():
     drawings = data.get("drawings", [])
 
     if not symbol:
-        print("Missing symbol for save_all_drawings")
+        # print("Missing symbol for save_all_drawings")
         return jsonify({"error": "Missing symbol"}), 400
 
     filename = os.path.join(DATA_DIR, f"drawings_{symbol}.json")
@@ -511,7 +511,7 @@ def save_all_drawings():
     try:
         with open(filename, "w") as f:
             json.dump(drawings, f, indent=2)
-        print(f"Saved {len(drawings)} drawings for {symbol} (full replace)")
+        # print(f"Saved {len(drawings)} drawings for {symbol} (full replace)")
         return jsonify({"success": True})
     except Exception as e:
         print("Error saving all drawings:", e)
@@ -603,24 +603,24 @@ trade_worker_started = False  # Track if trade worker has been started
 @socketio.on('connect')
 def handle_connect(auth=None):
     global ticker_worker_started, trade_worker_started
-    print(f'[CONNECT] Client connected: {request.sid}')
+    # print(f'[CONNECT] Client connected: {request.sid}')
     emit('connection_response', {'status': 'connected'})
 
     # Start ticker emit worker on first client connection
     if not ticker_worker_started:
         socketio.start_background_task(ticker_emit_worker)
         ticker_worker_started = True
-        print('[TICKER WORKER] Starting background task')
+        # print('[TICKER WORKER] Starting background task')
 
     # Start trade emit worker on first client connection
     if not trade_worker_started:
         socketio.start_background_task(trade_emit_worker)
         trade_worker_started = True
-        print('[TRADE WORKER] Starting background task')
+        # print('[TRADE WORKER] Starting background task')
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    print(f'[DISCONNECT] Client disconnected: {request.sid}')
+    pass  # print(f'[DISCONNECT] Client disconnected: {request.sid}')
 
 @socketio.on('subscribe')
 def handle_subscribe(data):
@@ -629,16 +629,16 @@ def handle_subscribe(data):
     if symbols:
         was_empty = len(subscribed_symbols) == 0
         subscribed_symbols.update(symbols)
-        print(f'[SUBSCRIBE] Subscribed to symbols: {symbols}')
-        print(f'[SUBSCRIBE] Total subscribed symbols: {len(subscribed_symbols)}')
+        # print(f'[SUBSCRIBE] Subscribed to symbols: {symbols}')
+        # print(f'[SUBSCRIBE] Total subscribed symbols: {len(subscribed_symbols)}')
 
         # Start Coinbase WebSocket if not already running
         if coinbase_ws is None:
-            print(f'[COINBASE] Starting WebSocket (first connection)')
+            # print(f'[COINBASE] Starting WebSocket (first connection)')
             start_coinbase_websocket()
         else:
             # Update existing subscription
-            print(f'[COINBASE] Updating subscriptions')
+            # print(f'[COINBASE] Updating subscriptions')
             resubscribe_coinbase_ws()
 
 @socketio.on('subscribe_ticker')
@@ -648,16 +648,16 @@ def handle_subscribe_ticker(data):
     if symbol:
         was_empty = len(subscribed_symbols) == 0
         subscribed_symbols.add(symbol)
-        print(f'[SUBSCRIBE_TICKER] Subscribed to symbol: {symbol}')
-        print(f'[SUBSCRIBE_TICKER] Total subscribed symbols: {len(subscribed_symbols)}')
+        # print(f'[SUBSCRIBE_TICKER] Subscribed to symbol: {symbol}')
+        # print(f'[SUBSCRIBE_TICKER] Total subscribed symbols: {len(subscribed_symbols)}')
 
         # Start Coinbase WebSocket if not already running
         if coinbase_ws is None:
-            print(f'[COINBASE] Starting WebSocket (first connection)')
+            # print(f'[COINBASE] Starting WebSocket (first connection)')
             start_coinbase_websocket()
         else:
             # Update existing subscription
-            print(f'[COINBASE] Updating subscriptions')
+            # print(f'[COINBASE] Updating subscriptions')
             resubscribe_coinbase_ws()
 
 @socketio.on('unsubscribe')
@@ -666,7 +666,7 @@ def handle_unsubscribe(data):
     symbols = data.get('symbols', [])
     if symbols:
         subscribed_symbols.difference_update(symbols)
-        print(f'Unsubscribed from symbols: {symbols}')
+        # print(f'Unsubscribed from symbols: {symbols}')
         # Update Coinbase WebSocket subscriptions
         if coinbase_ws:
             resubscribe_coinbase_ws()
@@ -677,9 +677,9 @@ def on_coinbase_message(ws, message):
         data = json.loads(message)
 
         # Debug: Log message types to see what Coinbase is sending
-        msg_type = data.get('type', 'unknown')
-        if msg_type not in ['ticker', 'subscriptions', 'heartbeat']:
-            print(f'[COINBASE MSG TYPE] {msg_type}')
+        # msg_type = data.get('type', 'unknown')
+        # if msg_type not in ['ticker', 'subscriptions', 'heartbeat']:
+        #     print(f'[COINBASE MSG TYPE] {msg_type}')
 
         # Handle ticker updates
         if data.get('type') == 'ticker':
@@ -717,8 +717,8 @@ def on_coinbase_message(ws, message):
                 trade_queue.put_nowait(trade_data)
 
                 # Debug: Print every 10th ticker to avoid spam
-                if price and int(price) % 10 == 0:
-                    print(f'[COINBASE -> QUEUE] {product_id}: ${price:.2f} -> added to queue')
+                # if price and int(price) % 10 == 0:
+                #     print(f'[COINBASE -> QUEUE] {product_id}: ${price:.2f} -> added to queue')
 
         # Handle trade/match updates (for tick charts)
         elif data.get('type') in ['match', 'last_match']:
@@ -747,7 +747,7 @@ def on_coinbase_message(ws, message):
                     pass  # Drop trade if queue is full (not critical)
 
                 # Debug: Print trades to see if they're coming through
-                print(f'[TRADE] {product_id}: ${price} x {size} ({side})')
+                # print(f'[TRADE] {product_id}: ${price} x {size} ({side})')
     except Exception as e:
         print(f'[ERROR] Processing Coinbase message: {e}')
 
@@ -757,14 +757,14 @@ def on_coinbase_error(ws, error):
 
 def on_coinbase_close(ws, close_status_code, close_msg):
     """Handle Coinbase WebSocket close"""
-    print(f'[COINBASE] Connection closed: {close_status_code} - {close_msg}')
+    # print(f'[COINBASE] Connection closed: {close_status_code} - {close_msg}')
     # Attempt to reconnect after 5 seconds
     eventlet.sleep(5)
     start_coinbase_websocket()
 
 def on_coinbase_open(ws):
     """Handle Coinbase WebSocket open"""
-    print('[COINBASE] WebSocket connected')
+    # print('[COINBASE] WebSocket connected')
     # Subscribe to all symbols
     subscribe_message = {
         "type": "subscribe",
@@ -772,17 +772,17 @@ def on_coinbase_open(ws):
         "channels": ["ticker", "matches"]
     }
     ws.send(json.dumps(subscribe_message))
-    print(f'[COINBASE] Subscribed to: {list(subscribed_symbols)} (ticker + matches)')
+    # print(f'[COINBASE] Subscribed to: {list(subscribed_symbols)} (ticker + matches)')
 
 def start_coinbase_websocket():
     """Start Coinbase Advanced Trade WebSocket connection"""
     global coinbase_ws
 
     if len(subscribed_symbols) == 0:
-        print('[COINBASE] No symbols to subscribe, skipping WebSocket')
+        # print('[COINBASE] No symbols to subscribe, skipping WebSocket')
         return
 
-    print('[COINBASE] Starting WebSocket connection...')
+    # print('[COINBASE] Starting WebSocket connection...')
 
     # Coinbase Advanced Trade WebSocket URL
     coinbase_ws = websocket.WebSocketApp(
@@ -810,13 +810,13 @@ def resubscribe_coinbase_ws():
         }
         try:
             coinbase_ws.send(json.dumps(subscribe_message))
-            print(f'[COINBASE] Updated subscriptions: {list(subscribed_symbols)} (ticker + matches)')
+            # print(f'[COINBASE] Updated subscriptions: {list(subscribed_symbols)} (ticker + matches)')
         except Exception as e:
             print(f'[COINBASE ERROR] Failed to update subscriptions: {e}')
 
 def ticker_emit_worker():
     """Background task that pulls ticker data from queue and emits to Socket.IO clients"""
-    print('[TICKER WORKER] Started - pulling from queue and emitting to clients')
+    # print('[TICKER WORKER] Started - pulling from queue and emitting to clients')
     while True:
         try:
             # Block until ticker data is available (with timeout to allow graceful shutdown)
@@ -826,8 +826,8 @@ def ticker_emit_worker():
             socketio.emit('ticker_update', ticker_data)
 
             # Debug logging (reduced frequency)
-            if ticker_data['price'] and int(ticker_data['price']) % 10 == 0:
-                print(f'[EMIT] {ticker_data["symbol"]}: ${ticker_data["price"]:.2f}')
+            # if ticker_data['price'] and int(ticker_data['price']) % 10 == 0:
+            #     print(f'[EMIT] {ticker_data["symbol"]}: ${ticker_data["price"]:.2f}')
 
         except eventlet.queue.Empty:
             # No ticker data available, continue loop
@@ -838,7 +838,7 @@ def ticker_emit_worker():
 
 def trade_emit_worker():
     """Background task that pulls trade data from queue and emits to Socket.IO clients"""
-    print('[TRADE WORKER] Started - pulling from queue and emitting to clients')
+    # print('[TRADE WORKER] Started - pulling from queue and emitting to clients')
     while True:
         try:
             # Block until trade data is available (with timeout to allow graceful shutdown)
@@ -848,8 +848,8 @@ def trade_emit_worker():
             socketio.emit('trade_update', trade_data)
 
             # Debug logging (reduced frequency) - log every 100th trade
-            if trade_data.get('trade_id') and trade_data.get('trade_id') % 100 == 0:
-                print(f'[EMIT TRADE] {trade_data["symbol"]}: ${trade_data["price"]}')
+            # if trade_data.get('trade_id') and trade_data.get('trade_id') % 100 == 0:
+            #     print(f'[EMIT TRADE] {trade_data["symbol"]}: ${trade_data["price"]}')
 
         except eventlet.queue.Empty:
             # No trade data available, continue loop
