@@ -32,8 +32,9 @@ desktop.ini
 instance/
 .webassets-cache
 
-# Data files (optional - uncomment if you don't want to track data)
-# backend/data/*.json
+# Data files - runtime cache and live market data
+backend/data/tick_bars/*.json
+backend/data/ord-volume/*.json
 
 # Backup files
 backend/backup*.py
