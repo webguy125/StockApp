@@ -37,10 +37,10 @@ export class ORDVolumeAnalysis {
       throw new Error('Draw mode requires at least 3 trendlines (Initial, Correction, Retest)');
     }
 
-    // If more than 7 lines, use only the first 7
-    if (waveLines.length > 7) {
-      console.warn(`[ORD Volume] ${waveLines.length} lines drawn, using first 7 only`);
-      waveLines = waveLines.slice(0, 7);
+    // If more than 100 lines, use only the first 100
+    if (waveLines.length > 100) {
+      console.warn(`[ORD Volume] ${waveLines.length} lines drawn, using first 100 only`);
+      waveLines = waveLines.slice(0, 100);
     }
 
     // Validate each line
@@ -57,6 +57,9 @@ export class ORDVolumeAnalysis {
     // Calculate volume for each wave
     this.waveData = this._calculateWaveVolumes(waveLines);
 
+    // Apply Elliott Wave labeling
+    this._applyElliottWaveLabeling(this.waveData);
+
     // Classify retest strength (compare 3rd wave to 1st wave)
     if (this.waveData.length >= 3) {
       this._classifyRetestStrength(this.waveData[0].avgVolume, this.waveData[2].avgVolume);
@@ -69,12 +72,12 @@ export class ORDVolumeAnalysis {
   /**
    * Analyze in Auto Mode
    * Automatically detect trendlines using price structure
-   * @param {Number} lineCount - Number of lines to generate (3-7)
+   * @param {Number} lineCount - Number of lines to generate (3-100)
    * @returns {Object} Analysis results with overlays
    */
   analyzeAutoMode(lineCount = 3) {
-    if (!Number.isInteger(lineCount) || lineCount < 3 || lineCount > 7) {
-      throw new Error('lineCount must be an integer between 3 and 7');
+    if (!Number.isInteger(lineCount) || lineCount < 3 || lineCount > 100) {
+      throw new Error('lineCount must be an integer between 3 and 100');
     }
 
     this.mode = 'auto';
@@ -91,6 +94,9 @@ export class ORDVolumeAnalysis {
 
     // Calculate volume for each wave
     this.waveData = this._calculateWaveVolumes(this.waveLines);
+
+    // Apply Elliott Wave labeling
+    this._applyElliottWaveLabeling(this.waveData);
 
     // Classify retest strength
     if (this.waveData.length >= 3) {
@@ -318,13 +324,11 @@ export class ORDVolumeAnalysis {
 
       const avgVolume = candleCount > 0 ? totalVolume / candleCount : 0;
 
-      // Determine wave label
-      const labels = ['Initial', 'Correction', 'Retest', 'Wave 4', 'Wave 5', 'Wave 6', 'Wave 7'];
-      const label = labels[i] || `Wave ${i + 1}`;
-
       waveData.push({
         index: i,
-        label: label,
+        label: null, // Will be assigned by Elliott Wave labeling
+        elliottLabel: null, // Elliott Wave notation (1-5, A-C)
+        isImpulse: null, // true for 1-5, false for A-C
         line: line,
         startIdx: startIdx,
         endIdx: endIdx,
@@ -365,6 +369,103 @@ export class ORDVolumeAnalysis {
   }
 
   /**
+   * Apply Elliott Wave labeling to wave data
+   * Finds valid Wave 1 patterns and labels complete 8-wave cycles
+   * Waves between cycles are left as neutral (unlabeled)
+   * @private
+   * @param {Array} waveData - Array of wave objects with price/volume data
+   */
+  _applyElliottWaveLabeling(waveData) {
+    if (waveData.length < 3) return; // Need at least 3 waves
+
+    const impulseLabels = ['1', '2', '3', '4', '5'];
+    const correctiveLabels = ['A', 'B', 'C'];
+
+    let i = 0;
+
+    while (i < waveData.length) {
+      // Find next valid Wave 1 starting from current position
+      let wave1Index = this._findFirstWave1FromIndex(waveData, i);
+
+      if (wave1Index === -1) {
+        // No more Wave 1 patterns found, rest are neutral
+        console.log(`[Elliott Wave] No more Wave 1 patterns found after index ${i}`);
+        break;
+      }
+
+      console.log(`[Elliott Wave] Found Wave 1 at index ${wave1Index}`);
+
+      // Label this complete 8-wave cycle (1-5, A-C)
+      for (let cyclePos = 0; cyclePos < 8 && (wave1Index + cyclePos) < waveData.length; cyclePos++) {
+        const wave = waveData[wave1Index + cyclePos];
+
+        if (cyclePos < 5) {
+          // Impulse waves (1-5)
+          wave.elliottLabel = impulseLabels[cyclePos];
+          wave.label = impulseLabels[cyclePos];
+          wave.isImpulse = true;
+        } else {
+          // Corrective waves (A-C)
+          wave.elliottLabel = correctiveLabels[cyclePos - 5];
+          wave.label = correctiveLabels[cyclePos - 5];
+          wave.isImpulse = false;
+        }
+      }
+
+      // Move past this cycle and look for next Wave 1
+      // Start searching after Wave C (8 waves from current Wave 1)
+      i = wave1Index + 8;
+    }
+
+    console.log('[Elliott Wave] Labeling complete. Unlabeled waves are neutral.');
+  }
+
+  /**
+   * Find the first valid Wave 1 in the wave data starting from a given index
+   * Wave 1 criteria: First significant impulse after a corrective low with higher high + higher low
+   * @private
+   * @param {Array} waveData - Array of wave objects
+   * @param {Number} startIndex - Index to start searching from
+   * @returns {Number} Index of first Wave 1, or -1 if not found
+   */
+  _findFirstWave1FromIndex(waveData, startIndex = 0) {
+    // Look for first upward impulse that creates a higher high
+    for (let i = Math.max(1, startIndex); i < waveData.length - 1; i++) {
+      const prevWave = waveData[i - 1];
+      const currentWave = waveData[i];
+      const nextWave = waveData[i + 1];
+
+      const [px1, py1, px2, py2] = prevWave.line;
+      const [cx1, cy1, cx2, cy2] = currentWave.line;
+      const [nx1, ny1, nx2, ny2] = nextWave.line;
+
+      // Check if current wave is an upward impulse (higher high than previous)
+      const isUpward = cy2 > cy1;
+      const higherHigh = cy2 > py2;
+
+      // Check if next wave (Wave 2) retraces but doesn't go below Wave 1 start
+      const wave2Retraces = ny2 < cy2;
+      const wave2DoesntExceed100Percent = ny2 > cy1;
+
+      if (isUpward && higherHigh && wave2Retraces && wave2DoesntExceed100Percent) {
+        console.log(`[Elliott Wave] Found potential Wave 1 at index ${i}`);
+        return i;
+      }
+    }
+
+    // If no perfect Wave 1 found, start at first upward wave
+    for (let i = 0; i < waveData.length; i++) {
+      const [x1, y1, x2, y2] = waveData[i].line;
+      if (y2 > y1) {
+        console.log(`[Elliott Wave] Using first upward wave at index ${i} as Wave 1`);
+        return i;
+      }
+    }
+
+    return -1; // No valid Wave 1 found
+  }
+
+  /**
    * Generate overlay data for chart rendering
    * @private
    * @returns {Object} Complete overlay data
@@ -373,64 +474,163 @@ export class ORDVolumeAnalysis {
     const trendlines = [];
     const labels = [];
 
+    // Elliott Wave color palette
+    const impulseColor = '#FFD700';  // Gold for impulse waves (1-5)
+    const correctiveColor = '#87CEEB'; // Sky blue for corrective waves (A-C)
+
     // Generate trendlines with labels
     for (let i = 0; i < this.waveData.length; i++) {
       const wave = this.waveData[i];
       const [x1, y1, x2, y2] = wave.line;
 
-      // Trendline object
+      // Get color based on Elliott Wave type (impulse vs corrective)
+      // If no label (before Wave 1), use gray
+      let waveColor = '#888888'; // Default gray for unlabeled waves
+      if (wave.isImpulse === true) {
+        waveColor = impulseColor; // Gold for 1-5
+      } else if (wave.isImpulse === false) {
+        waveColor = correctiveColor; // Blue for A-C
+      }
+
+      // Trendline object with enhanced styling
       trendlines.push({
         x1: x1,
         y1: y1,
         x2: x2,
         y2: y2,
         label: wave.label,
-        color: '#2196f3', // Blue line
-        lineWidth: 2
+        color: waveColor,
+        lineWidth: 3, // Thicker professional line
+        shadowColor: 'rgba(0, 0, 0, 0.3)',
+        shadowBlur: 2
       });
 
-      // Calculate label position (above/below midpoint with offset)
+      // Simple, intuitive label positioning
+      // Position at center of line, check local candles, place above or below with minimal offset
       const midX = (x1 + x2) / 2;
       const midY = (y1 + y2) / 2;
+      const midIdx = Math.floor(midX);
 
-      // Offset based on price range to avoid overlap
-      const priceRange = Math.abs(y2 - y1);
-      const offset = priceRange * 0.1; // 10% offset
-      const labelY = y1 < y2 ? midY + offset : midY - offset;
+      // Check small local area (3 candles around center)
+      let maxHighLocal = -Infinity;
+      let minLowLocal = Infinity;
 
-      // Volume label
+      for (let offset = -1; offset <= 1; offset++) {
+        const idx = midIdx + offset;
+        if (idx >= 0 && idx < this.candles.length && this.candles[idx]) {
+          maxHighLocal = Math.max(maxHighLocal, this.candles[idx].high);
+          minLowLocal = Math.min(minLowLocal, this.candles[idx].low);
+        }
+      }
+
+      let labelY = midY;
+      if (maxHighLocal !== -Infinity && minLowLocal !== Infinity) {
+        // Simple decision: which side has more space?
+        const spaceAbove = Math.abs(midY - maxHighLocal);
+        const spaceBelow = Math.abs(midY - minLowLocal);
+
+        // Use small, consistent offset to stay close to line
+        const localRange = maxHighLocal - minLowLocal;
+        const smallOffset = localRange * 0.25; // Just 25% to stay close
+
+        // Position on the side with more space
+        if (spaceAbove > spaceBelow) {
+          labelY = maxHighLocal - smallOffset;
+        } else {
+          labelY = minLowLocal + smallOffset;
+        }
+      }
+
+      const bestX = midX;
+      const bestY = labelY;
+
+      // Volume label with rotation matching the line angle (no background)
+      // Positioned at center, avoiding candles
       labels.push({
-        x: midX,
-        y: labelY,
-        text: `AvgVol${wave.label}: ${this._formatVolume(wave.avgVolume)}`,
-        color: '#ffffff',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        fontSize: 12,
-        draggable: true
-      });
-    }
-
-    // Add retest strength label (positioned at retest wave if available)
-    if (this.retestStrength && this.waveData.length >= 3) {
-      const retestWave = this.waveData[2];
-      const [x1, y1, x2, y2] = retestWave.line;
-      const midX = (x1 + x2) / 2;
-      const midY = (y1 + y2) / 2;
-      const priceRange = Math.abs(y2 - y1);
-      const offset = priceRange * 0.2; // Larger offset for strength label
-      const labelY = y1 < y2 ? midY + offset : midY - offset;
-
-      labels.push({
-        x: midX,
-        y: labelY,
-        text: `RetestStrength: ${this.retestStrength}`,
-        color: this._getColorHex(this.retestColor),
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        fontSize: 14,
+        x: bestX,
+        y: bestY,
+        lineX1: x1, // Store line endpoints for angle calculation
+        lineY1: y1,
+        lineX2: x2,
+        lineY2: y2,
+        text: `${this._formatVolume(wave.avgVolume)}`,
+        color: waveColor, // Use wave color for text
+        fontSize: 13,
         fontWeight: 'bold',
-        draggable: true
+        draggable: true,
+        isVolumeLabel: true, // Marker for click detection
+        waveIndex: i // Track which wave this label belongs to
       });
     }
+
+    // Add percentage comparison labels and wave labels at the END of each wave
+    // At the connection point where a wave ends
+    for (let i = 1; i < this.waveData.length; i++) {
+      const endingWave = this.waveData[i]; // This wave is ENDING at this connection point
+      const waveBeforeEnding = this.waveData[i - 1]; // Wave before the ending wave
+
+      // The connection point is where the ending wave ends
+      // Ending wave: [ex1, ey1, ex2, ey2]
+      // Connection point is at (ex2, ey2)
+      const [ex1, ey1, ex2, ey2] = endingWave.line;
+
+      // Calculate percentage difference (ending wave compared to wave before it)
+      const percentage = ((endingWave.avgVolume / waveBeforeEnding.avgVolume) * 100).toFixed(1);
+
+      // Determine color based on strength classification
+      let strengthColor;
+      const ratio = endingWave.avgVolume / waveBeforeEnding.avgVolume;
+      if (ratio >= 1.10) {
+        strengthColor = this._getColorHex('green'); // Strong
+      } else if (ratio >= 0.92) {
+        strengthColor = this._getColorHex('yellow'); // Neutral
+      } else {
+        strengthColor = this._getColorHex('red'); // Weak
+      }
+
+      // Determine direction of the ending wave
+      // If ending wave is going UP (ey2 > ey1), put label ABOVE
+      // If ending wave is going DOWN (ey2 < ey1), put label BELOW
+      const isEndingWaveUp = ey2 > ey1;
+
+      // Use fixed pixel offset (calculated from 35 lines baseline)
+      // Store connection point and direction info - bridge will apply pixel offset
+      // Percentage label at outer position (30 pixels from connection point)
+      labels.push({
+        x: ex2, // X position at the END of the ending wave
+        y: ey2, // Y position at END of ending wave (bridge will apply pixel offset)
+        text: `${percentage}%`,
+        color: strengthColor, // Color-coded based on strength
+        fontSize: 10, // Smaller text
+        fontWeight: 'bold',
+        angle: 0, // Horizontal
+        draggable: true,
+        isPercentageLabel: true, // Marker for custom comparison override
+        waveIndex: i, // Track which wave this label belongs to
+        isUpward: isEndingWaveUp, // Direction for pixel offset
+        pixelOffset: 30 // Fixed pixel offset from connection point
+      });
+
+      // Elliott Wave label for the ENDING wave (between percentage and pivot point)
+      if (endingWave.label) {
+        labels.push({
+          x: ex2,
+          y: ey2, // Y position at END of ending wave (bridge will apply pixel offset)
+          text: endingWave.label, // "1", "2", "3", "4", "5", "A", "B", "C"
+          color: '#FFFFFF', // White for visibility
+          fontSize: 14,
+          fontWeight: 'bold',
+          angle: 0,
+          draggable: true,
+          isWaveLabel: true, // Marker for wave labels
+          isUpward: isEndingWaveUp, // Direction for pixel offset
+          pixelOffset: 15 // Halfway between connection and percentage label
+        });
+      }
+    }
+
+    // Generate trade signals based on ORD Volume patterns
+    const tradeSignals = this._generateTradeSignals();
 
     // Return complete analysis result
     return {
@@ -440,8 +640,78 @@ export class ORDVolumeAnalysis {
       strength: this.retestStrength,
       color: this.retestColor,
       waveData: this.waveData,
-      lines: this.waveLines // For persistence in draw mode
+      lines: this.waveLines, // For persistence in draw mode
+      tradeSignals: tradeSignals // Trade signal overlays
     };
+  }
+
+  /**
+   * Generate trade signals based on ORD Volume analysis
+   * BUY: After Wave C (corrective) with strong volume (≥110%)
+   * SELL: After Wave 5 (impulse) with weak volume (<92%)
+   * @private
+   * @returns {Array} Array of trade signal objects
+   */
+  _generateTradeSignals() {
+    const signals = [];
+
+    for (let i = 1; i < this.waveData.length; i++) {
+      const wave = this.waveData[i];
+      const previousWave = this.waveData[i - 1];
+
+      // Calculate volume ratio
+      const ratio = wave.avgVolume / previousWave.avgVolume;
+
+      const [x1, y1, x2, y2] = wave.line;
+      const isUpward = y2 > y1;
+
+      // BUY Signal: Wave C (corrective) with strong volume going UP
+      if (wave.label === 'C' && ratio >= 1.10 && isUpward) {
+        signals.push({
+          type: 'BUY',
+          x: x2,
+          y: y2,
+          waveLabel: wave.label,
+          strength: ratio
+        });
+      }
+
+      // SELL Signal: Wave 5 (impulse peak) with weak volume or any downward wave with weak volume after Wave 5
+      if (wave.label === '5' && !isUpward) {
+        signals.push({
+          type: 'SELL',
+          x: x2,
+          y: y2,
+          waveLabel: wave.label,
+          strength: ratio
+        });
+      }
+
+      // Additional BUY: Strong upward wave after correction
+      if (wave.isImpulse === true && wave.label === '1' && ratio >= 1.10 && isUpward) {
+        signals.push({
+          type: 'BUY',
+          x: x2,
+          y: y2,
+          waveLabel: wave.label,
+          strength: ratio
+        });
+      }
+
+      // Additional SELL: Weak downward wave after impulse
+      if (wave.isImpulse === false && wave.label === 'A' && ratio < 0.92 && !isUpward) {
+        signals.push({
+          type: 'SELL',
+          x: x2,
+          y: y2,
+          waveLabel: wave.label,
+          strength: ratio
+        });
+      }
+    }
+
+    console.log(`[ORD Volume] Generated ${signals.length} trade signals`);
+    return signals;
   }
 
   /**
@@ -470,9 +740,9 @@ export class ORDVolumeAnalysis {
    */
   _getColorHex(colorName) {
     const colorMap = {
-      'green': '#00c853',
-      'yellow': '#ffd600',
-      'red': '#ff1744'
+      'green': '#10B981',  // Professional emerald green
+      'yellow': '#F59E0B', // Professional amber
+      'red': '#EF4444'     // Professional red
     };
     return colorMap[colorName] || '#ffffff';
   }

@@ -222,12 +222,14 @@ export class ORDVolumeRenderer {
         x2: x2,
         y2: y2,
         label: `Line ${i + 1}`,
-        color: '#00c853', // Green for completed lines
-        lineWidth: 3
+        color: '#10B981', // Professional emerald green for completed lines
+        lineWidth: 3,
+        shadowColor: 'rgba(0, 0, 0, 0.3)',
+        shadowBlur: 2
       };
     });
 
-    // Add current line being drawn (yellow dashed)
+    // Add current line being drawn (amber dashed)
     if (includeCurrentLine && this.currentLine) {
       const [x1, y1, x2, y2] = this.currentLine;
       trendlines.push({
@@ -236,9 +238,9 @@ export class ORDVolumeRenderer {
         x2: x2,
         y2: y2,
         label: 'Drawing...',
-        color: '#ffd600', // Yellow for current line
+        color: '#F59E0B', // Professional amber for current line
         lineWidth: 2,
-        dash: [5, 5] // Dashed line
+        dash: [8, 4] // Dashed line with longer segments
       });
     }
 
@@ -446,9 +448,10 @@ export class ORDVolumeRenderer {
     const sx2 = this._chartToScreenX(x2);
     const sy2 = this._chartToScreenY(y2);
 
-    this.ctx.strokeStyle = '#ffd600'; // Yellow for current line
+    this.ctx.strokeStyle = '#F59E0B'; // Professional amber for current line
     this.ctx.lineWidth = 2;
-    this.ctx.setLineDash([5, 5]); // Dashed line
+    this.ctx.lineCap = 'round';
+    this.ctx.setLineDash([8, 4]); // Dashed line with longer segments
     this.ctx.beginPath();
     this.ctx.moveTo(sx1, sy1);
     this.ctx.lineTo(sx2, sy2);
@@ -473,8 +476,14 @@ export class ORDVolumeRenderer {
       const sx2 = this._chartToScreenX(x2);
       const sy2 = this._chartToScreenY(y2);
 
-      this.ctx.strokeStyle = '#00c853'; // Green for drawn lines
-      this.ctx.lineWidth = 2;
+      // Professional emerald green with subtle shadow
+      this.ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      this.ctx.shadowBlur = 2;
+      this.ctx.shadowOffsetY = 1;
+      this.ctx.strokeStyle = '#10B981'; // Professional emerald green
+      this.ctx.lineWidth = 3;
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
       this.ctx.beginPath();
       this.ctx.moveTo(sx1, sy1);
       this.ctx.lineTo(sx2, sy2);

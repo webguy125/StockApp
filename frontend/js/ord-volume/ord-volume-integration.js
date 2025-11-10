@@ -61,6 +61,43 @@ export function initializeORDVolume() {
     ordVolumeController.open(candles, symbol, ordVolumeRenderer);
   });
 
+  // Auto-load saved ORD Volume data when chart symbol changes
+  async function autoLoadORDVolume() {
+    const symbol = extractCurrentSymbol();
+    if (!symbol) return;
+
+    console.log(`[ORD Volume] Auto-loading for symbol: ${symbol}`);
+    const analysis = await ordVolumeController.loadAnalysis(symbol);
+
+    if (analysis && window.ordVolumeBridge) {
+      console.log('[ORD Volume] Loaded saved analysis, displaying on chart');
+      window.ordVolumeBridge.setAnalysis(analysis);
+
+      // Trigger chart redraw
+      const canvas = extractChartCanvas();
+      if (canvas) {
+        requestAnimationFrame(() => {
+          if (window.tosApp && window.tosApp.activeChartType) {
+            if (window.tosApp.activeChartType === 'timeframe') {
+              const currentTimeframe = window.tosApp.timeframeRegistry?.get(window.tosApp.currentTimeframeId);
+              if (currentTimeframe && currentTimeframe.renderer && currentTimeframe.renderer.draw) {
+                currentTimeframe.renderer.draw();
+              }
+            } else if (window.tosApp.activeChartType === 'tick') {
+              const currentTickChart = window.tosApp.tickChartRegistry?.get(window.tosApp.currentTickChartId);
+              if (currentTickChart && currentTickChart.renderer && currentTickChart.renderer.draw) {
+                currentTickChart.renderer.draw();
+              }
+            }
+          }
+        });
+      }
+    }
+  }
+
+  // Expose auto-load function globally for chart integrations
+  window.autoLoadORDVolume = autoLoadORDVolume;
+
   console.log('[ORD Volume] Initialization complete');
 }
 

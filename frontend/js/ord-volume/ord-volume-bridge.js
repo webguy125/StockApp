@@ -13,6 +13,9 @@ export class ORDVolumeBridge {
     this.chartRenderer = null;
     this._hasLoggedDrawing = false;
     this.ordVolumeRenderer = null; // Reference to ORD Volume renderer for draw mode
+    this.selectedWaves = []; // Track selected waves for custom comparison
+    this.customComparison = null; // Store custom comparison data
+    this.showTradeSignals = true; // Toggle for trade signal visibility
   }
 
   /**
@@ -79,6 +82,11 @@ export class ORDVolumeBridge {
 
     // Draw labels
     this._drawLabels(ctx, chartState);
+
+    // Draw trade signals (if enabled)
+    if (this.showTradeSignals) {
+      this._drawTradeSignals(ctx, chartState);
+    }
   }
 
   /**
@@ -94,7 +102,7 @@ export class ORDVolumeBridge {
 
     ctx.save();
 
-    // Draw completed lines
+    // Draw completed lines with professional styling
     for (let i = 0; i < drawingState.drawnLines.length; i++) {
       const line = drawingState.drawnLines[i];
       const [x1, y1, x2, y2] = line;
@@ -108,12 +116,22 @@ export class ORDVolumeBridge {
 
       console.log(`[ORD Bridge] Line ${i} screen:`, {sx1, sy1, sx2, sy2});
 
-      ctx.strokeStyle = '#00c853'; // Green for completed lines
+      // Professional green with subtle shadow
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = 2;
+      ctx.shadowOffsetY = 1;
+      ctx.strokeStyle = '#10B981'; // Emerald green for completed lines
       ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
       ctx.moveTo(sx1, sy1);
       ctx.lineTo(sx2, sy2);
       ctx.stroke();
+
+      // Reset shadow
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
 
       console.log(`[ORD Bridge] ✅ Line ${i} drawn`);
     }
@@ -128,9 +146,11 @@ export class ORDVolumeBridge {
 
       console.log('[ORD Bridge] Current line:', {x1, y1, x2, y2}, '→', {sx1, sy1, sx2, sy2});
 
-      ctx.strokeStyle = '#ffd600'; // Yellow for current line
+      // Professional amber for current drawing
+      ctx.strokeStyle = '#F59E0B'; // Amber for current line
       ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]); // Dashed
+      ctx.lineCap = 'round';
+      ctx.setLineDash([8, 4]); // Dashed with longer segments
       ctx.beginPath();
       ctx.moveTo(sx1, sy1);
       ctx.lineTo(sx2, sy2);
@@ -176,9 +196,19 @@ export class ORDVolumeBridge {
         continue;
       }
 
+      // Add shadow for depth
+      if (line.shadowColor && line.shadowBlur) {
+        ctx.shadowColor = line.shadowColor;
+        ctx.shadowBlur = line.shadowBlur;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 1;
+      }
+
       // Draw line with specified color and style
-      ctx.strokeStyle = line.color || '#00FF00';
-      ctx.lineWidth = line.lineWidth || 4;
+      ctx.strokeStyle = line.color || '#3B82F6';
+      ctx.lineWidth = line.lineWidth || 3;
+      ctx.lineCap = 'round'; // Smooth line ends
+      ctx.lineJoin = 'round'; // Smooth line joins
 
       // Set dash pattern if specified
       if (line.dash) {
@@ -190,25 +220,16 @@ export class ORDVolumeBridge {
       ctx.lineTo(x2, y2);
       ctx.stroke();
 
-      // Reset dash
+      // Reset dash and shadow
       if (line.dash) {
         ctx.setLineDash([]);
       }
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
 
       if (shouldLog) {
         console.log(`[ORD Bridge] ✅ Line drawn successfully`);
-      }
-
-      // Draw label near line start
-      if (line.label) {
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 12px Arial';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        ctx.shadowBlur = 4;
-        const textX = x1 + 5;
-        const textY = y1 - 5;
-        ctx.fillText(line.label, textX, textY);
-        ctx.shadowBlur = 0;
       }
     }
 
@@ -229,47 +250,222 @@ export class ORDVolumeBridge {
 
     ctx.save();
 
-    for (const label of this.currentAnalysis.labels) {
+    for (let i = 0; i < this.currentAnalysis.labels.length; i++) {
+      const label = this.currentAnalysis.labels[i];
+
       // Convert to screen coordinates
-      const x = this._indexToX(label.x, chartState);
-      const y = this._priceToY(label.y, chartState);
+      let x = this._indexToX(label.x, chartState);
+      let y = this._priceToY(label.y, chartState);
+
+      // Apply fixed pixel offset for percentage and wave labels
+      if (label.pixelOffset !== undefined && label.isUpward !== undefined) {
+        // Apply pixel offset in screen space (up = negative Y, down = positive Y)
+        if (label.isUpward) {
+          y -= label.pixelOffset; // Move up (above the connection point)
+        } else {
+          y += label.pixelOffset; // Move down (below the connection point)
+        }
+      }
 
       // Skip if off-screen
       if (x < 0 || x > ctx.canvas.width || y < 0 || y > ctx.canvas.height) {
         continue;
       }
 
+      // Check if this is a percentage label and we should override with custom comparison
+      let labelText = label.text;
+      let labelColor = label.color || '#FFFFFF';
+
+      if (label.isPercentageLabel && this.customComparison) {
+        // Check if this label should show the custom comparison
+        if (label.waveIndex === this.customComparison.wave2Index) {
+          labelText = `${this.customComparison.percentage}%`;
+          labelColor = this.customComparison.color;
+        }
+      }
+
       // Set font
       const fontWeight = label.fontWeight || 'normal';
       const fontSize = label.fontSize || 12;
-      ctx.font = `${fontWeight} ${fontSize}px Arial`;
+      ctx.font = `${fontWeight} ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
 
-      // Measure text
-      const metrics = ctx.measureText(label.text);
-      const textWidth = metrics.width;
-      const textHeight = fontSize;
+      // Calculate angle from line endpoints in screen coordinates
+      let angle = 0;
+      if (label.lineX1 !== undefined && label.lineY1 !== undefined &&
+          label.lineX2 !== undefined && label.lineY2 !== undefined) {
+        // Convert line endpoints to screen coordinates
+        const sx1 = this._indexToX(label.lineX1, chartState);
+        const sy1 = this._priceToY(label.lineY1, chartState);
+        const sx2 = this._indexToX(label.lineX2, chartState);
+        const sy2 = this._priceToY(label.lineY2, chartState);
 
-      // Draw background
-      const padding = 6;
-      const bgX = x - padding;
-      const bgY = y - textHeight - padding;
-      const bgWidth = textWidth + padding * 2;
-      const bgHeight = textHeight + padding * 2;
+        // Calculate angle in screen space
+        angle = Math.atan2(sy2 - sy1, sx2 - sx1);
 
-      ctx.fillStyle = label.backgroundColor || 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+        // Keep text readable (left-to-right)
+        if (angle > Math.PI / 2) {
+          angle -= Math.PI;
+        } else if (angle < -Math.PI / 2) {
+          angle += Math.PI;
+        }
+      }
 
-      // Draw border
-      ctx.strokeStyle = label.color || '#ffffff';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(bgX, bgY, bgWidth, bgHeight);
+      // Save context for rotation
+      ctx.save();
 
-      // Draw text
-      ctx.fillStyle = label.color || '#ffffff';
-      ctx.fillText(label.text, x, y);
+      // Translate to label position and rotate
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+
+      // Draw text with shadow for readability (rotated to match line)
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+      ctx.shadowBlur = 3;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 1;
+      ctx.fillStyle = labelColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(labelText, 0, 0);
+
+      // Restore rotation context
+      ctx.restore();
     }
 
     ctx.restore();
+  }
+
+  /**
+   * Draw trade signals (BUY/SELL indicators)
+   * @private
+   */
+  _drawTradeSignals(ctx, chartState) {
+    if (!this.currentAnalysis.tradeSignals) return;
+
+    ctx.save();
+
+    for (const signal of this.currentAnalysis.tradeSignals) {
+      // Convert to screen coordinates
+      const x = this._indexToX(signal.x, chartState);
+      const y = this._priceToY(signal.y, chartState);
+
+      // Skip if off-screen
+      if (x < 0 || x > ctx.canvas.width || y < 0 || y > ctx.canvas.height) {
+        continue;
+      }
+
+      // Draw arrow and label
+      if (signal.type === 'BUY') {
+        // BUY signal - green arrow pointing up
+        this._drawBuySignal(ctx, x, y);
+      } else if (signal.type === 'SELL') {
+        // SELL signal - red arrow pointing down
+        this._drawSellSignal(ctx, x, y);
+      }
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * Draw BUY signal arrow
+   * @private
+   */
+  _drawBuySignal(ctx, x, y) {
+    const arrowSize = 20;
+    const yOffset = 40; // Position below the point
+
+    ctx.save();
+
+    // Draw upward arrow
+    ctx.beginPath();
+    ctx.moveTo(x, y + yOffset); // Arrow tip
+    ctx.lineTo(x - arrowSize / 2, y + yOffset + arrowSize); // Left point
+    ctx.lineTo(x - arrowSize / 4, y + yOffset + arrowSize); // Left of shaft
+    ctx.lineTo(x - arrowSize / 4, y + yOffset + arrowSize * 1.5); // Shaft left
+    ctx.lineTo(x + arrowSize / 4, y + yOffset + arrowSize * 1.5); // Shaft right
+    ctx.lineTo(x + arrowSize / 4, y + yOffset + arrowSize); // Right of shaft
+    ctx.lineTo(x + arrowSize / 2, y + yOffset + arrowSize); // Right point
+    ctx.closePath();
+
+    // Fill with green
+    ctx.fillStyle = '#00FF00';
+    ctx.fill();
+
+    // Outline
+    ctx.strokeStyle = '#008800';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Add "BUY" text
+    ctx.font = 'bold 12px Arial';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 3;
+    ctx.fillText('BUY', x, y + yOffset + arrowSize * 1.5 + 5);
+
+    ctx.restore();
+  }
+
+  /**
+   * Draw SELL signal arrow
+   * @private
+   */
+  _drawSellSignal(ctx, x, y) {
+    const arrowSize = 20;
+    const yOffset = -40; // Position above the point
+
+    ctx.save();
+
+    // Draw downward arrow
+    ctx.beginPath();
+    ctx.moveTo(x, y + yOffset); // Arrow tip
+    ctx.lineTo(x - arrowSize / 2, y + yOffset - arrowSize); // Left point
+    ctx.lineTo(x - arrowSize / 4, y + yOffset - arrowSize); // Left of shaft
+    ctx.lineTo(x - arrowSize / 4, y + yOffset - arrowSize * 1.5); // Shaft left
+    ctx.lineTo(x + arrowSize / 4, y + yOffset - arrowSize * 1.5); // Shaft right
+    ctx.lineTo(x + arrowSize / 4, y + yOffset - arrowSize); // Right of shaft
+    ctx.lineTo(x + arrowSize / 2, y + yOffset - arrowSize); // Right point
+    ctx.closePath();
+
+    // Fill with red
+    ctx.fillStyle = '#FF0000';
+    ctx.fill();
+
+    // Outline
+    ctx.strokeStyle = '#880000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Add "SELL" text
+    ctx.font = 'bold 12px Arial';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 3;
+    ctx.fillText('SELL', x, y + yOffset - arrowSize * 1.5 - 5);
+
+    ctx.restore();
+  }
+
+  /**
+   * Draw rounded rectangle path
+   * @private
+   */
+  _roundRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
   }
 
   /**
@@ -340,6 +536,112 @@ export class ORDVolumeBridge {
     }
 
     return false;
+  }
+
+  /**
+   * Handle clicks on percentage labels for custom wave comparison
+   * @param {MouseEvent} event - Click event
+   * @param {Object} chartState - Chart state with coordinate conversion functions
+   */
+  handleClick(event, chartState) {
+    if (!this.currentAnalysis || !this.currentAnalysis.waveData) {
+      return;
+    }
+
+    const canvas = event.target;
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    // Check if click is on any volume label (on the trendlines)
+    let clickedWaveIndex = null;
+
+    // Search through all labels to find volume labels
+    if (this.currentAnalysis.labels) {
+      for (const label of this.currentAnalysis.labels) {
+        if (!label.isVolumeLabel) continue;
+
+        // Convert label position to screen coordinates
+        const screenX = this._indexToX(label.x, chartState);
+        const screenY = this._priceToY(label.y, chartState);
+
+        // Check if click is near this volume label (within 40 pixels for easier clicking)
+        const distance = Math.sqrt(Math.pow(clickX - screenX, 2) + Math.pow(clickY - screenY, 2));
+
+        if (distance < 40) {
+          clickedWaveIndex = label.waveIndex;
+          break;
+        }
+      }
+    }
+
+    if (clickedWaveIndex !== null) {
+      // Add to selected waves
+      this.selectedWaves.push(clickedWaveIndex);
+
+      if (this.selectedWaves.length === 2) {
+        // Calculate comparison between the two selected waves
+        const wave1 = this.currentAnalysis.waveData[this.selectedWaves[0]];
+        const wave2 = this.currentAnalysis.waveData[this.selectedWaves[1]];
+
+        const percentage = ((wave2.avgVolume / wave1.avgVolume) * 100).toFixed(1);
+        const ratio = wave2.avgVolume / wave1.avgVolume;
+
+        let strengthColor;
+        if (ratio >= 1.10) strengthColor = '#00FF00';
+        else if (ratio >= 0.92) strengthColor = '#FFFF00';
+        else strengthColor = '#FF0000';
+
+        this.customComparison = {
+          wave1Index: this.selectedWaves[0],
+          wave2Index: this.selectedWaves[1],
+          percentage: percentage,
+          color: strengthColor
+        };
+
+        console.log(`[ORD Bridge] Custom comparison: Wave ${this.selectedWaves[0]} to Wave ${this.selectedWaves[1]} = ${percentage}%`);
+
+        // Reset selection for next comparison
+        this.selectedWaves = [];
+
+        // Trigger redraw
+        if (window.tosApp && window.tosApp.activeChartType) {
+          if (window.tosApp.activeChartType === 'timeframe') {
+            const currentTimeframe = window.tosApp.timeframeRegistry?.get(window.tosApp.currentTimeframeId);
+            if (currentTimeframe && currentTimeframe.renderer && currentTimeframe.renderer.draw) {
+              currentTimeframe.renderer.draw();
+            }
+          } else if (window.tosApp.activeChartType === 'tick') {
+            const currentTickChart = window.tosApp.tickChartRegistry?.get(window.tosApp.currentTickChartId);
+            if (currentTickChart && currentTickChart.renderer && currentTickChart.renderer.draw) {
+              currentTickChart.renderer.draw();
+            }
+          }
+        }
+      }
+    } else {
+      // Click anywhere else - reset to default
+      if (this.customComparison !== null) {
+        console.log('[ORD Bridge] Resetting to default comparison');
+        this.customComparison = null;
+        this.selectedWaves = [];
+
+        // Trigger redraw
+        if (window.tosApp && window.tosApp.activeChartType) {
+          if (window.tosApp.activeChartType === 'timeframe') {
+            const currentTimeframe = window.tosApp.timeframeRegistry?.get(window.tosApp.currentTimeframeId);
+            if (currentTimeframe && currentTimeframe.renderer && currentTimeframe.renderer.draw) {
+              currentTimeframe.renderer.draw();
+            }
+          } else if (window.tosApp.activeChartType === 'tick') {
+            const currentTickChart = window.tosApp.tickChartRegistry?.get(window.tosApp.currentTickChartId);
+            if (currentTickChart && currentTickChart.renderer && currentTickChart.renderer.draw) {
+              currentTickChart.renderer.draw();
+            }
+          }
+        }
+      }
+    }
   }
 }
 

@@ -1355,6 +1355,13 @@ export class CanvasRenderer {
     this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
     this.canvas.addEventListener('wheel', (e) => this.onWheel(e));
 
+    // ORD Volume custom comparison click handler
+    this.canvas.addEventListener('click', (e) => {
+      if (window.ordVolumeBridge && window.ordVolumeBridge.isActiveAnalysis()) {
+        window.ordVolumeBridge.handleClick(e, this);
+      }
+    });
+
     // Listen for drawing tool actions from tool panel
     this.canvas.addEventListener('tool-action', (e) => this.onToolAction(e));
 

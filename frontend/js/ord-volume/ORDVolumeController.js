@@ -59,8 +59,19 @@ export class ORDVolumeController {
 
             <!-- Line Count (visible in Auto mode) -->
             <div id="ord-line-count-group" class="ord-volume-setting" style="display: none;">
-              <label for="ord-line-count">Number of Trendlines (3-7):</label>
-              <input type="number" id="ord-line-count" min="3" max="7" value="3" />
+              <label for="ord-line-count">Number of Trendlines (3-100):</label>
+              <input type="number" id="ord-line-count" min="3" max="100" value="3" />
+            </div>
+
+            <!-- Properties Section -->
+            <div class="ord-volume-properties">
+              <h4 style="margin: 15px 0 10px 0; font-size: 14px; color: #888;">Display Options</h4>
+              <div class="ord-volume-checkbox-group">
+                <label>
+                  <input type="checkbox" id="ord-show-signals" checked />
+                  <span>Show Trade Signals</span>
+                </label>
+              </div>
             </div>
 
             <!-- Instructions -->
@@ -315,10 +326,49 @@ export class ORDVolumeController {
     this.lineCountInput.addEventListener('change', (e) => {
       let value = parseInt(e.target.value);
       if (value < 3) value = 3;
-      if (value > 7) value = 7;
+      if (value > 100) value = 100;
       this.lineCount = value;
       e.target.value = value;
     });
+
+    // Trade signals checkbox
+    const showSignalsCheckbox = document.getElementById('ord-show-signals');
+    if (showSignalsCheckbox) {
+      showSignalsCheckbox.addEventListener('change', (e) => {
+        if (window.ordVolumeBridge) {
+          window.ordVolumeBridge.showTradeSignals = e.target.checked;
+          console.log(`[ORD Controller] Trade signals ${e.target.checked ? 'enabled' : 'disabled'}`);
+
+          // Save preference
+          localStorage.setItem('ordVolumeShowSignals', e.target.checked);
+
+          // Redraw chart
+          if (window.tosApp && window.tosApp.activeChartType) {
+            if (window.tosApp.activeChartType === 'timeframe') {
+              const currentTimeframe = window.tosApp.timeframeRegistry?.get(window.tosApp.currentTimeframeId);
+              if (currentTimeframe && currentTimeframe.renderer && currentTimeframe.renderer.draw) {
+                currentTimeframe.renderer.draw();
+              }
+            } else if (window.tosApp.activeChartType === 'tick') {
+              const currentTickChart = window.tosApp.tickChartRegistry?.get(window.tosApp.currentTickChartId);
+              if (currentTickChart && currentTickChart.renderer && currentTickChart.renderer.draw) {
+                currentTickChart.renderer.draw();
+              }
+            }
+          }
+        }
+      });
+
+      // Load saved preference
+      const savedPreference = localStorage.getItem('ordVolumeShowSignals');
+      if (savedPreference !== null) {
+        const showSignals = savedPreference === 'true';
+        showSignalsCheckbox.checked = showSignals;
+        if (window.ordVolumeBridge) {
+          window.ordVolumeBridge.showTradeSignals = showSignals;
+        }
+      }
+    }
   }
 
   /**
