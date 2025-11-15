@@ -18,6 +18,10 @@ export class ORDVolumeBridge {
     this.customComparison = null; // Store custom comparison data
     this.showTradeSignals = true; // Toggle for trade signal visibility
     this.candles = null; // Reference to candle data for signal positioning
+    this.infoPanelElement = null; // HTML overlay for info panel
+
+    // Create info panel HTML element
+    this._createInfoPanelElement();
   }
 
   /**
@@ -102,6 +106,12 @@ export class ORDVolumeBridge {
     this.analysisStore.delete(chartKey);
     this.currentAnalysis = null;
     this.isActive = false;
+
+    // Hide info panel
+    if (this.infoPanelElement) {
+      this.infoPanelElement.style.display = 'none';
+    }
+
     console.log(`[ORD Bridge] Analysis cleared for ${chartKey}`);
   }
 
@@ -112,6 +122,12 @@ export class ORDVolumeBridge {
     this.analysisStore.clear();
     this.currentAnalysis = null;
     this.isActive = false;
+
+    // Hide info panel
+    if (this.infoPanelElement) {
+      this.infoPanelElement.style.display = 'none';
+    }
+
     console.log('[ORD Bridge] All analyses cleared (symbol change)');
   }
 
@@ -158,6 +174,9 @@ export class ORDVolumeBridge {
     if (this.showTradeSignals) {
       this._drawTradeSignals(ctx, chartState);
     }
+
+    // Draw ORD Volume info panel (always show to help users interpret results)
+    this._drawInfoPanel(ctx, chartState);
   }
 
   /**
@@ -890,6 +909,469 @@ export class ORDVolumeBridge {
         }
       }
     }
+  }
+
+  /**
+   * Create HTML info panel element (fixed position overlay)
+   * @private
+   */
+  _createInfoPanelElement() {
+    // Create panel container
+    const panel = document.createElement('div');
+    panel.id = 'ord-volume-info-panel';
+    panel.style.cssText = `
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      width: 420px;
+      max-height: 500px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #2196F3;
+      border-radius: 8px;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      user-select: none;
+      transition: all 0.3s ease;
+    `;
+
+    // Create draggable header with modern design
+    const header = document.createElement('div');
+    header.style.cssText = `
+      cursor: move;
+      padding: 0;
+      margin: 0 0 10px 0;
+      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+      border-bottom: 3px solid #1565C0;
+      border-radius: 6px 6px 0 0;
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+      position: relative;
+      overflow: hidden;
+    `;
+
+    // Add subtle pattern overlay
+    header.innerHTML = `
+      <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.03) 10px, rgba(255,255,255,0.03) 20px); pointer-events: none;"></div>
+      <div style="position: relative; padding: 12px 15px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="background: rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 4px; font-size: 18px;">📊</div>
+          <div>
+            <h3 style="margin: 0; color: #FFFFFF; font-size: 16px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+              ORD Volume Analysis
+            </h3>
+            <div style="font-size: 10px; color: rgba(255,255,255,0.8); margin-top: 2px;">Professional Trading Insights</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button id="ord-pin-button" style="background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; font-size: 11px; color: rgba(255,255,255,0.9); display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.2s;" title="Pin below Quick Order">
+            <span id="ord-pin-icon">📍</span>
+            <span id="ord-pin-text">Pin</span>
+          </button>
+          <div style="background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; font-size: 11px; color: rgba(255,255,255,0.9); display: flex; align-items: center; gap: 5px;">
+            <span>📌</span>
+            <span>Drag</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Create content container (scrollable)
+    const content = document.createElement('div');
+    content.id = 'ord-volume-info-content';
+    content.style.cssText = `
+      max-height: 340px;
+      overflow-y: auto;
+      padding: 5px 15px 15px 15px;
+    `;
+
+    panel.appendChild(header);
+    panel.appendChild(content);
+    document.body.appendChild(panel);
+
+    // Make panel draggable
+    this._makePanelDraggable(panel, header);
+
+    // Add pin functionality
+    this._addPinFunctionality(panel);
+
+    this.infoPanelElement = panel;
+    this.isPinned = false;
+
+    // Auto-pin on creation (simulate pin button click after a delay to ensure DOM is ready)
+    setTimeout(() => {
+      const pinButton = document.getElementById('ord-pin-button');
+      if (pinButton) {
+        pinButton.click();
+        console.log('[ORD Bridge] Auto-pinned panel on creation');
+      }
+    }, 250);
+  }
+
+  /**
+   * Make panel draggable by header
+   * @private
+   */
+  _makePanelDraggable(panel, header) {
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let rafId = null;
+
+    const mouseDownHandler = (e) => {
+      // Don't allow dragging if pinned
+      if (this.isPinned) {
+        return;
+      }
+
+      isDragging = true;
+
+      // Calculate initial offset
+      const rect = panel.getBoundingClientRect();
+      initialX = e.clientX - rect.left;
+      initialY = e.clientY - rect.top;
+
+      // Disable transitions for smooth dragging
+      panel.style.transition = 'none';
+      header.style.cursor = 'grabbing';
+
+      e.preventDefault();
+    };
+
+    const mouseMoveHandler = (e) => {
+      if (!isDragging || this.isPinned) return;
+
+      e.preventDefault();
+
+      // Cancel any pending animation frame
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+
+      // Use requestAnimationFrame for smooth 60fps updates
+      rafId = requestAnimationFrame(() => {
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+
+        // Keep panel within viewport bounds
+        const maxX = window.innerWidth - panel.offsetWidth;
+        const maxY = window.innerHeight - panel.offsetHeight;
+
+        currentX = Math.max(0, Math.min(currentX, maxX));
+        currentY = Math.max(0, Math.min(currentY, maxY));
+
+        // Use transform for better performance (GPU accelerated)
+        panel.style.left = currentX + 'px';
+        panel.style.top = currentY + 'px';
+        panel.style.right = 'auto'; // Remove right positioning when dragging
+      });
+    };
+
+    const mouseUpHandler = () => {
+      if (isDragging) {
+        isDragging = false;
+
+        // Re-enable transitions
+        panel.style.transition = 'all 0.3s ease';
+
+        if (!this.isPinned) {
+          header.style.cursor = 'move';
+        }
+
+        // Cancel any pending animation frame
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      }
+    };
+
+    header.addEventListener('mousedown', mouseDownHandler);
+    document.addEventListener('mousemove', mouseMoveHandler);
+    document.addEventListener('mouseup', mouseUpHandler);
+
+    // Store handlers for cleanup if needed
+    this._dragHandlers = { mouseDownHandler, mouseMoveHandler, mouseUpHandler };
+  }
+
+  /**
+   * Add pin functionality to position panel below Quick Order
+   * @private
+   */
+  _addPinFunctionality(panel) {
+    const pinButton = document.getElementById('ord-pin-button');
+    const pinIcon = document.getElementById('ord-pin-icon');
+    const pinText = document.getElementById('ord-pin-text');
+
+    if (!pinButton) return;
+
+    pinButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent drag from starting
+
+      this.isPinned = !this.isPinned;
+
+      if (this.isPinned) {
+        // Pin below Account Summary (Margin Usage section) on right side of screen
+        const accountSummary = document.querySelector('.tos-account-summary');
+        const quickOrderElement = document.querySelector('.tos-active-trader');
+        const header = panel.querySelector('div'); // Get header element
+
+        // If we can find Account Summary, position below it. Otherwise use Quick Order or fallback
+        if (accountSummary) {
+          const summaryRect = accountSummary.getBoundingClientRect();
+          const quickOrderRect = quickOrderElement ? quickOrderElement.getBoundingClientRect() : null;
+
+          const summaryBottom = summaryRect.bottom;
+          const quickOrderRight = quickOrderRect ? window.innerWidth - quickOrderRect.right : 20;
+          const quickOrderWidth = quickOrderRect ? quickOrderRect.width : 380;
+
+          console.log(`[ORD Bridge] 📍 PIN: Account Summary (Margin Usage) found at bottom=${summaryBottom}px`);
+          console.log(`[ORD Bridge] 📍 PIN: Quick Order width=${quickOrderWidth}px, right=${quickOrderRight}px`);
+
+          panel.style.left = 'auto';
+          panel.style.right = quickOrderRight + 'px';
+          panel.style.top = (summaryBottom + 5) + 'px'; // 5px gap below Account Summary (minimal gap)
+          panel.style.width = quickOrderWidth + 'px'; // Match Quick Order width
+
+          // Calculate available height (subtract 20px for bottom margin instead of 30px for more space)
+          const availableHeight = window.innerHeight - summaryBottom - 20;
+          panel.style.maxHeight = availableHeight + 'px';
+
+          // Update content div to use more of the available space (subtract ~80px for header)
+          const contentDiv = document.getElementById('ord-volume-info-content');
+          if (contentDiv) {
+            contentDiv.style.maxHeight = (availableHeight - 80) + 'px';
+          }
+
+          console.log(`[ORD Bridge] ✅ PIN: Panel positioned at top=${panel.style.top}, right=${panel.style.right}, width=${panel.style.width}, maxHeight=${panel.style.maxHeight}`);
+        } else {
+          // Fallback: position on right side below assumed Account Summary position
+          console.warn('[ORD Bridge] Account Summary element not found, using fallback position');
+          panel.style.left = 'auto';
+          panel.style.right = '20px';
+          panel.style.top = '700px'; // Below typical Account Summary height (more space)
+          panel.style.width = '380px';
+          panel.style.maxHeight = (window.innerHeight - 720) + 'px';
+        }
+
+        // Change cursor to default (not draggable when pinned)
+        if (header) {
+          header.style.cursor = 'default';
+        }
+
+        pinIcon.textContent = '📌';
+        pinText.textContent = 'Unpin';
+        pinButton.style.background = 'rgba(33, 150, 243, 0.4)';
+        pinButton.style.borderColor = 'rgba(33, 150, 243, 0.6)';
+      } else {
+        // Unpin - return to floating position (right side)
+        const header = panel.querySelector('div'); // Get header element
+
+        panel.style.left = 'auto';
+        panel.style.right = '20px';
+        panel.style.top = '80px';
+        panel.style.width = '420px';
+        panel.style.maxHeight = '500px';
+
+        // Reset content div max-height to default
+        const contentDiv = document.getElementById('ord-volume-info-content');
+        if (contentDiv) {
+          contentDiv.style.maxHeight = '340px';
+        }
+
+        // Restore draggable cursor
+        if (header) {
+          header.style.cursor = 'move';
+        }
+
+        pinIcon.textContent = '📍';
+        pinText.textContent = 'Pin';
+        pinButton.style.background = 'rgba(0,0,0,0.2)';
+        pinButton.style.borderColor = 'rgba(255,255,255,0.2)';
+      }
+    });
+
+    // Hover effect
+    pinButton.addEventListener('mouseenter', () => {
+      if (!this.isPinned) {
+        pinButton.style.background = 'rgba(33, 150, 243, 0.3)';
+        pinButton.style.borderColor = 'rgba(33, 150, 243, 0.5)';
+      }
+    });
+
+    pinButton.addEventListener('mouseleave', () => {
+      if (!this.isPinned) {
+        pinButton.style.background = 'rgba(0,0,0,0.2)';
+        pinButton.style.borderColor = 'rgba(255,255,255,0.2)';
+      }
+    });
+  }
+
+  /**
+   * Update and show/hide the info panel
+   * @private
+   */
+  _drawInfoPanel(ctx, chartState) {
+    if (!this.infoPanelElement) {
+      this._createInfoPanelElement();
+    }
+
+    if (!this.currentAnalysis) {
+      this.infoPanelElement.style.display = 'none';
+      return;
+    }
+
+    const analysis = this.currentAnalysis;
+
+    // Get wave data - could be 'waveData' or 'waves' depending on source
+    const waveData = analysis.waveData || analysis.waves || [];
+
+    // Calculate percentage changes from wave to wave
+    const percentages = [];
+    for (let i = 1; i < waveData.length; i++) {
+      const currentWave = waveData[i];
+      const previousWave = waveData[i - 1];
+      if (currentWave.avgVolume && previousWave.avgVolume) {
+        const percentage = (currentWave.avgVolume / previousWave.avgVolume) * 100;
+        percentages.push(percentage);
+      }
+    }
+
+    const hasStrongVolume = percentages.some(p => p >= 110);
+    const hasWeakVolume = percentages.some(p => p < 90);
+    const strongCount = percentages.filter(p => p >= 110).length;
+    const weakCount = percentages.filter(p => p < 90).length;
+    const neutralCount = percentages.filter(p => p >= 90 && p < 110).length;
+
+    // Build HTML content with modern, appealing design
+    let html = `
+      <!-- Analysis Results Section -->
+      <div style="background: linear-gradient(135deg, rgba(33, 150, 243, 0.15), rgba(33, 150, 243, 0.05)); border-left: 4px solid #2196F3; border-radius: 6px; padding: 12px 15px; margin-bottom: 15px;">
+        <h4 style="color: #2196F3; font-size: 14px; margin: 0 0 12px 0; font-weight: 600; display: flex; align-items: center;">
+          <span style="font-size: 18px; margin-right: 8px;">📊</span> Your Analysis
+        </h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; margin-bottom: 10px;">
+          <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
+            <div style="color: #AAA; font-size: 11px; margin-bottom: 3px;">Waves Analyzed</div>
+            <div style="color: #FFF; font-size: 16px; font-weight: bold;">${waveData.length}</div>
+          </div>
+          <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
+            <div style="color: #AAA; font-size: 11px; margin-bottom: 3px;">Overall Strength</div>
+            <div style="color: ${analysis.strength === 'Strong' ? '#00FF00' : analysis.strength === 'Weak' ? '#FF6666' : '#FFFF00'}; font-size: 16px; font-weight: bold;">${analysis.strength || 'N/A'}</div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 12px;">
+          <div style="background: rgba(0,255,0,0.1); padding: 8px; border-radius: 4px; border: 1px solid rgba(0,255,0,0.3);">
+            <div style="color: #AAA; font-size: 11px; margin-bottom: 3px;">Strong (≥110%)</div>
+            <div style="color: #00FF00; font-size: 16px; font-weight: bold;">${strongCount}</div>
+          </div>
+          <div style="background: rgba(255,255,0,0.1); padding: 8px; border-radius: 4px; border: 1px solid rgba(255,255,0,0.3);">
+            <div style="color: #AAA; font-size: 11px; margin-bottom: 3px;">Neutral (90-110%)</div>
+            <div style="color: #FFFF00; font-size: 16px; font-weight: bold;">${neutralCount}</div>
+          </div>
+          <div style="background: rgba(255,102,102,0.1); padding: 8px; border-radius: 4px; border: 1px solid rgba(255,102,102,0.3);">
+            <div style="color: #AAA; font-size: 11px; margin-bottom: 3px;">Weak (&lt;90%)</div>
+            <div style="color: #FF6666; font-size: 16px; font-weight: bold;">${weakCount}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Volume Interpretation Guide -->
+      <div style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.02)); border-left: 4px solid #FFD700; border-radius: 6px; padding: 12px 15px; margin-bottom: 15px;">
+        <h4 style="color: #FFD700; font-size: 14px; margin: 0 0 10px 0; font-weight: 600; display: flex; align-items: center;">
+          <span style="font-size: 18px; margin-right: 8px;">📈</span> Volume Interpretation
+        </h4>
+        <div style="line-height: 1.8; font-size: 12px;">
+          <div style="display: flex; align-items: center; margin-bottom: 6px;">
+            <span style="background: #00FF00; width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>
+            <span style="color: #00FF00; font-weight: 600;">≥110%</span>
+            <span style="color: #CCC; margin-left: 8px;">Strong momentum (bullish if uptrend)</span>
+          </div>
+          <div style="display: flex; align-items: center; margin-bottom: 6px;">
+            <span style="background: #FFFF00; width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>
+            <span style="color: #FFFF00; font-weight: 600;">90-110%</span>
+            <span style="color: #CCC; margin-left: 8px;">Normal/healthy continuation</span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <span style="background: #FF6666; width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>
+            <span style="color: #FF6666; font-weight: 600;">&lt;90%</span>
+            <span style="color: #CCC; margin-left: 8px;">Weakening (potential reversal)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trading Recommendation -->
+      <div style="background: ${hasStrongVolume ? 'linear-gradient(135deg, rgba(0,255,0,0.15), rgba(0,255,0,0.05))' : hasWeakVolume ? 'linear-gradient(135deg, rgba(255,102,102,0.15), rgba(255,102,102,0.05))' : 'linear-gradient(135deg, rgba(255,255,0,0.1), rgba(255,255,0,0.02))'}; border-left: 4px solid ${hasStrongVolume ? '#00FF00' : hasWeakVolume ? '#FF6666' : '#FFFF00'}; border-radius: 6px; padding: 12px 15px; margin-bottom: 15px;">
+        <h4 style="color: ${hasStrongVolume ? '#00FF00' : hasWeakVolume ? '#FF6666' : '#FFFF00'}; font-size: 14px; margin: 0 0 10px 0; font-weight: 600; display: flex; align-items: center;">
+          <span style="font-size: 18px; margin-right: 8px;">💡</span> Trading Signal
+        </h4>
+    `;
+
+    if (hasStrongVolume && waveData.length >= 3) {
+      html += `
+        <div style="font-size: 13px; color: #00FF00; font-weight: 600; margin-bottom: 6px;">✓ Strong Volume Detected</div>
+        <div style="font-size: 12px; color: #CCC; line-height: 1.6;">Momentum is present. Look for continuation in the current trend direction. Consider entries on pullbacks with volume confirmation.</div>
+      `;
+    } else if (hasWeakVolume) {
+      html += `
+        <div style="font-size: 13px; color: #FF6666; font-weight: 600; margin-bottom: 6px;">⚠ Weakening Volume</div>
+        <div style="font-size: 12px; color: #CCC; line-height: 1.6;">Volume is declining, suggesting potential exhaustion. Wait for confirmation before entering new positions. Consider reducing position size.</div>
+      `;
+    } else {
+      html += `
+        <div style="font-size: 13px; color: #FFFF00; font-weight: 600; margin-bottom: 6px;">○ Normal Volume Levels</div>
+        <div style="font-size: 12px; color: #CCC; line-height: 1.6;">Volume is in neutral territory. Monitor for changes in the volume pattern that could signal the next directional move.</div>
+      `;
+    }
+
+    html += `
+      </div>
+
+      <!-- Important Disclaimer -->
+      <div style="background: rgba(255,102,102,0.1); border: 1px solid rgba(255,102,102,0.3); border-radius: 6px; padding: 12px 15px; margin-bottom: 10px;">
+        <h4 style="color: #FF6666; font-size: 13px; margin: 0 0 8px 0; font-weight: 600; display: flex; align-items: center;">
+          <span style="font-size: 16px; margin-right: 6px;">⚠</span> Risk Disclaimer
+        </h4>
+        <div style="font-size: 11px; color: #CCC; line-height: 1.7;">
+          <div style="margin-bottom: 6px; color: #FFF;">ORD Volume is <strong>ONE</strong> indicator among many.</div>
+          <div style="color: #AAA;">Always combine with:</div>
+          <div style="margin-top: 4px; padding-left: 12px;">
+            <div>▸ Price action & support/resistance levels</div>
+            <div>▸ Trend indicators (moving averages)</div>
+            <div>▸ Momentum oscillators (RSI, MACD)</div>
+            <div>▸ Market context, fundamentals & news</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const signals = analysis.tradeSignals || analysis.signals || [];
+    if (signals.length === 0) {
+      html += `
+      <div style="background: rgba(100, 150, 255, 0.1); border: 1px solid rgba(100, 150, 255, 0.3); border-radius: 6px; padding: 12px 15px;">
+        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 18px; margin-right: 8px;">ℹ️</span>
+          <span style="color: #6496FF; font-weight: 600; font-size: 13px;">No Automated Signals</span>
+        </div>
+        <div style="color: #CCC; font-size: 11px; line-height: 1.7;">
+          <div style="margin-bottom: 4px;">Automated signals require high confluence (4+ factors).</div>
+          <div style="color: #AAA;">👉 Use the volume percentages on the chart to make informed manual trading decisions.</div>
+        </div>
+      </div>
+      `;
+    }
+
+    // Update content container (not the whole panel, to preserve header)
+    const contentContainer = document.getElementById('ord-volume-info-content');
+    if (contentContainer) {
+      contentContainer.innerHTML = html;
+    }
+
+    this.infoPanelElement.style.display = 'block';
   }
 }
 
