@@ -1,394 +1,499 @@
 # TOMORROW START HERE - Session Summary
 
-**Date**: November 15, 2025 - AI Learning Loop with Trading Agents
-**Session Focus**: Begin implementation of AI learning loop system with trading agents
+**Date**: November 15, 2025 - AI Learning System Implementation Begins
+**Session Focus**: Build self-learning stock trading system using modular ML pipeline
 
 ---
 
-## 🎉 CURRENT STATUS: ORD VOLUME INFO PANEL COMPLETE!
+## 🎯 CRITICAL DECISION MADE: NO MULTI-AGENT SYSTEM
 
-**Git Status**: ✅ COMMITTED (`4093806` - feat: Add ORD Volume info panel with auto-pin and wave analysis)
-**Implementation**: ✅ Info panel fully functional with auto-pin and wave analysis
-**Polish**: ✅ All UX improvements complete (dragging, pinning, positioning, styling)
-**Next Step**: Ready to start AI learning loop implementation!
+**Architecture Choice**: **Modular ML Pipeline with Ensemble Learning**
+
+### Why NOT Agents:
+- ❌ Token costs: ~$2,500/year for Claude API calls
+- ❌ Agent coordination adds complexity without benefit
+- ❌ Harder to debug agent interactions
+- ❌ Overkill for pipeline-style workflow
+
+### Why Modular ML Pipeline:
+- ✅ **$0 token costs** - all local Python processing
+- ✅ **Easy to extend** - plugin system for proprietary indicators
+- ✅ **Clear data flow** - Scan → Analyze → Signal → Learn
+- ✅ **Fast to build** - standard ML tools (scikit-learn, pandas)
+- ✅ **Better for experimentation** - A/B test indicators easily
 
 ---
 
-## 📋 WHAT WE COMPLETED TODAY (November 14, 2025)
+## 📋 SYSTEM OVERVIEW
 
-### ✅ ORD VOLUME INFO PANEL - COMPLETE IMPLEMENTATION
+### What We're Building:
+**Self-learning stock trading system that:**
+1. Scans **S&P 500 daily** for opportunities
+2. Analyzes stocks with **multiple indicators** (ORD Volume + technical + proprietary)
+3. **Learns from outcomes** by tracking actual trade results
+4. **Improves over time** by finding patterns in successful trades
+5. **Fully automated** - scan, analyze, signal, track, learn, repeat
 
-**🔥 Key Achievement**: Created professional info panel that auto-pins below Quick Order and displays comprehensive wave analysis!
-
-#### Panel Features:
-1. **HTML overlay panel** (fixed position, not canvas-based)
-   - Modern gradient header with branding
-   - Professional styling with card-based layout
-   - Smooth transitions and animations
-
-2. **Auto-pin functionality**:
-   - Automatically pins below "Margin Usage" on creation
-   - Uses `.tos-account-summary` selector for positioning
-   - 250ms delay ensures DOM is ready
-   - No manual pinning required!
-
-3. **Pin/Unpin system**:
-   - Pin button in header to toggle modes
-   - Pinned mode: Locked in place below Quick Order
-   - Unpinned mode: Draggable anywhere on screen
-   - Visual feedback (icon changes, colors)
-
-4. **Smooth dragging** (when unpinned):
-   - Uses `requestAnimationFrame` for 60fps updates
-   - Disables CSS transitions during drag
-   - Prevents sluggish behavior
-   - Keeps panel within viewport bounds
-
-5. **Dynamic sizing**:
-   - Matches Quick Order width when pinned
-   - Fills available height (window height - Margin Usage bottom - 20px)
-   - Content div scrollable with dynamic max-height
-   - Responsive to window size
-
-#### Wave Analysis Display:
-
-**Summary Stats (2-column grid):**
-- Waves Analyzed count
-- Overall Strength (color-coded: Strong=green, Weak=red, Neutral=yellow)
-
-**Wave Breakdown (3-column grid):**
-- **Strong waves** (≥110%) - Green box
-- **Neutral waves** (90-110%) - Yellow box - NEW!
-- **Weak waves** (<90%) - Red box
-
-**Visual Design:**
-- Color-coded backgrounds and borders
-- Large, bold numbers for quick scanning
-- Clear labels with percentage ranges
-- Gradient backgrounds for sections
-
-#### Interpretation Guide:
-
-1. **Volume Interpretation**:
-   - Color-coded dots (green/yellow/red)
-   - Percentage ranges with meanings
-   - Trading context (momentum, continuation, reversal)
-
-2. **Trading Signal**:
-   - Dynamic background color based on market condition
-   - Strong: Green background, bullish momentum message
-   - Weak: Red background, warning about exhaustion
-   - Neutral: Yellow background, monitoring message
-
-3. **Risk Disclaimer**:
-   - Emphasizes ORD Volume is ONE indicator
-   - Lists complementary indicators to use
-   - Professional risk management guidance
-
-4. **No Signals Explanation**:
-   - Shows when no automated signals generated
-   - Explains high confluence requirement (4+ factors)
-   - Guides user to manual interpretation
-
-### ✅ TECHNICAL IMPLEMENTATION DETAILS
-
-**File Modified**: `frontend/js/ord-volume/ord-volume-bridge.js` (+482 lines)
-
-**Key Methods Added**:
-
-1. **`_createInfoPanelElement()`**:
-   - Creates HTML panel with header and content
-   - Adds to document.body
-   - Sets up dragging and pinning
-   - Auto-clicks Pin button after 250ms
-
-2. **`_makePanelDraggable(panel, header)`**:
-   - Mouse event handlers (down, move, up)
-   - requestAnimationFrame for smooth updates
-   - Disables transitions during drag
-   - Respects `isPinned` flag
-
-3. **`_addPinFunctionality(panel)`**:
-   - Finds `.tos-account-summary` element
-   - Calculates positioning below Margin Usage
-   - Dynamic height calculation
-   - Updates content div max-height
-   - Changes cursor and button styling
-
-4. **`_drawInfoPanel(ctx, chartState)`**:
-   - Calculates wave percentages
-   - Counts strong/neutral/weak waves
-   - Builds HTML content dynamically
-   - Updates content container
-   - Shows/hides panel based on analysis
-
-**Positioning Logic**:
-```javascript
-const summaryRect = accountSummary.getBoundingClientRect();
-const summaryBottom = summaryRect.bottom;
-panel.style.top = (summaryBottom + 5) + 'px'; // 5px gap below
-const availableHeight = window.innerHeight - summaryBottom - 20;
-panel.style.maxHeight = availableHeight + 'px';
-contentDiv.style.maxHeight = (availableHeight - 80) + 'px';
+### Daily Workflow:
+```
+1. Scanner Module → Filter S&P 500 to ~50 promising stocks
+2. Multi-Indicator Analysis → Run ALL analyzers on each candidate
+3. Feature Extraction → Combine analyzer outputs into ML features
+4. Ensemble Prediction → Multiple specialist models vote
+5. Scoring & Ranking → Weighted combination produces ranked list
+6. Risk Filtering → Apply position sizing and portfolio rules
+7. Signal Output → Top 5-10 trade recommendations with confidence
 ```
 
-**Drag Optimization**:
-```javascript
-// Disable transitions during drag
-panel.style.transition = 'none';
-
-// Use requestAnimationFrame
-rafId = requestAnimationFrame(() => {
-  panel.style.left = currentX + 'px';
-  panel.style.top = currentY + 'px';
-});
-
-// Re-enable transitions on release
-panel.style.transition = 'all 0.3s ease';
+### Learning Loop (Weekly):
+```
+8. Trade Tracker → Record signals taken and outcomes
+9. Performance Analyzer → Find patterns in winners vs losers
+10. Weight Optimizer → Adjust scoring weights for each indicator
+11. Model Retraining → Update ensemble models with new data
+12. Pattern Discovery → Identify new successful setups
 ```
 
-### ✅ BUG FIXES
-
-1. **Header hanging over border**:
-   - Fixed: Removed negative margins from header
-   - Changed `margin: -15px -15px 10px -15px` to `margin: 0 0 10px 0`
-
-2. **Panel covering Margin Usage**:
-   - Fixed: Position below `.tos-account-summary` instead of `.tos-active-trader`
-   - Ensures panel appears below account info, not covering it
-
-3. **Sluggish dragging**:
-   - Fixed: Use `requestAnimationFrame` for 60fps updates
-   - Disable CSS transitions during drag
-   - Re-enable on mouse up
-
-4. **Text not readable when pinned**:
-   - Fixed: Dynamic height calculation fills available space
-   - Content div max-height adjusted for scrolling
-   - Reduced bottom margin from 30px to 20px
-
 ---
 
-## 🎯 TOMORROW'S SESSION (November 15, 2025)
+## 🏗️ ARCHITECTURE COMPONENTS
 
-### PRIMARY GOAL: AI Learning Loop Implementation
+### 1. Stock Scanner
+- **Purpose**: Filter S&P 500 to promising candidates
+- **Filters**: Volume spikes, price action, volatility, liquidity
+- **Output**: ~50 stocks worth analyzing
 
-**Objective**: Create an AI agent system that learns from trading decisions and improves analysis over time.
+### 2. Analyzer Registry (Plugin System)
+- **Built-in Analyzers**:
+  - ORD Volume Analyzer (reuse existing code)
+  - RSI Analyzer
+  - MACD Analyzer
+  - Volume Profile Analyzer
+  - Trend Analyzer (moving averages)
+  - Pattern Matcher (chart patterns)
 
-### Phase 1: Agent Architecture Design
+- **Proprietary Analyzers** (add later):
+  - User's custom indicator #1
+  - User's custom indicator #2
+  - User's custom indicator #3
 
-1. **Define agent types** and responsibilities:
-   - Market Analysis Agent (analyzes ORD Volume + other indicators)
-   - Trade Signal Agent (generates entry/exit signals)
-   - Risk Management Agent (position sizing, stop losses)
-   - Learning Agent (tracks performance, adjusts strategies)
-
-2. **Create agent communication protocol**:
-   - Message format between agents
-   - Shared state/memory structure
-   - Event system for agent coordination
-
-3. **Design learning feedback loop**:
-   - Track trade outcomes (win/loss, profit/loss)
-   - Store analysis → decision → outcome chains
-   - Identify patterns in successful vs failed trades
-
-### Phase 2: Core Agent Framework
-
-1. **Base Agent class**:
-   - Common interface for all agents
-   - State management
-   - Message passing
-   - Logging/debugging
-
-2. **Memory/Storage system**:
-   - Trade history database
-   - Analysis results archive
-   - Performance metrics tracking
-   - Pattern recognition data
-
-3. **Agent coordinator**:
-   - Manages agent lifecycle
-   - Routes messages between agents
-   - Coordinates learning cycles
-   - Handles conflicts between agent recommendations
-
-### Phase 3: Learning Mechanisms
-
-1. **Performance tracking**:
-   - Link ORD Volume signals to actual outcomes
-   - Track which confluence factors correlate with success
-   - Measure accuracy of trade signals over time
-
-2. **Pattern recognition**:
-   - Identify successful trade setups
-   - Find common characteristics in winning trades
-   - Detect failing patterns to avoid
-
-3. **Strategy adjustment**:
-   - Weight factors based on historical success
-   - Adjust confluence thresholds dynamically
-   - Modify entry/exit criteria based on learning
-
-### Phase 4: Integration with ORD Volume
-
-1. **Connect analysis to learning**:
-   - Feed ORD Volume results into agents
-   - Track which wave patterns lead to profits
-   - Adjust volume thresholds based on outcomes
-
-2. **Enhanced signal generation**:
-   - Use learned patterns to improve signals
-   - Add confidence scores based on similarity to past successes
-   - Filter out trades that match failing patterns
-
-3. **Feedback to user**:
-   - Show learning progress in UI
-   - Display confidence scores on signals
-   - Explain why agent recommends/rejects trades
-
----
-
-## 🔨 TECHNICAL STACK FOR AI AGENTS
-
-### Frontend Components:
-- **Agent UI Panel**: Display agent status, learning progress
-- **Trade Journal**: Manual trade entry for learning data
-- **Performance Dashboard**: Charts showing learning improvement
-
-### Backend Requirements:
-- **Agent Engine**: Python-based agent framework
-- **Database**: SQLite for trade history and learning data
-- **API Endpoints**:
-  - `/api/agents/analyze` - Run agent analysis
-  - `/api/agents/learn` - Submit trade outcome for learning
-  - `/api/agents/performance` - Get learning metrics
-
-### Data Models:
-```python
-Trade = {
-  'id': uuid,
-  'timestamp': datetime,
-  'symbol': str,
-  'entry_price': float,
-  'exit_price': float,
-  'position_size': float,
-  'analysis': {
-    'ord_volume': {...},
-    'other_indicators': {...}
-  },
-  'outcome': {
-    'profit_loss': float,
-    'win': bool,
-    'exit_reason': str
+- **Interface**: Each analyzer implements `analyze(symbol, start_date, end_date)`
+- **Output Format**:
+  ```json
+  {
+    "signal_strength": 0.75,  // 0.0 to 1.0
+    "direction": "bullish",   // bullish, bearish, neutral
+    "confidence": 0.85,       // 0.0 to 1.0
+    "metadata": {...}         // analyzer-specific details
   }
-}
+  ```
 
-Pattern = {
-  'id': uuid,
-  'features': {...},  # Characteristics of the pattern
-  'success_rate': float,
-  'confidence': float,
-  'trade_count': int
-}
+### 3. Feature Extractor
+- Converts analyzer outputs into ML feature vectors
+- Creates derived features (ratios, combinations, deltas)
+- Normalizes values to common scale
+
+### 4. Ensemble Models
+- **ORD Specialist**: RandomForest focused on ORD Volume patterns
+- **Technical Specialist**: XGBoost focused on technical indicators
+- **Pattern Specialist**: Neural Network for chart patterns
+- **Voting**: Weighted average based on historical model performance
+- **Confidence**: Agreement between models (high agreement = high confidence)
+
+### 5. Trade Tracker
+- **Database**: SQLite (backend/data/trading_system.db)
+- **Tables**:
+  - `trades` - all trades with entry/exit/outcome
+  - `signals` - all generated signals (taken or not)
+  - `analyzer_performance` - per-analyzer metrics
+  - `patterns` - discovered successful patterns
+
+### 6. Learning Module
+- **Frequency**: Weekly retraining (configurable)
+- **Tasks**:
+  - Retrain ensemble models on new outcomes
+  - Adjust analyzer/model weights based on performance
+  - Discover new patterns in winning trades
+  - Generate performance reports
+
+---
+
+## 📅 IMPLEMENTATION TIMELINE
+
+### Week 1: Core Framework (Days 1-7)
+**Goals**:
+- ✅ Build basic pipeline infrastructure
+- ✅ Get daily S&P 500 scan working
+- ✅ Implement analyzer plugin system
+- ✅ Create simple ML model (Random Forest)
+- ✅ Build trade tracking database
+
+**Deliverables**:
+- `StockScanner` class - filters S&P 500 to candidates
+- `AnalyzerRegistry` class - plugin system for indicators
+- `FeatureExtractor` class - combines analyzer outputs
+- `SimpleTradingModel` class - initial Random Forest
+- `TradeTracker` class - SQLite database integration
+- `TradingSystem` class - orchestrates all components
+- CLI interface - run daily scan manually
+
+**Success Criteria**: Can scan S&P 500, analyze with 2-3 indicators, output ranked signals
+
+---
+
+### Week 2: Standard Indicators (Days 8-14)
+**Goals**:
+- ✅ Implement standard technical indicators
+- ✅ Integrate ORD Volume analyzer
+- ✅ Add basic pattern recognition
+- ✅ Create feature engineering pipeline
+
+**Deliverables**:
+- `ORDVolumeAnalyzer` - reuse existing ORD Volume code
+- `RSIAnalyzer` - Relative Strength Index
+- `MACDAnalyzer` - MACD + signal line
+- `VolumeAnalyzer` - volume profile, VWAP
+- `TrendAnalyzer` - moving averages, trend detection
+- `PatternMatcher` - simple patterns (breakouts, reversals)
+
+**Success Criteria**: System runs 5+ indicators on each stock, generates meaningful signals
+
+---
+
+### Week 3: Learning Loop (Days 15-21)
+**Goals**:
+- ✅ Implement ensemble learning
+- ✅ Build automated retraining
+- ✅ Create performance tracking
+- ✅ Add weight optimization
+
+**Deliverables**:
+- `EnsemblePredictor` - multiple specialist models
+- `LearningEngine` - automated retraining logic
+- `PerformanceAnalyzer` - metrics and reporting
+- `WeightOptimizer` - adjust analyzer/model weights
+- `BacktestingFramework` - test on historical data
+
+**Success Criteria**: System learns from 50+ trades, measurably improves over baseline
+
+---
+
+### Week 4: UI & Automation (Days 22-30)
+**Goals**:
+- ✅ Build web UI for signals and tracking
+- ✅ Add automated daily scanning
+- ✅ Create performance dashboard
+- ✅ Implement manual trade entry for learning
+
+**Deliverables**:
+- Flask API endpoints for system interaction
+- Frontend dashboard showing daily signals
+- Trade journal UI for manual trade entry
+- Performance charts (win rate, profit curve, etc.)
+- Scheduled task for daily scan (Task Scheduler)
+- Email/notification system for high-confidence signals
+
+**Success Criteria**: Fully automated daily workflow with zero manual intervention
+
+---
+
+### Week 4+: Proprietary Indicators (After Core Stable)
+**Goals**:
+- ✅ Integrate user's proprietary indicators
+- ✅ A/B test new indicators vs baseline
+- ✅ Optimize indicator combinations
+- ✅ Fine-tune for live trading
+
+**Deliverables**:
+- User's proprietary indicator #1
+- User's proprietary indicator #2
+- User's proprietary indicator #3
+- A/B testing framework
+- Feature importance analysis
+- Live trading integration (future)
+
+**Success Criteria**: Proprietary indicators integrated and performance measured
+
+---
+
+## 💻 TECHNICAL STACK
+
+### Backend (Python 3.10+):
+- **pandas** - Data manipulation
+- **numpy** - Numerical computing
+- **scikit-learn** - Machine learning (RandomForest, etc.)
+- **xgboost** - Gradient boosting
+- **yfinance** - Stock data fetching
+- **sqlite3** - Database (built-in)
+- **sqlalchemy** - ORM for database
+- **schedule** - Task scheduling
+
+### Frontend (Existing Flask App):
+- Signal dashboard - daily trade ideas
+- Trade journal - manual entry for learning
+- Performance charts - win rate, profit curves
+- Analyzer metrics - see which indicators work best
+- Backtest viewer - historical simulation results
+
+### Database:
+- **SQLite** - backend/data/trading_system.db
+- **Tables**: trades, signals, analyzer_performance, patterns
+- **Backup**: Daily backup to backend/data/backups/
+
+### Deployment:
+- **Environment**: Local Windows machine (no cloud)
+- **Automation**: Windows Task Scheduler runs daily scan at market close
+- **Monitoring**: Log files in backend/logs/ directory
+
+---
+
+## 🎯 SUCCESS METRICS
+
+### Short-term (Week 1-2):
+- ✅ Core pipeline functional (scan → analyze → signal)
+- ✅ Can process 500 stocks in < 5 minutes
+- ✅ 5+ indicators integrated and working
+- ✅ Trade tracking database operational
+- ✅ Manual signal generation working
+
+### Medium-term (Week 3-4):
+- ✅ Learning loop functional (retrain weekly)
+- ✅ Ensemble models voting on signals
+- ✅ Performance metrics tracking
+- ✅ Automated daily scanning
+- ✅ 50+ trades recorded for learning
+
+### Long-term (Month 2+):
+- ✅ System win rate > 55% (better than random)
+- ✅ Positive profit factor (> 1.0)
+- ✅ Proprietary indicators integrated and tested
+- ✅ Measurable improvement over baseline (5-10% win rate increase)
+- ✅ Can explain why it recommends each trade
+
+### KPI Targets:
+- **Win Rate**: > 55% (60%+ is excellent)
+- **Profit Factor**: > 1.5 (2.0+ is excellent)
+- **Sharpe Ratio**: > 1.0 (2.0+ is excellent)
+- **Max Drawdown**: < 20%
+- **Avg Trade Duration**: 3-7 days (swing trading)
+- **Signals Per Day**: 5-10 high-confidence trades
+
+---
+
+## 🔌 ADDING PROPRIETARY INDICATORS (Easy!)
+
+### Step 1: Create Your Analyzer Class
+```python
+class MyProprietaryAnalyzer:
+    def analyze(self, symbol, start_date, end_date):
+        # Fetch data
+        data = self._get_data(symbol, start_date, end_date)
+
+        # Your proprietary calculation
+        signal = self._calculate_my_indicator(data)
+
+        # Return standardized format
+        return {
+            'signal_strength': signal,  # 0.0 to 1.0
+            'direction': 'bullish' if signal > 0.6 else 'bearish' if signal < 0.4 else 'neutral',
+            'confidence': abs(signal - 0.5) * 2,  # 0 to 1
+            'metadata': {
+                'indicator_value': signal,
+                'threshold_used': 0.6,
+                'lookback_period': 20
+            }
+        }
+
+    def _calculate_my_indicator(self, data):
+        # Your secret sauce here
+        pass
+```
+
+### Step 2: Register It (ONE LINE!)
+```python
+system.add_analyzer('my_proprietary', MyProprietaryAnalyzer())
+```
+
+### Step 3: Done!
+The system automatically:
+- ✅ Runs it on all scanned stocks
+- ✅ Includes it in ML features
+- ✅ Tracks its performance
+- ✅ Adjusts its weight based on success
+- ✅ Shows you metrics ("Your indicator has 68% accuracy")
+
+---
+
+## 💰 COST COMPARISON
+
+### Agent-Based Approach:
+- Claude API: $0.02 per analysis
+- Daily cost: 500 stocks × $0.02 = **$10/day**
+- Annual cost: $10 × 250 trading days = **$2,500/year**
+
+### Modular ML Pipeline:
+- API costs: **$0**
+- Compute costs: Local machine - negligible
+- Annual cost: **$0**
+
+### Optional LLM Features (If Needed Later):
+- News sentiment on top 10 stocks only
+- Cost: $0.02 × 10 × 250 = **$50/year**
+
+---
+
+## 📁 PROJECT STRUCTURE
+
+```
+StockApp/
+├── backend/
+│   ├── ml/                          ← NEW DIRECTORY
+│   │   ├── core/                    ← Core classes
+│   │   │   ├── trading_system.py    ← Main orchestrator
+│   │   │   ├── analyzer_registry.py ← Plugin system
+│   │   │   ├── feature_extractor.py ← Feature engineering
+│   │   │   └── trade_tracker.py     ← Database integration
+│   │   ├── analyzers/               ← All analyzer implementations
+│   │   │   ├── ord_volume.py        ← ORD Volume analyzer
+│   │   │   ├── rsi.py               ← RSI analyzer
+│   │   │   ├── macd.py              ← MACD analyzer
+│   │   │   ├── volume.py            ← Volume analyzer
+│   │   │   └── proprietary/         ← User's custom indicators (later)
+│   │   ├── models/                  ← ML model classes
+│   │   │   ├── ensemble.py          ← Ensemble predictor
+│   │   │   ├── ord_specialist.py    ← ORD Volume specialist
+│   │   │   └── tech_specialist.py   ← Technical indicator specialist
+│   │   ├── learning/                ← Learning engine
+│   │   │   ├── learning_engine.py   ← Retraining logic
+│   │   │   ├── weight_optimizer.py  ← Weight adjustment
+│   │   │   └── performance.py       ← Performance analysis
+│   │   ├── scanning/                ← Stock scanning
+│   │   │   └── scanner.py           ← S&P 500 scanner
+│   │   └── utils/                   ← Utility functions
+│   ├── data/
+│   │   ├── trading_system.db        ← SQLite database
+│   │   └── ml_models/               ← Saved model files
+│   └── logs/
+│       └── ml_system.log            ← System logs
+├── frontend/
+│   └── (existing frontend code)
+└── AI_LEARNING_SYSTEM_SPEC.json     ← FULL SPECIFICATION (READ THIS!)
 ```
 
 ---
 
-## 📊 SUCCESS METRICS FOR AI LEARNING LOOP
+## 🚀 TOMORROW'S SESSION - DAY 1 TASKS
 
-### Short-term (Week 1):
-- ✅ Agent framework implemented
-- ✅ Basic learning loop functional
-- ✅ Trade tracking integrated
+### Morning (2-3 hours):
+1. **Review Documentation**:
+   - Read `AI_LEARNING_SYSTEM_SPEC.json` (comprehensive spec)
+   - Review this file (TOMORROW_START_HERE.md)
+   - Understand architecture and decisions
 
-### Medium-term (Week 2-3):
-- ✅ Pattern recognition working
-- ✅ Strategy adjustments based on learning
-- ✅ Measurable improvement in signal accuracy
+2. **Set Up Project Structure**:
+   - Create `backend/ml/` directory structure
+   - Set up `backend/data/trading_system.db` (SQLite)
+   - Create `backend/logs/ml_system.log`
 
-### Long-term (Month 1+):
-- ✅ Self-improving system consistently outperforms baseline
-- ✅ Agent explains reasoning behind recommendations
-- ✅ User trust in AI recommendations increases
+3. **Build Core Classes**:
+   - `TradingSystem` - main orchestrator
+   - `AnalyzerRegistry` - plugin system
+   - `TradeTracker` - database integration
 
----
+### Afternoon (2-3 hours):
+4. **Implement Stock Scanner**:
+   - `StockScanner` class
+   - Filter S&P 500 to ~50 candidates
+   - Test on sample data
 
-## 💡 IMPORTANT NOTES FOR TOMORROW
+5. **Create First Analyzer**:
+   - `ORDVolumeAnalyzer` (reuse existing ORD Volume code)
+   - Implement `analyze()` method
+   - Test on sample stock
 
-### Starting Point:
-1. Review existing ORD Volume signal generation (`ORDVolumeSignals.js`)
-2. Understand current confluence calculation
-3. Identify decision points where learning could help
+6. **End-to-End Test**:
+   - Scan → Analyze → Output
+   - Verify data flow works
+   - Log results
 
-### Key Questions to Answer:
-1. What data should we track from each trade?
-2. How do we define "success" for a trade signal?
-3. What patterns should the agent look for?
-4. How quickly should the agent adapt to new data?
-
-### Risks to Consider:
-1. **Overfitting**: Agent learns patterns specific to past data that don't generalize
-2. **Data quality**: Manual trade entry could introduce bias
-3. **Feedback delay**: Trading outcomes take time, slowing learning
-4. **Complexity**: Too many agents/factors could be hard to debug
-
-### Mitigation Strategies:
-1. Use validation set to test learned patterns
-2. Implement data validation and sanity checks
-3. Track leading indicators (partial profits) for faster feedback
-4. Start simple - single agent, limited features
+### Success Criteria for Day 1:
+- ✅ Project structure created
+- ✅ Can scan S&P 500 and filter to candidates
+- ✅ Can analyze one stock with ORD Volume
+- ✅ Data flows from scanner → analyzer → output
+- ✅ SQLite database created with basic schema
 
 ---
 
-## 🚀 HOW TO START TOMORROW
+## ❓ QUESTIONS TO ANSWER TOMORROW
 
-### Step 1: Review Current System
-```bash
-# Start the app
-start_flask.bat
-
-# Review these files:
-frontend/js/ord-volume/ORDVolumeSignals.js  # Current signal generation
-frontend/js/ord-volume/ORDVolumeAnalysis.js # Current analysis logic
-frontend/js/ord-volume/ORDVolumeController.js # UI and flow control
-```
-
-### Step 2: Design Agent Architecture
-- Sketch out agent communication flow
-- Define message formats
-- Plan database schema for trade tracking
-
-### Step 3: Create Base Agent Class
-- Start with simple Python class
-- Implement basic message passing
-- Add logging/debugging
-
-### Step 4: Build First Agent
-- Market Analysis Agent as proof of concept
-- Takes ORD Volume data as input
-- Outputs simple recommendation
-- No learning yet - just framework
+1. **Data Source**: Confirm using yfinance for stock data (already in use)
+2. **Scanning Time**: What time to run daily scan? (After market close at 4pm ET?)
+3. **Signal Delivery**: How to deliver signals? (Email, UI dashboard, both?)
+4. **Initial Indicators**: Which indicators to start with? (ORD Volume + RSI + MACD + Volume?)
+5. **Backtest Period**: How much historical data for initial backtest? (1 year? 2 years?)
 
 ---
 
-## 📝 GIT COMMIT DETAILS
+## 📚 KEY RESOURCES
 
-**Commit Hash**: `4093806`
-**Message**: feat: Add ORD Volume info panel with auto-pin and wave analysis
+### Documentation:
+- **AI_LEARNING_SYSTEM_SPEC.json** - Complete system specification
+- **TOMORROW_START_HERE.md** - This file (session notes)
+- **frontend/js/ord-volume/** - Existing ORD Volume implementation
 
-**Files Changed**: 1 file, +482 lines
+### Code References:
+- **ORD Volume Analysis**: `frontend/js/ord-volume/ORDVolumeAnalysis.js`
+- **Stock Data Fetching**: `backend/api_server.py` (yfinance integration)
+- **Database Pattern**: `backend/data/*.json` (current persistence)
 
-**Key Changes**:
-- Created HTML info panel with modern styling
-- Implemented auto-pin below Margin Usage
-- Added smooth dragging with requestAnimationFrame
-- Wave analysis display (strong/neutral/weak counts)
-- Interpretation guide and trading signals
-- Risk disclaimer and no-signal explanation
+---
+
+## 💡 IMPORTANT REMINDERS
+
+### Core Principles:
+1. **No agents** - Use modular ML pipeline for simplicity
+2. **Zero token costs** - All local processing, no API calls
+3. **Extensible by design** - Easy to add proprietary indicators
+4. **Learn from outcomes** - Track trades and improve over time
+5. **Start simple** - Get basics working, then add complexity
+
+### What Makes This Different:
+- NOT just ORD Volume - multiple indicators working together
+- NOT manual - fully automated scanning and learning
+- NOT static - system improves over time from outcomes
+- NOT limited - easy to add new proprietary indicators
+- NOT expensive - $0 in token costs
+
+### Success Factors:
+- ✅ Clear data flow (pipeline, not agent mesh)
+- ✅ Modular design (easy to test and debug)
+- ✅ Standard ML tools (well-documented, proven)
+- ✅ Plugin system (proprietary indicators protected)
+- ✅ Performance tracking (know what works)
+
+---
+
+## 📝 SESSION NOTES FROM NOVEMBER 14
+
+### What We Completed:
+- ✅ ORD Volume info panel with auto-pin (DONE!)
+- ✅ Wave analysis display (Strong/Neutral/Weak counts)
+- ✅ Smooth dragging with requestAnimationFrame
+- ✅ Pin/Unpin functionality below Quick Order
+- ✅ All UX polish complete
+- ✅ Committed to GitHub (`4093806`, `ab7ce2d`)
+
+### Key Discussion Points:
+- User confirmed: System scans **S&P 500 daily**, not just a few stocks
+- User confirmed: **Multiple indicators**, not just ORD Volume
+- User confirmed: Has **proprietary indicators** to add later
+- Decision made: **Modular ML Pipeline** over multi-agent system
+- Reason: $0 token costs, simpler, easier to extend
 
 ---
 
 **Last Updated**: November 14, 2025, 11:59 PM
-**Last Git Commit**: `4093806` - feat: Add ORD Volume info panel with auto-pin and wave analysis
-**Status**: ✅ **ORD VOLUME INFO PANEL COMPLETE - READY FOR AI LEARNING LOOP!**
+**Last Git Commit**: `ab7ce2d` - docs: Update session notes for November 14
+**Status**: ✅ **ORD VOLUME COMPLETE - READY TO BUILD AI LEARNING SYSTEM!**
+**Next Session**: November 15, 2025 - Start building modular ML pipeline

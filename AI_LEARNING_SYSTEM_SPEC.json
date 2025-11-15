@@ -1,0 +1,574 @@
+{
+  "project_name": "Self-Learning Stock Trading System",
+  "description": "Modular ML pipeline that scans S&P 500 daily, analyzes multiple indicators, learns from trade outcomes, and improves over time",
+  "decision_date": "2025-11-14",
+  "architecture_choice": "Modular ML Pipeline with Ensemble Learning (NOT multi-agent system)",
+
+  "key_decisions": {
+    "why_not_agents": [
+      "Token costs would be ~$2,500/year with Claude API for agent communication",
+      "Agent coordination adds complexity without benefit for pipeline workflow",
+      "Debugging agent interactions is harder than debugging function calls",
+      "Modular pipeline gives same specialization benefits with less overhead"
+    ],
+    "why_modular_ml": [
+      "Zero token costs - all local Python processing",
+      "Easy to add proprietary indicators (just implement analyze() method)",
+      "Clear data flow: Scan → Analyze → Combine → Signal → Track → Learn",
+      "Standard ML tools (scikit-learn, pandas, numpy)",
+      "Fast to implement and iterate",
+      "Better for experimentation and A/B testing"
+    ],
+    "extensibility": [
+      "Plugin-based analyzer registry",
+      "Add new indicators without modifying core system",
+      "Each analyzer is independent and testable",
+      "System automatically learns predictive value of new indicators",
+      "Can add/remove indicators at runtime"
+    ]
+  },
+
+  "system_architecture": {
+    "overview": "Pipeline of specialized modules that learn and communicate through data flow",
+    "daily_workflow": [
+      "1. Scanner Module - Filters S&P 500 to ~50 promising stocks",
+      "2. Multi-Indicator Analysis - Runs ALL registered analyzers on each candidate",
+      "3. Feature Extraction - Combines analyzer outputs into ML features",
+      "4. Ensemble Prediction - Multiple specialist models vote on each stock",
+      "5. Scoring & Ranking - Weighted combination produces ranked signal list",
+      "6. Risk Filtering - Applies position sizing and portfolio rules",
+      "7. Signal Output - Top 5-10 trade recommendations with confidence scores"
+    ],
+    "learning_loop": [
+      "8. Trade Tracker - Records which signals were taken and outcomes",
+      "9. Performance Analyzer - Finds patterns in winners vs losers",
+      "10. Weight Optimizer - Adjusts scoring weights for each indicator",
+      "11. Model Retraining - Updates ensemble models with new outcome data",
+      "12. Pattern Discovery - Identifies new successful setups automatically"
+    ]
+  },
+
+  "core_components": {
+    "stock_scanner": {
+      "purpose": "Filter S&P 500 to promising candidates",
+      "inputs": "S&P 500 ticker list, market data",
+      "outputs": "~50 stocks with initial signals (volume spikes, price action, etc.)",
+      "filters": [
+        "Minimum volume threshold",
+        "Price range filter (avoid penny stocks)",
+        "Volatility threshold",
+        "Recent price movement (breakouts, etc.)",
+        "Liquidity requirements"
+      ]
+    },
+    "analyzer_registry": {
+      "purpose": "Plugin system for all indicators (standard + proprietary)",
+      "interface": "Each analyzer implements analyze(symbol, start_date, end_date) method",
+      "built_in_analyzers": [
+        "ORDVolumeAnalyzer - Analyzes ORD Volume patterns",
+        "RSIAnalyzer - Relative Strength Index",
+        "MACDAnalyzer - Moving Average Convergence Divergence",
+        "VolumeProfileAnalyzer - Volume distribution analysis",
+        "PatternMatcher - Chart patterns (head & shoulders, triangles, etc.)",
+        "TrendAnalyzer - Moving averages, trend strength"
+      ],
+      "proprietary_placeholder": [
+        "ProprietaryIndicator1 - User's custom indicator (added later)",
+        "ProprietaryIndicator2 - User's custom indicator (added later)",
+        "ProprietaryIndicator3 - User's custom indicator (added later)"
+      ],
+      "output_format": {
+        "signal_strength": "Float 0.0 to 1.0",
+        "direction": "String: 'bullish', 'bearish', 'neutral'",
+        "confidence": "Float 0.0 to 1.0",
+        "metadata": "Dict with analyzer-specific details"
+      }
+    },
+    "feature_extractor": {
+      "purpose": "Converts analyzer outputs into ML feature vectors",
+      "process": [
+        "Collect all analyzer outputs for a stock",
+        "Normalize values to common scale",
+        "Create feature vector (e.g., [ord_volume_strength, rsi, macd_signal, ...])",
+        "Add derived features (combinations, ratios, etc.)"
+      ],
+      "feature_engineering": [
+        "Raw indicator values",
+        "Indicator deltas (change from previous day)",
+        "Cross-indicator combinations (e.g., RSI * ORD Volume strength)",
+        "Time-based features (day of week, market regime)",
+        "Sector/industry features"
+      ]
+    },
+    "ensemble_models": {
+      "purpose": "Multiple specialist models that vote on trade signals",
+      "models": [
+        {
+          "name": "ord_specialist",
+          "type": "RandomForestClassifier",
+          "focus": "Learns which ORD Volume patterns predict success",
+          "features": "ORD Volume metrics + price action"
+        },
+        {
+          "name": "technical_specialist",
+          "type": "XGBoostClassifier",
+          "focus": "Learns which technical indicator combos work",
+          "features": "RSI, MACD, moving averages, volume"
+        },
+        {
+          "name": "pattern_specialist",
+          "type": "Neural Network (simple)",
+          "focus": "Learns chart patterns and price formations",
+          "features": "Price sequences, pattern features"
+        }
+      ],
+      "voting_strategy": "Weighted average based on historical model performance",
+      "confidence_calculation": "Agreement between models (high agreement = high confidence)"
+    },
+    "scoring_module": {
+      "purpose": "Combines ensemble predictions with learned weights",
+      "algorithm": "weighted_score = Σ(model_prediction[i] * model_weight[i])",
+      "thresholds": {
+        "strong_buy": "> 0.75",
+        "buy": "0.60 - 0.75",
+        "watch": "0.50 - 0.60",
+        "ignore": "< 0.50"
+      },
+      "weight_learning": "Weights adjusted based on model accuracy over rolling window"
+    },
+    "trade_tracker": {
+      "purpose": "Records all signals and actual trade outcomes",
+      "database": "SQLite database (local file)",
+      "schema": {
+        "trades": {
+          "id": "UUID",
+          "symbol": "String",
+          "entry_date": "DateTime",
+          "entry_price": "Float",
+          "exit_date": "DateTime (nullable)",
+          "exit_price": "Float (nullable)",
+          "position_size": "Float",
+          "outcome": "String: 'win', 'loss', 'open'",
+          "profit_loss": "Float",
+          "profit_loss_pct": "Float",
+          "exit_reason": "String: 'target', 'stop', 'time', 'manual'"
+        },
+        "signals": {
+          "id": "UUID",
+          "trade_id": "UUID (foreign key)",
+          "signal_date": "DateTime",
+          "symbol": "String",
+          "score": "Float",
+          "confidence": "Float",
+          "analyzers_data": "JSON blob (all analyzer outputs)",
+          "features": "JSON blob (ML feature vector)",
+          "predictions": "JSON blob (each model's prediction)"
+        },
+        "analyzer_performance": {
+          "analyzer_name": "String",
+          "date": "Date",
+          "trades_count": "Integer",
+          "win_rate": "Float",
+          "avg_profit": "Float",
+          "current_weight": "Float"
+        }
+      }
+    },
+    "learning_module": {
+      "purpose": "Analyzes outcomes and improves system over time",
+      "frequency": "Weekly retraining (configurable)",
+      "learning_tasks": [
+        {
+          "task": "Model Retraining",
+          "description": "Update ensemble models with new outcome data",
+          "method": "Incremental learning (partial_fit) or full retrain",
+          "validation": "Hold-out set (20% of trades) for testing"
+        },
+        {
+          "task": "Weight Optimization",
+          "description": "Adjust analyzer and model weights based on performance",
+          "method": "Success rate analysis over rolling 50-trade window",
+          "formula": "new_weight = (win_rate * 2.0) with min=0.1, max=3.0"
+        },
+        {
+          "task": "Pattern Discovery",
+          "description": "Find new successful trade setups",
+          "method": "Clustering winning trades, extracting common features",
+          "output": "New patterns added to PatternMatcher analyzer"
+        },
+        {
+          "task": "Performance Reporting",
+          "description": "Generate metrics and visualizations",
+          "metrics": [
+            "Overall win rate",
+            "Profit factor (gross profit / gross loss)",
+            "Sharpe ratio",
+            "Max drawdown",
+            "Per-analyzer accuracy",
+            "Per-model accuracy",
+            "Feature importance rankings"
+          ]
+        }
+      ]
+    }
+  },
+
+  "implementation_phases": {
+    "phase_1_core_framework": {
+      "timeline": "Week 1 (Days 1-7)",
+      "goals": [
+        "Build basic pipeline infrastructure",
+        "Get daily S&P 500 scan working",
+        "Implement analyzer plugin system",
+        "Create simple ML model (Random Forest)",
+        "Build trade tracking database"
+      ],
+      "deliverables": [
+        "StockScanner class - filters S&P 500 to candidates",
+        "AnalyzerRegistry class - plugin system for indicators",
+        "FeatureExtractor class - combines analyzer outputs",
+        "SimpleTradingModel class - initial Random Forest",
+        "TradeTracker class - SQLite database integration",
+        "TradingSystem class - orchestrates all components",
+        "CLI interface - run daily scan manually"
+      ],
+      "success_criteria": "Can scan S&P 500, analyze with 2-3 basic indicators, output ranked signals"
+    },
+    "phase_2_standard_indicators": {
+      "timeline": "Week 1-2 (Days 3-14)",
+      "goals": [
+        "Implement standard technical indicators",
+        "Integrate ORD Volume analyzer",
+        "Add basic pattern recognition",
+        "Create feature engineering pipeline"
+      ],
+      "deliverables": [
+        "ORDVolumeAnalyzer - reuse existing ORD Volume code",
+        "RSIAnalyzer - Relative Strength Index",
+        "MACDAnalyzer - MACD + signal line",
+        "VolumeAnalyzer - volume profile, VWAP",
+        "TrendAnalyzer - moving averages, trend detection",
+        "PatternMatcher - simple patterns (breakouts, reversals)"
+      ],
+      "success_criteria": "System runs 5+ indicators on each stock, generates meaningful signals"
+    },
+    "phase_3_learning_loop": {
+      "timeline": "Week 2-3 (Days 10-21)",
+      "goals": [
+        "Implement ensemble learning",
+        "Build automated retraining",
+        "Create performance tracking",
+        "Add weight optimization"
+      ],
+      "deliverables": [
+        "EnsemblePredictor - multiple specialist models",
+        "LearningEngine - automated retraining logic",
+        "PerformanceAnalyzer - metrics and reporting",
+        "WeightOptimizer - adjust analyzer/model weights",
+        "BacktestingFramework - test on historical data"
+      ],
+      "success_criteria": "System learns from 50+ trades, measurably improves over baseline"
+    },
+    "phase_4_ui_and_automation": {
+      "timeline": "Week 3-4 (Days 15-30)",
+      "goals": [
+        "Build web UI for signals and tracking",
+        "Add automated daily scanning",
+        "Create performance dashboard",
+        "Implement manual trade entry for learning"
+      ],
+      "deliverables": [
+        "Flask API endpoints for system interaction",
+        "Frontend dashboard showing daily signals",
+        "Trade journal UI for manual trade entry",
+        "Performance charts (win rate, profit curve, etc.)",
+        "Scheduled task for daily scan (cron job or Task Scheduler)",
+        "Email/notification system for high-confidence signals"
+      ],
+      "success_criteria": "Fully automated daily workflow with zero manual intervention"
+    },
+    "phase_5_proprietary_indicators": {
+      "timeline": "Week 4+ (After core is stable)",
+      "goals": [
+        "Integrate user's proprietary indicators",
+        "A/B test new indicators vs baseline",
+        "Optimize indicator combinations",
+        "Fine-tune for live trading"
+      ],
+      "deliverables": [
+        "ProprietaryAnalyzer1 - user's custom indicator",
+        "ProprietaryAnalyzer2 - user's custom indicator",
+        "ProprietaryAnalyzer3 - user's custom indicator",
+        "A/B testing framework - compare with/without indicators",
+        "Feature importance analysis - which indicators matter most",
+        "Live trading integration - connect to broker API (future)"
+      ],
+      "success_criteria": "Proprietary indicators integrated and performance measured"
+    }
+  },
+
+  "technical_stack": {
+    "backend": {
+      "language": "Python 3.10+",
+      "core_libraries": [
+        "pandas - Data manipulation",
+        "numpy - Numerical computing",
+        "scikit-learn - Machine learning (RandomForest, etc.)",
+        "xgboost - Gradient boosting",
+        "yfinance - Stock data fetching",
+        "sqlite3 - Database (built-in)",
+        "sqlalchemy - ORM for database",
+        "schedule - Task scheduling"
+      ],
+      "optional_libraries": [
+        "tensorflow/keras - Neural networks (if needed)",
+        "ta-lib - Technical analysis library",
+        "requests - API calls",
+        "beautifulsoup4 - Web scraping (for news sentiment)"
+      ]
+    },
+    "frontend": {
+      "framework": "Existing Flask app (StockApp)",
+      "components": [
+        "Signal dashboard - daily trade ideas",
+        "Trade journal - manual entry for learning",
+        "Performance charts - win rate, profit curves",
+        "Analyzer metrics - see which indicators work best",
+        "Backtest viewer - historical simulation results"
+      ]
+    },
+    "database": {
+      "type": "SQLite",
+      "file": "backend/data/trading_system.db",
+      "tables": ["trades", "signals", "analyzer_performance", "patterns"],
+      "backup_strategy": "Daily backup to backend/data/backups/"
+    },
+    "deployment": {
+      "environment": "Local Windows machine (no cloud needed)",
+      "automation": "Windows Task Scheduler runs daily scan at market close",
+      "monitoring": "Log files in backend/logs/ directory"
+    }
+  },
+
+  "data_models": {
+    "Trade": {
+      "id": "UUID - unique identifier",
+      "symbol": "String - stock ticker",
+      "entry_date": "DateTime - when trade was entered",
+      "entry_price": "Float - price at entry",
+      "exit_date": "DateTime (nullable) - when trade was closed",
+      "exit_price": "Float (nullable) - price at exit",
+      "position_size": "Float - number of shares or $ amount",
+      "outcome": "String - 'win', 'loss', 'open'",
+      "profit_loss": "Float - $ profit or loss",
+      "profit_loss_pct": "Float - % return",
+      "exit_reason": "String - 'target', 'stop', 'time', 'manual'",
+      "analysis_snapshot": "JSON - all analyzer outputs at entry",
+      "features": "JSON - ML feature vector used",
+      "predictions": "JSON - each model's prediction and confidence"
+    },
+    "Signal": {
+      "id": "UUID",
+      "date": "Date - when signal was generated",
+      "symbol": "String - stock ticker",
+      "score": "Float - overall signal strength (0-1)",
+      "confidence": "Float - model agreement (0-1)",
+      "direction": "String - 'buy', 'sell', 'hold'",
+      "analyzers": "JSON - output from each analyzer",
+      "model_predictions": "JSON - each model's vote",
+      "rank": "Integer - rank among daily signals (1 = best)",
+      "was_traded": "Boolean - did user take this signal?",
+      "trade_id": "UUID (nullable) - link to trade if taken"
+    },
+    "AnalyzerPerformance": {
+      "analyzer_name": "String - name of analyzer",
+      "period_start": "Date",
+      "period_end": "Date",
+      "trades_count": "Integer - number of trades this analyzer triggered",
+      "win_count": "Integer - winning trades",
+      "loss_count": "Integer - losing trades",
+      "win_rate": "Float - win_count / trades_count",
+      "avg_profit": "Float - average profit per trade",
+      "total_profit": "Float - cumulative profit",
+      "current_weight": "Float - weight in scoring algorithm",
+      "trend": "String - 'improving', 'declining', 'stable'"
+    },
+    "Pattern": {
+      "id": "UUID",
+      "name": "String - pattern name",
+      "description": "String - what this pattern looks for",
+      "features": "JSON - characteristics of this pattern",
+      "success_rate": "Float - historical win rate",
+      "confidence": "Float - how reliable this pattern is",
+      "trade_count": "Integer - number of trades matching pattern",
+      "discovered_date": "Date - when pattern was found",
+      "is_active": "Boolean - whether to use in scanning"
+    }
+  },
+
+  "analyzer_interface_spec": {
+    "description": "Standard interface all analyzers must implement",
+    "required_method": "analyze(symbol, start_date, end_date)",
+    "return_format": {
+      "signal_strength": "Float 0.0 to 1.0 - how strong is the signal",
+      "direction": "String - 'bullish', 'bearish', or 'neutral'",
+      "confidence": "Float 0.0 to 1.0 - how confident in this signal",
+      "metadata": "Dict - analyzer-specific details (optional)"
+    },
+    "example_implementation": {
+      "code": "class MyProprietaryAnalyzer:\n    def analyze(self, symbol, start_date, end_date):\n        # Fetch data\n        data = self._get_data(symbol, start_date, end_date)\n        \n        # Your proprietary calculation\n        signal = self._calculate_my_indicator(data)\n        \n        # Return standardized format\n        return {\n            'signal_strength': signal,  # 0.0 to 1.0\n            'direction': 'bullish' if signal > 0.6 else 'bearish' if signal < 0.4 else 'neutral',\n            'confidence': abs(signal - 0.5) * 2,  # 0 to 1\n            'metadata': {\n                'indicator_value': signal,\n                'threshold_used': 0.6,\n                'lookback_period': 20\n            }\n        }\n    \n    def _calculate_my_indicator(self, data):\n        # Your secret sauce here\n        pass"
+    },
+    "registration": {
+      "code": "# To add your analyzer to the system:\nsystem.add_analyzer('my_proprietary', MyProprietaryAnalyzer())\n\n# That's it! System will now:\n# - Run it on all scanned stocks\n# - Include output in ML features\n# - Track its performance\n# - Adjust its weight based on success"
+    }
+  },
+
+  "cost_analysis": {
+    "agent_based_approach": {
+      "api_costs": "$0.02 per analysis (Claude API)",
+      "daily_scans": "500 stocks × $0.02 = $10/day",
+      "annual_cost": "$10 × 250 trading days = $2,500/year",
+      "notes": "Does not include additional GPT-4 calls or coordination overhead"
+    },
+    "modular_ml_approach": {
+      "api_costs": "$0",
+      "compute_costs": "Local machine - negligible electricity",
+      "annual_cost": "$0",
+      "notes": "All processing is local Python code"
+    },
+    "optional_llm_features": {
+      "use_case": "News sentiment analysis on top 10 candidates only",
+      "cost": "$0.02 × 10 stocks × 250 days = $50/year",
+      "notes": "Can add selectively if needed, but core system doesn't require it"
+    }
+  },
+
+  "success_metrics": {
+    "short_term": {
+      "timeline": "Week 1-2",
+      "goals": [
+        "✅ Core pipeline functional (scan → analyze → signal)",
+        "✅ Can process 500 stocks in < 5 minutes",
+        "✅ 5+ indicators integrated and working",
+        "✅ Trade tracking database operational",
+        "✅ Manual signal generation working"
+      ]
+    },
+    "medium_term": {
+      "timeline": "Week 3-4",
+      "goals": [
+        "✅ Learning loop functional (retrain weekly)",
+        "✅ Ensemble models voting on signals",
+        "✅ Performance metrics tracking",
+        "✅ Automated daily scanning",
+        "✅ 50+ trades recorded for learning"
+      ]
+    },
+    "long_term": {
+      "timeline": "Month 2+",
+      "goals": [
+        "✅ System win rate > 55% (better than random)",
+        "✅ Positive profit factor (> 1.0)",
+        "✅ Proprietary indicators integrated and tested",
+        "✅ Measurable improvement over baseline (5-10% win rate increase)",
+        "✅ Can explain why it recommends each trade"
+      ]
+    },
+    "kpi_targets": {
+      "win_rate": "> 55% (60%+ is excellent)",
+      "profit_factor": "> 1.5 (2.0+ is excellent)",
+      "sharpe_ratio": "> 1.0 (2.0+ is excellent)",
+      "max_drawdown": "< 20%",
+      "avg_trade_duration": "3-7 days (swing trading)",
+      "signals_per_day": "5-10 high-confidence trades"
+    }
+  },
+
+  "risk_management": {
+    "position_sizing": {
+      "max_position_size": "10% of portfolio per trade",
+      "total_exposure": "Max 50% of portfolio in open positions",
+      "stop_loss": "Configurable per trade (e.g., 2% below entry)",
+      "take_profit": "Configurable per trade (e.g., 6% above entry)"
+    },
+    "portfolio_rules": {
+      "max_open_positions": "10 concurrent positions",
+      "max_correlated_positions": "No more than 3 positions in same sector",
+      "diversification": "At least 3 different sectors represented"
+    },
+    "learning_safeguards": {
+      "validation_set": "20% of trades held out for testing",
+      "rolling_window": "Performance measured over last 50 trades only",
+      "outlier_detection": "Extreme trades (> 3 std dev) flagged and reviewed",
+      "overfitting_prevention": "Regularization in ML models, feature selection"
+    }
+  },
+
+  "extensibility_examples": {
+    "adding_news_sentiment": {
+      "description": "Add LLM-based news analysis for top candidates",
+      "implementation": "class NewsSentimentAnalyzer:\n    def analyze(self, symbol, start_date, end_date):\n        # Fetch news for symbol\n        news = self._fetch_news(symbol)\n        \n        # Call Claude API for sentiment (optional, only for top picks)\n        if len(news) > 0:\n            sentiment = self._call_claude_api(news)\n        else:\n            sentiment = 0.5  # neutral\n        \n        return {\n            'signal_strength': sentiment,\n            'direction': 'bullish' if sentiment > 0.6 else 'bearish' if sentiment < 0.4 else 'neutral',\n            'confidence': 0.7,\n            'metadata': {'news_count': len(news)}\n        }",
+      "cost": "Only call API for top 10 stocks = ~$50/year"
+    },
+    "adding_proprietary_volume_indicator": {
+      "description": "User's secret volume flow indicator",
+      "steps": [
+        "1. Create class: class VolumeFlowAnalyzer",
+        "2. Implement analyze() method with your formula",
+        "3. Register: system.add_analyzer('volume_flow', VolumeFlowAnalyzer())",
+        "4. System automatically uses it in scanning and learns its value"
+      ]
+    },
+    "adding_sector_rotation": {
+      "description": "Detect sector rotations and favor strong sectors",
+      "implementation": "class SectorRotationAnalyzer:\n    def analyze(self, symbol, start_date, end_date):\n        sector = self._get_sector(symbol)\n        sector_strength = self._calculate_sector_momentum(sector)\n        \n        return {\n            'signal_strength': sector_strength,\n            'direction': 'bullish' if sector_strength > 0.6 else 'neutral',\n            'confidence': 0.8,\n            'metadata': {'sector': sector}\n        }"
+    }
+  },
+
+  "next_steps": {
+    "tomorrow_session_start": [
+      "1. Review this JSON and TOMORROW_START_HERE.md",
+      "2. Set up project structure (backend/ml/ directory)",
+      "3. Create base classes (TradingSystem, AnalyzerRegistry)",
+      "4. Implement StockScanner to filter S&P 500",
+      "5. Build first analyzer (ORDVolumeAnalyzer reusing existing code)",
+      "6. Create TradeTracker with SQLite database",
+      "7. Test end-to-end: scan → analyze → signal"
+    ],
+    "week_1_milestones": [
+      "Day 1-2: Core pipeline infrastructure",
+      "Day 3-4: Standard indicators (RSI, MACD, etc.)",
+      "Day 5-6: Basic ML model and feature extraction",
+      "Day 7: Testing and refinement"
+    ]
+  },
+
+  "important_notes": {
+    "no_agents_decision": "User confirmed: Use modular ML pipeline, NOT multi-agent system. Saves token costs, reduces complexity, easier to extend.",
+    "proprietary_indicators": "User has proprietary indicators to add LATER (after core system is stable). System designed for easy plugin.",
+    "sp500_scanning": "System scans ENTIRE S&P 500 daily, not just a few stocks. Need efficient processing.",
+    "multiple_indicators": "ORD Volume is just ONE indicator among many. System learns which indicators work best.",
+    "learning_is_key": "System must learn from trade outcomes and improve over time. This is the core value proposition.",
+    "zero_token_cost": "Must be $0 in API costs for core system. Can optionally add LLM features later for specific use cases."
+  },
+
+  "file_structure": {
+    "backend/ml/": "New directory for ML system",
+    "backend/ml/core/": "Core classes (TradingSystem, AnalyzerRegistry, etc.)",
+    "backend/ml/analyzers/": "All analyzer implementations",
+    "backend/ml/models/": "ML model classes",
+    "backend/ml/learning/": "Learning engine and weight optimizer",
+    "backend/ml/utils/": "Utility functions",
+    "backend/data/trading_system.db": "SQLite database",
+    "backend/data/ml_models/": "Saved model files",
+    "backend/logs/ml_system.log": "System logs"
+  },
+
+  "questions_to_answer_tomorrow": {
+    "data_source": "Confirm using yfinance for stock data (already in use)",
+    "scanning_time": "What time to run daily scan? (After market close at 4pm ET?)",
+    "signal_delivery": "How to deliver signals? (Email, UI dashboard, both?)",
+    "initial_indicators": "Which indicators to start with? (ORD Volume + RSI + MACD + Volume?)",
+    "backtest_period": "How much historical data for initial backtest? (1 year? 2 years?)"
+  }
+}
