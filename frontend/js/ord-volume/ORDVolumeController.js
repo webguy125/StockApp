@@ -12,7 +12,8 @@ import { ORDVolumeRenderer } from './ORDVolumeRenderer.js';
 export class ORDVolumeController {
   constructor() {
     this.mode = 'auto'; // 'draw' or 'auto'
-    this.lineCount = 3; // Default for auto mode
+    this.lineCount = 100; // Default for auto mode (was 3)
+    this.sensitivity = 'high'; // 'normal' or 'high' (lookback 2 or 1)
     this.isActive = false;
     this.isDrawing = false;
     this.currentLines = [];
@@ -60,11 +61,21 @@ export class ORDVolumeController {
             <!-- Line Count (visible in Auto mode) -->
             <div id="ord-line-count-group" class="ord-volume-setting" style="display: none;">
               <label for="ord-line-count">Number of Trendlines (3-100):</label>
-              <input type="number" id="ord-line-count" min="3" max="100" value="3" />
+              <input type="number" id="ord-line-count" min="3" max="100" value="100" />
             </div>
 
             <!-- Properties Section -->
             <div class="ord-volume-properties">
+              <h4 style="margin: 15px 0 10px 0; font-size: 14px; color: #888;">Analysis Options</h4>
+
+              <!-- Sensitivity Toggle -->
+              <div class="ord-volume-checkbox-group">
+                <label>
+                  <input type="checkbox" id="ord-high-sensitivity" checked />
+                  <span>High Sensitivity (More Swing Points)</span>
+                </label>
+              </div>
+
               <h4 style="margin: 15px 0 10px 0; font-size: 14px; color: #888;">Display Options</h4>
               <div class="ord-volume-checkbox-group">
                 <label>
@@ -88,6 +99,7 @@ export class ORDVolumeController {
             <div id="ord-status" class="ord-volume-status"></div>
           </div>
           <div class="ord-volume-modal-footer">
+            <button id="ord-clear-btn" class="ord-btn-danger" style="margin-right: auto;">Clear ORD Volume</button>
             <button id="ord-analyze-btn" class="ord-btn-primary">Analyze</button>
             <button id="ord-cancel-btn" class="ord-btn-secondary">Cancel</button>
           </div>
@@ -105,6 +117,7 @@ export class ORDVolumeController {
     this.lineCountInput = document.getElementById('ord-line-count');
     this.analyzeBtn = document.getElementById('ord-analyze-btn');
     this.cancelBtn = document.getElementById('ord-cancel-btn');
+    this.clearBtn = document.getElementById('ord-clear-btn');
 
     // Add modal styles
     this._addModalStyles();
@@ -256,6 +269,23 @@ export class ORDVolumeController {
         font-size: 13px;
       }
 
+      .ord-volume-checkbox-group {
+        margin-bottom: 10px;
+      }
+
+      .ord-volume-checkbox-group label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        color: var(--tos-text-primary, #ffffff);
+        font-size: 13px;
+      }
+
+      .ord-volume-checkbox-group input[type="checkbox"] {
+        margin-right: 8px;
+        cursor: pointer;
+      }
+
       .ord-volume-modal-footer {
         display: flex;
         justify-content: flex-end;
@@ -292,6 +322,22 @@ export class ORDVolumeController {
       .ord-btn-secondary:hover {
         background: var(--tos-bg-hover, #333);
       }
+
+      .ord-btn-danger {
+        background: #dc3545;
+        color: #ffffff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .ord-btn-danger:hover {
+        background: #c82333;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -322,6 +368,9 @@ export class ORDVolumeController {
     // Cancel button
     this.cancelBtn.addEventListener('click', () => this.closeModal());
 
+    // Clear button
+    this.clearBtn.addEventListener('click', () => this.clearORDVolume());
+
     // Line count input
     this.lineCountInput.addEventListener('change', (e) => {
       let value = parseInt(e.target.value);
@@ -330,6 +379,25 @@ export class ORDVolumeController {
       this.lineCount = value;
       e.target.value = value;
     });
+
+    // Sensitivity checkbox
+    const sensitivityCheckbox = document.getElementById('ord-high-sensitivity');
+    if (sensitivityCheckbox) {
+      sensitivityCheckbox.addEventListener('change', (e) => {
+        this.sensitivity = e.target.checked ? 'high' : 'normal';
+        console.log(`[ORD Controller] Sensitivity: ${this.sensitivity} (lookback ${this.sensitivity === 'high' ? 1 : 2})`);
+
+        // Save preference
+        localStorage.setItem('ordVolumeSensitivity', this.sensitivity);
+      });
+
+      // Load saved preference
+      const savedSensitivity = localStorage.getItem('ordVolumeSensitivity');
+      if (savedSensitivity) {
+        this.sensitivity = savedSensitivity;
+        sensitivityCheckbox.checked = (savedSensitivity === 'high');
+      }
+    }
 
     // Trade signals checkbox
     const showSignalsCheckbox = document.getElementById('ord-show-signals');
@@ -426,24 +494,29 @@ export class ORDVolumeController {
       document.getElementById('ord-draw-instructions').style.display = 'block';
       document.getElementById('ord-auto-instructions').style.display = 'none';
 
-      // In draw mode, close the modal and start drawing
+      // In draw mode, close the modal immediately and start drawing
       console.log('[ORD Volume] Entering draw mode - closing modal');
+      this.isActive = false; // Allow reopening modal while in draw mode
       this.modal.style.display = 'none';
 
       // Enable drawing mode on renderer
       if (this.renderer) {
         this.renderer.enableDrawMode();
 
-        // Set callback to update line counter
+        // Set callback to run analysis after each line is drawn
         this.renderer.onLineDrawn = (count) => {
-          this._updateLineCounter();
+          console.log(`[ORD Volume] ${count} lines drawn, running live analysis...`);
+          // Run analysis automatically after each line (if at least 3 lines)
+          if (count >= 3) {
+            this._runDrawModeAnalysis();
+          }
         };
 
-        console.log('[ORD Volume] Draw mode enabled - draw lines on chart, then press Enter or click ORD Volume button again to analyze');
+        console.log('[ORD Volume] Draw mode enabled - draw lines on chart (analysis runs automatically)');
       }
 
-      // Show instructions on screen
-      this._showDrawingInstructions();
+      // DON'T show instructions panel - just let user draw
+      // this._showDrawingInstructions(); // REMOVED
 
     } else {
       this.autoModeBtn.classList.add('active');
@@ -474,8 +547,41 @@ export class ORDVolumeController {
         return;
       }
 
+      console.log(`[ORD Volume] Analyzing ${this.candles.length} candles`);
+
+      // Check minimum data requirements for ORD Volume
+      const MIN_BARS_REQUIRED = 100;  // Absolute minimum for basic analysis
+      const RECOMMENDED_BARS = 500;   // Recommended for accurate ORD Volume signals
+      const MAX_BARS_ALLOWED = 4500;  // Maximum before performance degrades (allows Daily ~4000 bars)
+
+      if (this.candles.length < MIN_BARS_REQUIRED) {
+        this._updateStatus(`Error: Insufficient data. Need at least ${MIN_BARS_REQUIRED} bars, have ${this.candles.length}. Try a longer timeframe (Daily recommended).`, 'error');
+        alert(`ORD Volume Analysis Error\n\nInsufficient data for analysis.\n\nRequired: ${MIN_BARS_REQUIRED}+ bars\nAvailable: ${this.candles.length} bars\n\nSuggestion: Use Daily or Weekly timeframe for best results.\nORD Volume methodology requires significant historical data.`);
+        return;
+      }
+
+      // IMPORTANT: Block Auto mode only if too much data, Draw mode is OK
+      if (this.mode === 'auto' && this.candles.length > MAX_BARS_ALLOWED) {
+        this._updateStatus(`Error: Auto mode not available - too much data (${this.candles.length} bars)`, 'error');
+        alert(`ORD Volume Auto Mode Not Available\n\nDataset too large for Auto mode.\n\nMaximum: ${MAX_BARS_ALLOWED} bars\nYou have: ${this.candles.length} bars\n\n✅ SOLUTION: Use Draw mode instead!\nDraw mode works on any timeframe (manually draw 3+ trendlines).\n\n❌ Auto mode requires swing point detection which freezes on large datasets.\n\nClick "Draw" to switch modes.`);
+        return;
+      }
+
+      // Draw mode can handle larger datasets (manual drawing, no swing detection)
+      if (this.mode === 'draw' && this.candles.length > MAX_BARS_ALLOWED) {
+        console.warn(`[ORD Volume] Draw mode with ${this.candles.length} bars (exceeds auto mode limit, but manual drawing is OK)`);
+      }
+
+      if (this.candles.length < RECOMMENDED_BARS) {
+        console.warn(`[ORD Volume] WARNING: Only ${this.candles.length} bars available. ${RECOMMENDED_BARS}+ recommended for accurate signals.`);
+        this._updateStatus(`Warning: Limited data (${this.candles.length} bars). 500+ bars recommended.`, 'warning');
+      }
+
       // Create analyzer
       const analyzer = new ORDVolumeAnalysis(this.candles);
+
+      // Set sensitivity (lookback period for swing detection)
+      analyzer.setSensitivity(this.sensitivity);
 
       if (this.mode === 'draw') {
         // Get lines from renderer (user drawn)
@@ -490,14 +596,14 @@ export class ORDVolumeController {
         this.analysisResult = analyzer.analyzeDrawMode(drawnLines);
       } else {
         // Auto mode
-        this._updateStatus(`Detecting ${this.lineCount} trendlines...`);
+        this._updateStatus(`Detecting ${this.lineCount} trendlines (${this.sensitivity} sensitivity)...`);
         this.analysisResult = analyzer.analyzeAutoMode(this.lineCount);
       }
 
       // Store result in bridge for persistent rendering
       if (window.ordVolumeBridge) {
         window.ordVolumeBridge.setChartRenderer(this.renderer.chartState);
-        window.ordVolumeBridge.setAnalysis(this.analysisResult);
+        window.ordVolumeBridge.setAnalysis(this.analysisResult, this.candles);
         console.log('[ORD Volume] Analysis stored in bridge');
       }
 
@@ -681,7 +787,46 @@ export class ORDVolumeController {
   }
 
   /**
-   * Finish drawing and perform analysis
+   * Run analysis in draw mode (called automatically after each line)
+   * @private
+   */
+  _runDrawModeAnalysis() {
+    try {
+      // Get lines from renderer (user drawn)
+      const drawnLines = this.renderer.getDrawnLines();
+
+      if (drawnLines.length < 3) {
+        return; // Need at least 3 lines
+      }
+
+      console.log(`[ORD Volume] Running analysis on ${drawnLines.length} drawn lines...`);
+
+      // Create analyzer
+      const analyzer = new ORDVolumeAnalysis(this.candles);
+      analyzer.setSensitivity(this.sensitivity);
+
+      // Analyze drawn lines
+      this.analysisResult = analyzer.analyzeDrawMode(drawnLines);
+
+      // Store result in bridge for persistent rendering
+      if (window.ordVolumeBridge) {
+        window.ordVolumeBridge.setChartRenderer(this.renderer.chartState);
+        window.ordVolumeBridge.setAnalysis(this.analysisResult, this.candles);
+        console.log('[ORD Volume] Draw mode analysis complete, stored in bridge');
+      }
+
+      // Trigger chart redraw to show overlays
+      if (this.renderer.chartState && this.renderer.chartState.draw) {
+        this.renderer.chartState.draw();
+      }
+
+    } catch (error) {
+      console.error('[ORD Volume] Error during draw mode analysis:', error);
+    }
+  }
+
+  /**
+   * Finish drawing and perform analysis (DEPRECATED - now runs automatically)
    * @private
    */
   _finishDrawing() {
@@ -692,5 +837,40 @@ export class ORDVolumeController {
 
     // Perform analysis
     this.analyze();
+  }
+
+  /**
+   * Clear ORD Volume analysis and lines from current chart
+   */
+  clearORDVolume() {
+    console.log('[ORD Volume] Clearing ORD Volume for current chart');
+
+    // Clear from bridge (removes from current chart storage)
+    if (window.ordVolumeBridge) {
+      window.ordVolumeBridge.clearAnalysis();
+    }
+
+    // Clear renderer state
+    if (this.renderer) {
+      this.renderer.clearDrawingMode();
+    }
+
+    // Clear local state
+    this.analysisResult = null;
+    this.currentLines = [];
+    this.tempLines = [];
+
+    // Trigger chart redraw to remove overlays
+    if (this.renderer && this.renderer.chartState && this.renderer.chartState.draw) {
+      this.renderer.chartState.draw();
+    }
+
+    // Update status
+    this._updateStatus('ORD Volume cleared', 'success');
+
+    // Close modal after short delay
+    setTimeout(() => this.closeModal(), 1000);
+
+    console.log('[ORD Volume] Cleared successfully');
   }
 }

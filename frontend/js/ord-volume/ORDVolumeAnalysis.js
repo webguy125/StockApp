@@ -6,6 +6,9 @@
  * NO SHARED CODE - All functionality self-contained
  */
 
+import { ORDVolumeIndicators } from './ORDVolumeIndicators.js';
+import { ORDVolumeSignals } from './ORDVolumeSignals.js';
+
 export class ORDVolumeAnalysis {
   constructor(candles) {
     if (!Array.isArray(candles) || candles.length === 0) {
@@ -24,6 +27,21 @@ export class ORDVolumeAnalysis {
     this.waveData = [];
     this.retestStrength = null;
     this.retestColor = null;
+    this.sensitivity = 'high'; // Default: 'normal' (lookback 2) or 'high' (lookback 1)
+  }
+
+  /**
+   * Set sensitivity for swing point detection
+   * @param {String} sensitivity - 'normal' or 'high'
+   */
+  setSensitivity(sensitivity) {
+    if (sensitivity !== 'normal' && sensitivity !== 'high') {
+      console.warn(`[ORD Volume] Invalid sensitivity: ${sensitivity}, using 'high'`);
+      this.sensitivity = 'high';
+    } else {
+      this.sensitivity = sensitivity;
+    }
+    console.log(`[ORD Volume] Sensitivity set to: ${this.sensitivity} (lookback ${this.sensitivity === 'high' ? 1 : 2})`);
   }
 
   /**
@@ -50,6 +68,16 @@ export class ORDVolumeAnalysis {
         throw new Error(`Invalid line at index ${i}: must be [x1, y1, x2, y2]`);
       }
     }
+
+    // CRITICAL: Sort lines by starting X position (chronological order)
+    // This ensures lines are numbered 1, 2, 3... from left to right on chart
+    waveLines = waveLines.slice().sort((a, b) => {
+      const startA = Math.min(a[0], a[2]); // Leftmost X of line A
+      const startB = Math.min(b[0], b[2]); // Leftmost X of line B
+      return startA - startB;
+    });
+
+    console.log('[ORD Volume] Lines sorted by chronological order (left to right)');
 
     this.mode = 'draw';
     this.waveLines = waveLines;
@@ -80,13 +108,29 @@ export class ORDVolumeAnalysis {
       throw new Error('lineCount must be an integer between 3 and 100');
     }
 
+    // CRITICAL: Check bar count BEFORE any calculations
+    const MAX_BARS = 4500; // Balanced limit - Daily works (4077 bars), but 15m/5m/1m blocked
+    if (this.candles.length > MAX_BARS) {
+      throw new Error(`Dataset too large. Maximum ${MAX_BARS} bars supported, got ${this.candles.length} bars. Use Daily or Weekly timeframe.`);
+    }
+
     this.mode = 'auto';
 
     // Detect swing points using fractal detection
     const swingPoints = this._detectSwingPoints();
 
-    if (swingPoints.length < lineCount + 1) {
-      throw new Error(`Not enough swing points detected. Need ${lineCount + 1}, found ${swingPoints.length}`);
+    // GRACEFUL FALLBACK: Use whatever swing points are available
+    const minRequired = lineCount + 1;
+    if (swingPoints.length < minRequired) {
+      const maxPossible = Math.max(3, swingPoints.length - 1);
+      console.warn(`[ORD Volume] Requested ${lineCount} lines but only ${swingPoints.length} swing points detected. Using ${maxPossible} lines instead.`);
+
+      if (swingPoints.length < 4) {
+        throw new Error(`Insufficient swing points for analysis. Found ${swingPoints.length}, minimum 4 required. Try a longer timeframe or use Daily/Weekly data.`);
+      }
+
+      // Adjust lineCount to maximum available
+      lineCount = maxPossible;
     }
 
     // Generate trendlines from swing points (zigzag)
@@ -108,13 +152,14 @@ export class ORDVolumeAnalysis {
   }
 
   /**
-   * Detect swing points using 2-period fractal detection
+   * Detect swing points using adaptive fractal detection
    * @private
    * @returns {Array} Array of swing point objects {index, price, type}
    */
   _detectSwingPoints() {
     const swings = [];
-    const lookback = 2; // 2-period fractals
+    // Use sensitivity setting: 'high' = lookback 1 (more swings), 'normal' = lookback 2 (fewer swings)
+    const lookback = this.sensitivity === 'high' ? 1 : 2;
 
     for (let i = lookback; i < this.candles.length - lookback; i++) {
       const candle = this.candles[i];
@@ -155,8 +200,14 @@ export class ORDVolumeAnalysis {
       }
     }
 
+    console.log(`[ORD Volume] Detected ${swings.length} raw swing points (lookback=${lookback}, sensitivity=${this.sensitivity})`);
+
     // Filter to create proper zigzag (alternating highs and lows)
-    return this._createZigzag(swings);
+    const zigzag = this._createZigzag(swings);
+
+    console.log(`[ORD Volume] After zigzag filter: ${zigzag.length} swing points available for trendline generation`);
+
+    return zigzag;
   }
 
   /**
@@ -629,8 +680,13 @@ export class ORDVolumeAnalysis {
       }
     }
 
-    // Generate trade signals based on ORD Volume patterns
-    const tradeSignals = this._generateTradeSignals();
+    // Calculate ORD Volume indicators (Timothy Ord's proprietary methodology)
+    const ordIndicators = new ORDVolumeIndicators(this.candles);
+    const ordAnalysis = ordIndicators.calculate();
+
+    // Generate trade signals with confluence scoring
+    const signalGenerator = new ORDVolumeSignals(this.candles, ordIndicators, this.waveData);
+    const tradeSignals = signalGenerator.generateSignals();
 
     // Return complete analysis result
     return {
@@ -641,77 +697,9 @@ export class ORDVolumeAnalysis {
       color: this.retestColor,
       waveData: this.waveData,
       lines: this.waveLines, // For persistence in draw mode
-      tradeSignals: tradeSignals // Trade signal overlays
+      tradeSignals: tradeSignals, // Professional ORD Volume signals
+      ordVolumeState: ordAnalysis.currentState // Current ORD Volume state
     };
-  }
-
-  /**
-   * Generate trade signals based on ORD Volume analysis
-   * BUY: After Wave C (corrective) with strong volume (≥110%)
-   * SELL: After Wave 5 (impulse) with weak volume (<92%)
-   * @private
-   * @returns {Array} Array of trade signal objects
-   */
-  _generateTradeSignals() {
-    const signals = [];
-
-    for (let i = 1; i < this.waveData.length; i++) {
-      const wave = this.waveData[i];
-      const previousWave = this.waveData[i - 1];
-
-      // Calculate volume ratio
-      const ratio = wave.avgVolume / previousWave.avgVolume;
-
-      const [x1, y1, x2, y2] = wave.line;
-      const isUpward = y2 > y1;
-
-      // BUY Signal: Wave C (corrective) with strong volume going UP
-      if (wave.label === 'C' && ratio >= 1.10 && isUpward) {
-        signals.push({
-          type: 'BUY',
-          x: x2,
-          y: y2,
-          waveLabel: wave.label,
-          strength: ratio
-        });
-      }
-
-      // SELL Signal: Wave 5 (impulse peak) with weak volume or any downward wave with weak volume after Wave 5
-      if (wave.label === '5' && !isUpward) {
-        signals.push({
-          type: 'SELL',
-          x: x2,
-          y: y2,
-          waveLabel: wave.label,
-          strength: ratio
-        });
-      }
-
-      // Additional BUY: Strong upward wave after correction
-      if (wave.isImpulse === true && wave.label === '1' && ratio >= 1.10 && isUpward) {
-        signals.push({
-          type: 'BUY',
-          x: x2,
-          y: y2,
-          waveLabel: wave.label,
-          strength: ratio
-        });
-      }
-
-      // Additional SELL: Weak downward wave after impulse
-      if (wave.isImpulse === false && wave.label === 'A' && ratio < 0.92 && !isUpward) {
-        signals.push({
-          type: 'SELL',
-          x: x2,
-          y: y2,
-          waveLabel: wave.label,
-          strength: ratio
-        });
-      }
-    }
-
-    console.log(`[ORD Volume] Generated ${signals.length} trade signals`);
-    return signals;
   }
 
   /**

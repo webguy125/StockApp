@@ -8,7 +8,8 @@
 
 export class ORDVolumeBridge {
   constructor() {
-    this.currentAnalysis = null;
+    this.currentAnalysis = null; // DEPRECATED: Use analysisStore instead
+    this.analysisStore = new Map(); // Store analysis per chart: 'timeframe:1d' or 'tick:50'
     this.isActive = false;
     this.chartRenderer = null;
     this._hasLoggedDrawing = false;
@@ -16,6 +17,25 @@ export class ORDVolumeBridge {
     this.selectedWaves = []; // Track selected waves for custom comparison
     this.customComparison = null; // Store custom comparison data
     this.showTradeSignals = true; // Toggle for trade signal visibility
+    this.candles = null; // Reference to candle data for signal positioning
+  }
+
+  /**
+   * Get unique chart key for current context
+   * @private
+   */
+  _getChartKey() {
+    if (!window.tosApp) return 'default';
+
+    if (window.tosApp.activeChartType === 'timeframe') {
+      const timeframeId = window.tosApp.currentTimeframeId || 'unknown';
+      return `timeframe:${timeframeId}`;
+    } else if (window.tosApp.activeChartType === 'tick') {
+      const tickId = window.tosApp.currentTickChartId || 'unknown';
+      return `tick:${tickId}`;
+    }
+
+    return 'default';
   }
 
   /**
@@ -34,20 +54,65 @@ export class ORDVolumeBridge {
   }
 
   /**
-   * Store analysis result for persistent rendering
+   * Store analysis result for persistent rendering (per chart)
    */
-  setAnalysis(analysisResult) {
+  setAnalysis(analysisResult, candles) {
+    const chartKey = this._getChartKey();
+
+    // Store in per-chart map
+    this.analysisStore.set(chartKey, {
+      analysis: analysisResult,
+      candles: candles,
+      timestamp: Date.now()
+    });
+
+    // Also update legacy properties for current chart
     this.currentAnalysis = analysisResult;
+    this.candles = candles;
     this.isActive = true;
-    this._hasLoggedDrawing = false; // Reset flag for new analysis
+    this._hasLoggedDrawing = false;
+
+    console.log(`[ORD Bridge] Analysis stored for ${chartKey}`);
   }
 
   /**
-   * Clear the analysis
+   * Get analysis for current chart
+   * @returns {Object|null} Analysis result or null
+   */
+  getAnalysis() {
+    const chartKey = this._getChartKey();
+    const stored = this.analysisStore.get(chartKey);
+
+    if (stored) {
+      // Update current properties
+      this.currentAnalysis = stored.analysis;
+      this.candles = stored.candles;
+      this.isActive = true;
+      return stored.analysis;
+    }
+
+    return null;
+  }
+
+  /**
+   * Clear the analysis for current chart
    */
   clearAnalysis() {
+    const chartKey = this._getChartKey();
+    this.analysisStore.delete(chartKey);
     this.currentAnalysis = null;
     this.isActive = false;
+    console.log(`[ORD Bridge] Analysis cleared for ${chartKey}`);
+  }
+
+  /**
+   * Clear ALL analyses (when switching symbols)
+   */
+  clearAllAnalyses() {
+    this.analysisStore.clear();
+    this.currentAnalysis = null;
+    this.isActive = false;
+    console.log('[ORD Bridge] All analyses cleared (symbol change)');
   }
 
   /**
@@ -68,8 +133,14 @@ export class ORDVolumeBridge {
 
       if (drawingState.isDrawMode) {
         this._drawManualLines(ctx, chartState, drawingState);
-        return; // Don't draw analysis overlays while drawing
+        // CHANGED: Don't return early - draw analysis overlays too if available
+        // This allows live calculations to show while drawing
       }
+    }
+
+    // Auto-load analysis for current chart if not already loaded
+    if (!this.currentAnalysis) {
+      this.getAnalysis(); // This will load from store if exists
     }
 
     // Draw analysis overlays
@@ -97,6 +168,7 @@ export class ORDVolumeBridge {
     console.log('[ORD Bridge] Drawing manual lines:', {
       drawnCount: drawingState.drawnLines.length,
       hasCurrent: !!drawingState.currentLine,
+      selectedLineIndex: drawingState.selectedLineIndex,
       canvasSize: `${ctx.canvas.width}x${ctx.canvas.height}`
     });
 
@@ -106,8 +178,9 @@ export class ORDVolumeBridge {
     for (let i = 0; i < drawingState.drawnLines.length; i++) {
       const line = drawingState.drawnLines[i];
       const [x1, y1, x2, y2] = line;
+      const isSelected = (i === drawingState.selectedLineIndex);
 
-      console.log(`[ORD Bridge] Line ${i} raw:`, {x1, y1, x2, y2});
+      console.log(`[ORD Bridge] Line ${i} raw:`, {x1, y1, x2, y2, isSelected});
 
       const sx1 = this._indexToX(x1, chartState);
       const sy1 = this._priceToY(y1, chartState);
@@ -116,18 +189,39 @@ export class ORDVolumeBridge {
 
       console.log(`[ORD Bridge] Line ${i} screen:`, {sx1, sy1, sx2, sy2});
 
-      // Professional green with subtle shadow
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-      ctx.shadowBlur = 2;
-      ctx.shadowOffsetY = 1;
-      ctx.strokeStyle = '#10B981'; // Emerald green for completed lines
-      ctx.lineWidth = 3;
+      // Highlight selected line with different color and thicker line
+      if (isSelected) {
+        ctx.shadowColor = 'rgba(255, 200, 0, 0.5)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 0;
+        ctx.strokeStyle = '#FCD34D'; // Yellow for selected line
+        ctx.lineWidth = 4;
+      } else {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 2;
+        ctx.shadowOffsetY = 1;
+        ctx.strokeStyle = '#10B981'; // Emerald green for normal lines
+        ctx.lineWidth = 3;
+      }
+
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.beginPath();
       ctx.moveTo(sx1, sy1);
       ctx.lineTo(sx2, sy2);
       ctx.stroke();
+
+      // Draw endpoint circles for selected line
+      if (isSelected) {
+        ctx.fillStyle = '#FCD34D';
+        ctx.shadowBlur = 4;
+        ctx.beginPath();
+        ctx.arc(sx1, sy1, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(sx2, sy2, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // Reset shadow
       ctx.shadowBlur = 0;
@@ -335,31 +429,50 @@ export class ORDVolumeBridge {
   }
 
   /**
-   * Draw trade signals (BUY/SELL indicators)
+   * Draw trade signals (Professional ORD Volume signals with full details)
    * @private
    */
   _drawTradeSignals(ctx, chartState) {
-    if (!this.currentAnalysis.tradeSignals) return;
+    if (!this.currentAnalysis.tradeSignals || this.currentAnalysis.tradeSignals.length === 0) return;
+
+    // Need candles to position signals
+    if (!this.candles || this.candles.length === 0) {
+      console.log('[ORD Bridge] Cannot draw signals: candles not available');
+      return;
+    }
 
     ctx.save();
 
+    console.log('[ORD Bridge] Drawing', this.currentAnalysis.tradeSignals.length, 'professional trade signals');
+
     for (const signal of this.currentAnalysis.tradeSignals) {
+      // Get entry price position (signals now contain full signal objects from ORDVolumeSignals)
+      const entryX = this.candles.length - 1; // Current bar
+      const entryY = signal.entry;
+
       // Convert to screen coordinates
-      const x = this._indexToX(signal.x, chartState);
-      const y = this._priceToY(signal.y, chartState);
+      const entryScreenX = this._indexToX(entryX, chartState);
+      const entryScreenY = this._priceToY(entryY, chartState);
 
       // Skip if off-screen
-      if (x < 0 || x > ctx.canvas.width || y < 0 || y > ctx.canvas.height) {
+      if (entryScreenX < 0 || entryScreenX > ctx.canvas.width) {
         continue;
       }
 
-      // Draw arrow and label
-      if (signal.type === 'BUY') {
-        // BUY signal - green arrow pointing up
-        this._drawBuySignal(ctx, x, y);
-      } else if (signal.type === 'SELL') {
-        // SELL signal - red arrow pointing down
-        this._drawSellSignal(ctx, x, y);
+      console.log(`[ORD Bridge] Signal ${signal.signal_id}:`, {
+        direction: signal.direction,
+        entry: signal.entry,
+        stop: signal.stop,
+        targets: [signal.target_1, signal.target_2, signal.target_3],
+        confluence: signal.confluence_score,
+        probability: signal.probability
+      });
+
+      // Draw signal based on direction
+      if (signal.direction === 'LONG') {
+        this._drawProfessionalLongSignal(ctx, chartState, signal, entryScreenX, entryScreenY);
+      } else if (signal.direction === 'SHORT') {
+        this._drawProfessionalShortSignal(ctx, chartState, signal, entryScreenX, entryScreenY);
       }
     }
 
@@ -367,85 +480,220 @@ export class ORDVolumeBridge {
   }
 
   /**
-   * Draw BUY signal arrow
+   * Draw professional LONG signal with entry, stop, targets, and details
    * @private
    */
-  _drawBuySignal(ctx, x, y) {
-    const arrowSize = 20;
-    const yOffset = 40; // Position below the point
-
+  _drawProfessionalLongSignal(ctx, chartState, signal, entryX, entryY) {
     ctx.save();
 
-    // Draw upward arrow
+    // Draw horizontal price levels
+    this._drawPriceLevel(ctx, chartState, signal.stop, '#EF4444', 'STOP', true); // Red for stop
+    this._drawPriceLevel(ctx, chartState, signal.entry, '#10B981', 'ENTRY', false); // Green for entry
+    this._drawPriceLevel(ctx, chartState, signal.target_1, '#3B82F6', 'T1', false); // Blue for targets
+    this._drawPriceLevel(ctx, chartState, signal.target_2, '#3B82F6', 'T2', false);
+    this._drawPriceLevel(ctx, chartState, signal.target_3, '#3B82F6', 'T3', false);
+
+    // Draw upward arrow at entry point
+    const arrowSize = 24;
+    const yOffset = 50; // Position below entry
+
     ctx.beginPath();
-    ctx.moveTo(x, y + yOffset); // Arrow tip
-    ctx.lineTo(x - arrowSize / 2, y + yOffset + arrowSize); // Left point
-    ctx.lineTo(x - arrowSize / 4, y + yOffset + arrowSize); // Left of shaft
-    ctx.lineTo(x - arrowSize / 4, y + yOffset + arrowSize * 1.5); // Shaft left
-    ctx.lineTo(x + arrowSize / 4, y + yOffset + arrowSize * 1.5); // Shaft right
-    ctx.lineTo(x + arrowSize / 4, y + yOffset + arrowSize); // Right of shaft
-    ctx.lineTo(x + arrowSize / 2, y + yOffset + arrowSize); // Right point
+    ctx.moveTo(entryX, entryY + yOffset); // Arrow tip
+    ctx.lineTo(entryX - arrowSize / 2, entryY + yOffset + arrowSize); // Left point
+    ctx.lineTo(entryX - arrowSize / 4, entryY + yOffset + arrowSize); // Left of shaft
+    ctx.lineTo(entryX - arrowSize / 4, entryY + yOffset + arrowSize * 1.5); // Shaft left
+    ctx.lineTo(entryX + arrowSize / 4, entryY + yOffset + arrowSize * 1.5); // Shaft right
+    ctx.lineTo(entryX + arrowSize / 4, entryY + yOffset + arrowSize); // Right of shaft
+    ctx.lineTo(entryX + arrowSize / 2, entryY + yOffset + arrowSize); // Right point
     ctx.closePath();
 
     // Fill with green
-    ctx.fillStyle = '#00FF00';
+    ctx.fillStyle = '#10B981';
     ctx.fill();
 
     // Outline
-    ctx.strokeStyle = '#008800';
+    ctx.strokeStyle = '#059669';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Add "BUY" text
-    ctx.font = 'bold 12px Arial';
-    ctx.fillStyle = '#FFFFFF';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-    ctx.shadowBlur = 3;
-    ctx.fillText('BUY', x, y + yOffset + arrowSize * 1.5 + 5);
+    // Draw info panel
+    this._drawSignalInfoPanel(ctx, signal, entryX + 60, entryY);
 
     ctx.restore();
   }
 
   /**
-   * Draw SELL signal arrow
+   * Draw professional SHORT signal with entry, stop, targets, and details
    * @private
    */
-  _drawSellSignal(ctx, x, y) {
-    const arrowSize = 20;
-    const yOffset = -40; // Position above the point
-
+  _drawProfessionalShortSignal(ctx, chartState, signal, entryX, entryY) {
     ctx.save();
 
-    // Draw downward arrow
+    // Draw horizontal price levels
+    this._drawPriceLevel(ctx, chartState, signal.stop, '#EF4444', 'STOP', true); // Red for stop
+    this._drawPriceLevel(ctx, chartState, signal.entry, '#EF4444', 'ENTRY', false); // Red for entry (short)
+    this._drawPriceLevel(ctx, chartState, signal.target_1, '#3B82F6', 'T1', false); // Blue for targets
+    this._drawPriceLevel(ctx, chartState, signal.target_2, '#3B82F6', 'T2', false);
+    this._drawPriceLevel(ctx, chartState, signal.target_3, '#3B82F6', 'T3', false);
+
+    // Draw downward arrow at entry point
+    const arrowSize = 24;
+    const yOffset = -50; // Position above entry
+
     ctx.beginPath();
-    ctx.moveTo(x, y + yOffset); // Arrow tip
-    ctx.lineTo(x - arrowSize / 2, y + yOffset - arrowSize); // Left point
-    ctx.lineTo(x - arrowSize / 4, y + yOffset - arrowSize); // Left of shaft
-    ctx.lineTo(x - arrowSize / 4, y + yOffset - arrowSize * 1.5); // Shaft left
-    ctx.lineTo(x + arrowSize / 4, y + yOffset - arrowSize * 1.5); // Shaft right
-    ctx.lineTo(x + arrowSize / 4, y + yOffset - arrowSize); // Right of shaft
-    ctx.lineTo(x + arrowSize / 2, y + yOffset - arrowSize); // Right point
+    ctx.moveTo(entryX, entryY + yOffset); // Arrow tip
+    ctx.lineTo(entryX - arrowSize / 2, entryY + yOffset - arrowSize); // Left point
+    ctx.lineTo(entryX - arrowSize / 4, entryY + yOffset - arrowSize); // Left of shaft
+    ctx.lineTo(entryX - arrowSize / 4, entryY + yOffset - arrowSize * 1.5); // Shaft left
+    ctx.lineTo(entryX + arrowSize / 4, entryY + yOffset - arrowSize * 1.5); // Shaft right
+    ctx.lineTo(entryX + arrowSize / 4, entryY + yOffset - arrowSize); // Right of shaft
+    ctx.lineTo(entryX + arrowSize / 2, entryY + yOffset - arrowSize); // Right point
     ctx.closePath();
 
     // Fill with red
-    ctx.fillStyle = '#FF0000';
+    ctx.fillStyle = '#EF4444';
     ctx.fill();
 
     // Outline
-    ctx.strokeStyle = '#880000';
+    ctx.strokeStyle = '#DC2626';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Add "SELL" text
-    ctx.font = 'bold 12px Arial';
-    ctx.fillStyle = '#FFFFFF';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
+    // Draw info panel
+    this._drawSignalInfoPanel(ctx, signal, entryX + 60, entryY);
+
+    ctx.restore();
+  }
+
+  /**
+   * Draw horizontal price level line
+   * @private
+   */
+  _drawPriceLevel(ctx, chartState, price, color, label, isDashed) {
+    const y = this._priceToY(price, chartState);
+    const canvasWidth = ctx.canvas.width;
+
+    ctx.save();
+
+    // Draw line
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    if (isDashed) {
+      ctx.setLineDash([8, 4]);
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvasWidth, y);
+    ctx.stroke();
+
+    if (isDashed) {
+      ctx.setLineDash([]);
+    }
+
+    // Draw label on right side
+    ctx.font = 'bold 11px Arial';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
     ctx.shadowBlur = 3;
-    ctx.fillText('SELL', x, y + yOffset - arrowSize * 1.5 - 5);
+    ctx.fillText(`${label} $${price.toFixed(2)}`, canvasWidth - 10, y);
+
+    ctx.restore();
+  }
+
+  /**
+   * Draw signal information panel
+   * @private
+   */
+  _drawSignalInfoPanel(ctx, signal, x, y) {
+    ctx.save();
+
+    // Panel dimensions
+    const panelWidth = 280;
+    const panelHeight = 180;
+    const padding = 12;
+    const lineHeight = 16;
+
+    // Draw panel background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    this._roundRect(ctx, x, y - panelHeight / 2, panelWidth, panelHeight, 8);
+    ctx.fill();
+
+    // Draw panel border
+    ctx.strokeStyle = signal.direction === 'LONG' ? '#10B981' : '#EF4444';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw content
+    let currentY = y - panelHeight / 2 + padding + 12;
+
+    // Title
+    ctx.font = 'bold 14px Arial';
+    ctx.fillStyle = signal.direction === 'LONG' ? '#10B981' : '#EF4444';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`${signal.direction} SIGNAL`, x + padding, currentY);
+    currentY += lineHeight + 4;
+
+    // Confluence and probability
+    ctx.font = 'bold 12px Arial';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(`Confluence: ${signal.confluence_score}/5`, x + padding, currentY);
+    ctx.fillText(`Probability: ${signal.probability}%`, x + padding + 140, currentY);
+    currentY += lineHeight + 4;
+
+    // Risk/Reward
+    ctx.font = '11px Arial';
+    ctx.fillStyle = '#A0A0A0';
+    ctx.fillText(`Risk/Reward: ${signal.rr}`, x + padding, currentY);
+    currentY += lineHeight + 6;
+
+    // ORD triggers
+    ctx.font = 'bold 11px Arial';
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText('ORD Triggers:', x + padding, currentY);
+    currentY += lineHeight;
+
+    ctx.font = '10px Arial';
+    ctx.fillStyle = '#FFFFFF';
+    for (let i = 0; i < Math.min(2, signal.ord_triggers.length); i++) {
+      const trigger = signal.ord_triggers[i];
+      const truncated = trigger.length > 35 ? trigger.substring(0, 32) + '...' : trigger;
+      ctx.fillText(`• ${truncated}`, x + padding + 8, currentY);
+      currentY += lineHeight - 2;
+    }
+
+    if (signal.ord_triggers.length > 2) {
+      ctx.fillStyle = '#A0A0A0';
+      ctx.fillText(`  +${signal.ord_triggers.length - 2} more...`, x + padding + 8, currentY);
+      currentY += lineHeight;
+    } else {
+      currentY += 4;
+    }
+
+    // Elliott Wave triggers (if any)
+    if (signal.ew_triggers && signal.ew_triggers.length > 0) {
+      currentY += 2;
+      ctx.font = 'bold 11px Arial';
+      ctx.fillStyle = '#87CEEB';
+      ctx.fillText('Elliott Wave:', x + padding, currentY);
+      currentY += lineHeight;
+
+      ctx.font = '10px Arial';
+      ctx.fillStyle = '#FFFFFF';
+      const ewTruncated = signal.ew_triggers[0].length > 35 ? signal.ew_triggers[0].substring(0, 32) + '...' : signal.ew_triggers[0];
+      ctx.fillText(`• ${ewTruncated}`, x + padding + 8, currentY);
+    }
+
+    // ORD Quote at bottom
+    currentY = y + panelHeight / 2 - padding - 12;
+    ctx.font = 'italic 10px Arial';
+    ctx.fillStyle = '#FFD700';
+    ctx.textAlign = 'left';
+    const quote = signal.ord_quote.length > 40 ? signal.ord_quote.substring(0, 37) + '...' : signal.ord_quote;
+    ctx.fillText(`"${quote}"`, x + padding, currentY);
 
     ctx.restore();
   }

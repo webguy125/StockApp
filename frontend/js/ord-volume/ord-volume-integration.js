@@ -32,16 +32,74 @@ export function initializeORDVolume() {
   ordVolumeBtn.addEventListener('click', () => {
     console.log('[ORD Volume] Button clicked');
 
+    // Note: 1m and 5m timeframes are allowed now (for Draw mode only)
+    // Auto mode will be blocked in the controller if too much data
+
+    // CRITICAL: Check data length BEFORE extraction to prevent freeze
+    const MAX_CANDLES = 4500;
+    let dataLength = 0;
+    let chartType = 'unknown';
+
+    try {
+      if (window.tosApp?.activeChartType === 'timeframe') {
+        chartType = 'timeframe';
+        const currentTimeframe = window.tosApp.timeframeRegistry?.get(window.tosApp.currentTimeframeId);
+        dataLength = currentTimeframe?.data?.length || 0;
+        console.log(`[ORD Volume] Pre-check: Timeframe chart has ${dataLength} candles`);
+      } else if (window.tosApp?.activeChartType === 'tick') {
+        // BLOCK tick charts completely - incompatible with ORD Volume methodology
+        console.error('[ORD Volume] BLOCKED: Tick charts are not compatible with ORD Volume analysis');
+        alert(`ORD Volume Not Available on Tick Charts\n\n❌ Tick charts are incompatible with ORD Volume methodology.\n\nWhy?\n• ORD Volume analyzes completed price swings over time\n• Tick charts update continuously with every trade\n• Analysis would become invalid with each new tick\n• Lines would need to be redrawn constantly\n\n✅ SOLUTION: Switch to a timeframe chart\n• Daily (1d) - RECOMMENDED for ORD Volume\n• Weekly (1wk) - Also excellent\n• Hourly (1h) - Works but needs more data\n• Avoid: 1-minute, 5-minute (too much data)`);
+        return;
+      } else {
+        console.warn(`[ORD Volume] Unknown chart type: ${window.tosApp?.activeChartType}`);
+      }
+
+      // CRITICAL: If we can't determine data length, BLOCK to be safe
+      if (dataLength === 0) {
+        console.error('[ORD Volume] WARNING: Could not determine data length - blocking for safety');
+        alert(`ORD Volume Error - Cannot Verify Data Size\n\nUnable to verify dataset size for safety.\n\nThis is a safety measure to prevent browser freezes.\n\nTry:\n1. Reload the chart\n2. Use a Daily or Weekly timeframe\n3. Check browser console for errors`);
+        return;
+      }
+
+      if (dataLength > MAX_CANDLES) {
+        alert(`ORD Volume Error - Dataset Too Large\n\n${chartType} chart has ${dataLength.toLocaleString()} candles\nMaximum allowed: 4,500 candles\n\nThis timeframe has too many bars and will freeze the browser.\n\n✅ Use Daily (1d) or Weekly (1wk) timeframe instead.\n❌ Avoid: Tick charts, 1-minute, 5-minute timeframes with long history.`);
+        console.error(`[ORD Volume] BLOCKED at pre-check: ${dataLength} candles exceeds maximum of ${MAX_CANDLES}`);
+        return; // Abort before any data extraction
+      }
+
+      console.log(`[ORD Volume] ✓ Pre-check passed: ${dataLength} candles (max ${MAX_CANDLES})`);
+    } catch (e) {
+      console.error('[ORD Volume] Error during pre-check:', e);
+      // CRITICAL: If pre-check fails, BLOCK to be safe
+      alert(`ORD Volume Error - Safety Check Failed\n\nCannot verify data size due to error.\n\nError: ${e.message}\n\nBlocking for safety to prevent browser freeze.`);
+      return;
+    }
+
     // Get current chart data (need to extract from existing chart)
     const candles = extractCandleData();
     const symbol = extractCurrentSymbol();
     const canvas = extractChartCanvas();
     const chartState = extractChartState();
 
+    // Check if extraction was aborted due to too much data
     if (!candles || candles.length === 0) {
-      alert('Please load chart data before using ORD Volume');
+      // Check if this was a "too much data" case vs "no data" case
+      const currentTimeframe = window.tosApp?.timeframeRegistry?.get(window.tosApp.currentTimeframeId);
+      const currentTickChart = window.tosApp?.tickChartRegistry?.get(window.tosApp.currentTickChartId);
+      const dataLength = currentTimeframe?.data?.length || currentTickChart?.data?.length || 0;
+
+      if (dataLength > 4500) {
+        alert(`ORD Volume Error - Dataset Too Large\n\nTimeframe has ${dataLength.toLocaleString()} candles\nMaximum allowed: 4,500 candles\n\nThis timeframe has too many bars and will freeze the browser.\n\n✅ Use Daily (1d) or Weekly (1wk) timeframe instead.\n❌ Avoid: 15-minute, 5-minute, 1-minute timeframes.`);
+        console.error(`[ORD Volume] BLOCKED: ${dataLength} candles exceeds maximum of 4500`);
+      } else {
+        alert('Please load chart data before using ORD Volume');
+      }
       return;
     }
+
+    console.log(`[ORD Volume] ✓ Candle count OK: ${candles.length} candles (max 4500)`);
+
 
     // ALWAYS recreate renderer to ensure we have the latest canvas/chartState
     if (canvas) {
@@ -71,7 +129,8 @@ export function initializeORDVolume() {
 
     if (analysis && window.ordVolumeBridge) {
       console.log('[ORD Volume] Loaded saved analysis, displaying on chart');
-      window.ordVolumeBridge.setAnalysis(analysis);
+      // Note: candles not available during auto-load, signals won't render until next analysis run
+      window.ordVolumeBridge.setAnalysis(analysis, null);
 
       // Trigger chart redraw
       const canvas = extractChartCanvas();
@@ -107,11 +166,21 @@ export function initializeORDVolume() {
  * @returns {Array} Array of OHLCV objects
  */
 function extractCandleData() {
+  const MAX_CANDLES = 4500; // MUST match the limit in ord-volume-integration.js
+
   // Method 1: Get data from active timeframe
   if (window.tosApp && window.tosApp.activeChartType === 'timeframe') {
     const currentTimeframe = window.tosApp.timeframeRegistry?.get(window.tosApp.currentTimeframeId);
     if (currentTimeframe && currentTimeframe.data && currentTimeframe.data.length > 0) {
-      console.log(`[ORD Volume] Found ${currentTimeframe.data.length} candles from timeframe ${window.tosApp.currentTimeframeId}`);
+      const dataLength = currentTimeframe.data.length;
+      console.log(`[ORD Volume] Found ${dataLength} candles from timeframe ${window.tosApp.currentTimeframeId}`);
+
+      // CHECK BEFORE CONVERSION to prevent freeze during data processing
+      if (dataLength > MAX_CANDLES) {
+        console.error(`[ORD Volume] Dataset too large: ${dataLength} candles exceeds maximum ${MAX_CANDLES}. Aborting extraction.`);
+        return []; // Return empty to trigger the alert in the caller
+      }
+
       return convertToOHLCV(currentTimeframe.data);
     }
   }
@@ -120,7 +189,15 @@ function extractCandleData() {
   if (window.tosApp && window.tosApp.activeChartType === 'tick') {
     const currentTickChart = window.tosApp.tickChartRegistry?.get(window.tosApp.currentTickChartId);
     if (currentTickChart && currentTickChart.data && currentTickChart.data.length > 0) {
-      console.log(`[ORD Volume] Found ${currentTickChart.data.length} candles from tick chart ${window.tosApp.currentTickChartId}`);
+      const dataLength = currentTickChart.data.length;
+      console.log(`[ORD Volume] Found ${dataLength} candles from tick chart ${window.tosApp.currentTickChartId}`);
+
+      // CHECK BEFORE CONVERSION to prevent freeze during data processing
+      if (dataLength > MAX_CANDLES) {
+        console.error(`[ORD Volume] Dataset too large: ${dataLength} candles exceeds maximum ${MAX_CANDLES}. Aborting extraction.`);
+        return []; // Return empty to trigger the alert in the caller
+      }
+
       return convertToOHLCV(currentTickChart.data);
     }
   }
