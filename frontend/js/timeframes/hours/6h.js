@@ -1,22 +1,22 @@
 /**
- * 1 Minute Timeframe
- * Independent implementation - displays 1-minute candlestick chart with live updates
+ * 6 Hour Timeframe
+ * Independent implementation - displays 6-hour candlestick chart with live updates
  */
 import { CanvasRenderer } from '../../chart-renderers/canvas-renderer.js';
 import { volumeAccumulator } from '../../services/VolumeAccumulator.js';
 
-export class Timeframe1m {
+export class Timeframe6h {
   constructor() {
     // Timeframe configuration
-    this.id = '1m';
-    this.name = '1 minute';
-    this.interval = '1m';
-    this.period = '1d';
-    this.category = 'minutes';
+    this.id = '6h';
+    this.name = '6 hours';
+    this.interval = '6h';
+    this.period = '1y';
+    this.category = 'hours';
     this.isCustom = false;
 
     // Chart renderer (independent instance)
-    this.renderer = new CanvasRenderer('1m');
+    this.renderer = new CanvasRenderer('6h');
 
     // Data and state
     this.symbol = null;
@@ -31,7 +31,7 @@ export class Timeframe1m {
    * Initialize the timeframe for a specific symbol
    */
   async initialize(symbol, socket) {
-    console.log(`📊 [1M] Initializing for ${symbol}`);
+    console.log(`📊 [6H] Initializing for ${symbol}`);
 
     this.symbol = symbol;
     this.socket = socket;
@@ -49,18 +49,18 @@ export class Timeframe1m {
         const lastCandle = this.data[this.data.length - 1];
 
         try {
-          const response = await fetch(`/current-candle-volume/${symbol}?interval=1m`);
+          const response = await fetch(`/current-candle-volume/${symbol}?interval=6h`);
           const currentCandleData = await response.json();
 
-          console.log(`📊 [1M] Current candle volume: ${currentCandleData.volume.toFixed(4)} BTC`);
+          console.log(`📊 [6H] Current candle volume: ${currentCandleData.volume.toFixed(4)} BTC`);
 
-          volumeAccumulator.initializeCandleTimes('1m', currentCandleData.candle_start_time);
-          volumeAccumulator.initializeVolume('1m', currentCandleData.volume);
+          volumeAccumulator.initializeCandleTimes('6h', currentCandleData.candle_start_time);
+          volumeAccumulator.initializeVolume('6h', currentCandleData.volume);
         } catch (error) {
-          console.error(`❌ [1M] Failed to fetch current candle volume:`, error);
+          console.error(`❌ [6H] Failed to fetch current candle volume:`, error);
           // Fallback to 0 if fetch fails
-          volumeAccumulator.initializeCandleTimes('1m', lastCandle.Date);
-          volumeAccumulator.initializeVolume('1m', 0);
+          volumeAccumulator.initializeCandleTimes('6h', lastCandle.Date);
+          volumeAccumulator.initializeVolume('6h', 0);
         }
       }
 
@@ -70,14 +70,14 @@ export class Timeframe1m {
           this.renderer.updateCurrentCandleVolume(volume);
         }
       };
-      volumeAccumulator.registerCallback('1m', this.volumeCallback);
+      volumeAccumulator.registerCallback('6h', this.volumeCallback);
 
       // Subscribe to WebSocket updates for price
       this.subscribeToLiveData();
 
       return true;
     } catch (error) {
-      console.error(`❌ [1M] Initialization error:`, error);
+      console.error(`❌ [6H] Initialization error:`, error);
       return false;
     }
   }
@@ -87,7 +87,6 @@ export class Timeframe1m {
    */
   async loadHistoricalData() {
     const url = `/data/${this.symbol}?interval=${this.interval}&period=${this.period}`;
-    console.log(`📥 [1M] Fetching: ${url}`);
 
     try {
       const response = await fetch(url);
@@ -101,17 +100,12 @@ export class Timeframe1m {
         throw new Error(`No data returned for ${this.symbol}`);
       }
 
-      console.log(`✅ [1M] Loaded ${this.data.length} 1-minute candles`);
-
       // Render the data
       const success = await this.renderer.render(this.data, this.symbol);
 
       if (success) {
-        console.log('✅ [1M] Chart rendered successfully');
-
         // Apply any ticker update that arrived during chart load
         if (this.lastTickerUpdate && this.lastTickerUpdate.symbol === this.symbol) {
-          console.log(`🔄 [1M] Applying pending ticker update: ${this.lastTickerUpdate.symbol} = $${this.lastTickerUpdate.price}`);
           const bid = this.lastTickerUpdate.bid || null;
           const ask = this.lastTickerUpdate.ask || null;
           this.renderer.updateLivePrice(this.lastTickerUpdate.price, null, bid, ask);
@@ -120,7 +114,7 @@ export class Timeframe1m {
 
       return this.data;
     } catch (error) {
-      console.error(`❌ [1M] Error loading data:`, error);
+      console.error(`❌ [6H] Error loading data:`, error);
       throw error;
     }
   }
@@ -130,7 +124,7 @@ export class Timeframe1m {
    */
   subscribeToLiveData() {
     if (!this.socket) {
-      console.warn(`⚠️ [1M] No socket connection available`);
+      console.warn(`⚠️ [6H] No socket connection available`);
       return;
     }
 
@@ -140,15 +134,13 @@ export class Timeframe1m {
       channels: ['ticker']
     });
 
-    console.log(`🔔 [1M] Subscribed to ${this.symbol} ticker`);
+    console.log(`🔔 [6H] Subscribed to ${this.symbol} ticker`);
   }
 
   /**
    * Handle live ticker update from WebSocket
    */
   handleTickerUpdate(data) {
-    // console.log(`📈 [1M] Received ticker: ${data.symbol} = $${data.price}, isActive=${this.isActive}`);
-
     // Check if this ticker is for our symbol
     const symbolMatches = data.symbol && this.symbol &&
       (data.symbol === `${this.symbol}-USD` ||
@@ -156,15 +148,12 @@ export class Timeframe1m {
        this.symbol.includes(data.symbol.split('-')[0]));
 
     if (!this.isActive || !data || !symbolMatches) {
-      // console.log(`  ❌ [1M] Skipping ticker - isActive=${this.isActive}, symbolMatches=${symbolMatches}`);
       return;
     }
 
     const price = parseFloat(data.price);
     const bid = data.bid ? parseFloat(data.bid) : null;
     const ask = data.ask ? parseFloat(data.ask) : null;
-
-    // console.log(`  ✅ [1M] Live update - price=${price}, bid=${bid}, ask=${ask}, data.length=${this.data.length}`);
 
     // Store latest ticker for this symbol (even if chart isn't loaded yet)
     this.lastTickerUpdate = {
@@ -176,10 +165,7 @@ export class Timeframe1m {
 
     // Update the chart renderer with live price (NO volume - trade updates handle that)
     if (this.data.length > 0) {
-      // console.log(`  🖼️ [1M] Updating renderer with live price`);
       this.renderer.updateLivePrice(price, null, bid, ask);
-    } else {
-      // console.log(`  ⚠️ [1M] No data yet, ticker stored for later`);
     }
   }
 
@@ -187,13 +173,13 @@ export class Timeframe1m {
    * Deactivate this timeframe
    */
   deactivate() {
-    console.log(`⏸️ [1M] Deactivating`);
+    console.log(`⏸️ [6H] Deactivating`);
 
     this.isActive = false;
 
     // Unregister volume callback
     if (this.volumeCallback) {
-      volumeAccumulator.unregisterCallback('1m', this.volumeCallback);
+      volumeAccumulator.unregisterCallback('6h', this.volumeCallback);
       this.volumeCallback = null;
     }
 
@@ -206,7 +192,7 @@ export class Timeframe1m {
     if (this.socket && this.symbol) {
       this.socket.emit('unsubscribe', {
         product_ids: [this.symbol],
-        channels: ['ticker', 'matches']
+        channels: ['ticker']
       });
     }
   }
@@ -231,7 +217,6 @@ export class Timeframe1m {
    * Reload chart data (full refresh)
    */
   async reload() {
-    console.log(`🔄 [1M] Reloading...`);
     await this.loadHistoricalData();
   }
 

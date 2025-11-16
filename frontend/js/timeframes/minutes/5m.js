@@ -3,6 +3,7 @@
  * Independent implementation - displays 5-minute candlestick chart with live updates
  */
 import { CanvasRenderer } from '../../chart-renderers/canvas-renderer.js';
+import { volumeAccumulator } from '../../services/VolumeAccumulator.js';
 
 export class Timeframe5m {
   constructor() {
@@ -23,23 +24,55 @@ export class Timeframe5m {
     this.socket = null;
     this.isActive = false;
     this.lastTickerUpdate = null; // Store ticker that arrives before chart loads
+    this.volumeCallback = null; // Callback for volume updates from shared accumulator
   }
 
   /**
    * Initialize the timeframe for a specific symbol
    */
   async initialize(symbol, socket) {
-    // console.log(`📊 [5M] Initializing for ${symbol}`);
+    console.log(`📊 [5M] Initializing for ${symbol}`);
 
     this.symbol = symbol;
     this.socket = socket;
     this.isActive = true;
 
     try {
+      // Start shared volume accumulator
+      volumeAccumulator.start(symbol, socket);
+
       // Load historical data
       await this.loadHistoricalData();
 
-      // Subscribe to WebSocket updates
+      // Fetch current candle's actual accumulated volume from backend
+      if (this.data.length > 0) {
+        const lastCandle = this.data[this.data.length - 1];
+
+        try {
+          const response = await fetch(`/current-candle-volume/${symbol}?interval=5m`);
+          const currentCandleData = await response.json();
+
+          console.log(`📊 [5M] Current candle volume: ${currentCandleData.volume.toFixed(4)} BTC`);
+
+          volumeAccumulator.initializeCandleTimes('5m', currentCandleData.candle_start_time);
+          volumeAccumulator.initializeVolume('5m', currentCandleData.volume);
+        } catch (error) {
+          console.error(`❌ [5M] Failed to fetch current candle volume:`, error);
+          // Fallback to 0 if fetch fails
+          volumeAccumulator.initializeCandleTimes('5m', lastCandle.Date);
+          volumeAccumulator.initializeVolume('5m', 0);
+        }
+      }
+
+      // Register callback to receive volume updates
+      this.volumeCallback = (volume) => {
+        if (this.isActive && this.data.length > 0) {
+          this.renderer.updateCurrentCandleVolume(volume);
+        }
+      };
+      volumeAccumulator.registerCallback('5m', this.volumeCallback);
+
+      // Subscribe to WebSocket updates for price
       this.subscribeToLiveData();
 
       return true;
@@ -79,8 +112,9 @@ export class Timeframe5m {
         // Apply any ticker update that arrived during chart load
         if (this.lastTickerUpdate && this.lastTickerUpdate.symbol === this.symbol) {
           // console.log(`🔄 [5M] Applying pending ticker update: ${this.lastTickerUpdate.symbol} = $${this.lastTickerUpdate.price}`);
-          const volumeBTC = this.lastTickerUpdate.volume_today || 0;
-          this.renderer.updateLivePrice(this.lastTickerUpdate.price, volumeBTC);
+          const bid = this.lastTickerUpdate.bid || null;
+          const ask = this.lastTickerUpdate.ask || null;
+          this.renderer.updateLivePrice(this.lastTickerUpdate.price, null, bid, ask);
         }
       }
 
@@ -96,17 +130,17 @@ export class Timeframe5m {
    */
   subscribeToLiveData() {
     if (!this.socket) {
-      // console.warn(`⚠️ [5M] No socket connection available`);
+      console.warn(`⚠️ [5M] No socket connection available`);
       return;
     }
 
-    // Subscribe to ticker updates from Coinbase
+    // Subscribe to ticker updates from Coinbase (matches handled by VolumeAccumulator)
     this.socket.emit('subscribe', {
       product_ids: [this.symbol],
-      channels: ['ticker', 'matches']
+      channels: ['ticker']
     });
 
-    // console.log(`🔔 [5M] Subscribed to ${this.symbol}`);
+    console.log(`🔔 [5M] Subscribed to ${this.symbol} ticker`);
   }
 
   /**
@@ -127,40 +161,41 @@ export class Timeframe5m {
     }
 
     const price = parseFloat(data.price);
-    const volumeBTC = data.volume_today || 0;
+    const bid = data.bid ? parseFloat(data.bid) : null;
+    const ask = data.ask ? parseFloat(data.ask) : null;
 
-    // console.log(`  ✅ [ update - price=${price}, volume=${volumeBTC}, data.length=${this.data.length}`);
+    // console.log(`  ✅ [5M] Live update - price=${price}, bid=${bid}, ask=${ask}, data.length=${this.data.length}`);
 
     // Store latest ticker for this symbol (even if chart isn't loaded yet)
     this.lastTickerUpdate = {
       symbol: this.symbol,
       price: price,
-      volume_today: volumeBTC
+      bid: bid,
+      ask: ask
     };
 
-    // Update the chart renderer with live price
+    // Update the chart renderer with live price (NO volume - trade updates handle that)
     if (this.data.length > 0) {
       // console.log(`  🖼️ [5M] Updating renderer with live price`);
-      this.renderer.updateLivePrice(price, volumeBTC);
+      this.renderer.updateLivePrice(price, null, bid, ask);
     } else {
       // console.log(`  ⚠️ [5M] Chart not loaded yet, ticker stored for later`);
     }
   }
 
   /**
-   * Handle trade update from WebSocket (placeholder)
-   */
-  handleTradeUpdate(data) {
-    // Not needed for 5-minute charts
-  }
-
-  /**
    * Deactivate this timeframe
    */
   deactivate() {
-    // console.log(`⏸️ [5M] Deactivating`);
+    console.log(`⏸️ [5M] Deactivating`);
 
     this.isActive = false;
+
+    // Unregister volume callback
+    if (this.volumeCallback) {
+      volumeAccumulator.unregisterCallback('5m', this.volumeCallback);
+      this.volumeCallback = null;
+    }
 
     // Destroy the renderer to remove the canvas from DOM
     if (this.renderer) {
@@ -171,7 +206,7 @@ export class Timeframe5m {
     if (this.socket && this.symbol) {
       this.socket.emit('unsubscribe', {
         product_ids: [this.symbol],
-        channels: ['ticker', 'matches']
+        channels: ['ticker']
       });
     }
   }
