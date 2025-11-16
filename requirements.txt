@@ -12,3 +12,5 @@ python-dateutil
 feedparser
 websocket-client
 pytz
+python-dotenv
+PyJWT

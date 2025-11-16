@@ -44,3 +44,7 @@ frontend/Backup*.html
 # Windows reserved names
 nul
 backend/nul
+
+# Environment variables (API keys, secrets)
+.env
+backend/.env

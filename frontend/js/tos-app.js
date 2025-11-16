@@ -992,6 +992,11 @@ class TOSApp {
     state.currentSymbol = symbol;
     this.saveChartSettings();
 
+    // Clear ORD Volume analyses (symbol changed, old analyses invalid)
+    if (window.ordVolumeBridge) {
+      window.ordVolumeBridge.clearAllAnalyses();
+    }
+
     // Update symbol input
     const symbolInput = document.getElementById('tos-symbol-input');
     if (symbolInput) {

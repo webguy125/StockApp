@@ -8,11 +8,16 @@
 import { Timeframe1m } from './minutes/1m.js';
 import { Timeframe5m } from './minutes/5m.js';
 import { Timeframe15m } from './minutes/15m.js';
-import { Timeframe1h } from './minutes/1h.js';
+import { Timeframe30m } from './minutes/30m.js';
+import { Timeframe1h } from './hours/1h.js';
+import { Timeframe2h } from './hours/2h.js';
+import { Timeframe4h } from './hours/4h.js';
+import { Timeframe6h } from './hours/6h.js';
 import { Timeframe1d } from './days/1d.js';
 import { Timeframe1w } from './days/1w.js';
 import { Timeframe1mo } from './days/1mo.js';
 import { Timeframe3mo } from './days/3mo.js';
+import { volumeAccumulator } from '../services/VolumeAccumulator.js';
 
 export class TimeframeRegistry {
   constructor() {
@@ -29,11 +34,17 @@ export class TimeframeRegistry {
    * Register all timeframe instances (only working standalone implementations)
    */
   registerAllTimeframes() {
-    // Minutes (standalone implementations with ticker timing fix)
+    // Minutes (standalone implementations with volume accumulation)
     this.register(new Timeframe1m());
     this.register(new Timeframe5m());
     this.register(new Timeframe15m());
+    this.register(new Timeframe30m());
+
+    // Hours (standalone implementations with volume accumulation)
     this.register(new Timeframe1h());
+    this.register(new Timeframe2h());
+    this.register(new Timeframe4h());
+    this.register(new Timeframe6h());
 
     // Days (standalone implementations with ticker timing fix)
     this.register(new Timeframe1d());
@@ -121,12 +132,11 @@ export class TimeframeRegistry {
   }
 
   /**
-   * Handle trade update - route to current timeframe
+   * Handle trade update - route to VolumeAccumulator
    */
   handleTradeUpdate(data) {
-    if (this.currentTimeframe) {
-      this.currentTimeframe.handleTradeUpdate(data);
-    }
+    // Route to shared volume accumulator (handles all timeframes in background)
+    volumeAccumulator.handleTradeUpdate(data);
   }
 
   /**

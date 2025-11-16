@@ -53,9 +53,13 @@ export class CanvasRenderer {
     this.yAxisDragStartCenter = 0;
     this.xAxisDragStartX = 0;
     this.xAxisDragStartVisibleCandles = 0;
+    this.manualPriceScale = false; // Track if user manually adjusted Y-axis
+    this.manualPan = false; // Track if user manually panned the view
 
     // Live price tracking
     this.livePrice = null;
+    this.liveBid = null;
+    this.liveAsk = null;
 
     // Auto-scroll behavior for tick charts
     this.autoScrollEnabled = true; // Enable auto-scroll to latest candle by default
@@ -89,6 +93,10 @@ export class CanvasRenderer {
    * Initialize and render the chart
    */
   async render(data, symbol) {
+    if (this.isDragging) {
+      console.warn(`⚠️ RENDER CALLED WHILE DRAGGING!`);
+      console.trace();
+    }
     console.log(`🎨 Canvas: Rendering ${data.length} candles for ${symbol} (autoScroll=${this.autoScrollEnabled}, hasRendered=${this.hasRendered}, canvas=${!!this.canvas})`);
 
     if (data.length > 0) {
@@ -979,7 +987,20 @@ export class CanvasRenderer {
     ctx.fillStyle = this.colors.textBright;
     ctx.font = '16px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(`${this.symbol} - Daily`, this.width / 2, 30);
+
+    // Convert timeframe interval to readable format
+    let timeframeLabel = this.timeframeInterval;
+    if (this.timeframeInterval === '1m') timeframeLabel = '1 Minute';
+    else if (this.timeframeInterval === '5m') timeframeLabel = '5 Minutes';
+    else if (this.timeframeInterval === '15m') timeframeLabel = '15 Minutes';
+    else if (this.timeframeInterval === '30m') timeframeLabel = '30 Minutes';
+    else if (this.timeframeInterval === '1h') timeframeLabel = '1 Hour';
+    else if (this.timeframeInterval === '1d') timeframeLabel = 'Daily';
+    else if (this.timeframeInterval === '1w') timeframeLabel = 'Weekly';
+    else if (this.timeframeInterval === '1mo') timeframeLabel = 'Monthly';
+    else if (this.timeframeInterval === '3mo') timeframeLabel = '3 Months';
+
+    ctx.fillText(`${this.symbol} - ${timeframeLabel}`, this.width / 2, 30);
   }
 
   /**
@@ -990,7 +1011,17 @@ export class CanvasRenderer {
     if (!dateStr) return '';
 
     try {
-      const date = new Date(dateStr);
+      // Backend sends dates as "YYYY-MM-DD HH:MM:SS" in UTC (no timezone indicator)
+      // We need to treat them as UTC, then display in local time
+      let date;
+      if (dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('T')) {
+        // Already has timezone info
+        date = new Date(dateStr);
+      } else {
+        // No timezone - treat as UTC by adding 'Z'
+        const isoFormat = dateStr.replace(' ', 'T') + 'Z';
+        date = new Date(isoFormat);
+      }
 
       // Different formats based on interval
       if (this.timeframeInterval === '1m' || this.timeframeInterval === '5m' ||
@@ -1027,6 +1058,13 @@ export class CanvasRenderer {
     const chartLeft = this.margin.left;
     const chartRight = this.width - this.margin.right;
 
+    // Calculate snapped X position (center of nearest candle)
+    let crosshairX = this.mouseX;
+    if (this.hoveredIndex >= 0 && this.hoveredIndex < this.data.length) {
+      // Snap to the center of the hovered candle
+      crosshairX = this.indexToX(this.hoveredIndex);
+    }
+
     // Save context state
     ctx.save();
 
@@ -1035,10 +1073,10 @@ export class CanvasRenderer {
     ctx.lineWidth = 1;
     ctx.setLineDash([5, 5]);
 
-    // Vertical line (full height)
+    // Vertical line (full height) - snapped to candle center
     ctx.beginPath();
-    ctx.moveTo(this.mouseX, chartTop);
-    ctx.lineTo(this.mouseX, chartBottom);
+    ctx.moveTo(crosshairX, chartTop);
+    ctx.lineTo(crosshairX, chartBottom);
     ctx.stroke();
 
     // Horizontal line (full width)
@@ -1080,8 +1118,8 @@ export class CanvasRenderer {
         const boxWidth = textWidth + 12;
         const boxHeight = 20;
 
-        // Position at bottom of chart, centered on crosshair
-        const boxX = this.mouseX - (boxWidth / 2);
+        // Position at bottom of chart, centered on snapped crosshair X
+        const boxX = crosshairX - (boxWidth / 2);
         const boxY = chartBottom + 5;
 
         // Background box
@@ -1096,7 +1134,7 @@ export class CanvasRenderer {
         // Date/time text
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
-        ctx.fillText(dateTimeText, this.mouseX, boxY + 14);
+        ctx.fillText(dateTimeText, crosshairX, boxY + 14);
       }
     }
   }
@@ -1215,27 +1253,160 @@ export class CanvasRenderer {
     // Draw Low marker (blue box at bottom)
     drawPriceBox(lowY, visibleLow, 'Low', '#1976d2');
 
-    // Draw current price marker (green if up, red if down)
+    // Use real Bid/Ask from live data if available, otherwise use small spread
+    let askPrice, bidPrice;
+    if (this.liveAsk && this.liveBid) {
+      // Use real bid/ask from WebSocket
+      askPrice = this.liveAsk;
+      bidPrice = this.liveBid;
+    } else {
+      // Fallback: Calculate based on small spread
+      const spread = currentPrice * 0.0002; // 0.02% spread
+      askPrice = currentPrice + spread;
+      bidPrice = currentPrice - spread;
+    }
+
+    // Draw current price marker with countdown timer (green if up, red if down)
     const isUp = currentPrice >= lastCandle.Open;
     const currentBgColor = isUp ? '#00c851' : '#ff4444';
-    drawPriceBox(currentY, currentPrice, 'Last', currentBgColor);
 
-    // Optional: Draw simulated Bid/Ask based on last price with small spread
-    // For crypto, typical spread is ~0.01-0.05%
-    const spread = currentPrice * 0.0002; // 0.02% spread
-    const askPrice = currentPrice + spread;
-    const bidPrice = currentPrice - spread;
-    const askY = this.priceToY(askPrice);
-    const bidY = this.priceToY(bidPrice);
+    // Get countdown text
+    const countdownText = this.getCountdownText();
 
-    // Only draw if they're visible and not too close to other markers
-    const minDistance = 30; // minimum pixels between markers
-    if (Math.abs(askY - highY) > minDistance && Math.abs(askY - currentY) > minDistance) {
-      drawPriceBox(askY, askPrice, 'Ask', '#d32f2f');
+    // Calculate Y positions at their actual price levels
+    let askY = this.priceToY(askPrice);
+    let bidY = this.priceToY(bidPrice);
+
+    // Ensure minimum spacing between boxes for visibility (TradingView style)
+    const minSpacing = 22; // Minimum pixels between box centers
+    const lastBoxHeight = 24;
+    const slimBoxHeight = 18;
+
+    // If ask is too close to current, push it up
+    if (Math.abs(askY - currentY) < minSpacing) {
+      askY = currentY - minSpacing;
     }
-    if (Math.abs(bidY - lowY) > minDistance && Math.abs(bidY - currentY) > minDistance) {
-      drawPriceBox(bidY, bidPrice, 'Bid', '#1565c0');
+
+    // If bid is too close to current, push it down
+    if (Math.abs(bidY - currentY) < minSpacing) {
+      bidY = currentY + minSpacing;
     }
+
+    // If ask and bid are too close to each other, ensure spacing
+    if (Math.abs(askY - bidY) < minSpacing) {
+      // Push them apart symmetrically
+      const midpoint = (askY + bidY) / 2;
+      askY = midpoint - minSpacing / 2;
+      bidY = midpoint + minSpacing / 2;
+    }
+
+    // Draw bid and ask first (in back)
+    this.drawSlimPriceBox(bidY, bidPrice, 'Bid', '#1565c0', chartRight);
+    this.drawSlimPriceBox(askY, askPrice, 'Ask', '#d32f2f', chartRight);
+
+    // Draw Last on top (so it can overlap bid/ask when price moves outside spread)
+    // This is TradingView style - Last always on top
+    this.drawPriceBoxWithCountdown(currentY, currentPrice, 'Last', currentBgColor, countdownText, chartRight);
+  }
+
+  /**
+   * Get countdown text for next candle (TradingView style)
+   * Returns time remaining until next candle based on timeframe interval
+   */
+  getCountdownText() {
+    if (!this.data || this.data.length === 0) return '';
+
+    const lastCandle = this.data[this.data.length - 1];
+    if (!lastCandle || !lastCandle.Date) return '';
+
+    // Parse last candle time as UTC
+    let lastCandleTime;
+    if (lastCandle.Date.includes('Z') || lastCandle.Date.includes('+') || lastCandle.Date.includes('T')) {
+      lastCandleTime = new Date(lastCandle.Date);
+    } else {
+      const isoFormat = lastCandle.Date.replace(' ', 'T') + 'Z';
+      lastCandleTime = new Date(isoFormat);
+    }
+
+    // Get interval in milliseconds
+    const intervalMs = this._getIntervalMilliseconds();
+
+    // Calculate next candle time
+    const nextCandleTime = new Date(lastCandleTime.getTime() + intervalMs);
+
+    // Calculate time remaining
+    const now = new Date();
+    const remainingMs = nextCandleTime - now;
+
+    // Don't show if time is up or negative
+    if (remainingMs <= 0) return '';
+
+    // Format countdown based on interval
+    const totalSeconds = Math.floor(remainingMs / 1000);
+
+    if (intervalMs >= 3600000) {
+      // 1 hour or more: show HH:MM:SS
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else if (intervalMs >= 60000) {
+      // 1 minute or more (but less than 1 hour): show MM:SS
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+      // Less than 1 minute: show seconds only
+      return `${totalSeconds}s`;
+    }
+  }
+
+  /**
+   * Draw price box with countdown timer integrated (TradingView style)
+   */
+  drawPriceBoxWithCountdown(y, price, label, bgColor, countdownText, chartRight) {
+    const ctx = this.ctx;
+    const priceText = price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const padding = 6;
+    const boxHeight = 24; // Keep slim - same height with or without countdown
+    const boxWidth = 85;
+
+    // Draw background box
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(chartRight + 5, y - boxHeight / 2, boxWidth, boxHeight);
+
+    // Draw price text (top line, larger)
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 11px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(priceText, chartRight + 10, y - 2);
+
+    // Draw countdown text if available (bottom line, smaller)
+    if (countdownText) {
+      ctx.font = '9px monospace'; // Monospace for consistent timer width
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; // Slightly transparent
+      ctx.fillText(countdownText, chartRight + 10, y + 10);
+    }
+  }
+
+  /**
+   * Draw slim price box with label in front of price (for Bid/Ask)
+   */
+  drawSlimPriceBox(y, price, label, bgColor, chartRight) {
+    const ctx = this.ctx;
+    const priceText = price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const boxHeight = 18; // Slim height
+    const boxWidth = 85;
+
+    // Draw background box
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(chartRight + 5, y - boxHeight / 2, boxWidth, boxHeight);
+
+    // Draw label and price on same line: "Ask 98765.43"
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${label} ${priceText}`, chartRight + 10, y + 3);
   }
 
   /**
@@ -1400,6 +1571,9 @@ export class CanvasRenderer {
       this.minPrice = this.yAxisDragStartCenter - (newRange / 2);
       this.maxPrice = this.yAxisDragStartCenter + (newRange / 2);
 
+      // Mark that user has manually scaled the Y-axis
+      this.manualPriceScale = true;
+
       console.log(`📏 Y-axis: dy=${dy.toFixed(0)}px, scale=${scaleFactor.toFixed(2)}x, range=${newRange.toFixed(0)}`);
     }
     // X-axis expand/compress
@@ -1442,13 +1616,13 @@ export class CanvasRenderer {
       // Allow a small tolerance (1 candle) to account for fractional positioning
       const distanceFromLiveEdge = (this.data.length - 1) - this.endIndex;
 
-      if (distanceFromLiveEdge > 1) {
-        // User has panned away from live data
+      if (Math.abs(distanceFromLiveEdge) > 1) {
+        // User has panned away from live data (either left or right)
         if (this.autoScrollEnabled) {
           this.autoScrollEnabled = false;
-          console.log('⏸️ Auto-scroll PAUSED - user panned away from live edge');
+          console.log(`⏸️ Auto-scroll PAUSED - user panned away (distance=${distanceFromLiveEdge.toFixed(2)})`);
         }
-      } else if (distanceFromLiveEdge <= 0.5) {
+      } else if (Math.abs(distanceFromLiveEdge) <= 0.5) {
         // User has panned back to live edge
         if (!this.autoScrollEnabled) {
           this.autoScrollEnabled = true;
@@ -1466,12 +1640,17 @@ export class CanvasRenderer {
       this.minPrice = this.dragStartMinPrice + priceShift;
       this.maxPrice = this.dragStartMaxPrice + priceShift;
 
+      // Mark that user has manually panned (either horizontally or vertically)
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        this.manualPan = true;
+      }
+
       if (Math.abs(indexDelta) > 0.1 || Math.abs(dy) > 1) {
         console.log(`🖱️ Panning: dx=${dx.toFixed(0)}px (${indexDelta.toFixed(2)} candles), dy=${dy.toFixed(0)}px (${priceShift.toFixed(0)} price shift)`);
       }
     } else {
-      // Update hovered candle
-      this.hoveredIndex = this.xToIndex(this.mouseX);
+      // Update hovered candle - round to nearest whole candle for snapping
+      this.hoveredIndex = Math.round(this.xToIndex(this.mouseX));
 
       // Update cursor based on active tool (when not dragging)
       const activeTool = window.toolRegistry?.getActiveTool();
@@ -1711,6 +1890,14 @@ export class CanvasRenderer {
    * Mouse up handler
    */
   onMouseUp(e) {
+    // Safety check - canvas might be destroyed
+    if (!this.canvas) {
+      this.isDragging = false;
+      this.isDraggingYAxis = false;
+      this.isDraggingXAxis = false;
+      return;
+    }
+
     const rect = this.canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
@@ -2029,39 +2216,157 @@ export class CanvasRenderer {
    * @param {number} price - Current price
    * @param {number} volume - Current 24h volume (optional)
    */
-  updateLivePrice(price, volume = null) {
-    // console.log(`🖼️ CanvasRenderer.updateLivePrice called: price=${price}, volume=${volume}, data.length=${this.data.length}`);
-
+  updateLivePrice(price, volume = null, bid = null, ask = null) {
     if (this.data.length === 0) {
-      // console.log('  ⚠️ No data loaded, skipping update');
+      return false;
+    }
+
+    // Update live bid/ask if provided
+    if (bid !== null) this.liveBid = bid;
+    if (ask !== null) this.liveAsk = ask;
+
+    const now = new Date();
+    const lastIndex = this.data.length - 1;
+    const lastCandle = this.data[lastIndex];
+
+    // Parse last candle time (treating as UTC)
+    let lastCandleTime;
+    if (lastCandle.Date.includes('Z') || lastCandle.Date.includes('+') || lastCandle.Date.includes('T')) {
+      lastCandleTime = new Date(lastCandle.Date);
+    } else {
+      const isoFormat = lastCandle.Date.replace(' ', 'T') + 'Z';
+      lastCandleTime = new Date(isoFormat);
+    }
+
+    // Check if we need to create a new candle
+    const shouldCreateNewCandle = this._shouldCreateNewCandle(lastCandleTime, now);
+
+    if (shouldCreateNewCandle) {
+      // Create new candle
+      const newCandleTime = this._getNextCandleTime(lastCandleTime);
+
+      // Format as "YYYY-MM-DD HH:MM:SS" in UTC (matching backend format)
+      const year = newCandleTime.getUTCFullYear();
+      const month = String(newCandleTime.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(newCandleTime.getUTCDate()).padStart(2, '0');
+      const hours = String(newCandleTime.getUTCHours()).padStart(2, '0');
+      const minutes = String(newCandleTime.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(newCandleTime.getUTCSeconds()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+      const newCandle = {
+        Date: formattedDate,
+        Open: lastCandle.Close,
+        High: price,
+        Low: price,
+        Close: price,
+        Volume: volume || 0
+      };
+
+      this.data.push(newCandle);
+
+      // Auto-scroll if enabled
+      if (this.autoScrollEnabled) {
+        this.endIndex = this.data.length - 1;
+        const visibleCandles = Math.floor((this.width - this.margin.left - this.margin.right) / (this.candleWidth + this.candleSpacing));
+        this.startIndex = Math.max(0, this.endIndex - visibleCandles);
+      }
+    } else {
+      // Update existing last candle
+      lastCandle.Close = price;
+      lastCandle.High = Math.max(lastCandle.High, price);
+      lastCandle.Low = Math.min(lastCandle.Low, price);
+
+      if (volume !== null) {
+        lastCandle.Volume = volume;
+      }
+    }
+
+    // Set live price for the live price line
+    this.livePrice = price;
+
+    // Only recalculate ranges if user hasn't manually scaled or panned
+    if (!this.manualPriceScale && !this.manualPan) {
+      this.calculateRanges();
+    } else {
+      // Just update volume range, preserve manual price scale/pan
+      this.calculateVolumeRange();
+    }
+
+    // Redraw
+    this.draw();
+
+    return true;
+  }
+
+  /**
+   * Update just the volume for the current candle (for real-time trade accumulation)
+   * @param {number} volume - Accumulated volume for current candle
+   */
+  updateCurrentCandleVolume(volume) {
+    if (this.data.length === 0) {
       return false;
     }
 
     const lastIndex = this.data.length - 1;
     const lastCandle = this.data[lastIndex];
-    // console.log(`  📊 Updating last candle [${lastIndex}]: old Close=${lastCandle.Close}, new Close=${price}`);
 
-    // Set live price for the live price line
-    this.livePrice = price;
+    // Update volume
+    lastCandle.Volume = volume;
 
-    // Update last candle price
-    lastCandle.Close = price;
-    lastCandle.High = Math.max(lastCandle.High, price);
-    lastCandle.Low = Math.min(lastCandle.Low, price);
-
-    // Update volume if provided
-    if (volume !== null) {
-      lastCandle.Volume = volume;
+    // Only recalculate volume range if user hasn't manually scaled
+    if (!this.manualPriceScale && !this.manualPan) {
+      this.calculateVolumeRange();
     }
 
-    // Only update volume range, preserve price pan position
-    this.calculateVolumeRange();
-
-    // Redraw
+    // Redraw to show updated volume bar
     this.draw();
-    // console.log('  ✅ Chart redrawn with new live price');
 
     return true;
+  }
+
+  _shouldCreateNewCandle(lastCandleTime, currentTime) {
+    const intervalMs = this._getIntervalMilliseconds();
+    const nextCandleTime = new Date(lastCandleTime.getTime() + intervalMs);
+    return currentTime >= nextCandleTime;
+  }
+
+  _getNextCandleTime(lastCandleTime) {
+    const intervalMs = this._getIntervalMilliseconds();
+    return new Date(lastCandleTime.getTime() + intervalMs);
+  }
+
+  _getIntervalMilliseconds() {
+    const interval = this.timeframeInterval;
+
+    // Handle week intervals (e.g., "1wk")
+    if (interval.endsWith('wk')) {
+      const weeks = parseInt(interval);
+      return weeks * 7 * 24 * 60 * 60 * 1000;
+    }
+
+    // Handle month intervals (e.g., "1mo", "3mo")
+    if (interval.endsWith('mo')) {
+      const months = parseInt(interval);
+      return months * 30 * 24 * 60 * 60 * 1000; // Approximate 30 days per month
+    }
+
+    // Handle standard intervals (m, h, d)
+    const match = interval.match(/^(\d+)([mhd])$/);
+    if (!match) {
+      console.warn(`⚠️ Unknown interval format: ${interval}, defaulting to 1 day`);
+      return 24 * 60 * 60 * 1000; // Default 1 day
+    }
+
+    const value = parseInt(match[1]);
+    const unit = match[2];
+
+    switch (unit) {
+      case 'm': return value * 60 * 1000;
+      case 'h': return value * 60 * 60 * 1000;
+      case 'd': return value * 24 * 60 * 60 * 1000;
+      default: return 24 * 60 * 60 * 1000;
+    }
   }
 
   /**
