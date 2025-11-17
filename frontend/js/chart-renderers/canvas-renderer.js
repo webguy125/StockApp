@@ -649,17 +649,34 @@ export class CanvasRenderer {
     // Draw title
     this.drawTitle();
 
+    // Set clipping region for price chart area (prevents overflow into indicators)
+    if (this.indicatorLayout) {
+      this.ctx.save();
+      const { x, y, width, height } = this.indicatorLayout.priceChart;
+      this.ctx.beginPath();
+      this.ctx.rect(x, y, width, height);
+      this.ctx.clip();
+    }
+
     // Draw grid
     this.drawGrid();
 
     // Draw candles
     this.drawCandles();
 
+    // Draw overlay indicators (Bollinger Bands, etc.) - must be within clipping region
+    this.renderOverlayIndicators();
+
+    // Restore context to remove clipping for volume and oscillator indicators
+    if (this.indicatorLayout) {
+      this.ctx.restore();
+    }
+
     // Draw volume
     this.drawVolume();
 
-    // Draw indicators (overlays and subplots)
-    this.renderIndicators();
+    // Draw oscillator indicators (RSI, MACD, etc.) - outside clipping region
+    this.renderOscillatorIndicators();
 
     // Draw indicator subplot borders
     this.drawIndicatorBorders();
@@ -757,7 +774,10 @@ export class CanvasRenderer {
   drawGrid() {
     const ctx = this.ctx;
     const chartTop = this.margin.top;
-    const chartBottom = this.height - this.margin.bottom; // Full height (unified)
+    // Use indicator layout to constrain grid to price chart area only
+    const chartBottom = this.indicatorLayout
+      ? this.margin.top + this.indicatorLayout.priceChart.height
+      : this.height - this.margin.bottom; // Fallback to full height if no indicators
     const chartLeft = this.margin.left;
     const chartRight = this.width - this.margin.right;
 
@@ -768,10 +788,13 @@ export class CanvasRenderer {
     const priceLevels = this.calculatePriceLevels();
     for (const price of priceLevels) {
       const y = this.priceToY(price);
-      ctx.beginPath();
-      ctx.moveTo(chartLeft, y);
-      ctx.lineTo(chartRight, y);
-      ctx.stroke();
+      // Only draw horizontal lines within price chart bounds
+      if (y >= chartTop && y <= chartBottom) {
+        ctx.beginPath();
+        ctx.moveTo(chartLeft, y);
+        ctx.lineTo(chartRight, y);
+        ctx.stroke();
+      }
     }
 
     // Vertical grid lines (anchored to candles, extends beyond data like TradingView)
@@ -804,7 +827,7 @@ export class CanvasRenderer {
       if (centerX >= chartLeft) {
         ctx.beginPath();
         ctx.moveTo(centerX, chartTop);
-        ctx.lineTo(centerX, chartBottom);
+        ctx.lineTo(centerX, chartBottom); // Only extends to price chart bottom
         ctx.stroke();
       }
     }
@@ -2313,7 +2336,7 @@ export class CanvasRenderer {
    * @param {number} price - Current price
    * @param {number} volume - Current 24h volume (optional)
    */
-  updateLivePrice(price, volume = null, bid = null, ask = null) {
+  async updateLivePrice(price, volume = null, bid = null, ask = null) {
     if (this.data.length === 0) {
       return false;
     }
@@ -2361,6 +2384,10 @@ export class CanvasRenderer {
       };
 
       this.data.push(newCandle);
+
+      // Recalculate indicators for the new candle
+      await this.calculateIndicators();
+      this.calculateIndicatorLayout();
 
       // Auto-scroll if enabled
       if (this.autoScrollEnabled) {
@@ -4179,7 +4206,14 @@ export class CanvasRenderer {
       this.indicatorData = await indicatorRegistry.calculateAll(candlesForIndicators);
 
       if (this.indicatorData.size > 0) {
-        console.log(`📊 Calculated ${this.indicatorData.size} indicators`);
+        console.log(`📊 Calculated ${this.indicatorData.size} indicators for ${candlesForIndicators.length} candles`);
+
+        // Debug: Check array lengths match
+        this.indicatorData.forEach((data, name) => {
+          if (data.length !== candlesForIndicators.length) {
+            console.warn(`⚠️ ${name}: indicator length (${data.length}) ≠ candle length (${candlesForIndicators.length})`);
+          }
+        });
       }
     } catch (error) {
       console.error('❌ Error calculating indicators:', error);
@@ -4378,17 +4412,17 @@ export class CanvasRenderer {
   }
 
   /**
-   * Render all enabled indicators on the chart
-   * Called from draw() method
+   * Render overlay indicators (Bollinger Bands, etc.)
+   * Must be called within price chart clipping region
    */
-  renderIndicators() {
+  renderOverlayIndicators() {
     if (!indicatorRegistry || this.indicatorData.size === 0) {
       return;
     }
 
-    const enabledIndicators = indicatorRegistry.getAll().filter(ind => ind.enabled);
+    const enabledIndicators = indicatorRegistry.getAll().filter(ind => ind.enabled && ind.outputType === 'overlay');
     if (enabledIndicators.length === 0) {
-      return; // No indicators to render
+      return;
     }
 
     const visibleIndices = this.getVisibleIndices();
@@ -4401,24 +4435,51 @@ export class CanvasRenderer {
       }
 
       try {
-        if (indicator.outputType === 'overlay') {
-          // Render on main price chart (e.g., Bollinger Bands)
-          const bounds = this.indicatorLayout.priceChart;
-          const mappings = this.mapIndicesToIndicatorData(data, visibleIndices);
-          indicator.render(this.ctx, bounds, data, mappings, this.priceToY.bind(this), this.startIndex, this.endIndex);
-        } else if (indicator.outputType === 'oscillator') {
-          // Find subplot bounds for this indicator
-          const subplotBounds = this.indicatorLayout.oscillators.find(s => s.name === indicator.name);
+        // Render on main price chart (e.g., Bollinger Bands)
+        const bounds = this.indicatorLayout.priceChart;
+        const mappings = this.mapIndicesToIndicatorData(data, visibleIndices);
+        indicator.render(this.ctx, bounds, data, mappings, this.priceToY.bind(this), this.startIndex, this.endIndex);
+      } catch (error) {
+        console.error(`❌ Error rendering overlay ${indicator.name}:`, error);
+      }
+    });
+  }
 
-          if (subplotBounds) {
-            // Map visible candle indices to indicator data indices
-            const mappings = this.mapIndicesToIndicatorData(data, visibleIndices);
-            // Pass startIndex and endIndex for proper X coordinate calculation during panning
-            indicator.render(this.ctx, subplotBounds, data, mappings, this.startIndex, this.endIndex);
-          }
+  /**
+   * Render oscillator indicators (RSI, MACD, etc.)
+   * Called outside clipping region to draw in subplots
+   */
+  renderOscillatorIndicators() {
+    if (!indicatorRegistry || this.indicatorData.size === 0) {
+      return;
+    }
+
+    const enabledIndicators = indicatorRegistry.getAll().filter(ind => ind.enabled && ind.outputType === 'oscillator');
+    if (enabledIndicators.length === 0) {
+      return;
+    }
+
+    const visibleIndices = this.getVisibleIndices();
+
+    enabledIndicators.forEach(indicator => {
+      const data = this.indicatorData.get(indicator.name);
+
+      if (!data || data.length === 0) {
+        return;
+      }
+
+      try {
+        // Find subplot bounds for this indicator
+        const subplotBounds = this.indicatorLayout.oscillators.find(s => s.name === indicator.name);
+
+        if (subplotBounds) {
+          // Map visible candle indices to indicator data indices
+          const mappings = this.mapIndicesToIndicatorData(data, visibleIndices);
+          // Pass startIndex and endIndex for proper X coordinate calculation during panning
+          indicator.render(this.ctx, subplotBounds, data, mappings, this.startIndex, this.endIndex);
         }
       } catch (error) {
-        console.error(`❌ Error rendering ${indicator.name}:`, error);
+        console.error(`❌ Error rendering oscillator ${indicator.name}:`, error);
       }
     });
   }

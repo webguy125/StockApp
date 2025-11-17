@@ -115,7 +115,19 @@ export class MACD extends IndicatorBase {
     // Calculate Histogram (MACD Line - Signal Line)
     const result = [];
     const signalStartIndex = signalPeriod - 1;
+    const firstValidIndex = startIndex + signalStartIndex;
 
+    // Add null padding for early candles to keep array aligned
+    for (let i = 0; i < firstValidIndex; i++) {
+      result.push({
+        date: candles[i].Date,
+        macd: null,
+        signal: null,
+        histogram: null
+      });
+    }
+
+    // Add calculated values
     for (let i = 0; i < signalLine.length; i++) {
       const macdIndex = i + signalStartIndex;
       const candleIndex = startIndex + macdIndex;
@@ -251,8 +263,11 @@ export class MACD extends IndicatorBase {
       const { indicatorIndex } = mapping;
       if (indicatorIndex >= 0 && indicatorIndex < data.length) {
         const d = data[indicatorIndex];
-        minValue = Math.min(minValue, d.macd, d.signal, d.histogram);
-        maxValue = Math.max(maxValue, d.macd, d.signal, d.histogram);
+        // Skip null values
+        if (d.macd !== null && d.signal !== null && d.histogram !== null) {
+          minValue = Math.min(minValue, d.macd, d.signal, d.histogram);
+          maxValue = Math.max(maxValue, d.macd, d.signal, d.histogram);
+        }
       }
     });
 
@@ -288,6 +303,10 @@ export class MACD extends IndicatorBase {
       if (indicatorIndex < 0 || indicatorIndex >= data.length) return;
 
       const histogram = data[indicatorIndex].histogram;
+
+      // Skip null values
+      if (histogram === null || histogram === undefined) return;
+
       const barActualWidth = barWidth * 0.8;
       const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset - barActualWidth / 2;
       const histY = valueToY(histogram);
@@ -316,6 +335,13 @@ export class MACD extends IndicatorBase {
       if (indicatorIndex < 0 || indicatorIndex >= data.length) return;
 
       const macdValue = data[indicatorIndex].macd;
+
+      // Skip null values and restart line
+      if (macdValue === null || macdValue === undefined) {
+        firstPoint = true;
+        return;
+      }
+
       const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset;
       const yPos = valueToY(macdValue);
 
@@ -340,6 +366,13 @@ export class MACD extends IndicatorBase {
       if (indicatorIndex < 0 || indicatorIndex >= data.length) return;
 
       const signalValue = data[indicatorIndex].signal;
+
+      // Skip null values and restart line
+      if (signalValue === null || signalValue === undefined) {
+        firstPoint = true;
+        return;
+      }
+
       const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset;
       const yPos = valueToY(signalValue);
 
@@ -356,7 +389,7 @@ export class MACD extends IndicatorBase {
 
     // Draw current values label
     const lastData = data[data.length - 1];
-    if (lastData) {
+    if (lastData && lastData.macd !== null && lastData.signal !== null && lastData.histogram !== null) {
       ctx.font = 'bold 10px monospace';
 
       // MACD value

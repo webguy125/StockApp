@@ -1298,20 +1298,41 @@ def list_ord_volume_segregated():
 # =============================================================================
 
 # Lazy import ML module to avoid errors if PyTorch not installed
-_ml_model = None
+_ml_model_stock = None
+_ml_model_crypto = None
 
-def get_ml_model():
-    """Get singleton ML model instance"""
-    global _ml_model
-    if _ml_model is None:
-        try:
-            from ml.pivot_model import get_model
-            _ml_model = get_model()
-            print("[ML] Model loaded successfully")
-        except Exception as e:
-            print(f"[ML] Model not available: {e}")
-            _ml_model = False  # Mark as unavailable
-    return _ml_model if _ml_model is not False else None
+def get_ml_model(symbol=None):
+    """
+    Get appropriate ML model instance based on symbol type
+
+    Args:
+        symbol: Trading symbol (optional). If provided, will auto-detect stock vs crypto
+
+    Returns:
+        tuple: (model, model_type) or (None, None) if unavailable
+    """
+    global _ml_model_stock, _ml_model_crypto
+
+    try:
+        from ml.pivot_model import get_model, is_crypto_symbol
+
+        # Detect model type
+        if symbol and is_crypto_symbol(symbol):
+            model_type = 'crypto'
+            if _ml_model_crypto is None:
+                _ml_model_crypto = get_model(model_type='crypto')
+                print(f"[ML] Crypto model loaded successfully")
+            return _ml_model_crypto, 'crypto'
+        else:
+            model_type = 'stock'
+            if _ml_model_stock is None:
+                _ml_model_stock = get_model(model_type='stock')
+                print(f"[ML] Stock model loaded successfully")
+            return _ml_model_stock, 'stock'
+
+    except Exception as e:
+        print(f"[ML] Model not available: {e}")
+        return None, None
 
 
 @app.route("/ml/pivot-reliability", methods=["POST"])
@@ -1321,6 +1342,7 @@ def ml_pivot_reliability():
 
     Request body:
     {
+        "symbol": "AAPL" or "BTC-USD",  # Required for model selection
         "features": [9 float values],  # Single pivot
         OR
         "features": [[9 values], [9 values], ...]  # Multiple pivots
@@ -1329,25 +1351,30 @@ def ml_pivot_reliability():
     Response:
     {
         "scores": [0.85, 0.72, ...],  # Probability scores
-        "count": 2
+        "count": 2,
+        "model_type": "stock" or "crypto"
     }
     """
     try:
-        # Get ML model
-        model = get_ml_model()
-
-        if model is None:
-            return jsonify({
-                'error': 'ML model not available. Train model first using train_pivot_model.py'
-            }), 503
-
         # Parse request
         data = request.get_json()
 
         if 'features' not in data:
             return jsonify({'error': 'Missing "features" in request body'}), 400
 
+        if 'symbol' not in data:
+            return jsonify({'error': 'Missing "symbol" in request body'}), 400
+
+        symbol = data['symbol']
         features = data['features']
+
+        # Get appropriate ML model based on symbol
+        model, model_type = get_ml_model(symbol=symbol)
+
+        if model is None:
+            return jsonify({
+                'error': f'ML model not available for {model_type}. Train model first using train_pivot_model.py or train_pivot_model_crypto.py'
+            }), 503
 
         # Convert to numpy array
         import numpy as np
@@ -1371,7 +1398,8 @@ def ml_pivot_reliability():
 
         return jsonify({
             'scores': scores.tolist(),
-            'count': len(scores)
+            'count': len(scores),
+            'model_type': model_type
         }), 200
 
     except Exception as e:
@@ -1383,22 +1411,29 @@ def ml_pivot_reliability():
 
 @app.route("/ml/model-info", methods=["GET"])
 def ml_model_info():
-    """Get information about the loaded ML model"""
+    """Get information about the loaded ML models"""
     try:
-        model = get_ml_model()
-
-        if model is None:
-            return jsonify({
-                'loaded': False,
-                'message': 'ML model not available'
-            }), 200
+        # Check both models
+        stock_model, _ = get_ml_model(symbol='AAPL')  # Test with stock symbol
+        crypto_model, _ = get_ml_model(symbol='BTC-USD')  # Test with crypto symbol
 
         return jsonify({
-            'loaded': True,
-            'architecture': '9 -> 32 -> 16 -> 1',
-            'input_features': 9,
-            'output': 'pivot_reliability_score',
-            'model_type': 'PyTorch MLP'
+            'stock_model': {
+                'loaded': stock_model is not None,
+                'architecture': '9 -> 32 -> 16 -> 1',
+                'input_features': 9,
+                'output': 'pivot_reliability_score',
+                'model_type': 'PyTorch MLP',
+                'trained_on': ['AAPL', 'TSLA', 'NVDA', 'SPY', 'QQQ']
+            },
+            'crypto_model': {
+                'loaded': crypto_model is not None,
+                'architecture': '9 -> 32 -> 16 -> 1',
+                'input_features': 9,
+                'output': 'pivot_reliability_score',
+                'model_type': 'PyTorch MLP',
+                'trained_on': ['BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD', 'ADA-USD', 'DOGE-USD', 'MATIC-USD']
+            }
         }), 200
 
     except Exception as e:

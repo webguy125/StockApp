@@ -54,6 +54,18 @@ export class RSI extends IndicatorBase {
     const period = this.currentSettings.lookback_period;
     const result = [];
 
+    // Add null padding for early candles to keep array aligned
+    for (let i = 0; i < period; i++) {
+      result.push({
+        date: candles[i].Date,
+        value: null,
+        avgGain: null,
+        avgLoss: null,
+        overbought: this.currentSettings.overbought,
+        oversold: this.currentSettings.oversold
+      });
+    }
+
     // Calculate price changes
     const changes = [];
     for (let i = 1; i < candles.length; i++) {
@@ -265,6 +277,13 @@ export class RSI extends IndicatorBase {
       if (indicatorIndex < 0 || indicatorIndex >= data.length) return;
 
       const rsiValue = data[indicatorIndex].value;
+
+      // Skip null values and restart line
+      if (rsiValue === null || rsiValue === undefined) {
+        firstPoint = true;
+        return;
+      }
+
       // Calculate X position using candleIndex for proper alignment with candle center
       const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset;
       const yPos = y + height * (1 - rsiValue / 100);
@@ -282,7 +301,7 @@ export class RSI extends IndicatorBase {
 
     // Draw current value label
     const lastData = data[data.length - 1];
-    if (lastData) {
+    if (lastData && lastData.value !== null && lastData.value !== undefined) {
       const labelY = y + height * (1 - lastData.value / 100);
       ctx.fillStyle = settings.line_color;
       ctx.fillRect(x + width - 50, labelY - 8, 48, 16);

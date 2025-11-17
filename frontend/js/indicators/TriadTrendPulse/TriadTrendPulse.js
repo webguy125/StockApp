@@ -381,35 +381,65 @@ export class TriadTrendPulse extends IndicatorBase {
     const shortTrend = this._calculateLinearRegression(closes, shortTrendLength);
     const shortTrendNorm = this._normalize(shortTrend, normLookback);
 
-    // === Component 4: Pivot Detection ===
+    // === Component 4: Real-Time Pivot Detection ===
+    // ML will filter these - we detect potential pivots as they form
     const pivotHighs = new Array(candles.length).fill(false);
     const pivotLows = new Array(candles.length).fill(false);
     const pivotScores = new Array(candles.length).fill(null);
 
-    for (let i = settings.pivot_lookback; i < closes.length - settings.pivot_lookback; i++) {
-      // Check for swing high
+    // Start from pivot_lookback (need history to compare)
+    // Go up to the CURRENT candle (closes.length - 1) for real-time detection
+    for (let i = settings.pivot_lookback; i < closes.length; i++) {
+      // Check for potential swing high (only look back, not forward)
       let isHigh = true;
       let isLow = true;
 
+      // Only check previous candles (real-time detection)
       for (let j = 1; j <= settings.pivot_lookback; j++) {
-        if (highs[i] <= highs[i - j] || highs[i] <= highs[i + j]) {
+        if (highs[i] <= highs[i - j]) {
           isHigh = false;
         }
-        if (lows[i] >= lows[i - j] || lows[i] >= lows[i + j]) {
+        if (lows[i] >= lows[i - j]) {
           isLow = false;
         }
       }
 
-      // Apply ADX filter (simplified - using threshold)
-      const adxStrong = true; // adx[i] > settings.adx_threshold (simplified)
+      // For the current candle (last one), also check if it's higher/lower than recent candles
+      // This gives us a "potential" pivot that ML can validate
+      if (i === closes.length - 1) {
+        // Current candle - mark as potential pivot if it's an extreme
+        // ML will decide if it's valid
+        if (isHigh) {
+          pivotHighs[i] = true;
+          pivotScores[i] = 0.5; // Lower initial score for current candle (unconfirmed)
+        }
+        if (isLow) {
+          pivotLows[i] = true;
+          pivotScores[i] = 0.5; // Lower initial score for current candle (unconfirmed)
+        }
+      } else {
+        // Historical candles - also check forward candles for confirmation
+        let confirmedHigh = isHigh;
+        let confirmedLow = isLow;
 
-      if (isHigh && adxStrong) {
-        pivotHighs[i] = true;
-        pivotScores[i] = 0.85; // Will be replaced by ML if enabled
-      }
-      if (isLow && adxStrong) {
-        pivotLows[i] = true;
-        pivotScores[i] = 0.85; // Will be replaced by ML if enabled
+        const forwardLookback = Math.min(settings.pivot_lookback, closes.length - 1 - i);
+        for (let j = 1; j <= forwardLookback; j++) {
+          if (highs[i] <= highs[i + j]) {
+            confirmedHigh = false;
+          }
+          if (lows[i] >= lows[i + j]) {
+            confirmedLow = false;
+          }
+        }
+
+        if (confirmedHigh) {
+          pivotHighs[i] = true;
+          pivotScores[i] = 0.85; // Higher score for confirmed pivots
+        }
+        if (confirmedLow) {
+          pivotLows[i] = true;
+          pivotScores[i] = 0.85; // Higher score for confirmed pivots
+        }
       }
     }
 
@@ -433,28 +463,30 @@ export class TriadTrendPulse extends IndicatorBase {
       console.log(`✅ ML filtered ${pivotsBeforeML} → ${pivotsAfterML} pivots (removed ${pivotsBeforeML - pivotsAfterML})`);
     }
 
-    // Build result array
+    // Build result array (aligned with candles array)
     const result = [];
-    const startIndex = Math.max(
-      settings.reg_length,
-      settings.rsi_len + settings.reg_length,
-      20 + settings.reg_length,
-      shortTrendLength
-    );
 
-    for (let i = startIndex; i < candles.length; i++) {
-      const weightedIndex = i - (settings.rsi_len + settings.reg_length);
-      const oscillatorIndex = i - (20 + settings.reg_length);
-      const shortIndex = i - shortTrendLength;
+    // Calculate the actual starting indices for each component
+    // weightedTrendNorm starts at: settings.rsi_len + settings.reg_length + normLookback
+    // oscillatorNorm starts at: 20 + settings.reg_length + normLookback
+    // shortTrendNorm starts at: shortTrendLength + normLookback
+
+    const weightedStartIdx = settings.rsi_len + settings.reg_length + normLookback;
+    const oscillatorStartIdx = 20 + settings.reg_length + normLookback;
+    const shortStartIdx = shortTrendLength + normLookback;
+
+    // Build aligned result - one entry per candle
+    for (let i = 0; i < candles.length; i++) {
+      // Calculate array index for each normalized component
+      const wtIdx = i - weightedStartIdx;
+      const oscIdx = i - oscillatorStartIdx;
+      const stIdx = i - shortStartIdx;
 
       result.push({
         date: candles[i].Date,
-        weighted_trend: weightedIndex >= 0 && weightedIndex < weightedTrendNorm.length ?
-          weightedTrendNorm[weightedIndex] : 0,
-        oscillator: oscillatorIndex >= 0 && oscillatorIndex < oscillatorNorm.length ?
-          oscillatorNorm[oscillatorIndex] : 0,
-        short_trend: shortIndex >= 0 && shortIndex < shortTrendNorm.length ?
-          shortTrendNorm[shortIndex] : 0,
+        weighted_trend: (wtIdx >= 0 && wtIdx < weightedTrendNorm.length) ? weightedTrendNorm[wtIdx] : null,
+        oscillator: (oscIdx >= 0 && oscIdx < oscillatorNorm.length) ? oscillatorNorm[oscIdx] : null,
+        short_trend: (stIdx >= 0 && stIdx < shortTrendNorm.length) ? shortTrendNorm[stIdx] : null,
         pivot_high: pivotHighs[i],
         pivot_low: pivotLows[i],
         pivot_score: pivotScores[i],
@@ -785,7 +817,7 @@ export class TriadTrendPulse extends IndicatorBase {
 
       // Pivots are already filtered by ML during calculation if use_ml is enabled
       // So we just need to check if pivot exists (ML filtering sets them to false)
-      if (d.pivot_high && d.pivot_score) {
+      if (d.pivot_high && d.pivot_score && d.weighted_trend !== null) {
         drawnHighs++;
         // Draw pivot high marker
         ctx.fillStyle = settings.pivot_high_color;
@@ -802,7 +834,7 @@ export class TriadTrendPulse extends IndicatorBase {
         ctx.fill();
       }
 
-      if (d.pivot_low && d.pivot_score) {
+      if (d.pivot_low && d.pivot_score && d.weighted_trend !== null) {
         drawnLows++;
         // Draw pivot low marker
         ctx.fillStyle = settings.pivot_low_color;
@@ -824,7 +856,7 @@ export class TriadTrendPulse extends IndicatorBase {
 
     // Draw current values label
     const lastData = data[data.length - 1];
-    if (lastData) {
+    if (lastData && lastData.weighted_trend !== null && lastData.oscillator !== null && lastData.short_trend !== null) {
       ctx.font = 'bold 10px monospace';
 
       ctx.fillStyle = settings.weighted_trend_color;
@@ -857,6 +889,13 @@ export class TriadTrendPulse extends IndicatorBase {
       if (indicatorIndex < 0 || indicatorIndex >= data.length) return;
 
       const value = data[indicatorIndex][field];
+
+      // Skip null values and restart line
+      if (value === null || value === undefined) {
+        firstPoint = true;
+        return;
+      }
+
       const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset;
       const yPos = valueToY(value);
 

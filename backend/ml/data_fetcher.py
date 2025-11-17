@@ -217,9 +217,9 @@ def fetch_historical_data(symbol, days=None, timeframe='1d'):
     Unified function to fetch historical data for any asset
 
     Args:
-        symbol: Asset symbol (e.g., 'AAPL', 'BTC/USD')
+        symbol: Asset symbol (e.g., 'AAPL', 'BTC-USD')
         days: Number of days (default: auto-detect based on asset type)
-        timeframe: Timeframe for crypto ('1m', '1d', etc.)
+        timeframe: Timeframe ('1d' for daily, etc.)
 
     Returns:
         pandas DataFrame with OHLCV data
@@ -228,9 +228,17 @@ def fetch_historical_data(symbol, days=None, timeframe='1d'):
         asset_type = detect_asset_type(symbol)
 
         if asset_type == 'crypto':
-            # Default to 30 days for crypto
-            days = days or 30
-            return fetch_crypto_ohlcv(symbol, days=days, timeframe=timeframe)
+            # Default to 90 days for crypto
+            days = days or 90
+
+            # For daily crypto data, use yfinance (more reliable than ccxt)
+            if timeframe == '1d':
+                # Ensure symbol is in yfinance format (BTC-USD, not BTC/USD)
+                yf_symbol = symbol.replace('/', '-')
+                return fetch_stock_ohlcv(yf_symbol, days=days)
+            else:
+                # For intraday, use ccxt (if available)
+                return fetch_crypto_ohlcv(symbol, days=days, timeframe=timeframe)
         else:
             # Default to 3 years for stocks
             days = days or 1095

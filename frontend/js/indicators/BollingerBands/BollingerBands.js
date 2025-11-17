@@ -99,6 +99,19 @@ export class BollingerBands extends IndicatorBase {
     const stdDevMultiplier = this.currentSettings.std_dev;
     const result = [];
 
+    // Add null padding for early candles to keep array aligned
+    for (let i = 0; i < period - 1; i++) {
+      result.push({
+        date: candles[i].Date,
+        upper: null,
+        middle: null,
+        lower: null,
+        bandwidth: null,
+        percentB: null,
+        price: candles[i].Close
+      });
+    }
+
     // Extract close prices
     const closes = candles.map(c => c.Close);
 
@@ -261,11 +274,18 @@ export class BollingerBands extends IndicatorBase {
       // Draw upper band path
       let firstPoint = true;
       mappings.forEach((mapping) => {
-        const { candleIndex, indicatorIndex } = mapping;
+        const { candleIndex, indicatorIndex} = mapping;
         if (indicatorIndex < 0 || indicatorIndex >= data.length) return;
 
+        const upper = data[indicatorIndex].upper;
+        // Skip null values
+        if (upper === null || upper === undefined) {
+          firstPoint = true;
+          return;
+        }
+
         const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset;
-        const yPos = priceToY(data[indicatorIndex].upper);
+        const yPos = priceToY(upper);
 
         if (firstPoint) {
           ctx.moveTo(xPos, yPos);
@@ -280,8 +300,12 @@ export class BollingerBands extends IndicatorBase {
         const { candleIndex, indicatorIndex } = mappings[i];
         if (indicatorIndex < 0 || indicatorIndex >= data.length) continue;
 
+        const lower = data[indicatorIndex].lower;
+        // Skip null values
+        if (lower === null || lower === undefined) continue;
+
         const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset;
-        const yPos = priceToY(data[indicatorIndex].lower);
+        const yPos = priceToY(lower);
         ctx.lineTo(xPos, yPos);
       }
 
@@ -301,8 +325,16 @@ export class BollingerBands extends IndicatorBase {
       const { candleIndex, indicatorIndex } = mapping;
       if (indicatorIndex < 0 || indicatorIndex >= data.length) return;
 
+      const upper = data[indicatorIndex].upper;
+
+      // Skip null values and restart line
+      if (upper === null || upper === undefined) {
+        firstPoint = true;
+        return;
+      }
+
       const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset;
-      const yPos = priceToY(data[indicatorIndex].upper);
+      const yPos = priceToY(upper);
 
       if (firstPoint) {
         ctx.moveTo(xPos, yPos);
@@ -324,8 +356,16 @@ export class BollingerBands extends IndicatorBase {
         const { candleIndex, indicatorIndex } = mapping;
         if (indicatorIndex < 0 || indicatorIndex >= data.length) return;
 
+        const middle = data[indicatorIndex].middle;
+
+        // Skip null values and restart line
+        if (middle === null || middle === undefined) {
+          firstPoint = true;
+          return;
+        }
+
         const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset;
-        const yPos = priceToY(data[indicatorIndex].middle);
+        const yPos = priceToY(middle);
 
         if (firstPoint) {
           ctx.moveTo(xPos, yPos);
@@ -347,8 +387,16 @@ export class BollingerBands extends IndicatorBase {
       const { candleIndex, indicatorIndex } = mapping;
       if (indicatorIndex < 0 || indicatorIndex >= data.length) return;
 
+      const lower = data[indicatorIndex].lower;
+
+      // Skip null values and restart line
+      if (lower === null || lower === undefined) {
+        firstPoint = true;
+        return;
+      }
+
       const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset;
-      const yPos = priceToY(data[indicatorIndex].lower);
+      const yPos = priceToY(lower);
 
       if (firstPoint) {
         ctx.moveTo(xPos, yPos);
@@ -363,12 +411,12 @@ export class BollingerBands extends IndicatorBase {
 
     // Draw values label
     const lastData = data[data.length - 1];
-    if (lastData) {
+    if (lastData && lastData.upper !== null && lastData.lower !== null) {
       ctx.font = 'bold 10px monospace';
       ctx.fillStyle = settings.upper_band_color;
       ctx.fillText(`U: ${lastData.upper.toFixed(2)}`, x + 5, priceToY(lastData.upper));
 
-      if (settings.show_middle) {
+      if (settings.show_middle && lastData.middle !== null) {
         ctx.fillStyle = settings.middle_band_color;
         ctx.fillText(`M: ${lastData.middle.toFixed(2)}`, x + 5, priceToY(lastData.middle));
       }
@@ -377,9 +425,11 @@ export class BollingerBands extends IndicatorBase {
       ctx.fillText(`L: ${lastData.lower.toFixed(2)}`, x + 5, priceToY(lastData.lower));
 
       // Show bandwidth
-      ctx.fillStyle = '#888';
-      ctx.font = '9px monospace';
-      ctx.fillText(`BW: ${lastData.bandwidth.toFixed(1)}%`, x + 5, bounds.y + bounds.height - 5);
+      if (lastData.bandwidth !== null) {
+        ctx.fillStyle = '#888';
+        ctx.font = '9px monospace';
+        ctx.fillText(`BW: ${lastData.bandwidth.toFixed(1)}%`, x + 5, bounds.y + bounds.height - 5);
+      }
     }
   }
 }

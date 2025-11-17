@@ -11,9 +11,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Model file location
+# Model file locations
 MODEL_DIR = Path(__file__).parent / 'models'
-MODEL_PATH = MODEL_DIR / 'pivot_model.pth'
+MODEL_PATH_STOCK = MODEL_DIR / 'pivot_model.pth'  # Stock/ETF model
+MODEL_PATH_CRYPTO = MODEL_DIR / 'pivot_model_crypto.pth'  # Crypto model
 
 
 class PivotClassifier(nn.Module):
@@ -149,19 +150,22 @@ def save_model(model, optimizer=None, epoch=None, loss=None, path=None):
         raise
 
 
-def load_model(path=None, device='cpu'):
+def load_model(path=None, device='cpu', model_type='stock'):
     """
     Load model from checkpoint
 
     Args:
-        path: Model file path (default: MODEL_PATH)
+        path: Model file path (default: MODEL_PATH_STOCK or MODEL_PATH_CRYPTO)
         device: Device to load model on ('cpu' or 'cuda')
+        model_type: 'stock' or 'crypto' (default: 'stock')
 
     Returns:
         PivotClassifier instance
     """
     try:
-        path = path or MODEL_PATH
+        # Determine model path if not explicitly provided
+        if path is None:
+            path = MODEL_PATH_CRYPTO if model_type == 'crypto' else MODEL_PATH_STOCK
 
         if not Path(path).exists():
             logger.warning(f"⚠️ Model file not found: {path}")
@@ -268,24 +272,62 @@ def batch_inference(feature_arrays, model=None, threshold=0.7):
         raise
 
 
-# Singleton model instance for Flask API
-_model_instance = None
+# Singleton model instances for Flask API
+_model_instance_stock = None
+_model_instance_crypto = None
 
 
-def get_model():
+def get_model(model_type='stock'):
     """
     Get singleton model instance (for Flask API)
+
+    Args:
+        model_type: 'stock' or 'crypto'
 
     Returns:
         PivotClassifier instance
     """
-    global _model_instance
+    global _model_instance_stock, _model_instance_crypto
 
-    if _model_instance is None:
-        logger.info("📊 Loading ML model for the first time...")
-        _model_instance = load_model()
+    if model_type == 'crypto':
+        if _model_instance_crypto is None:
+            logger.info("📊 Loading crypto ML model for the first time...")
+            _model_instance_crypto = load_model(model_type='crypto')
+        return _model_instance_crypto
+    else:
+        if _model_instance_stock is None:
+            logger.info("📊 Loading stock ML model for the first time...")
+            _model_instance_stock = load_model(model_type='stock')
+        return _model_instance_stock
 
-    return _model_instance
+
+def is_crypto_symbol(symbol):
+    """
+    Detect if symbol is a cryptocurrency
+
+    Args:
+        symbol: Trading symbol (e.g., 'BTC-USD', 'AAPL', 'ETH-USD')
+
+    Returns:
+        bool: True if crypto, False if stock/ETF
+    """
+    # Crypto symbols typically end with -USD, -USDT, or contain crypto tickers
+    crypto_suffixes = ['-USD', '-USDT', '-BUSD', '-EUR']
+    crypto_tickers = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'MATIC', 'AVAX', 'DOT', 'LINK']
+
+    symbol_upper = symbol.upper()
+
+    # Check suffixes
+    for suffix in crypto_suffixes:
+        if symbol_upper.endswith(suffix):
+            return True
+
+    # Check if it starts with a known crypto ticker
+    for ticker in crypto_tickers:
+        if symbol_upper.startswith(ticker):
+            return True
+
+    return False
 
 
 def predict_pivot_reliability(features, threshold=0.7):
