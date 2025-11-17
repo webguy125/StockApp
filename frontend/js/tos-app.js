@@ -907,11 +907,47 @@ class TOSApp {
   }
 
   initializeChartControls() {
+    // Market type toggle buttons
+    this.currentMarketType = localStorage.getItem('marketType') || 'stock';
+    const marketStockBtn = document.getElementById('market-stock-btn');
+    const marketCryptoBtn = document.getElementById('market-crypto-btn');
+
+    // Set initial active state
+    if (this.currentMarketType === 'stock') {
+      marketStockBtn?.classList.add('active');
+      marketCryptoBtn?.classList.remove('active');
+    } else {
+      marketStockBtn?.classList.remove('active');
+      marketCryptoBtn?.classList.add('active');
+    }
+
+    // Market type toggle handlers
+    if (marketStockBtn) {
+      marketStockBtn.addEventListener('click', () => {
+        this.currentMarketType = 'stock';
+        localStorage.setItem('marketType', 'stock');
+        marketStockBtn.classList.add('active');
+        marketCryptoBtn.classList.remove('active');
+        console.log('📊 Market type switched to: stock');
+      });
+    }
+
+    if (marketCryptoBtn) {
+      marketCryptoBtn.addEventListener('click', () => {
+        this.currentMarketType = 'crypto';
+        localStorage.setItem('marketType', 'crypto');
+        marketCryptoBtn.classList.add('active');
+        marketStockBtn.classList.remove('active');
+        console.log('📊 Market type switched to: crypto');
+      });
+    }
+
     // Symbol input - populate with last symbol or default
     const symbolInput = document.getElementById('tos-symbol-input');
     if (symbolInput) {
-      // Set initial value from localStorage or default
-      const lastSymbol = this.currentSymbol || localStorage.getItem('lastSymbol') || 'BTC-USD';
+      // Set initial value from localStorage or default based on market type
+      const defaultSymbol = this.currentMarketType === 'stock' ? 'AAPL' : 'BTC-USD';
+      const lastSymbol = this.currentSymbol || localStorage.getItem('lastSymbol') || defaultSymbol;
       symbolInput.value = lastSymbol;
       console.log(`📊 [DEBUG] Set symbol input to: ${lastSymbol}`);
 
@@ -1106,8 +1142,9 @@ class TOSApp {
     console.log(`📊 Loading 1D chart for ${this.currentSymbol}`);
 
     try {
-      // Fetch all historical data
-      const fetchUrl = `/data/${this.currentSymbol}?period=${this.currentPeriod}&interval=${this.currentInterval}`;
+      // Fetch all historical data with market type
+      const marketType = this.currentMarketType || 'stock';
+      const fetchUrl = `/data/${this.currentSymbol}?period=${this.currentPeriod}&interval=${this.currentInterval}&market_type=${marketType}`;
       const response = await fetch(fetchUrl);
 
       if (!response.ok) {

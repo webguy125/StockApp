@@ -142,21 +142,22 @@ export class IndicatorRegistry {
   /**
    * Calculate all enabled indicators for given candles
    * @param {Array} candles - OHLCV candles
-   * @returns {Map} name -> calculated data
+   * @returns {Promise<Map>} name -> calculated data
    */
-  calculateAll(candles) {
+  async calculateAll(candles) {
     const results = new Map();
 
-    this.getEnabled().forEach(indicator => {
+    const enabledIndicators = this.getEnabled();
+    for (const indicator of enabledIndicators) {
       try {
-        const data = indicator.getData(candles);
+        const data = await indicator.getData(candles);
         if (data) {
           results.set(indicator.name, data);
         }
       } catch (error) {
         console.error(`❌ Error calculating ${indicator.name}:`, error);
       }
-    });
+    }
 
     return results;
   }

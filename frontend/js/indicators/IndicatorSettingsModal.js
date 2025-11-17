@@ -12,6 +12,13 @@ export class IndicatorSettingsModal {
     this.currentIndicator = null;
     this.formElements = new Map(); // field name -> input element
 
+    // Drag state
+    this.isDragging = false;
+    this.dragStartX = 0;
+    this.dragStartY = 0;
+    this.modalStartX = 0;
+    this.modalStartY = 0;
+
     this._initModal();
     this._attachEventListeners();
   }
@@ -112,12 +119,15 @@ export class IndicatorSettingsModal {
           background: #1e1e1e;
           border-radius: 8px;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-          width: 90%;
-          max-width: 900px;
-          max-height: 85vh;
+          width: 900px;
+          height: 600px;
+          min-width: 400px;
+          min-height: 300px;
           display: flex;
           flex-direction: column;
           color: #e0e0e0;
+          resize: both;
+          overflow: hidden;
         }
 
         .indicator-modal-header {
@@ -126,6 +136,8 @@ export class IndicatorSettingsModal {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          cursor: move;
+          user-select: none;
         }
 
         .indicator-modal-header h2 {
@@ -473,6 +485,45 @@ export class IndicatorSettingsModal {
         this._renderSettings(this.currentIndicator);
       }
     });
+
+    // Drag functionality
+    const header = this.modal.querySelector('.indicator-modal-header');
+    const modalContent = this.modal.querySelector('.indicator-modal-content');
+
+    header.addEventListener('mousedown', (e) => {
+      // Don't drag if clicking close button
+      if (e.target.classList.contains('indicator-modal-close')) return;
+
+      this.isDragging = true;
+      this.dragStartX = e.clientX;
+      this.dragStartY = e.clientY;
+
+      // Get current position
+      const rect = modalContent.getBoundingClientRect();
+      this.modalStartX = rect.left;
+      this.modalStartY = rect.top;
+
+      // Remove transform centering when starting drag
+      modalContent.style.transform = 'none';
+      modalContent.style.left = `${this.modalStartX}px`;
+      modalContent.style.top = `${this.modalStartY}px`;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!this.isDragging) return;
+
+      const deltaX = e.clientX - this.dragStartX;
+      const deltaY = e.clientY - this.dragStartY;
+
+      modalContent.style.left = `${this.modalStartX + deltaX}px`;
+      modalContent.style.top = `${this.modalStartY + deltaY}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (this.isDragging) {
+        this.isDragging = false;
+      }
+    });
   }
 
   /**
@@ -482,6 +533,12 @@ export class IndicatorSettingsModal {
     this._renderIndicatorList();
     this.modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
+
+    // Reset position to center when opening
+    const modalContent = this.modal.querySelector('.indicator-modal-content');
+    modalContent.style.transform = 'translate(-50%, -50%)';
+    modalContent.style.left = '50%';
+    modalContent.style.top = '50%';
   }
 
   /**
@@ -658,6 +715,30 @@ export class IndicatorSettingsModal {
           if (valueDisplay && valueDisplay.classList.contains('indicator-setting-value-display')) {
             valueDisplay.textContent = e.target.value;
           }
+        });
+      }
+      // Add instant apply for checkboxes (especially for ML toggle)
+      else if (el.type === 'checkbox') {
+        // Capture the indicator name in closure to avoid this.currentIndicator becoming null
+        const indicatorName = this.currentIndicator;
+        el.addEventListener('change', (e) => {
+          // Apply settings directly using the captured indicator name
+          const indicator = indicatorRegistry.get(indicatorName);
+          if (!indicator) return;
+
+          // Read current checkbox value and apply immediately
+          const newSettings = {};
+          this.formElements.forEach((formEl, formFieldName) => {
+            if (formEl.type === 'checkbox') {
+              newSettings[formFieldName] = formEl.checked;
+            } else if (formEl.type === 'number') {
+              newSettings[formFieldName] = parseFloat(formEl.value);
+            } else {
+              newSettings[formFieldName] = formEl.value;
+            }
+          });
+
+          indicatorRegistry.updateSettings(indicatorName, newSettings);
         });
       }
     });

@@ -269,6 +269,14 @@
         <!-- Chart Toolbar -->
         <div class="tos-chart-toolbar">
           <div class="tos-toolbar-group">
+            <span class="tos-toolbar-label">Market:</span>
+            <div class="market-type-toggle">
+              <button id="market-stock-btn" class="market-toggle-btn active" data-market="stock">Stock</button>
+              <button id="market-crypto-btn" class="market-toggle-btn" data-market="crypto">Crypto</button>
+            </div>
+          </div>
+
+          <div class="tos-toolbar-group">
             <span class="tos-toolbar-label">Symbol:</span>
             <input type="text" id="tos-symbol-input" class="tos-toolbar-input" placeholder="AAPL" />
           </div>

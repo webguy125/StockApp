@@ -14,3 +14,7 @@ websocket-client
 pytz
 python-dotenv
 PyJWT
+torch
+TA-Lib
+ccxt
+yfinance

@@ -359,6 +359,22 @@ def serve_js(filename):
     response.headers['Expires'] = '0'
     return response
 
+def detect_market_type(symbol):
+    """
+    Detect market type based on symbol format.
+
+    Args:
+        symbol: Symbol string (e.g., 'BTC-USD', 'AAPL', 'ETH-USDT')
+
+    Returns:
+        str: 'crypto' or 'stock'
+    """
+    # Crypto symbols typically have a hyphen (BTC-USD, ETH-USDT)
+    if '-' in symbol:
+        return 'crypto'
+    # Stock symbols are typically plain tickers (AAPL, TSLA, GE)
+    return 'stock'
+
 @app.route("/data/<symbol>")
 def get_chart_data(symbol):
     symbol = symbol.upper()
@@ -367,11 +383,14 @@ def get_chart_data(symbol):
     period = request.args.get('period')
     interval = request.args.get('interval', '1d')
 
-    # Route all intraday and daily intervals to Coinbase for crypto (proper OHLC data with live candles)
+    # Get market type from query param or auto-detect from symbol
+    market_type = request.args.get('market_type', detect_market_type(symbol))
+
+    # CRYPTO: Route to Coinbase for intraday data
     coinbase_intervals = ['1m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '1d']
 
-    if interval in coinbase_intervals:
-        # print(f"[ROUTING] Using Coinbase for {symbol} {interval} period={period}")
+    if market_type == 'crypto' and interval in coinbase_intervals:
+        # print(f"[ROUTING] Using Coinbase for crypto {symbol} {interval} period={period}")
         try:
             candles = fetch_coinbase_candles(symbol, interval, period or '1d')
             return jsonify(candles)
@@ -379,8 +398,9 @@ def get_chart_data(symbol):
             print(f"[COINBASE ERROR] {e}")
             return jsonify([])
 
-    # Use yfinance for daily and above (unchanged)
-    # print(f"[ROUTING] Using yfinance for {symbol} {interval}")
+    # STOCKS: Always use yfinance
+    # CRYPTO: Use yfinance for weekly/monthly intervals (fallback)
+    # print(f"[ROUTING] Using yfinance for {market_type} {symbol} {interval}")
     kwargs = {'interval': interval}
     if start and end:
         kwargs['start'] = start
@@ -1271,6 +1291,122 @@ def list_ord_volume_segregated():
 
 # =============================================================================
 # END OF ORD VOLUME ENDPOINTS
+# =============================================================================
+
+# =============================================================================
+# ML ENDPOINTS - Triad Trend Pulse Pivot Reliability
+# =============================================================================
+
+# Lazy import ML module to avoid errors if PyTorch not installed
+_ml_model = None
+
+def get_ml_model():
+    """Get singleton ML model instance"""
+    global _ml_model
+    if _ml_model is None:
+        try:
+            from ml.pivot_model import get_model
+            _ml_model = get_model()
+            print("[ML] Model loaded successfully")
+        except Exception as e:
+            print(f"[ML] Model not available: {e}")
+            _ml_model = False  # Mark as unavailable
+    return _ml_model if _ml_model is not False else None
+
+
+@app.route("/ml/pivot-reliability", methods=["POST"])
+def ml_pivot_reliability():
+    """
+    ML endpoint for pivot reliability prediction
+
+    Request body:
+    {
+        "features": [9 float values],  # Single pivot
+        OR
+        "features": [[9 values], [9 values], ...]  # Multiple pivots
+    }
+
+    Response:
+    {
+        "scores": [0.85, 0.72, ...],  # Probability scores
+        "count": 2
+    }
+    """
+    try:
+        # Get ML model
+        model = get_ml_model()
+
+        if model is None:
+            return jsonify({
+                'error': 'ML model not available. Train model first using train_pivot_model.py'
+            }), 503
+
+        # Parse request
+        data = request.get_json()
+
+        if 'features' not in data:
+            return jsonify({'error': 'Missing "features" in request body'}), 400
+
+        features = data['features']
+
+        # Convert to numpy array
+        import numpy as np
+        features = np.array(features, dtype=np.float32)
+
+        # Validate shape
+        if features.ndim == 1:
+            # Single pivot
+            if features.shape[0] != 9:
+                return jsonify({'error': f'Expected 9 features, got {features.shape[0]}'}), 400
+            features = features.reshape(1, -1)
+        elif features.ndim == 2:
+            # Multiple pivots
+            if features.shape[1] != 9:
+                return jsonify({'error': f'Expected 9 features per pivot, got {features.shape[1]}'}), 400
+        else:
+            return jsonify({'error': 'Invalid feature array shape'}), 400
+
+        # Run inference
+        scores = model.predict_proba(features)
+
+        return jsonify({
+            'scores': scores.tolist(),
+            'count': len(scores)
+        }), 200
+
+    except Exception as e:
+        print(f"[ML ERROR] Pivot reliability prediction failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route("/ml/model-info", methods=["GET"])
+def ml_model_info():
+    """Get information about the loaded ML model"""
+    try:
+        model = get_ml_model()
+
+        if model is None:
+            return jsonify({
+                'loaded': False,
+                'message': 'ML model not available'
+            }), 200
+
+        return jsonify({
+            'loaded': True,
+            'architecture': '9 -> 32 -> 16 -> 1',
+            'input_features': 9,
+            'output': 'pivot_reliability_score',
+            'model_type': 'PyTorch MLP'
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# =============================================================================
+# END OF ML ENDPOINTS
 # =============================================================================
 
 if __name__ == "__main__":

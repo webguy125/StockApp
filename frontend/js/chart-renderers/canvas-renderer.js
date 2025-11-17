@@ -192,8 +192,8 @@ export class CanvasRenderer {
 
     console.log(`💰 Price range: ${this.minPrice.toFixed(2)} - ${this.maxPrice.toFixed(2)}`);
 
-    // Calculate indicators
-    this.calculateIndicators();
+    // Calculate indicators (await for ML-enhanced indicators)
+    await this.calculateIndicators();
 
     // Calculate indicator layout (subplots)
     this.calculateIndicatorLayout();
@@ -1573,9 +1573,9 @@ export class CanvasRenderer {
     });
 
     // Listen for indicator changes (enable/disable/settings update)
-    window.addEventListener('indicators-changed', () => {
+    window.addEventListener('indicators-changed', async () => {
       console.log('📊 Indicators changed - recalculating and redrawing');
-      this.calculateIndicators();
+      await this.calculateIndicators();
       this.calculateIndicatorLayout();
       this.draw();
     });
@@ -4158,7 +4158,7 @@ export class CanvasRenderer {
   /**
    * Calculate all enabled indicators
    */
-  calculateIndicators() {
+  async calculateIndicators() {
     if (!indicatorRegistry || this.data.length === 0) {
       this.indicatorData = new Map();
       return;
@@ -4175,8 +4175,8 @@ export class CanvasRenderer {
         Volume: candle.Volume || 0
       }));
 
-      // Calculate all enabled indicators
-      this.indicatorData = indicatorRegistry.calculateAll(candlesForIndicators);
+      // Calculate all enabled indicators (may be async for ML-enhanced indicators)
+      this.indicatorData = await indicatorRegistry.calculateAll(candlesForIndicators);
 
       if (this.indicatorData.size > 0) {
         console.log(`📊 Calculated ${this.indicatorData.size} indicators`);

@@ -149,9 +149,9 @@ export class IndicatorBase {
   /**
    * Get or calculate indicator data (with caching)
    * @param {Array} candles - OHLCV candles
-   * @returns {Array} Indicator values
+   * @returns {Promise<Array>|Array} Indicator values
    */
-  getData(candles) {
+  async getData(candles) {
     if (!this.enabled) {
       return null;
     }
@@ -160,8 +160,8 @@ export class IndicatorBase {
       return this.cachedData;
     }
 
-    // Calculate fresh data
-    const data = this.calculate(candles);
+    // Calculate fresh data (may be async for ML-enhanced indicators)
+    const data = await this.calculate(candles);
 
     // Cache it
     this.cachedData = data;

@@ -3,6 +3,39 @@
  * Buttons, inputs, cards, modals, and other UI components
  */
 
+/* Market Type Toggle */
+.market-type-toggle {
+  display: flex;
+  gap: 4px;
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 3px;
+}
+
+.market-toggle-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition-normal);
+  margin: 0;
+  width: auto;
+}
+
+.market-toggle-btn:hover {
+  color: var(--color-text);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.market-toggle-btn.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
 /* Buttons */
 .theme-toggle,
 .btn-primary,

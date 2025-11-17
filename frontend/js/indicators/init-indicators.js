@@ -8,6 +8,7 @@ import { indicatorSettingsModal } from './IndicatorSettingsModal.js';
 import { RSI } from './RSI/RSI.js';
 import { MACD } from './MACD/MACD.js';
 import { BollingerBands} from './BollingerBands/BollingerBands.js';
+import { TriadTrendPulse } from './TriadTrendPulse/TriadTrendPulse.js';
 
 /**
  * Initialize the indicator system
@@ -19,6 +20,7 @@ export function initIndicators() {
   const rsi = new RSI();
   const macd = new MACD();
   const bollingerBands = new BollingerBands();
+  const triadTrendPulse = new TriadTrendPulse();
 
   console.log('📊 Registering RSI indicator...');
   indicatorRegistry.register(rsi);
@@ -26,6 +28,8 @@ export function initIndicators() {
   indicatorRegistry.register(macd);
   console.log('📊 Registering Bollinger Bands indicator...');
   indicatorRegistry.register(bollingerBands);
+  console.log('📊 Registering Triad Trend Pulse indicator...');
+  indicatorRegistry.register(triadTrendPulse);
 
   console.log(`📊 Total registered indicators: ${indicatorRegistry.getAll().length}`);
 
