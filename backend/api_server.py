@@ -367,10 +367,10 @@ def get_chart_data(symbol):
     period = request.args.get('period')
     interval = request.args.get('interval', '1d')
 
-    # Route minute-level intervals to Coinbase for crypto (proper OHLC data)
-    minute_intervals = ['1m', '5m', '15m', '30m', '1h']
+    # Route all intraday and daily intervals to Coinbase for crypto (proper OHLC data with live candles)
+    coinbase_intervals = ['1m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '1d']
 
-    if interval in minute_intervals:
+    if interval in coinbase_intervals:
         # print(f"[ROUTING] Using Coinbase for {symbol} {interval} period={period}")
         try:
             candles = fetch_coinbase_candles(symbol, interval, period or '1d')
@@ -407,12 +407,12 @@ def get_chart_data(symbol):
 
 def get_current_candle_volume(symbol, interval):
     """
-    Get the accumulated volume for the current forming candle by fetching recent trades from Coinbase.
-    This ensures accurate volume display even when loading mid-candle.
+    Get the accumulated volume for the current forming candle by fetching the actual current candle from Coinbase.
+    This ensures accurate volume display and uses Coinbase's authoritative candle start time.
 
     Args:
         symbol: Crypto symbol (e.g., 'BTC', 'ETH' - will be converted to 'BTC-USD')
-        interval: Time interval ('1m', '5m', '15m', '30m', '1h', '2h', '4h', '6h')
+        interval: Time interval ('1m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '1d')
 
     Returns:
         dict: {'volume': float, 'candle_start_time': ISO8601 string}
@@ -423,85 +423,99 @@ def get_current_candle_volume(symbol, interval):
     if not symbol.endswith('-USD'):
         symbol = f"{symbol}-USD"
 
-    # Map interval to milliseconds for candle period calculation
-    interval_ms_map = {
-        '1m': 60 * 1000,
-        '5m': 5 * 60 * 1000,
-        '15m': 15 * 60 * 1000,
-        '30m': 30 * 60 * 1000,
-        '1h': 60 * 60 * 1000,
-        '2h': 2 * 60 * 60 * 1000,
-        '4h': 4 * 60 * 60 * 1000,
-        '6h': 6 * 60 * 60 * 1000
+    # Map interval to Coinbase granularity
+    interval_to_granularity = {
+        '1m': 'ONE_MINUTE',
+        '5m': 'FIVE_MINUTE',
+        '15m': 'FIFTEEN_MINUTE',
+        '30m': 'THIRTY_MINUTE',
+        '1h': 'ONE_HOUR',
+        '2h': 'TWO_HOUR',
+        '4h': 'FOUR_HOUR',
+        '6h': 'SIX_HOUR',
+        '1d': 'ONE_DAY'
     }
 
-    if interval not in interval_ms_map:
+    if interval not in interval_to_granularity:
         return {'volume': 0, 'candle_start_time': datetime.utcnow().isoformat() + 'Z'}
 
-    interval_ms = interval_ms_map[interval]
+    granularity = interval_to_granularity[interval]
 
-    # Calculate current candle period boundaries
+    # Fetch the most recent candles from Coinbase (including the current forming candle)
+    # We'll fetch 2 candles to ensure we get the current one
     now = datetime.utcnow()
-    now_ms = int(now.timestamp() * 1000)
-
-    # Round down to start of current candle period
-    candle_start_ms = (now_ms // interval_ms) * interval_ms
-    candle_start_dt = datetime.fromtimestamp(candle_start_ms / 1000)
+    # Go back enough time to get at least 2 candles
+    granularity_seconds_map = {
+        'ONE_MINUTE': 60,
+        'FIVE_MINUTE': 300,
+        'FIFTEEN_MINUTE': 900,
+        'THIRTY_MINUTE': 1800,
+        'ONE_HOUR': 3600,
+        'TWO_HOUR': 7200,
+        'FOUR_HOUR': 14400,
+        'SIX_HOUR': 21600,
+        'ONE_DAY': 86400
+    }
+    granularity_seconds = granularity_seconds_map[granularity]
+    start_dt = now - timedelta(seconds=granularity_seconds * 3)  # Go back 3 candle periods
 
     # Convert to Unix timestamps for API call
     import calendar
-    start_ts = int(calendar.timegm(candle_start_dt.timetuple()))
+    start_ts = int(calendar.timegm(start_dt.timetuple()))
     end_ts = int(calendar.timegm(now.timetuple()))
 
-    # Call Coinbase Advanced Trade API to get market trades (recent trades)
-    # Endpoint: GET /api/v3/brokerage/market/products/{product_id}/ticker
-    request_path = f"/api/v3/brokerage/market/products/{symbol}/ticker"
+    # Fetch candles from Coinbase to get the authoritative candle start time
+    request_path = f"/api/v3/brokerage/products/{symbol}/candles"
+    url = f"https://api.coinbase.com{request_path}"
+
+    params = {
+        'granularity': granularity,
+        'start': start_ts,
+        'end': end_ts
+    }
 
     try:
         # Generate JWT token for authentication
         token = generate_coinbase_jwt('GET', request_path)
 
-        # Make API request with query parameters for time range
-        url = f"https://api.coinbase.com{request_path}"
-        params = {
-            'limit': 1000,  # Max trades to fetch
-            'start': start_ts,
-            'end': end_ts
-        }
-
         headers = {
-            'Authorization': f'Bearer {token}',
-            'Content-Type': 'application/json'
+            'Authorization': f'Bearer {token}'
         }
 
-        response = requests.get(url, headers=headers, params=params, timeout=10)
+        response = requests.get(url, params=params, headers=headers, timeout=10)
         response.raise_for_status()
-
         data = response.json()
-        print(f"[CURRENT_CANDLE] API Response keys: {data.keys() if isinstance(data, dict) else 'not a dict'}")
 
-        # Sum up volume from all trades in current candle period
-        total_volume = 0.0
+        # Get the candles array
+        candles = data.get('candles', [])
 
-        # The ticker endpoint returns trades in the 'trades' field
-        if 'trades' in data and isinstance(data['trades'], list):
-            for trade in data['trades']:
-                if 'size' in trade:
-                    total_volume += float(trade['size'])
+        if not candles:
+            print(f"[CURRENT_CANDLE] No candles returned from Coinbase")
+            return {'volume': 0, 'candle_start_time': now.isoformat() + 'Z'}
 
-        print(f"[CURRENT_CANDLE] Calculated volume: {total_volume:.4f} BTC from {len(data.get('trades', []))} trades")
+        # The most recent candle (first in the array for Coinbase API) is the current forming candle
+        current_candle = candles[0]
+        candle_start_timestamp = int(current_candle['start'])
+        candle_volume = float(current_candle['volume'])
+
+        # Convert timestamp to datetime for ISO format
+        candle_start_dt = datetime.utcfromtimestamp(candle_start_timestamp)
+
+        print(f"[CURRENT_CANDLE] Coinbase candle: start={candle_start_dt.isoformat()}Z, volume={candle_volume:.4f} BTC")
 
         return {
-            'volume': total_volume,
+            'volume': candle_volume,
             'candle_start_time': candle_start_dt.isoformat() + 'Z'
         }
 
     except Exception as e:
-        print(f"[CURRENT_CANDLE ERROR] Failed to fetch current candle volume: {e}")
+        print(f"[CURRENT_CANDLE ERROR] Failed to fetch current candle: {e}")
+        import traceback
+        traceback.print_exc()
         # Return 0 volume on error - better than crashing
         return {
             'volume': 0,
-            'candle_start_time': candle_start_dt.isoformat() + 'Z'
+            'candle_start_time': now.isoformat() + 'Z'
         }
 
 @app.route("/current-candle-volume/<symbol>")

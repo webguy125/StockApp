@@ -82,11 +82,10 @@ export class Timeframe3mo {
       if (success) {
         // console.log('✅ [3MO] Chart rendered successfully');
 
-        // Apply any ticker update that arrived during chart load (1D pattern)
+        // Apply any ticker update that arrived during chart load (NO volume - VolumeAccumulator handles that)
         if (this.lastTickerUpdate && this.lastTickerUpdate.symbol === this.symbol) {
           // console.log(`🔄 [3MO] Applying pending ticker update: ${this.lastTickerUpdate.symbol} = $${this.lastTickerUpdate.price}`);
-          const volumeBTC = this.lastTickerUpdate.volume_today || 0;
-          this.renderer.updateLivePrice(this.lastTickerUpdate.price, volumeBTC);
+          this.renderer.updateLivePrice(this.lastTickerUpdate.price, null);
         }
       }
 
@@ -144,10 +143,10 @@ export class Timeframe3mo {
       volume_today: volumeBTC
     };
 
-    // Update the chart renderer with live price
+    // Update the chart renderer with live price (NO volume - VolumeAccumulator handles that)
     if (this.data.length > 0) {
       // console.log(`  🖼️ [3MO] Updating renderer with live price`);
-      this.renderer.updateLivePrice(price, volumeBTC);
+      this.renderer.updateLivePrice(price, null);
     } else {
       // console.log(`  ⚠️ [, ticker stored for later`);
     }

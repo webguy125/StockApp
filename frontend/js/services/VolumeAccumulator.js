@@ -19,7 +19,8 @@ export class VolumeAccumulator {
       '1h': { volume: 0, candleStartTime: null },
       '2h': { volume: 0, candleStartTime: null },
       '4h': { volume: 0, candleStartTime: null },
-      '6h': { volume: 0, candleStartTime: null }
+      '6h': { volume: 0, candleStartTime: null },
+      '1d': { volume: 0, candleStartTime: null }
     };
 
     // Interval durations in milliseconds
@@ -31,7 +32,8 @@ export class VolumeAccumulator {
       '1h': 60 * 60 * 1000,
       '2h': 2 * 60 * 60 * 1000,
       '4h': 4 * 60 * 60 * 1000,
-      '6h': 6 * 60 * 60 * 1000
+      '6h': 6 * 60 * 60 * 1000,
+      '1d': 24 * 60 * 60 * 1000
     };
 
     // Callbacks to notify timeframes when volume updates
@@ -155,13 +157,21 @@ export class VolumeAccumulator {
       }
 
       // Check if we've moved to a new candle period
+      let newCandleStarted = false;
+
+      // Use millisecond-based logic for ALL intervals (including 1d)
+      // The candle start time is set correctly by the backend based on exchange-specific boundaries
       const timeSinceCandle = now - vol.candleStartTime;
       const intervalMs = this.intervals[interval];
 
       if (timeSinceCandle >= intervalMs) {
+        newCandleStarted = true;
+        vol.candleStartTime = new Date(vol.candleStartTime.getTime() + intervalMs);
+      }
+
+      if (newCandleStarted) {
         // New candle started - reset volume
         vol.volume = 0;
-        vol.candleStartTime = new Date(vol.candleStartTime.getTime() + intervalMs);
         console.log(`📊 [VolumeAccumulator] ${interval} new candle started, reset volume`);
       }
 
@@ -179,6 +189,8 @@ export class VolumeAccumulator {
    * Round down a timestamp to the start of the interval
    */
   roundDownToInterval(date, interval) {
+    // Use millisecond-based rounding for all intervals
+    // Note: For daily candles, the backend provides the accurate start time via initializeCandleTimes()
     const ms = date.getTime();
     const intervalMs = this.intervals[interval];
     return new Date(Math.floor(ms / intervalMs) * intervalMs);

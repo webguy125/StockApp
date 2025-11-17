@@ -907,9 +907,14 @@ class TOSApp {
   }
 
   initializeChartControls() {
-    // Symbol input
+    // Symbol input - populate with last symbol or default
     const symbolInput = document.getElementById('tos-symbol-input');
     if (symbolInput) {
+      // Set initial value from localStorage or default
+      const lastSymbol = this.currentSymbol || localStorage.getItem('lastSymbol') || 'BTC-USD';
+      symbolInput.value = lastSymbol;
+      console.log(`📊 [DEBUG] Set symbol input to: ${lastSymbol}`);
+
       symbolInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
           this.loadSymbol(e.target.value.trim().toUpperCase());
@@ -956,13 +961,8 @@ class TOSApp {
       });
     }
 
-    // Add indicator button
-    const addIndicatorBtn = document.getElementById('btn-add-indicator');
-    if (addIndicatorBtn) {
-      addIndicatorBtn.addEventListener('click', () => {
-        this.showIndicatorPanel();
-      });
-    }
+    // Add indicator button - NOW HANDLED BY indicators/init-indicators.js
+    // The new modular indicator system wires up this button automatically
 
     // Drawing tools button
     const drawingToolsBtn = document.getElementById('btn-drawing-tools');
@@ -1013,13 +1013,13 @@ class TOSApp {
       this.newsFeed.setSymbolFilter(symbol);
     }
 
-    // Load saved indicators for this symbol
+    // Load saved indicators for this symbol - DISABLED (using new indicator system)
     // console.log(`Loading saved indicators for ${symbol}`);
-    this.loadSavedIndicators(symbol);
+    // this.loadSavedIndicators(symbol);
     // console.log(`After loadSavedIndicators: activeIndicators count = ${this.activeIndicators.length}`);
-    if (this.activeIndicators.length > 0) {
-      // console.log('Indicators to restore:', this.activeIndicators.map(i => i.type));
-    }
+    // if (this.activeIndicators.length > 0) {
+    //   console.log('Indicators to restore:', this.activeIndicators.map(i => i.type));
+    // }
 
     // === OLD PATH (1D ONLY) - COMMENTED OUT ===
     // Load the chart (force recreate when switching symbols)
@@ -1029,10 +1029,15 @@ class TOSApp {
     // === NEW PATH (ALL TIMEFRAMES) - USE TIMEFRAME REGISTRY ===
     // Load chart using the currently selected timeframe from dropdown
     console.log(`📊 Loading ${symbol} with timeframe: ${this.currentTimeframeId}`);
+    console.log(`📊 Timeframe registry exists: ${!!this.timeframeRegistry}`);
+    console.log(`📊 Socket exists: ${!!this.socket}`);
+
     if (this.timeframeRegistry) {
       // Load chart even if socket isn't connected yet (historical data doesn't need socket)
       // Socket will be used for live updates once connected
+      console.log(`📊 Calling switchTimeframe(${this.currentTimeframeId}, ${symbol})`);
       await this.timeframeRegistry.switchTimeframe(this.currentTimeframeId, symbol, this.socket);
+      console.log(`✅ Chart loaded successfully`);
     } else {
       console.error('❌ Timeframe registry not initialized!');
     }
@@ -1894,7 +1899,9 @@ class TOSApp {
     // This would be implemented to change the trace type
   }
 
-  showIndicatorPanel() {
+  // OLD INDICATOR SYSTEM - DEPRECATED
+  // Now using modular indicator system in js/indicators/
+  /* showIndicatorPanel() {
     const indicators = [
       { name: 'SMA', fullName: 'Simple Moving Average', type: 'SMA', params: [{name: 'period', label: 'Period', default: 20, min: 1, max: 200}], category: 'Trend' },
       { name: 'EMA', fullName: 'Exponential Moving Average', type: 'EMA', params: [{name: 'period', label: 'Period', default: 20, min: 1, max: 200}], category: 'Trend' },
@@ -1945,9 +1952,9 @@ class TOSApp {
     if (clearBtn) {
       clearBtn.onclick = () => this.clearAllIndicators();
     }
-  }
+  } */
 
-  clearAllIndicators() {
+  /* clearAllIndicators() {
     // console.log('Clearing all indicators');
 
     // Clear the active indicators array
@@ -1970,9 +1977,9 @@ class TOSApp {
     notif.textContent = '✓ All indicators cleared';
     notif.style.color = 'var(--tos-accent-green)';
     setTimeout(() => notif.textContent = '', 3000);
-  }
+  } */
 
-  selectIndicator(indicator) {
+  /* selectIndicator(indicator) {
     const paramsDiv = document.getElementById('indicator-params');
     const titleEl = document.getElementById('param-title');
     const inputsDiv = document.getElementById('param-inputs');
@@ -2013,9 +2020,9 @@ class TOSApp {
       document.getElementById('indicator-modal').style.display = 'none';
       paramsDiv.style.display = 'none';
     };
-  }
+  } */
 
-  async addIndicatorToChart(type, params, existingId = null) {
+  /* async addIndicatorToChart(type, params, existingId = null) {
     if (!this.currentSymbol) {
       alert('Please load a chart first');
       return;
@@ -2222,9 +2229,9 @@ class TOSApp {
       console.error('Error adding indicator:', error);
       alert('Error adding indicator: ' + error.message);
     }
-  }
+  } */
 
-  updateCurrentIndicatorsUI() {
+  /* updateCurrentIndicatorsUI() {
     const section = document.getElementById('current-indicators-section');
     const list = document.getElementById('current-indicators-list');
 
@@ -2253,9 +2260,9 @@ class TOSApp {
       item.appendChild(removeBtn);
       list.appendChild(item);
     });
-  }
+  } */
 
-  async removeIndicator(indicatorId) {
+  /* async removeIndicator(indicatorId) {
     const indicator = this.activeIndicators.find(ind => ind.id === indicatorId);
     if (!indicator) return;
 
@@ -2318,7 +2325,7 @@ class TOSApp {
       this.updateCurrentIndicatorsUI();
       this.saveIndicators();
     }
-  }
+  } */
 
   showCompareDialog() {
     const symbol = prompt('Enter symbol to compare with current chart:');
@@ -2465,7 +2472,7 @@ class TOSApp {
  * Initialize the application
  */
 async function initializeApp() {
-  // console.log('Starting ThinkorSwim-Style Platform...');
+  console.log('Starting ThinkorSwim-Style Platform...');
 
   const app = new TOSApp();
   await app.initialize();
@@ -2477,13 +2484,14 @@ async function initializeApp() {
   const urlParams = new URLSearchParams(window.location.search);
   const defaultSymbol = urlParams.get('symbol') || app.currentSymbol || 'BTC-USD';
 
-  // console.log(`🔍 [DEBUG] Initializing with symbol: ${defaultSymbol}, period: ${app.currentPeriod}, interval: ${app.currentInterval}`);
+  console.log(`🔍 [DEBUG] Initializing with symbol: ${defaultSymbol}, period: ${app.currentPeriod}, interval: ${app.currentInterval}`);
 
   setTimeout(() => {
+    console.log(`🔍 [DEBUG] Calling loadSymbol(${defaultSymbol})`);
     app.loadSymbol(defaultSymbol);
   }, 500);
 
-  // console.log('Platform ready!');
+  console.log('Platform ready!');
 }
 
 // Wait for DOM to be ready

@@ -6,6 +6,7 @@
  */
 
 import { SelectionManager } from './SelectionManager.js?v=20251030-fix';
+import { indicatorRegistry } from '../indicators/init-indicators.js';
 
 export class CanvasRenderer {
   constructor(timeframeInterval = '1d') {
@@ -72,6 +73,17 @@ export class CanvasRenderer {
 
     // Selection manager for editing drawings
     this.selectionManager = null; // Initialized after canvas is created
+
+    // Indicator data storage
+    this.indicatorData = new Map(); // Stores calculated indicator data
+    this.indicatorLayout = null; // Stores subplot bounds for indicators
+
+    // Indicator border dragging
+    this.isDraggingIndicatorBorder = false;
+    this.draggedBorderIndex = -1; // Which border is being dragged
+    this.dragBorderStartY = 0;
+    this.dragBorderStartHeight = 0;
+    this.dragStartedInIndicatorArea = false; // Track if pan started in indicator area
 
     // Colors
     this.colors = {
@@ -179,6 +191,12 @@ export class CanvasRenderer {
     this.calculateRanges();
 
     console.log(`💰 Price range: ${this.minPrice.toFixed(2)} - ${this.maxPrice.toFixed(2)}`);
+
+    // Calculate indicators
+    this.calculateIndicators();
+
+    // Calculate indicator layout (subplots)
+    this.calculateIndicatorLayout();
 
     // Draw chart
     this.draw();
@@ -640,6 +658,12 @@ export class CanvasRenderer {
     // Draw volume
     this.drawVolume();
 
+    // Draw indicators (overlays and subplots)
+    this.renderIndicators();
+
+    // Draw indicator subplot borders
+    this.drawIndicatorBorders();
+
     // Draw axes
     this.drawAxes();
 
@@ -836,12 +860,15 @@ export class CanvasRenderer {
   }
 
   /**
-   * Draw volume bars (fixed position at bottom, like TradingView)
+   * Draw volume bars
+   * Position: Right after price chart, before indicator subplots
    */
   drawVolume() {
     const ctx = this.ctx;
-    // Volume bars in fixed 80px area at bottom of canvas
-    const volumeTop = this.height - this.margin.bottom - this.volumeHeight;
+    // Use indicator layout position if available, otherwise use default bottom position
+    const volumeTop = this.indicatorLayout
+      ? this.indicatorLayout.volumeY
+      : this.height - this.margin.bottom - this.volumeHeight;
     const chartLeft = this.margin.left;
     const chartWidth = this.width - this.margin.left - this.margin.right;
 
@@ -1544,6 +1571,14 @@ export class CanvasRenderer {
       this.calculateVolumeRange(); // Only update volume, preserve price pan
       this.draw();
     });
+
+    // Listen for indicator changes (enable/disable/settings update)
+    window.addEventListener('indicators-changed', () => {
+      console.log('📊 Indicators changed - recalculating and redrawing');
+      this.calculateIndicators();
+      this.calculateIndicatorLayout();
+      this.draw();
+    });
   }
 
   /**
@@ -1559,8 +1594,42 @@ export class CanvasRenderer {
       return; // SelectionManager handled the event
     }
 
+    // Indicator border dragging
+    if (this.isDraggingIndicatorBorder) {
+      const dy = this.mouseY - this.dragBorderStartY;
+      const newHeight = Math.max(50, this.dragBorderStartHeight - dy); // Minimum 50px height (inverted: drag down = smaller dy needed for same height)
+
+      if (this.draggedBorderIndex >= 0 && this.draggedBorderIndex < this.indicatorLayout.oscillators.length) {
+        // Update the height of the dragged subplot
+        this.indicatorLayout.oscillators[this.draggedBorderIndex].height = newHeight;
+
+        // Recalculate total oscillator height
+        let totalOscillatorHeight = 0;
+        this.indicatorLayout.oscillators.forEach(subplot => {
+          totalOscillatorHeight += subplot.height;
+        });
+
+        // Recalculate price chart height
+        const availableHeight = this.height - this.margin.top - this.margin.bottom;
+        const priceChartHeight = availableHeight - this.volumeHeight - totalOscillatorHeight;
+
+        // Update price chart bounds
+        this.indicatorLayout.priceChart.height = priceChartHeight;
+        this.chartHeight = priceChartHeight;
+
+        // Update volume position
+        this.indicatorLayout.volumeY = this.margin.top + priceChartHeight;
+
+        // Recalculate positions of all oscillator subplots
+        let currentY = this.margin.top + priceChartHeight + this.volumeHeight;
+        for (let i = 0; i < this.indicatorLayout.oscillators.length; i++) {
+          this.indicatorLayout.oscillators[i].y = currentY;
+          currentY += this.indicatorLayout.oscillators[i].height;
+        }
+      }
+    }
     // Y-axis expand/compress
-    if (this.isDraggingYAxis) {
+    else if (this.isDraggingYAxis) {
       const dy = this.mouseY - this.yAxisDragStartY;
       // Drag up = negative dy = expand (increase range)
       // Drag down = positive dy = compress (decrease range)
@@ -1620,101 +1689,110 @@ export class CanvasRenderer {
         // User has panned away from live data (either left or right)
         if (this.autoScrollEnabled) {
           this.autoScrollEnabled = false;
-          console.log(`⏸️ Auto-scroll PAUSED - user panned away (distance=${distanceFromLiveEdge.toFixed(2)})`);
+          // console.log(`⏸️ Auto-scroll PAUSED - user panned away (distance=${distanceFromLiveEdge.toFixed(2)})`);
         }
       } else if (Math.abs(distanceFromLiveEdge) <= 0.5) {
         // User has panned back to live edge
         if (!this.autoScrollEnabled) {
           this.autoScrollEnabled = true;
-          console.log('▶️ Auto-scroll RESUMED - user returned to live edge');
+          // console.log('▶️ Auto-scroll RESUMED - user returned to live edge');
         }
       }
 
       // VERTICAL PANNING (up/down) - TradingView style (unrestricted)
-      // Calculate price range shift based on vertical drag
-      const priceRange = this.dragStartMaxPrice - this.dragStartMinPrice;
-      const pixelsPerPrice = this.chartHeight / priceRange;
-      const priceShift = dy / pixelsPerPrice; // Drag down = see higher prices, drag up = see lower prices
+      // Skip vertical panning if drag started in indicator area
+      if (!this.dragStartedInIndicatorArea) {
+        // Calculate price range shift based on vertical drag
+        const priceRange = this.dragStartMaxPrice - this.dragStartMinPrice;
+        const pixelsPerPrice = this.chartHeight / priceRange;
+        const priceShift = dy / pixelsPerPrice; // Drag down = see higher prices, drag up = see lower prices
 
-      // Apply the shift to both min and max to pan the view (completely unrestricted like TradingView)
-      this.minPrice = this.dragStartMinPrice + priceShift;
-      this.maxPrice = this.dragStartMaxPrice + priceShift;
+        // Apply the shift to both min and max to pan the view (completely unrestricted like TradingView)
+        this.minPrice = this.dragStartMinPrice + priceShift;
+        this.maxPrice = this.dragStartMaxPrice + priceShift;
+      }
 
       // Mark that user has manually panned (either horizontally or vertically)
       if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
         this.manualPan = true;
       }
 
-      if (Math.abs(indexDelta) > 0.1 || Math.abs(dy) > 1) {
-        console.log(`🖱️ Panning: dx=${dx.toFixed(0)}px (${indexDelta.toFixed(2)} candles), dy=${dy.toFixed(0)}px (${priceShift.toFixed(0)} price shift)`);
-      }
+      // if (Math.abs(indexDelta) > 0.1 || Math.abs(dy) > 1) {
+      //   console.log(`🖱️ Panning: dx=${dx.toFixed(0)}px (${indexDelta.toFixed(2)} candles), dy=${dy.toFixed(0)}px (${priceShift.toFixed(0)} price shift)`);
+      // }
     } else {
       // Update hovered candle - round to nearest whole candle for snapping
       this.hoveredIndex = Math.round(this.xToIndex(this.mouseX));
 
-      // Update cursor based on active tool (when not dragging)
-      const activeTool = window.toolRegistry?.getActiveTool();
+      // Check if hovering over an indicator border
+      const borderIndex = this.getIndicatorBorderAtY(this.mouseY);
+      if (borderIndex >= 0) {
+        this.canvas.style.cursor = 'ns-resize';
+      } else {
+        // Update cursor based on active tool (when not dragging)
+        const activeTool = window.toolRegistry?.getActiveTool();
 
-      // Special handling for eraser tool - highlight drawing under cursor
-      if (activeTool && activeTool.id === 'eraser-cursor' && this.selectionManager) {
-        const hoveredDrawing = this.selectionManager.findDrawingAtPoint(this.mouseX, this.mouseY);
-        if (hoveredDrawing) {
-          this.canvas.style.cursor = 'pointer'; // Show clickable cursor
-          // Store for highlight rendering
-          this.eraserHoveredDrawing = hoveredDrawing;
-        } else {
-          this.canvas.style.cursor = activeTool.cursorStyle || 'default';
-          this.eraserHoveredDrawing = null;
+        // Special handling for eraser tool - highlight drawing under cursor
+        if (activeTool && activeTool.id === 'eraser-cursor' && this.selectionManager) {
+          const hoveredDrawing = this.selectionManager.findDrawingAtPoint(this.mouseX, this.mouseY);
+          if (hoveredDrawing) {
+            this.canvas.style.cursor = 'pointer'; // Show clickable cursor
+            // Store for highlight rendering
+            this.eraserHoveredDrawing = hoveredDrawing;
+          } else {
+            this.canvas.style.cursor = activeTool.cursorStyle || 'default';
+            this.eraserHoveredDrawing = null;
+          }
         }
-      }
-      // Special handling for dot/arrow cursor - show preview
-      else if (activeTool && (activeTool.id === 'dot-cursor' || activeTool.id === 'arrow-cursor')) {
-        this.eraserHoveredDrawing = null;
+        // Special handling for dot/arrow cursor - show preview
+        else if (activeTool && (activeTool.id === 'dot-cursor' || activeTool.id === 'arrow-cursor')) {
+          this.eraserHoveredDrawing = null;
 
-        // Get preview from tool's onMouseMove
-        const result = activeTool.onMouseMove({ clientX: this.mouseX + this.canvas.getBoundingClientRect().left, clientY: this.mouseY + this.canvas.getBoundingClientRect().top }, {});
-        if (result) {
-          // Convert to chart coordinates
-          const chartX = this.xToIndex(this.mouseX);
-          const chartY = this.yToPrice(this.mouseY);
-          result.chartIndex = chartX;
-          result.chartPrice = chartY;
+          // Get preview from tool's onMouseMove
+          const result = activeTool.onMouseMove({ clientX: this.mouseX + this.canvas.getBoundingClientRect().left, clientY: this.mouseY + this.canvas.getBoundingClientRect().top }, {});
+          if (result) {
+            // Convert to chart coordinates
+            const chartX = this.xToIndex(this.mouseX);
+            const chartY = this.yToPrice(this.mouseY);
+            result.chartIndex = chartX;
+            result.chartPrice = chartY;
 
-          // Auto-detect arrow direction for preview
-          if (result.action === 'preview-arrow' && this.data.length > 0) {
-            const nearestIndex = Math.round(chartX);
-            if (nearestIndex >= 0 && nearestIndex < this.data.length) {
-              const candle = this.data[nearestIndex];
-              const candleHigh = candle.High;
-              const candleLow = candle.Low;
+            // Auto-detect arrow direction for preview
+            if (result.action === 'preview-arrow' && this.data.length > 0) {
+              const nearestIndex = Math.round(chartX);
+              if (nearestIndex >= 0 && nearestIndex < this.data.length) {
+                const candle = this.data[nearestIndex];
+                const candleHigh = candle.High;
+                const candleLow = candle.Low;
 
-              // If arrow is below the candle, point up (bullish)
-              // If arrow is above the candle, point down (bearish)
-              if (chartY < candleLow) {
-                result.direction = 'up';
-              } else if (chartY > candleHigh) {
-                result.direction = 'down';
-              } else {
-                // If inside the candle body, use proximity to decide
-                const candleMid = (candleHigh + candleLow) / 2;
-                result.direction = chartY < candleMid ? 'up' : 'down';
+                // If arrow is below the candle, point up (bullish)
+                // If arrow is above the candle, point down (bearish)
+                if (chartY < candleLow) {
+                  result.direction = 'up';
+                } else if (chartY > candleHigh) {
+                  result.direction = 'down';
+                } else {
+                  // If inside the candle body, use proximity to decide
+                  const candleMid = (candleHigh + candleLow) / 2;
+                  result.direction = chartY < candleMid ? 'up' : 'down';
+                }
               }
             }
+
+            // Store as preview
+            this.previewDrawing = result;
           }
 
-          // Store as preview
-          this.previewDrawing = result;
-        }
-
-        this.canvas.style.cursor = activeTool.cursorStyle;
-      }
-      else {
-        this.eraserHoveredDrawing = null;
-        this.previewDrawing = null; // Clear preview when switching tools
-        if (activeTool && activeTool.cursorStyle) {
           this.canvas.style.cursor = activeTool.cursorStyle;
-        } else {
-          this.canvas.style.cursor = 'default';
+        }
+        else {
+          this.eraserHoveredDrawing = null;
+          this.previewDrawing = null; // Clear preview when switching tools
+          if (activeTool && activeTool.cursorStyle) {
+            this.canvas.style.cursor = activeTool.cursorStyle;
+          } else {
+            this.canvas.style.cursor = 'default';
+          }
         }
       }
     }
@@ -1729,6 +1807,17 @@ export class CanvasRenderer {
     const rect = this.canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
+
+    // Check if clicking on an indicator border
+    const borderIndex = this.getIndicatorBorderAtY(mouseY);
+    if (borderIndex >= 0) {
+      this.isDraggingIndicatorBorder = true;
+      this.draggedBorderIndex = borderIndex;
+      this.dragBorderStartY = mouseY;
+      this.dragBorderStartHeight = this.indicatorLayout.oscillators[borderIndex].height;
+      this.canvas.style.cursor = 'ns-resize';
+      return; // Handled
+    }
 
     // Check if eraser tool is active
     const activeTool = window.toolRegistry?.getActiveTool();
@@ -1835,15 +1924,15 @@ export class CanvasRenderer {
 
     // Let SelectionManager handle first (for drawing selection/editing)
     if (this.selectionManager && this.selectionManager.onMouseDown(e, mouseX, mouseY)) {
-      console.log('✅ SelectionManager handled mouseDown');
+      // console.log('✅ SelectionManager handled mouseDown');
       return; // SelectionManager handled the event
     }
-    console.log('⏭️ SelectionManager did not handle mouseDown, continuing to pan/zoom logic');
+    // console.log('⏭️ SelectionManager did not handle mouseDown, continuing to pan/zoom logic');
 
     // Check if any drawing tool is active (other than default cursor modes)
     // If so, prevent panning - the tool is still being drawn
     if (activeTool && activeTool.id !== 'default-cursor' && activeTool.id !== 'eraser-cursor') {
-      console.log(`🚫 Drawing tool '${activeTool.id}' is active - panning disabled`);
+      // console.log(`🚫 Drawing tool '${activeTool.id}' is active - panning disabled`);
       return; // Don't allow panning while drawing
     }
 
@@ -1862,14 +1951,14 @@ export class CanvasRenderer {
       this.yAxisDragStartRange = this.maxPrice - this.minPrice;
       this.yAxisDragStartCenter = (this.maxPrice + this.minPrice) / 2;
       this.canvas.style.cursor = 'ns-resize';
-      console.log(`📏 Y-axis expand/compress started`);
+      // console.log(`📏 Y-axis expand/compress started`);
     } else if (mouseY >= chartBottom && mouseX >= chartLeft && mouseX <= chartRight) {
       // Clicked on X-axis (time axis)
       this.isDraggingXAxis = true;
       this.xAxisDragStartX = mouseX;
       this.xAxisDragStartVisibleCandles = this.endIndex - this.startIndex;
       this.canvas.style.cursor = 'ew-resize';
-      console.log(`📏 X-axis expand/compress started`);
+      // console.log(`📏 X-axis expand/compress started`);
     } else {
       // Normal chart panning
       this.isDragging = true;
@@ -1878,8 +1967,9 @@ export class CanvasRenderer {
       this.dragStartIndex = this.startIndex;
       this.dragStartMinPrice = this.minPrice;
       this.dragStartMaxPrice = this.maxPrice;
+      this.dragStartedInIndicatorArea = this.isMouseInIndicatorArea(mouseY); // Track if started in indicator area
       this.canvas.style.cursor = 'grabbing';
-      console.log(`🖱️ Pan started at index ${this.startIndex}, price range: ${this.minPrice.toFixed(0)} - ${this.maxPrice.toFixed(0)}`);
+      // console.log(`🖱️ Pan started at index ${this.startIndex}, price range: ${this.minPrice.toFixed(0)} - ${this.maxPrice.toFixed(0)}`);
     }
 
     // Prevent text selection while dragging
@@ -1895,6 +1985,7 @@ export class CanvasRenderer {
       this.isDragging = false;
       this.isDraggingYAxis = false;
       this.isDraggingXAxis = false;
+      this.isDraggingIndicatorBorder = false;
       return;
     }
 
@@ -1910,6 +2001,9 @@ export class CanvasRenderer {
     this.isDragging = false;
     this.isDraggingYAxis = false;
     this.isDraggingXAxis = false;
+    this.isDraggingIndicatorBorder = false;
+    this.draggedBorderIndex = -1;
+    this.dragStartedInIndicatorArea = false;
     // Restore cursor based on active tool
     const activeTool = window.toolRegistry?.getActiveTool();
     if (activeTool && activeTool.cursorStyle) {
@@ -1929,6 +2023,9 @@ export class CanvasRenderer {
     this.isDragging = false;
     this.isDraggingYAxis = false;
     this.isDraggingXAxis = false;
+    this.isDraggingIndicatorBorder = false;
+    this.draggedBorderIndex = -1;
+    this.dragStartedInIndicatorArea = false;
     // Restore cursor based on active tool
     const activeTool = window.toolRegistry?.getActiveTool();
     if (activeTool && activeTool.cursorStyle) {
@@ -4054,6 +4151,276 @@ export class CanvasRenderer {
     // Reset flags so new chart instance starts fresh
     this.autoScrollEnabled = true;
     this.hasRendered = false;
+  }
+
+  // ==================== INDICATOR INTEGRATION METHODS ====================
+
+  /**
+   * Calculate all enabled indicators
+   */
+  calculateIndicators() {
+    if (!indicatorRegistry || this.data.length === 0) {
+      this.indicatorData = new Map();
+      return;
+    }
+
+    try {
+      // Convert canvas data format to indicator format (OHLCV with Date)
+      const candlesForIndicators = this.data.map(candle => ({
+        Date: candle.Date,
+        Open: candle.Open,
+        High: candle.High,
+        Low: candle.Low,
+        Close: candle.Close,
+        Volume: candle.Volume || 0
+      }));
+
+      // Calculate all enabled indicators
+      this.indicatorData = indicatorRegistry.calculateAll(candlesForIndicators);
+
+      if (this.indicatorData.size > 0) {
+        console.log(`📊 Calculated ${this.indicatorData.size} indicators`);
+      }
+    } catch (error) {
+      console.error('❌ Error calculating indicators:', error);
+      this.indicatorData = new Map();
+    }
+  }
+
+  /**
+   * Calculate layout for indicator subplots
+   * Determines where each indicator should be drawn (overlay vs subplot)
+   * Layout order: Price Chart → Volume → Oscillator Subplots
+   */
+  calculateIndicatorLayout() {
+    const subplotHeight = 120; // Fixed height for each oscillator subplot
+    const gap = 5; // Gap between subplots
+
+    // Get enabled oscillators (if registry available)
+    let oscillators = [];
+    if (indicatorRegistry && this.indicatorData.size > 0) {
+      const enabledIndicators = indicatorRegistry.getAll().filter(ind => ind.enabled);
+      oscillators = enabledIndicators.filter(ind => ind.outputType === 'oscillator');
+    }
+
+    const totalSubplotHeight = oscillators.length * (subplotHeight + gap);
+
+    // Calculate available space (total height - margins - volume - oscillator subplots)
+    const availableHeight = this.height - this.margin.top - this.margin.bottom;
+    const priceChartHeight = availableHeight - this.volumeHeight - totalSubplotHeight;
+
+    // Layout: Price Chart at top
+    this.indicatorLayout = {
+      priceChart: {
+        x: this.margin.left,
+        y: this.margin.top,
+        width: this.width - this.margin.left - this.margin.right,
+        height: priceChartHeight
+      },
+      volumeY: this.margin.top + priceChartHeight, // Volume right after price chart
+      oscillators: []
+    };
+
+    // Create bounds for each oscillator subplot (after volume)
+    let currentY = this.margin.top + priceChartHeight + this.volumeHeight;
+    oscillators.forEach(indicator => {
+      this.indicatorLayout.oscillators.push({
+        name: indicator.name,
+        x: this.margin.left,
+        y: currentY,
+        width: this.width - this.margin.left - this.margin.right,
+        height: subplotHeight
+      });
+      currentY += subplotHeight + gap;
+    });
+
+    // Update chartHeight to use new price chart height if we have subplots
+    if (oscillators.length > 0) {
+      this.chartHeight = priceChartHeight;
+    } else {
+      this.chartHeight = availableHeight - this.volumeHeight;
+    }
+  }
+
+  /**
+   * Convert a price value to Y coordinate
+   * Used by overlay indicators (Bollinger Bands)
+   */
+  priceToY(price) {
+    if (!this.indicatorLayout) {
+      // Fallback to default calculation
+      const priceRange = this.maxPrice - this.minPrice;
+      const chartHeight = this.height - this.margin.top - this.margin.bottom - this.volumeHeight;
+      return this.margin.top + (this.maxPrice - price) / priceRange * chartHeight;
+    }
+
+    const { y, height } = this.indicatorLayout.priceChart;
+    const priceRange = this.maxPrice - this.minPrice;
+    return y + (this.maxPrice - price) / priceRange * height;
+  }
+
+  /**
+   * Get array of visible candle indices for indicator rendering
+   * Returns array like: [floor(startIndex), floor(startIndex)+1, ..., ceil(endIndex)]
+   * Handles fractional indices for smooth panning
+   */
+  getVisibleIndices() {
+    const indices = [];
+    // Use integer loop bounds for fractional index support (same as drawCandles)
+    const loopStart = Math.floor(this.startIndex);
+    const loopEnd = Math.ceil(this.endIndex);
+
+    for (let i = loopStart; i <= loopEnd; i++) {
+      if (i >= 0 && i < this.data.length) {
+        indices.push(i);
+      }
+    }
+    return indices;
+  }
+
+  /**
+   * Map candle indices to indicator data indices by matching dates
+   * @param {Array} indicatorData - Indicator data with date field
+   * @param {Array} candleIndices - Array of candle indices
+   * @returns {Array} Array of {candleIndex, indicatorIndex} mappings
+   */
+  mapIndicesToIndicatorData(indicatorData, candleIndices) {
+    // Build date-to-index map for indicator data
+    const indicatorDateMap = new Map();
+    indicatorData.forEach((item, idx) => {
+      const dateStr = item.date instanceof Date ? item.date.toISOString() : item.date;
+      indicatorDateMap.set(dateStr, idx);
+    });
+
+    // Map each candle index to its indicator index
+    const mappings = [];
+    candleIndices.forEach(candleIdx => {
+      if (candleIdx >= 0 && candleIdx < this.data.length) {
+        const candleDate = this.data[candleIdx].Date;
+        const dateStr = candleDate instanceof Date ? candleDate.toISOString() : candleDate;
+        const indicatorIdx = indicatorDateMap.get(dateStr);
+
+        if (indicatorIdx !== undefined) {
+          mappings.push({
+            candleIndex: candleIdx,
+            indicatorIndex: indicatorIdx
+          });
+        }
+      }
+    });
+
+    return mappings;
+  }
+
+  /**
+   * Check if mouse is near an indicator border (for dragging)
+   * @param {number} mouseY - Mouse Y position
+   * @returns {number} Index of border (-1 if not near any border)
+   */
+  getIndicatorBorderAtY(mouseY) {
+    if (!this.indicatorLayout || !this.indicatorLayout.oscillators || this.indicatorLayout.oscillators.length === 0) {
+      return -1;
+    }
+
+    const tolerance = 5; // 5px hit detection tolerance
+
+    for (let i = 0; i < this.indicatorLayout.oscillators.length; i++) {
+      const subplot = this.indicatorLayout.oscillators[i];
+      const borderY = subplot.y;
+
+      if (Math.abs(mouseY - borderY) <= tolerance) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  /**
+   * Check if a Y coordinate is inside an indicator subplot area
+   * @param {number} mouseY - Mouse Y position
+   * @returns {boolean} True if inside an indicator subplot
+   */
+  isMouseInIndicatorArea(mouseY) {
+    if (!this.indicatorLayout || !this.indicatorLayout.oscillators || this.indicatorLayout.oscillators.length === 0) {
+      return false;
+    }
+
+    for (let i = 0; i < this.indicatorLayout.oscillators.length; i++) {
+      const subplot = this.indicatorLayout.oscillators[i];
+      if (mouseY >= subplot.y && mouseY <= subplot.y + subplot.height) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Draw borders around indicator subplots
+   */
+  drawIndicatorBorders() {
+    if (!this.indicatorLayout || !this.indicatorLayout.oscillators || this.indicatorLayout.oscillators.length === 0) {
+      return;
+    }
+
+    const ctx = this.ctx;
+    ctx.strokeStyle = this.colors.gridLine;
+    ctx.lineWidth = 1;
+
+    // Draw only top border for each subplot (avoids double lines between indicators)
+    this.indicatorLayout.oscillators.forEach(subplot => {
+      ctx.beginPath();
+      ctx.moveTo(subplot.x, subplot.y);
+      ctx.lineTo(subplot.x + subplot.width, subplot.y);
+      ctx.stroke();
+    });
+  }
+
+  /**
+   * Render all enabled indicators on the chart
+   * Called from draw() method
+   */
+  renderIndicators() {
+    if (!indicatorRegistry || this.indicatorData.size === 0) {
+      return;
+    }
+
+    const enabledIndicators = indicatorRegistry.getAll().filter(ind => ind.enabled);
+    if (enabledIndicators.length === 0) {
+      return; // No indicators to render
+    }
+
+    const visibleIndices = this.getVisibleIndices();
+
+    enabledIndicators.forEach(indicator => {
+      const data = this.indicatorData.get(indicator.name);
+
+      if (!data || data.length === 0) {
+        return;
+      }
+
+      try {
+        if (indicator.outputType === 'overlay') {
+          // Render on main price chart (e.g., Bollinger Bands)
+          const bounds = this.indicatorLayout.priceChart;
+          const mappings = this.mapIndicesToIndicatorData(data, visibleIndices);
+          indicator.render(this.ctx, bounds, data, mappings, this.priceToY.bind(this), this.startIndex, this.endIndex);
+        } else if (indicator.outputType === 'oscillator') {
+          // Find subplot bounds for this indicator
+          const subplotBounds = this.indicatorLayout.oscillators.find(s => s.name === indicator.name);
+
+          if (subplotBounds) {
+            // Map visible candle indices to indicator data indices
+            const mappings = this.mapIndicesToIndicatorData(data, visibleIndices);
+            // Pass startIndex and endIndex for proper X coordinate calculation during panning
+            indicator.render(this.ctx, subplotBounds, data, mappings, this.startIndex, this.endIndex);
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Error rendering ${indicator.name}:`, error);
+      }
+    });
   }
 
   /**
