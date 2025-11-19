@@ -120,6 +120,15 @@ export class Timeframe3mo {
   handleTickerUpdate(data) {
     // console.log(`📈 [3MO] Received ticker: ${data.symbol} = $${data.price}, isActive=${this.isActive}`);
 
+    // Ignore ticker updates for stock symbols (they don't have real-time data from Coinbase)
+    const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 'LTC'];
+    const isCrypto = cryptoSymbols.includes(this.symbol) || this.symbol.endsWith('-USD');
+
+    if (!isCrypto) {
+      console.log(`📊 [3MO] Ignoring ticker update for stock symbol: ${this.symbol}`);
+      return;
+    }
+
     // Check if this ticker is for our symbol
     const symbolMatches = data.symbol && this.symbol &&
       (data.symbol === `${this.symbol}-USD` ||

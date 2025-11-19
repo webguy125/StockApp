@@ -400,8 +400,12 @@ def get_chart_data(symbol):
 
     # STOCKS: Always use yfinance
     # CRYPTO: Use yfinance for weekly/monthly intervals (fallback)
+    # Yahoo Finance doesn't support 2h, 6h, and 45m intervals for stocks, so we aggregate from smaller intervals
+    unsupported_intervals = {'2h': '1h', '6h': '1h', '45m': '15m'}
+    source_interval = unsupported_intervals.get(interval, interval)
+
     # print(f"[ROUTING] Using yfinance for {market_type} {symbol} {interval}")
-    kwargs = {'interval': interval}
+    kwargs = {'interval': source_interval}
     if start and end:
         kwargs['start'] = start
         kwargs['end'] = end
@@ -410,7 +414,11 @@ def get_chart_data(symbol):
     else:
         kwargs['period'] = 'max'
 
-    data = yf.download(symbol, **kwargs)
+    try:
+        data = yf.download(symbol, **kwargs)
+    except Exception as e:
+        print(f"[YFINANCE ERROR] Failed to download {symbol} {interval}: {e}")
+        return jsonify([])
 
     if data.empty:
         # print(f"No data found for {symbol}.")
@@ -420,25 +428,101 @@ def get_chart_data(symbol):
     if isinstance(data.columns, pd.MultiIndex):
         data.columns = data.columns.get_level_values(0)
 
-    data.reset_index(inplace=True)
-    data = data.rename(columns={'Datetime': 'Date'} if 'Datetime' in data.columns else {'Date': 'Date'})
-    data['Date'] = data['Date'].dt.strftime("%Y-%m-%d %H:%M:%S") if 'h' in interval or 'm' in interval else data['Date'].dt.strftime("%Y-%m-%d")
+    # Aggregate data if we fetched a smaller interval than requested
+    if interval in unsupported_intervals and market_type == 'stock':
+        print(f"[AGGREGATION] Building {interval} candles from {source_interval} data for {symbol}")
+
+        # Determine resampling rule
+        resample_rule = interval.upper()  # '2h' -> '2H', '6h' -> '6H'
+
+        # Resample to create larger candles
+        data_resampled = data.resample(resample_rule, on=data.index).agg({
+            'Open': 'first',
+            'High': 'max',
+            'Low': 'min',
+            'Close': 'last',
+            'Volume': 'sum'
+        }).dropna()
+
+        data = data_resampled.reset_index()
+
+    # Ensure we have a Date column from the index
+    if 'Date' not in data.columns:
+        if data.index.name in ['Date', 'Datetime'] or isinstance(data.index, pd.DatetimeIndex):
+            data = data.reset_index()
+            # Rename the index column to 'Date'
+            if 'index' in data.columns:
+                data = data.rename(columns={'index': 'Date'})
+            elif 'Datetime' in data.columns:
+                data = data.rename(columns={'Datetime': 'Date'})
+            elif data.columns[0] not in ['Open', 'High', 'Low', 'Close', 'Volume']:
+                # First column is probably the datetime
+                data = data.rename(columns={data.columns[0]: 'Date'})
+
+    # Format dates based on interval type - intraday intervals need time
+    intraday_intervals = ['1m', '2m', '5m', '15m', '30m', '45m', '60m', '90m', '1h', '2h', '4h', '6h']
+    if interval in intraday_intervals:
+        data['Date'] = pd.to_datetime(data['Date']).dt.strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        data['Date'] = pd.to_datetime(data['Date']).dt.strftime("%Y-%m-%d")
+
     return jsonify(data[['Date', 'Open', 'High', 'Low', 'Close', 'Volume']].fillna("").to_dict(orient="records"))
 
 def get_current_candle_volume(symbol, interval):
     """
-    Get the accumulated volume for the current forming candle by fetching the actual current candle from Coinbase.
-    This ensures accurate volume display and uses Coinbase's authoritative candle start time.
+    Get the accumulated volume for the current forming candle.
+    For crypto: fetches from Coinbase API
+    For stocks: fetches from Yahoo Finance
 
     Args:
-        symbol: Crypto symbol (e.g., 'BTC', 'ETH' - will be converted to 'BTC-USD')
+        symbol: Stock or crypto symbol (e.g., 'AAPL', 'BTC', 'BTC-USD')
         interval: Time interval ('1m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '1d')
 
     Returns:
-        dict: {'volume': float, 'candle_start_time': ISO8601 string}
+        dict: {'volume': float, 'open': float, 'high': float, 'low': float, 'close': float, 'candle_start_time': ISO8601 string}
     """
-    print(f"[CURRENT_CANDLE] Getting current candle volume for {symbol} {interval}")
+    print(f"[CURRENT_CANDLE] Getting current candle data for {symbol} {interval}")
 
+    # Determine if this is a crypto symbol
+    # Crypto symbols either end with -USD or are in our known crypto list
+    known_crypto = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 'LTC',
+                   'MATIC', 'UNI', 'BNB', 'USDT', 'USDC']
+
+    is_crypto = symbol.endswith('-USD') or symbol in known_crypto
+
+    # For stocks, use Yahoo Finance to get current volume
+    if not is_crypto:
+        try:
+            ticker = yf.Ticker(symbol)
+            # Get today's data with the specified interval
+            if interval == '1d':
+                hist = ticker.history(period='1d')
+            else:
+                hist = ticker.history(period='1d', interval=interval)
+
+            if not hist.empty:
+                # Get the last row which is the current candle
+                last_row = hist.iloc[-1]
+                current_time = hist.index[-1]
+
+                print(f"[CURRENT_CANDLE] Yahoo Finance data for {symbol}: O={last_row['Open']:.2f} H={last_row['High']:.2f} L={last_row['Low']:.2f} C={last_row['Close']:.2f} V={last_row['Volume']}")
+
+                return {
+                    'volume': float(last_row['Volume']),
+                    'open': float(last_row['Open']),
+                    'high': float(last_row['High']),
+                    'low': float(last_row['Low']),
+                    'close': float(last_row['Close']),
+                    'candle_start_time': current_time.isoformat() + 'Z'
+                }
+            else:
+                print(f"[CURRENT_CANDLE ERROR] No data returned from Yahoo Finance for {symbol}")
+                return {'volume': 0, 'candle_start_time': datetime.utcnow().isoformat() + 'Z'}
+        except Exception as e:
+            print(f"[CURRENT_CANDLE ERROR] Failed to fetch from Yahoo Finance: {e}")
+            return {'volume': 0, 'candle_start_time': datetime.utcnow().isoformat() + 'Z'}
+
+    # For crypto, use Coinbase API
     # Ensure symbol is in Coinbase format (BTC-USD)
     if not symbol.endswith('-USD'):
         symbol = f"{symbol}-USD"
@@ -517,14 +601,22 @@ def get_current_candle_volume(symbol, interval):
         current_candle = candles[0]
         candle_start_timestamp = int(current_candle['start'])
         candle_volume = float(current_candle['volume'])
+        candle_open = float(current_candle['open'])
+        candle_high = float(current_candle['high'])
+        candle_low = float(current_candle['low'])
+        candle_close = float(current_candle['close'])
 
         # Convert timestamp to datetime for ISO format
         candle_start_dt = datetime.utcfromtimestamp(candle_start_timestamp)
 
-        print(f"[CURRENT_CANDLE] Coinbase candle: start={candle_start_dt.isoformat()}Z, volume={candle_volume:.4f} BTC")
+        print(f"[CURRENT_CANDLE] Coinbase data for {symbol}: O={candle_open:.2f} H={candle_high:.2f} L={candle_low:.2f} C={candle_close:.2f} V={candle_volume:.4f}")
 
         return {
             'volume': candle_volume,
+            'open': candle_open,
+            'high': candle_high,
+            'low': candle_low,
+            'close': candle_close,
             'candle_start_time': candle_start_dt.isoformat() + 'Z'
         }
 
@@ -1443,6 +1535,135 @@ def ml_model_info():
 # =============================================================================
 # END OF ML ENDPOINTS
 # =============================================================================
+
+# =============================================================================
+# AGENT SIGNALS API (for multi-agent trading system)
+# =============================================================================
+
+@app.route("/agent-signals", methods=["GET"])
+def get_agent_signals():
+    """
+    Get the latest signals from the multi-agent trading system.
+    Returns fusion output with buy/sell recommendations for all symbols.
+    """
+    try:
+        # Path to the agent repository
+        agent_repo = os.path.join(BASE_DIR, "..", "agents", "repository")
+
+        # Load fusion output (contains all agent signals)
+        fusion_file = os.path.join(agent_repo, "fusion_output.json")
+        if not os.path.exists(fusion_file):
+            return jsonify({
+                "status": "no_data",
+                "message": "No agent signals available. Run scanner and fusion agents first.",
+                "signals": []
+            }), 200
+
+        with open(fusion_file, 'r', encoding='utf-8') as f:
+            fusion_data = json.load(f)
+
+        # Extract top opportunities and format for heatmap
+        signals = []
+
+        # Process all fusions (not just top opportunities)
+        all_fusions = fusion_data.get('all_fusions', [])
+
+        for fusion in all_fusions:
+            signal = {
+                'symbol': fusion['symbol'],
+                'score': fusion['total_score'],
+                'confidence': fusion['confidence'],
+                'recommendation': fusion['recommendation'],
+                'emoji': fusion.get('emoji_string', ''),
+                'timestamp': fusion.get('timestamp', ''),
+
+                # Color coding for heatmap
+                'color': get_signal_color(fusion['recommendation'], fusion['total_score']),
+                'intensity': min(100, int(fusion['confidence'] * 100))  # 0-100 intensity
+            }
+            signals.append(signal)
+
+        # Sort by score * confidence (strongest signals first)
+        signals.sort(key=lambda x: x['score'] * x['confidence'], reverse=True)
+
+        return jsonify({
+            "status": "success",
+            "timestamp": fusion_data.get('timestamp', ''),
+            "total_signals": len(signals),
+            "signals": signals,
+            "summary": fusion_data.get('recommendations', {})
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error getting agent signals: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+def get_signal_color(recommendation, score):
+    """Convert recommendation to color for heatmap"""
+    if recommendation == 'strong_buy':
+        return '#00ff00'  # Bright green
+    elif recommendation == 'buy':
+        return '#90ee90'  # Light green
+    elif recommendation == 'hold':
+        return '#ffff00'  # Yellow
+    elif recommendation == 'sell':
+        return '#ffb6c1'  # Light red
+    elif recommendation == 'strong_sell':
+        return '#ff0000'  # Bright red
+    else:
+        return '#808080'  # Gray for unknown
+
+
+@app.route("/agent-signals/refresh", methods=["POST"])
+def refresh_agent_signals():
+    """
+    Trigger the agent system to refresh signals
+    (Runs scanner -> fusion pipeline)
+    """
+    try:
+        import subprocess
+        import sys
+
+        # Path to agents
+        agent_path = os.path.join(BASE_DIR, "..", "agents")
+
+        # Run scanner agent
+        scanner_result = subprocess.run(
+            [sys.executable, os.path.join(agent_path, "scanner_agent.py")],
+            capture_output=True,
+            text=True,
+            cwd=agent_path
+        )
+
+        if scanner_result.returncode != 0:
+            return jsonify({
+                "status": "error",
+                "message": f"Scanner failed: {scanner_result.stderr}"
+            }), 500
+
+        # Run fusion agent
+        fusion_result = subprocess.run(
+            [sys.executable, os.path.join(agent_path, "fusion_agent.py")],
+            capture_output=True,
+            text=True,
+            cwd=agent_path
+        )
+
+        if fusion_result.returncode != 0:
+            return jsonify({
+                "status": "error",
+                "message": f"Fusion failed: {fusion_result.stderr}"
+            }), 500
+
+        return jsonify({
+            "status": "success",
+            "message": "Agent signals refreshed successfully"
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error refreshing agent signals: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     # Use socketio.run instead of app.run for WebSocket support

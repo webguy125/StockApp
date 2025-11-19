@@ -104,13 +104,22 @@ export class Timeframe1w {
       return;
     }
 
-    // Subscribe to ticker updates from Coinbase
-    this.socket.emit('subscribe', {
-      product_ids: [this.symbol],
-      channels: ['ticker', 'matches']
-    });
+    // Only subscribe to Coinbase ticker updates for crypto symbols
+    // Stocks don't have real-time WebSocket feeds from Coinbase
+    const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 'LTC'];
+    const isCrypto = cryptoSymbols.includes(this.symbol) || this.symbol.endsWith('-USD');
 
-    // console.log(`🔔 [1W] Subscribed to ${this.symbol}`);
+    if (isCrypto) {
+      // Subscribe to ticker updates from Coinbase
+      this.socket.emit('subscribe', {
+        product_ids: [this.symbol],
+        channels: ['ticker', 'matches']
+      });
+
+      console.log(`🔔 [1W] Subscribed to ${this.symbol} ticker`);
+    } else {
+      console.log(`📊 [1W] Skipping WebSocket subscription for stock symbol: ${this.symbol}`);
+    }
   }
 
   /**
@@ -118,6 +127,15 @@ export class Timeframe1w {
    */
   handleTickerUpdate(data) {
     // console.log(`📈 [1W] Received ticker: ${data.symbol} = $${data.price}, isActive=${this.isActive}`);
+
+    // Ignore ticker updates for stock symbols (they don't have real-time data from Coinbase)
+    const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 'LTC'];
+    const isCrypto = cryptoSymbols.includes(this.symbol) || this.symbol.endsWith('-USD');
+
+    if (!isCrypto) {
+      console.log(`📊 [1W] Ignoring ticker update for stock symbol: ${this.symbol}`);
+      return;
+    }
 
     // Check if this ticker is for our symbol
     const symbolMatches = data.symbol && this.symbol &&

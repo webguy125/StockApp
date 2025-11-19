@@ -9,6 +9,7 @@ import { Timeframe1m } from './minutes/1m.js';
 import { Timeframe5m } from './minutes/5m.js';
 import { Timeframe15m } from './minutes/15m.js';
 import { Timeframe30m } from './minutes/30m.js';
+import { Timeframe45m } from './minutes/45m.js';
 import { Timeframe1h } from './hours/1h.js';
 import { Timeframe2h } from './hours/2h.js';
 import { Timeframe4h } from './hours/4h.js';
@@ -39,6 +40,7 @@ export class TimeframeRegistry {
     this.register(new Timeframe5m());
     this.register(new Timeframe15m());
     this.register(new Timeframe30m());
+    this.register(new Timeframe45m());
 
     // Hours (standalone implementations with volume accumulation)
     this.register(new Timeframe1h());

@@ -53,12 +53,21 @@ export class Timeframe1d {
           const response = await fetch(`/current-candle-volume/${symbol}?interval=1d`);
           const currentCandleData = await response.json();
 
-          console.log(`📊 [1D] Current candle volume: ${currentCandleData.volume.toFixed(4)} BTC`);
+          console.log(`📊 [1D] Current candle data: O=${currentCandleData.open?.toFixed(2)} H=${currentCandleData.high?.toFixed(2)} L=${currentCandleData.low?.toFixed(2)} C=${currentCandleData.close?.toFixed(2)} V=${currentCandleData.volume?.toFixed(0)}`);
+
+          // Update the last candle with current OHLCV data if available
+          if (currentCandleData.open !== undefined) {
+            lastCandle.Open = currentCandleData.open;
+            lastCandle.High = currentCandleData.high;
+            lastCandle.Low = currentCandleData.low;
+            lastCandle.Close = currentCandleData.close;
+            lastCandle.Volume = currentCandleData.volume;
+          }
 
           volumeAccumulator.initializeCandleTimes('1d', currentCandleData.candle_start_time);
           volumeAccumulator.initializeVolume('1d', currentCandleData.volume);
         } catch (error) {
-          console.error(`❌ [1D] Failed to fetch current candle volume:`, error);
+          console.error(`❌ [1D] Failed to fetch current candle data:`, error);
           // Fallback to 0 if fetch fails
           volumeAccumulator.initializeCandleTimes('1d', lastCandle.Date);
           volumeAccumulator.initializeVolume('1d', 0);
@@ -134,13 +143,22 @@ export class Timeframe1d {
       return;
     }
 
-    // Subscribe to ticker updates from Coinbase
-    this.socket.emit('subscribe', {
-      product_ids: [this.symbol],
-      channels: ['ticker', 'matches']
-    });
+    // Only subscribe to Coinbase ticker updates for crypto symbols
+    // Stocks don't have real-time WebSocket feeds from Coinbase
+    const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 'LTC'];
+    const isCrypto = cryptoSymbols.includes(this.symbol) || this.symbol.endsWith('-USD');
 
-    // console.log(`🔔 [1D] Subscribed to ${this.symbol}`);
+    if (isCrypto) {
+      // Subscribe to ticker updates from Coinbase
+      this.socket.emit('subscribe', {
+        product_ids: [this.symbol],
+        channels: ['ticker', 'matches']
+      });
+
+      console.log(`🔔 [1D] Subscribed to ${this.symbol} ticker`);
+    } else {
+      console.log(`📊 [1D] Skipping WebSocket subscription for stock symbol: ${this.symbol}`);
+    }
   }
 
   /**
@@ -148,6 +166,15 @@ export class Timeframe1d {
    */
   handleTickerUpdate(data) {
     // console.log(`📈 [1D] Received ticker: ${data.symbol} = $${data.price}, isActive=${this.isActive}`);
+
+    // Ignore ticker updates for stock symbols (they don't have real-time data from Coinbase)
+    const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 'LTC'];
+    const isCrypto = cryptoSymbols.includes(this.symbol) || this.symbol.endsWith('-USD');
+
+    if (!isCrypto) {
+      console.log(`📊 [1D] Ignoring ticker update for stock symbol: ${this.symbol}`);
+      return;
+    }
 
     // Check if this ticker is for our symbol
     const symbolMatches = data.symbol && this.symbol &&
