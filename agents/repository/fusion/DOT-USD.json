@@ -1,0 +1,34 @@
+{
+  "symbol": "DOT-USD",
+  "timestamp": "2025-11-24T00:02:34.453755",
+  "agent": "fusion_agent",
+  "total_score": 21.69230769230769,
+  "confidence": 0.5169230769230768,
+  "recommendation": "sell",
+  "emojis": [
+    "📉",
+    "❌",
+    "💰"
+  ],
+  "emoji_string": "📉❌💰",
+  "shorthand": "DOT-USD | 📉❌💰 | 21 | 0.52 | 2025-11-24",
+  "weighted_scores": {
+    "indicators_agent": {
+      "score": 4,
+      "confidence": 0.33999999999999997,
+      "weight": 0.4,
+      "contribution": 1.6
+    },
+    "volume_agent": {
+      "score": 50,
+      "confidence": 0.8,
+      "weight": 0.25,
+      "contribution": 12.5
+    }
+  },
+  "metadata": {
+    "total_weight_used": 0.65,
+    "agents_contributing": 2,
+    "signals_collected": 2
+  }
+}

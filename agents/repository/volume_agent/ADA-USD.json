@@ -1,0 +1,44 @@
+{
+  "symbol": "ADA-USD",
+  "timestamp": "2025-11-17T22:02:45.705493",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 10,
+    "confidence": 0.4,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 8477110452.599999,
+        "recent_sell_volume": 11728200921.399998,
+        "recent_delta": -3251090468.7999983,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.7227971714853675,
+        "cumulative_delta": -3604101965.9999995
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -96623922.81467977,
+        "current_value": -3071504174.9631906,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 16,
+        "last_wave": {
+          "start_idx": 29,
+          "direction": "down",
+          "volume": 2284381657,
+          "price_change": -0.0720169594662982,
+          "end_idx": 30,
+          "bars": 2
+        }
+      },
+      "volume_profile": {
+        "poc_range": "0.65-0.66",
+        "poc_volume_pct": 8.832782054058502,
+        "near_poc": false,
+        "current_price": 0.46779903769493103
+      }
+    }
+  },
+  "shorthand": "ADA-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+}

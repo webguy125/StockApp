@@ -1,0 +1,271 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Standard JSON schema for multi-agent communication repository",
+
+  "base_agent_output": {
+    "type": "object",
+    "required": ["symbol", "timestamp", "agent", "signals"],
+    "properties": {
+      "symbol": {
+        "type": "string",
+        "pattern": "^[A-Z]+-USD$",
+        "description": "Crypto trading pair (e.g., BTC-USD)"
+      },
+      "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "description": "ISO 8601 timestamp"
+      },
+      "agent": {
+        "type": "string",
+        "enum": [
+          "scanner", "tick_agent", "volume_agent", "indicators_agent",
+          "fundamentals_agent", "news_agent", "fusion_agent",
+          "supreme_leader", "tracker_agent", "criteria_auditor",
+          "evaluator", "archivist", "trainer"
+        ],
+        "description": "Agent that produced this output"
+      },
+      "signals": {
+        "type": "object",
+        "required": ["emoji", "score", "confidence"],
+        "properties": {
+          "emoji": {
+            "type": "string",
+            "description": "Emoji representation of signal"
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Signal strength (0-100)"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Confidence level (0.0-1.0)"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Agent-specific additional data"
+          }
+        }
+      },
+      "shorthand": {
+        "type": "string",
+        "pattern": "^[A-Z]+-USD \\| .+ \\| \\d+ \\| \\d\\.\\d+ \\| \\d{4}-\\d{2}-\\d{2}",
+        "description": "Emoji shorthand format"
+      }
+    }
+  },
+
+  "scanner_output": {
+    "type": "object",
+    "required": ["scan_timestamp", "total_scanned", "passed_filters", "selected_count", "candidates"],
+    "properties": {
+      "scan_timestamp": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "total_scanned": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "passed_filters": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "selected_count": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "candidates": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["symbol", "score", "confidence", "emojis", "shorthand", "ticker_data"],
+          "properties": {
+            "symbol": {"type": "string"},
+            "score": {"type": "number"},
+            "confidence": {"type": "number"},
+            "emojis": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "shorthand": {"type": "string"},
+            "ticker_data": {"type": "object"}
+          }
+        }
+      }
+    }
+  },
+
+  "tick_agent_output": {
+    "allOf": [
+      {"$ref": "#/base_agent_output"},
+      {
+        "properties": {
+          "tick_bars": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "threshold": {"type": "number"},
+                "pattern": {"type": "string"},
+                "trend": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  "volume_agent_output": {
+    "allOf": [
+      {"$ref": "#/base_agent_output"},
+      {
+        "properties": {
+          "volume_analysis": {
+            "type": "object",
+            "properties": {
+              "accumulation_distribution": {"type": "string"},
+              "ord_volume": {"type": "number"},
+              "weis_wave": {"type": "object"}
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  "indicators_agent_output": {
+    "allOf": [
+      {"$ref": "#/base_agent_output"},
+      {
+        "properties": {
+          "indicators": {
+            "type": "object",
+            "properties": {
+              "RSI": {"type": "number"},
+              "MACD": {"type": "object"},
+              "MA_20": {"type": "number"},
+              "MA_50": {"type": "number"},
+              "ATR": {"type": "number"}
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  "fusion_agent_output": {
+    "type": "object",
+    "required": ["symbol", "timestamp", "total_score", "weighted_scores", "emojis", "confidence", "recommendation"],
+    "properties": {
+      "symbol": {"type": "string"},
+      "timestamp": {"type": "string", "format": "date-time"},
+      "total_score": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100
+      },
+      "weighted_scores": {
+        "type": "object",
+        "properties": {
+          "technical": {"type": "number"},
+          "volume": {"type": "number"},
+          "fundamentals": {"type": "number"},
+          "news": {"type": "number"}
+        }
+      },
+      "emojis": {
+        "type": "array",
+        "items": {"type": "string"}
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "recommendation": {
+        "type": "string",
+        "enum": ["strong_buy", "buy", "hold", "sell", "strong_sell"]
+      },
+      "shorthand": {"type": "string"}
+    }
+  },
+
+  "supreme_leader_output": {
+    "type": "object",
+    "required": ["timestamp", "approved_trades", "rejected_trades", "constraints_applied"],
+    "properties": {
+      "timestamp": {"type": "string", "format": "date-time"},
+      "approved_trades": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "symbol": {"type": "string"},
+            "score": {"type": "number"},
+            "position_size": {"type": "number"},
+            "stop_loss": {"type": "number"},
+            "take_profit": {"type": "number"}
+          }
+        }
+      },
+      "rejected_trades": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "symbol": {"type": "string"},
+            "reason": {"type": "string"}
+          }
+        }
+      },
+      "constraints_applied": {
+        "type": "object",
+        "properties": {
+          "max_positions": {"type": "integer"},
+          "min_score": {"type": "number"},
+          "min_confidence": {"type": "number"}
+        }
+      }
+    }
+  },
+
+  "archivist_output": {
+    "type": "object",
+    "required": ["records", "summary"],
+    "properties": {
+      "records": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "symbol": {"type": "string"},
+            "original_shorthand": {"type": "string"},
+            "expanded": {"type": "object"},
+            "verdict": {"type": "string", "enum": ["win", "loss", "open"]},
+            "confidence": {"type": "number"},
+            "realized_return": {"type": "number"},
+            "feedback": {"type": "string"}
+          }
+        }
+      },
+      "summary": {
+        "type": "object",
+        "properties": {
+          "total_predictions": {"type": "integer"},
+          "wins": {"type": "integer"},
+          "losses": {"type": "integer"},
+          "win_rate": {"type": "number"},
+          "avg_confidence": {"type": "number"},
+          "avg_return": {"type": "number"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Signal Heat Maps - StockApp</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/tos-theme.css">
+    <link rel="stylesheet" href="css/heatmap-page.css">
+</head>
+<body class="tos-theme">
+    <div class="heatmap-page-container">
+        <!-- Header -->
+        <div class="heatmap-header">
+            <div class="heatmap-title">
+                <h1>Agent Signal Heat Maps</h1>
+                <p class="heatmap-subtitle">Dynamic signals from multi-agent learning loop</p>
+            </div>
+            <div class="heatmap-actions">
+                <button class="tos-btn-secondary" onclick="refreshHeatmaps()">
+                    <span id="refresh-icon">↻</span> Refresh
+                </button>
+                <button class="tos-btn-secondary" onclick="window.location.href='/'">
+                    ← Back to Chart
+                </button>
+            </div>
+        </div>
+
+        <!-- Timeframe Filter Tabs -->
+        <div class="timeframe-tabs">
+            <button class="timeframe-tab active" data-timeframe="all" onclick="switchTimeframe('all')">
+                All Signals
+            </button>
+            <button class="timeframe-tab" data-timeframe="intraday" onclick="switchTimeframe('intraday')">
+                Intraday
+                <span class="tab-count" id="count-intraday">0</span>
+            </button>
+            <button class="timeframe-tab" data-timeframe="daily" onclick="switchTimeframe('daily')">
+                Daily
+                <span class="tab-count" id="count-daily">0</span>
+            </button>
+            <button class="timeframe-tab" data-timeframe="monthly" onclick="switchTimeframe('monthly')">
+                Monthly
+                <span class="tab-count" id="count-monthly">0</span>
+            </button>
+        </div>
+
+        <!-- Heat Map Content Area -->
+        <div class="heatmap-content">
+            <!-- Intraday Section -->
+            <div class="heatmap-section" id="section-intraday">
+                <div class="section-header">
+                    <h2>Intraday Signals</h2>
+                    <p>High confidence (≥70%), high score (≥65) - Quick trades</p>
+                </div>
+                <div class="heatmap-grid" id="grid-intraday">
+                    <!-- Signals will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Daily Section -->
+            <div class="heatmap-section" id="section-daily">
+                <div class="section-header">
+                    <h2>Daily Signals</h2>
+                    <p>Medium-high confidence (≥55%), good score (≥55) - Swing trades</p>
+                </div>
+                <div class="heatmap-grid" id="grid-daily">
+                    <!-- Signals will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Monthly Section -->
+            <div class="heatmap-section" id="section-monthly">
+                <div class="section-header">
+                    <h2>Monthly Signals</h2>
+                    <p>Reasonable confidence (≥40%), score (≥45) - Position trades</p>
+                </div>
+                <div class="heatmap-grid" id="grid-monthly">
+                    <!-- Signals will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="empty-state" style="display: none;">
+                <div class="empty-icon">📊</div>
+                <h3>No Signals Available</h3>
+                <p>Run the scanner and fusion agents to generate heat map data.</p>
+                <button class="tos-btn-primary" onclick="runAgents()">Run Agents</button>
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading-state" id="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Loading heat map data...</p>
+            </div>
+        </div>
+
+        <!-- Metadata Footer -->
+        <div class="heatmap-footer" id="heatmap-footer" style="display: none;">
+            <div class="metadata-item">
+                <span class="metadata-label">Generated:</span>
+                <span class="metadata-value" id="meta-timestamp">-</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Source:</span>
+                <span class="metadata-value" id="meta-source">Agent Learning Loop</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Total Signals:</span>
+                <span class="metadata-value" id="meta-total">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/heatmap-page.js"></script>
+</body>
+</html>

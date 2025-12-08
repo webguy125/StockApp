@@ -495,7 +495,8 @@ export class ORDVolumeController {
       document.getElementById('ord-auto-instructions').style.display = 'none';
 
       // In draw mode, close the modal immediately and start drawing
-      console.log('[ORD Volume] Entering draw mode - closing modal');
+      // Debug logging disabled for performance
+      // console.log('[ORD Volume] Entering draw mode - closing modal');
       this.isActive = false; // Allow reopening modal while in draw mode
       this.modal.style.display = 'none';
 
@@ -505,14 +506,16 @@ export class ORDVolumeController {
 
         // Set callback to run analysis after each line is drawn
         this.renderer.onLineDrawn = (count) => {
-          console.log(`[ORD Volume] ${count} lines drawn, running live analysis...`);
+          // Debug logging disabled for performance
+          // console.log(`[ORD Volume] ${count} lines drawn, running live analysis...`);
           // Run analysis automatically after each line (if at least 3 lines)
           if (count >= 3) {
             this._runDrawModeAnalysis();
           }
         };
 
-        console.log('[ORD Volume] Draw mode enabled - draw lines on chart (analysis runs automatically)');
+        // Debug logging disabled for performance
+        // console.log('[ORD Volume] Draw mode enabled - draw lines on chart (analysis runs automatically)');
       }
 
       // DON'T show instructions panel - just let user draw
@@ -531,7 +534,8 @@ export class ORDVolumeController {
       // Disable drawing mode on renderer
       if (this.renderer) {
         this.renderer.clearDrawingMode();
-        console.log('[ORD Volume] Auto mode enabled');
+        // Debug logging disabled for performance
+        // console.log('[ORD Volume] Auto mode enabled');
       }
     }
   }
@@ -547,7 +551,8 @@ export class ORDVolumeController {
         return;
       }
 
-      console.log(`[ORD Volume] Analyzing ${this.candles.length} candles`);
+      // Debug logging disabled for performance
+      // console.log(`[ORD Volume] Analyzing ${this.candles.length} candles`);
 
       // Check minimum data requirements for ORD Volume
       const MIN_BARS_REQUIRED = 100;  // Absolute minimum for basic analysis
@@ -603,8 +608,14 @@ export class ORDVolumeController {
       // Store result in bridge for persistent rendering
       if (window.ordVolumeBridge) {
         window.ordVolumeBridge.setChartRenderer(this.renderer.chartState);
-        window.ordVolumeBridge.setAnalysis(this.analysisResult, this.candles);
-        console.log('[ORD Volume] Analysis stored in bridge');
+
+        // Get current symbol and timeframe for storage
+        const symbol = window.tosApp?.currentSymbol || null;
+        const timeframeId = window.tosApp?.currentTimeframeId || window.tosApp?.currentTickChartId || null;
+
+        window.ordVolumeBridge.setAnalysis(this.analysisResult, this.candles, symbol, timeframeId);
+        // Debug logging disabled for performance
+        // console.log('[ORD Volume] Analysis stored in bridge');
       }
 
       // Trigger chart redraw to show overlays
@@ -799,7 +810,8 @@ export class ORDVolumeController {
         return; // Need at least 3 lines
       }
 
-      console.log(`[ORD Volume] Running analysis on ${drawnLines.length} drawn lines...`);
+      // Debug logging disabled for performance
+      // console.log(`[ORD Volume] Running analysis on ${drawnLines.length} drawn lines...`);
 
       // Create analyzer
       const analyzer = new ORDVolumeAnalysis(this.candles);
@@ -811,8 +823,14 @@ export class ORDVolumeController {
       // Store result in bridge for persistent rendering
       if (window.ordVolumeBridge) {
         window.ordVolumeBridge.setChartRenderer(this.renderer.chartState);
-        window.ordVolumeBridge.setAnalysis(this.analysisResult, this.candles);
-        console.log('[ORD Volume] Draw mode analysis complete, stored in bridge');
+
+        // Get current symbol and timeframe for storage
+        const symbol = window.tosApp?.currentSymbol || null;
+        const timeframeId = window.tosApp?.currentTimeframeId || window.tosApp?.currentTickChartId || null;
+
+        window.ordVolumeBridge.setAnalysis(this.analysisResult, this.candles, symbol, timeframeId);
+        // Debug logging disabled for performance
+        // console.log('[ORD Volume] Draw mode analysis complete, stored in bridge');
       }
 
       // Trigger chart redraw to show overlays
@@ -830,7 +848,8 @@ export class ORDVolumeController {
    * @private
    */
   _finishDrawing() {
-    console.log('[ORD Volume] Finishing drawing mode');
+    // Debug logging disabled for performance
+    // console.log('[ORD Volume] Finishing drawing mode');
 
     // Hide drawing panel
     this._hideDrawingInstructions();
@@ -843,7 +862,8 @@ export class ORDVolumeController {
    * Clear ORD Volume analysis and lines from current chart
    */
   clearORDVolume() {
-    console.log('[ORD Volume] Clearing ORD Volume for current chart');
+    // Debug logging disabled for performance
+    // console.log('[ORD Volume] Clearing ORD Volume for current chart');
 
     // Clear from bridge (removes from current chart storage)
     if (window.ordVolumeBridge) {
@@ -871,6 +891,7 @@ export class ORDVolumeController {
     // Close modal after short delay
     setTimeout(() => this.closeModal(), 1000);
 
-    console.log('[ORD Volume] Cleared successfully');
+    // Debug logging disabled for performance
+    // console.log('[ORD Volume] Cleared successfully');
   }
 }

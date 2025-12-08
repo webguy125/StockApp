@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-11-17T20:57:43.011096",
+  "agent": "supreme_leader",
+  "portfolio_value": 100000,
+  "current_positions_count": 0,
+  "portfolio_utilization_pct": 0.0,
+  "approved_trades": [],
+  "rejected_trades": [
+    {
+      "symbol": "DOT-USD",
+      "reason": "Score too low: 21.7 < 65",
+      "score": 21.69230769230769,
+      "confidence": 0.5169230769230768
+    },
+    {
+      "symbol": "LINK-USD",
+      "reason": "Score too low: 6.3 < 65",
+      "score": 6.307692307692307,
+      "confidence": 0.363076923076923
+    },
+    {
+      "symbol": "AVAX-USD",
+      "reason": "Score too low: 6.3 < 65",
+      "score": 6.307692307692307,
+      "confidence": 0.363076923076923
+    }
+  ],
+  "constraints_applied": {
+    "max_positions": 5,
+    "max_position_size_pct": 20,
+    "min_position_size_pct": 2,
+    "max_portfolio_risk_pct": 10,
+    "min_score": 65,
+    "min_confidence": 0.6,
+    "min_risk_reward": 2.0,
+    "max_correlated_positions": 3
+  },
+  "summary": {
+    "total_reviewed": 3,
+    "approved": 0,
+    "rejected": 3,
+    "open_signals": 0,
+    "close_signals": 0,
+    "hold_signals": 0
+  }
+}

@@ -86,11 +86,27 @@ function loadSavedSettings() {
     const savedSettings = localStorage.getItem('indicator_settings');
     if (savedSettings) {
       const settings = JSON.parse(savedSettings);
+
+      // Check for version mismatches and migration
+      if (settings.TriadTrendPulse) {
+        const savedVersion = settings.TriadTrendPulse.version || '1.0.0';
+
+        // If loading an old version (v1.x.x), reset it to defaults for v2.0.0
+        if (savedVersion.startsWith('1.')) {
+          console.log(`⚠️ TriadTrendPulse: Upgrading from ${savedVersion} to 2.0.0`);
+          console.log('⚠️ TriadTrendPulse: Resetting to default settings due to major version change');
+          delete settings.TriadTrendPulse; // Remove old settings, will use defaults
+        }
+      }
+
       indicatorRegistry.importAllSettings(settings);
       console.log('📥 Loaded saved indicator settings');
     }
   } catch (error) {
     console.error('❌ Error loading saved settings:', error);
+    // If there's an error, clear the corrupted settings
+    console.warn('⚠️ Clearing corrupted indicator settings');
+    localStorage.removeItem('indicator_settings');
   }
 }
 

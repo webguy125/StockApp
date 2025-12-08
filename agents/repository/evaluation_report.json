@@ -1,0 +1,71 @@
+{
+  "timestamp": "2025-11-17T21:09:45.930794",
+  "agent": "evaluator_agent",
+  "positions_evaluated": 2,
+  "evaluations": [
+    {
+      "verdict": "win",
+      "verdict_emoji": "🎯",
+      "verdict_reasons": [
+        "Hit take profit"
+      ],
+      "quality_score": 60.526315789473685,
+      "metrics": {
+        "symbol": "AAPL",
+        "return_pct": 0.010526315789473684,
+        "return_usd": 2.0,
+        "hold_time": "2 days, 0:00:00",
+        "hold_time_hours": 48.0,
+        "max_drawdown_pct": 0,
+        "max_gain_pct": 0,
+        "entry_price": 190.0,
+        "exit_price": 192.0,
+        "position_size": 10000,
+        "risk_reward_realized": 0
+      },
+      "original_signals": {},
+      "entry_timestamp": "2025-11-15T21:09:45.930794",
+      "exit_timestamp": "2025-11-17T21:09:45.930794"
+    },
+    {
+      "verdict": "loss",
+      "verdict_emoji": "🛑",
+      "verdict_reasons": [
+        "Hit stop loss"
+      ],
+      "quality_score": 33.0,
+      "metrics": {
+        "symbol": "TSLA",
+        "return_pct": -0.012,
+        "return_usd": -3.0,
+        "hold_time": "1 day, 0:00:00",
+        "hold_time_hours": 24.0,
+        "max_drawdown_pct": 0,
+        "max_gain_pct": 0,
+        "entry_price": 250.0,
+        "exit_price": 247.0,
+        "position_size": 5000,
+        "risk_reward_realized": 0
+      },
+      "original_signals": {},
+      "entry_timestamp": "2025-11-16T21:09:45.930794",
+      "exit_timestamp": "2025-11-17T21:09:45.930794"
+    }
+  ],
+  "verdict_summary": {
+    "quality_win": 0,
+    "win": 1,
+    "scratch": 0,
+    "loss": 1,
+    "quality_loss": 0
+  },
+  "statistics": {
+    "win_rate_pct": 50.0,
+    "total_wins": 1,
+    "total_losses": 1,
+    "avg_quality_score": 46.76315789473684,
+    "avg_win_return_pct": 1.0526315789473684,
+    "avg_loss_return_pct": -1.2,
+    "profit_factor": 0.8771929824561403
+  }
+}

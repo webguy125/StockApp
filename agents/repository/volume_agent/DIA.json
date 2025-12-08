@@ -1,0 +1,44 @@
+{
+  "symbol": "DIA",
+  "timestamp": "2025-11-17T22:02:50.378243",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 30,
+    "confidence": 0.6,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 73215810.0,
+        "recent_sell_volume": 72638890.0,
+        "recent_delta": 576920.0,
+        "delta_trend": "bullish",
+        "buy_sell_ratio": 1.0079423019817622,
+        "cumulative_delta": 576920.0000000009
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -118913.13702207283,
+        "current_value": 1428696.9135813527,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 11,
+        "last_wave": {
+          "start_idx": 19,
+          "direction": "down",
+          "volume": 27259500,
+          "price_change": -0.034420768574742085,
+          "end_idx": 21,
+          "bars": 3
+        }
+      },
+      "volume_profile": {
+        "poc_range": "473.91-474.96",
+        "poc_volume_pct": 8.72824036939886,
+        "near_poc": false,
+        "current_price": 466.32000732421875
+      }
+    }
+  },
+  "shorthand": "DIA | ⚖️💸🌊⬇️ | 30 | 0.60 | 2025-11-17"
+}

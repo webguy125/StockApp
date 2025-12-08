@@ -1,0 +1,44 @@
+{
+  "symbol": "SOL-USD",
+  "timestamp": "2025-11-17T22:02:44.754083",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 10,
+    "confidence": 0.4,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 52620050159.8,
+        "recent_sell_volume": 74554600626.19998,
+        "recent_delta": -21934550466.39998,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.7057921270831442,
+        "cumulative_delta": -21625599494.4
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -776007394.348698,
+        "current_value": -19328259199.892014,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 16,
+        "last_wave": {
+          "start_idx": 29,
+          "direction": "down",
+          "volume": 12684806633,
+          "price_change": -0.037673267283190676,
+          "end_idx": 30,
+          "bars": 2
+        }
+      },
+      "volume_profile": {
+        "poc_range": "186.13-189.90",
+        "poc_volume_pct": 9.340046176680545,
+        "near_poc": false,
+        "current_price": 134.32704162597656
+      }
+    }
+  },
+  "shorthand": "SOL-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+}

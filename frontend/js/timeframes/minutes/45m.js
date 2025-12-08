@@ -25,6 +25,7 @@ export class Timeframe45m {
     this.isActive = false;
     this.lastTickerUpdate = null; // Store ticker that arrives before chart loads
     this.volumeCallback = null; // Callback for volume updates from shared accumulator
+    this.newCandleCallback = null; // Callback for new candle detection
   }
 
   /**
@@ -80,6 +81,46 @@ export class Timeframe45m {
         }
       };
       volumeAccumulator.registerCallback('45m', this.volumeCallback);
+
+      // Register callback for new candle detection (critical for ORD Volume auto-update)
+      this.newCandleCallback = (interval) => {
+        if (this.isActive && this.data.length > 0 && interval === '45m') {
+          console.log(`🕐 [45M] New candle detected - checking data array`);
+
+          const lastCandle = this.data[this.data.length - 1];
+          const currentPrice = this.lastTickerUpdate?.price || lastCandle.Close;
+
+          // Get current timestamp (rounded down to 45-minute boundary)
+          const now = new Date();
+          const candleTime = new Date(Math.floor(now.getTime() / (45 * 60000)) * (45 * 60000));
+
+          // CRITICAL FIX: Check if last candle already has this timestamp (duplicate detection)
+          const lastCandleTime = new Date(lastCandle.Date.includes('Z') ? lastCandle.Date : lastCandle.Date + 'Z');
+
+          if (lastCandleTime.getTime() === candleTime.getTime()) {
+            // Duplicate detected! Remove the flat candle and add the correct one
+            console.log(`🗑️ [45M] Removing duplicate flat candle at ${candleTime.toLocaleTimeString()}`);
+            this.data.pop(); // Remove the flat candle
+          }
+
+                    const newCandle = {
+            Date: candleTime.toISOString(),
+            Open: currentPrice,
+            High: currentPrice,
+            Low: currentPrice,
+            Close: currentPrice,
+            Volume: 0
+          };
+
+          this.data.push(newCandle);
+          console.log(`✅ [45M] Added candle #${this.data.length}: ${candleTime.toLocaleTimeString()} @ $${currentPrice.toFixed(2)}`);
+
+          if (this.renderer && this.renderer.draw) {
+            this.renderer.draw();
+          }
+        }
+      };
+      volumeAccumulator.registerNewCandleCallback('45m', this.newCandleCallback);
 
       // Subscribe to WebSocket updates for price
       this.subscribeToLiveData();
@@ -204,6 +245,13 @@ export class Timeframe45m {
     // Update the chart renderer with live price (NO volume - trade updates handle that)
     if (this.data.length > 0) {
       // console.log(`  🖼️ [45M] Updating renderer with live price`);
+
+      // CRITICAL: Update the current candle's OHLC in the data array
+      const currentCandle = this.data[this.data.length - 1];
+      currentCandle.Close = price;
+      currentCandle.High = Math.max(currentCandle.High, price);
+      currentCandle.Low = Math.min(currentCandle.Low, price);
+
       this.renderer.updateLivePrice(price, null, bid, ask);
     } else {
       // console.log(`  ⚠️ [45M] Chart not loaded yet, ticker stored for later`);
@@ -222,6 +270,12 @@ export class Timeframe45m {
     if (this.volumeCallback) {
       volumeAccumulator.unregisterCallback('45m', this.volumeCallback);
       this.volumeCallback = null;
+    }
+
+    // Unregister new candle callback
+    if (this.newCandleCallback) {
+      volumeAccumulator.unregisterNewCandleCallback('45m', this.newCandleCallback);
+      this.newCandleCallback = null;
     }
 
     // Destroy the renderer to remove the canvas from DOM

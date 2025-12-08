@@ -1,0 +1,34 @@
+{
+  "symbol": "QQQ",
+  "timestamp": "2025-11-19T13:01:47.740086",
+  "agent": "fusion_agent",
+  "total_score": 25.384615384615383,
+  "confidence": 0.5538461538461539,
+  "recommendation": "sell",
+  "emojis": [
+    "📉",
+    "❌",
+    "💰"
+  ],
+  "emoji_string": "📉❌💰",
+  "shorthand": "QQQ | 📉❌💰 | 25 | 0.55 | 2025-11-19",
+  "weighted_scores": {
+    "indicators_agent": {
+      "score": 10,
+      "confidence": 0.4,
+      "weight": 0.4,
+      "contribution": 4.0
+    },
+    "volume_agent": {
+      "score": 50,
+      "confidence": 0.8,
+      "weight": 0.25,
+      "contribution": 12.5
+    }
+  },
+  "metadata": {
+    "total_weight_used": 0.65,
+    "agents_contributing": 2,
+    "signals_collected": 2
+  }
+}

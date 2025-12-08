@@ -1,0 +1,44 @@
+{
+  "symbol": "DOGE-USD",
+  "timestamp": "2025-11-17T22:02:45.422528",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 10,
+    "confidence": 0.4,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 19130771685.9,
+        "recent_sell_volume": 27484922407.100002,
+        "recent_delta": -8354150721.200001,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.6960460503595263,
+        "cumulative_delta": -9219212373.6
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -25789105.57265067,
+        "current_value": -2112024220.885538,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 16,
+        "last_wave": {
+          "start_idx": 29,
+          "direction": "down",
+          "volume": 4796646757,
+          "price_change": -0.05593520877341994,
+          "end_idx": 30,
+          "bars": 2
+        }
+      },
+      "volume_profile": {
+        "poc_range": "0.16-0.17",
+        "poc_volume_pct": 11.833995816803633,
+        "near_poc": false,
+        "current_price": 0.1541394591331482
+      }
+    }
+  },
+  "shorthand": "DOGE-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+}

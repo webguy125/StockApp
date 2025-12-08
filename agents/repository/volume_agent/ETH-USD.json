@@ -1,0 +1,44 @@
+{
+  "symbol": "ETH-USD",
+  "timestamp": "2025-11-17T22:02:44.469992",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 10,
+    "confidence": 0.4,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 314471147682.8,
+        "recent_sell_volume": 448312207977.19995,
+        "recent_delta": -133841060294.39996,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.7014556866557451,
+        "cumulative_delta": -161290926287.2
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -4680694288.164812,
+        "current_value": -152805642101.94598,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 14,
+        "last_wave": {
+          "start_idx": 29,
+          "direction": "down",
+          "volume": 75631562684,
+          "price_change": -0.04704609301545383,
+          "end_idx": 30,
+          "bars": 2
+        }
+      },
+      "volume_profile": {
+        "poc_range": "3861.99-3926.77",
+        "poc_volume_pct": 9.799101694580656,
+        "near_poc": false,
+        "current_price": 3019.40576171875
+      }
+    }
+  },
+  "shorthand": "ETH-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+}

@@ -1,0 +1,44 @@
+{
+  "symbol": "LTC-USD",
+  "timestamp": "2025-11-17T22:02:46.976971",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💰🔄⬆️🌊⬇️",
+    "score": 65,
+    "confidence": 0.95,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 9923235901.099998,
+        "recent_sell_volume": 9995692735.9,
+        "recent_delta": -72456834.80000114,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.9927511942679301,
+        "cumulative_delta": -504033475.59999985
+      },
+      "accumulation_distribution": {
+        "signal": "accumulation",
+        "slope": 35868927.19299031,
+        "current_value": -139274400.12548625,
+        "divergence": "bullish_divergence"
+      },
+      "weis_waves": {
+        "total_waves": 14,
+        "last_wave": {
+          "start_idx": 29,
+          "direction": "down",
+          "volume": 1610771982,
+          "price_change": -0.0900140688561838,
+          "end_idx": 30,
+          "bars": 2
+        }
+      },
+      "volume_profile": {
+        "poc_range": "98.33-99.98",
+        "poc_volume_pct": 11.625737612785185,
+        "near_poc": false,
+        "current_price": 92.7970199584961
+      }
+    }
+  },
+  "shorthand": "LTC-USD | ⚖️💰🔄⬆️🌊⬇️ | 65 | 0.95 | 2025-11-17"
+}

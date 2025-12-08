@@ -1,0 +1,32 @@
+{
+  "symbol": "XRP-USD",
+  "timestamp": "2025-11-17T22:02:17.778604",
+  "agent": "indicators_agent",
+  "signals": {
+    "emoji": "📉⚪❌🌧️",
+    "score": 4,
+    "confidence": 0.33999999999999997,
+    "metadata": {
+      "indicators": {
+        "price": 2.1585183143615723,
+        "rsi": 43.20236414472179,
+        "macd": -0.08138099402063093,
+        "macd_signal": -0.07071347286413068,
+        "macd_histogram": -0.010667521156500243,
+        "ma_20": 2.3534000158309936,
+        "ma_50": 2.522853722572327,
+        "ma_200": null,
+        "atr": 0.1671713250023978,
+        "atr_pct": 0.07744725809836008
+      },
+      "signals": {
+        "rsi_signal": "neutral",
+        "macd_signal": "bearish",
+        "ma_signal": "bearish",
+        "trend": "strong_downtrend",
+        "volatility": "high"
+      }
+    }
+  },
+  "shorthand": "XRP-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+}

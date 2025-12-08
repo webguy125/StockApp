@@ -1,0 +1,44 @@
+{
+  "symbol": "XOM",
+  "timestamp": "2025-11-17T22:02:48.881852",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💰🌊⬇️",
+    "score": 75,
+    "confidence": 0.95,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 153808350.0,
+        "recent_sell_volume": 128978150.0,
+        "recent_delta": 24830200.0,
+        "delta_trend": "bullish",
+        "buy_sell_ratio": 1.1925147786659989,
+        "cumulative_delta": 24830200.0
+      },
+      "accumulation_distribution": {
+        "signal": "accumulation",
+        "slope": 506586.9081046285,
+        "current_value": 12799593.539219424,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 12,
+        "last_wave": {
+          "start_idx": 20,
+          "direction": "down",
+          "volume": 16032500,
+          "price_change": -0.013496526096027528,
+          "end_idx": 20,
+          "bars": 1
+        }
+      },
+      "volume_profile": {
+        "poc_range": "114.07-114.51",
+        "poc_volume_pct": 9.532105752948176,
+        "near_poc": false,
+        "current_price": 117.68000030517578
+      }
+    }
+  },
+  "shorthand": "XOM | ⚖️💰🌊⬇️ | 75 | 0.95 | 2025-11-17"
+}

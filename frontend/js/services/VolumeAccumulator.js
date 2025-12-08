@@ -38,6 +38,9 @@ export class VolumeAccumulator {
 
     // Callbacks to notify timeframes when volume updates
     this.callbacks = {};
+
+    // Callbacks to notify when a new candle starts (for ORD Volume auto-update)
+    this.newCandleCallbacks = {};
   }
 
   /**
@@ -59,13 +62,19 @@ export class VolumeAccumulator {
       this.volumes[interval] = { volume: 0, candleStartTime: null };
     }
 
-    // Subscribe to trade channel
-    if (this.socket) {
+    // Only subscribe to WebSocket for crypto symbols
+    // Stock symbols don't have real-time trade data from Coinbase
+    const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 'LTC', 'MATIC', 'UNI'];
+    const isCrypto = cryptoSymbols.includes(symbol) || symbol.endsWith('-USD');
+
+    if (this.socket && isCrypto) {
       this.socket.emit('subscribe', {
         product_ids: [`${symbol}-USD`],
         channels: ['matches']
       });
       console.log(`📊 [VolumeAccumulator] Subscribed to matches for ${symbol}-USD`);
+    } else {
+      console.log(`📊 [VolumeAccumulator] Skipping WebSocket subscription for stock symbol: ${symbol}`);
     }
   }
 
@@ -129,10 +138,38 @@ export class VolumeAccumulator {
   }
 
   /**
+   * Register a callback to be notified when a new candle starts
+   */
+  registerNewCandleCallback(interval, callback) {
+    if (!this.newCandleCallbacks[interval]) {
+      this.newCandleCallbacks[interval] = [];
+    }
+    this.newCandleCallbacks[interval].push(callback);
+  }
+
+  /**
+   * Unregister a new candle callback
+   */
+  unregisterNewCandleCallback(interval, callback) {
+    if (this.newCandleCallbacks[interval]) {
+      this.newCandleCallbacks[interval] = this.newCandleCallbacks[interval].filter(cb => cb !== callback);
+    }
+  }
+
+  /**
    * Handle trade update from WebSocket
    */
   handleTradeUpdate(data) {
     if (!this.isActive || !data) return;
+
+    // Ignore trade updates for stock symbols (they don't have real-time data from Coinbase)
+    const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 'LTC', 'MATIC', 'UNI'];
+    const isCrypto = cryptoSymbols.includes(this.symbol) || this.symbol.endsWith('-USD');
+
+    if (!isCrypto) {
+      // console.log(`📊 [VolumeAccumulator] Ignoring trade update for stock symbol: ${this.symbol}`);
+      return;
+    }
 
     // Check if this trade is for our symbol
     const symbolMatches = data.product_id && this.symbol &&
@@ -173,6 +210,11 @@ export class VolumeAccumulator {
         // New candle started - reset volume
         vol.volume = 0;
         console.log(`📊 [VolumeAccumulator] ${interval} new candle started, reset volume`);
+
+        // Notify new candle callbacks (for ORD Volume auto-update)
+        if (this.newCandleCallbacks[interval]) {
+          this.newCandleCallbacks[interval].forEach(callback => callback(interval));
+        }
       }
 
       // Accumulate the trade

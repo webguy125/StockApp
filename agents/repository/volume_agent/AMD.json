@@ -1,0 +1,44 @@
+{
+  "symbol": "AMD",
+  "timestamp": "2025-11-17T22:02:49.209421",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💰🌊⬇️",
+    "score": 40,
+    "confidence": 0.7,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 536194750.0,
+        "recent_sell_volume": 563567750.0,
+        "recent_delta": -27373000.0,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.9514290872747775,
+        "cumulative_delta": -27372999.999999993
+      },
+      "accumulation_distribution": {
+        "signal": "accumulation",
+        "slope": 2058426.263512972,
+        "current_value": 65604691.392703414,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 13,
+        "last_wave": {
+          "start_idx": 18,
+          "direction": "down",
+          "volume": 148654200,
+          "price_change": -0.07234177688128213,
+          "end_idx": 20,
+          "bars": 3
+        }
+      },
+      "volume_profile": {
+        "poc_range": "247.98-250.10",
+        "poc_volume_pct": 8.960742682761987,
+        "near_poc": false,
+        "current_price": 240.52000427246094
+      }
+    }
+  },
+  "shorthand": "AMD | ⚖️💰🌊⬇️ | 40 | 0.70 | 2025-11-17"
+}

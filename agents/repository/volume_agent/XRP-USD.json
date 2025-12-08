@@ -1,0 +1,44 @@
+{
+  "symbol": "XRP-USD",
+  "timestamp": "2025-11-17T22:02:45.110152",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 10,
+    "confidence": 0.4,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 43670585124.8,
+        "recent_sell_volume": 62317349535.19999,
+        "recent_delta": -18646764410.399986,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.7007773188449333,
+        "cumulative_delta": -17460556772.799995
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -272111333.96089345,
+        "current_value": -7221400551.641549,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 14,
+        "last_wave": {
+          "start_idx": 24,
+          "direction": "down",
+          "volume": 37743886251,
+          "price_change": -0.15449865719660869,
+          "end_idx": 30,
+          "bars": 7
+        }
+      },
+      "volume_profile": {
+        "poc_range": "2.35-2.38",
+        "poc_volume_pct": 8.828585027870933,
+        "near_poc": false,
+        "current_price": 2.1585183143615723
+      }
+    }
+  },
+  "shorthand": "XRP-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+}

@@ -1,0 +1,44 @@
+{
+  "symbol": "IWM",
+  "timestamp": "2025-11-17T22:02:48.041595",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 25,
+    "confidence": 0.55,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 372563560.0,
+        "recent_sell_volume": 423476040.0,
+        "recent_delta": -50912480.0,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.8797748274022776,
+        "cumulative_delta": -50912479.99999999
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -4944538.086911887,
+        "current_value": -70477247.96133868,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 11,
+        "last_wave": {
+          "start_idx": 20,
+          "direction": "down",
+          "volume": 55683200,
+          "price_change": -0.019875363422687548,
+          "end_idx": 20,
+          "bars": 1
+        }
+      },
+      "volume_profile": {
+        "poc_range": "244.03-245.05",
+        "poc_volume_pct": 10.46356143417669,
+        "near_poc": false,
+        "current_price": 232.75999450683594
+      }
+    }
+  },
+  "shorthand": "IWM | ⚖️💸🌊⬇️ | 25 | 0.55 | 2025-11-17"
+}

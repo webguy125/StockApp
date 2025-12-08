@@ -1,0 +1,24 @@
+{
+  "verdict": "loss",
+  "verdict_emoji": "🛑",
+  "verdict_reasons": [
+    "Hit stop loss"
+  ],
+  "quality_score": 33.0,
+  "metrics": {
+    "symbol": "TSLA",
+    "return_pct": -0.012,
+    "return_usd": -3.0,
+    "hold_time": "1 day, 0:00:00",
+    "hold_time_hours": 24.0,
+    "max_drawdown_pct": 0,
+    "max_gain_pct": 0,
+    "entry_price": 250.0,
+    "exit_price": 247.0,
+    "position_size": 5000,
+    "risk_reward_realized": 0
+  },
+  "original_signals": {},
+  "entry_timestamp": "2025-11-16T21:09:45.930794",
+  "exit_timestamp": "2025-11-17T21:09:45.930794"
+}

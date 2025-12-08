@@ -175,7 +175,7 @@ class TOSApp {
 
       // Reload chart data to catch up on missed updates
       if (this.currentSymbol) {
-        this.reloadChart();
+        this.loadSymbol(this.currentSymbol);
       }
     });
 
@@ -216,9 +216,9 @@ class TOSApp {
         }
 
         // If away for a while, do a quick check to ensure data is current
-        if (timeAway > 5 * 60 * 1000) {
+        if (timeAway > 5 * 60 * 1000 && this.currentSymbol) {
           console.log(`Verifying chart data (away ${Math.round(timeAway / 60000)}m)...`);
-          this.reloadChart();
+          this.loadSymbol(this.currentSymbol);
         }
       } else {
         // Tab became hidden

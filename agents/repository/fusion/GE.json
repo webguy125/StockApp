@@ -1,0 +1,34 @@
+{
+  "symbol": "GE",
+  "timestamp": "2025-12-04T00:02:31.712203",
+  "agent": "fusion_agent",
+  "total_score": 9.384615384615383,
+  "confidence": 0.39384615384615385,
+  "recommendation": "strong_sell",
+  "emojis": [
+    "📉",
+    "❌",
+    "💸"
+  ],
+  "emoji_string": "📉❌💸",
+  "shorthand": "GE | 📉❌💸 | 9 | 0.39 | 2025-12-04",
+  "weighted_scores": {
+    "indicators_agent": {
+      "score": 9,
+      "confidence": 0.39,
+      "weight": 0.4,
+      "contribution": 3.6
+    },
+    "volume_agent": {
+      "score": 10,
+      "confidence": 0.4,
+      "weight": 0.25,
+      "contribution": 2.5
+    }
+  },
+  "metadata": {
+    "total_weight_used": 0.65,
+    "agents_contributing": 2,
+    "signals_collected": 2
+  }
+}

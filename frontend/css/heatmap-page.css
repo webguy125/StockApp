@@ -1,0 +1,366 @@
+/* Heat Map Page Styles */
+
+.heatmap-page-container {
+    min-height: 100vh;
+    background: var(--bg-primary, #1a1a1a);
+    color: var(--text-primary, #e0e0e0);
+    padding: 20px;
+}
+
+/* Header */
+.heatmap-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color, #404040);
+}
+
+.heatmap-title h1 {
+    margin: 0 0 5px 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.heatmap-subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.heatmap-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Timeframe Tabs */
+.timeframe-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color, #404040);
+    padding-bottom: 0;
+}
+
+.timeframe-tab {
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.timeframe-tab:hover {
+    color: var(--text-primary, #e0e0e0);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.timeframe-tab.active {
+    color: var(--accent-color, #00bfff);
+    border-bottom-color: var(--accent-color, #00bfff);
+}
+
+.tab-count {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.timeframe-tab.active .tab-count {
+    background: var(--accent-color, #00bfff);
+    color: #000;
+}
+
+/* Heat Map Content */
+.heatmap-content {
+    min-height: 400px;
+}
+
+.heatmap-section {
+    margin-bottom: 40px;
+}
+
+.heatmap-section.hidden {
+    display: none;
+}
+
+.section-header {
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    margin: 0 0 5px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.section-header p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+/* Heat Map Grid */
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    min-height: 100px;
+}
+
+/* Signal Cell */
+.signal-cell {
+    padding: 16px 12px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+
+.signal-cell:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-color, #00bfff);
+    z-index: 10;
+}
+
+/* Signal strength colors */
+.signal-strong-buy {
+    background: linear-gradient(135deg, #00ff00, #00cc00);
+    color: #000;
+}
+
+.signal-buy {
+    background: linear-gradient(135deg, #90ee90, #7dd87d);
+    color: #000;
+}
+
+.signal-hold {
+    background: linear-gradient(135deg, #ffff00, #ffcc00);
+    color: #000;
+}
+
+.signal-sell {
+    background: linear-gradient(135deg, #ffb6c1, #ffa0b4);
+    color: #000;
+}
+
+.signal-strong-sell {
+    background: linear-gradient(135deg, #ff0000, #cc0000);
+    color: #fff;
+}
+
+/* Signal Cell Content */
+.signal-symbol {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.signal-emoji {
+    font-size: 24px;
+    margin: 4px 0;
+}
+
+.signal-score {
+    font-size: 12px;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+.signal-recommendation {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    margin-top: 4px;
+}
+
+.signal-confidence {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.confidence-bar {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+/* Tooltip */
+.signal-tooltip {
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel-bg, #2a2a2a);
+    border: 1px solid var(--border-color, #404040);
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    min-width: 200px;
+}
+
+.signal-cell:hover .signal-tooltip {
+    opacity: 1;
+}
+
+.tooltip-row {
+    margin: 4px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.tooltip-label {
+    color: var(--text-secondary, #a0a0a0);
+    font-weight: 500;
+}
+
+.tooltip-value {
+    color: var(--text-primary, #e0e0e0);
+    font-weight: 600;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.empty-state p {
+    margin: 0 0 20px 0;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--accent-color, #00bfff);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+    color: var(--text-secondary, #a0a0a0);
+}
+
+/* Footer */
+.heatmap-footer {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color, #404040);
+}
+
+.metadata-item {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.metadata-label {
+    color: var(--text-secondary, #a0a0a0);
+    font-weight: 500;
+}
+
+.metadata-value {
+    color: var(--text-primary, #e0e0e0);
+    font-weight: 600;
+}
+
+/* Refresh Animation */
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.refreshing {
+    animation: rotate 1s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .heatmap-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .timeframe-tabs {
+        flex-wrap: wrap;
+    }
+
+    .heatmap-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+    }
+
+    .heatmap-footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

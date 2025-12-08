@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-11-17T21:15:27.558485",
+  "agent": "archivist_agent",
+  "archived_this_session": 2,
+  "archive_breakdown": {
+    "wins": 1,
+    "losses": 1,
+    "quality_trades": 0,
+    "learning_cases": 0
+  },
+  "total_in_archive": 2,
+  "archive_statistics": {
+    "total_trades": 2,
+    "wins": 1,
+    "losses": 1,
+    "quality_wins": 0,
+    "quality_losses": 0,
+    "win_rate_pct": 50.0,
+    "training_samples": 2
+  }
+}

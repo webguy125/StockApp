@@ -18,3 +18,7 @@ torch
 TA-Lib
 ccxt
 yfinance
+polygon-api-client
+pycoingecko
+schedule
+ta

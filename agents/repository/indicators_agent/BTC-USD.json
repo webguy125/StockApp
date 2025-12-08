@@ -1,0 +1,32 @@
+{
+  "symbol": "BTC-USD",
+  "timestamp": "2025-11-17T22:02:16.912333",
+  "agent": "indicators_agent",
+  "signals": {
+    "emoji": "📉🔵❌🌧️",
+    "score": 18,
+    "confidence": 0.48,
+    "metadata": {
+      "indicators": {
+        "price": 90708.1015625,
+        "rsi": 26.92119782116646,
+        "macd": -4400.722963314402,
+        "macd_signal": -3288.6764062792713,
+        "macd_histogram": -1112.0465570351303,
+        "ma_20": 102875.642578125,
+        "ma_50": 109894.01515625,
+        "ma_200": null,
+        "atr": 4443.735491071428,
+        "atr_pct": 0.048989400224737266
+      },
+      "signals": {
+        "rsi_signal": "oversold",
+        "macd_signal": "bearish",
+        "ma_signal": "bearish",
+        "trend": "strong_downtrend",
+        "volatility": "high"
+      }
+    }
+  },
+  "shorthand": "BTC-USD | 📉🔵❌🌧️ | 18 | 0.48 | 2025-11-17"
+}

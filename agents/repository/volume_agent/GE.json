@@ -1,0 +1,44 @@
+{
+  "symbol": "GE",
+  "timestamp": "2025-11-17T22:02:50.805953",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 10,
+    "confidence": 0.4,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 38195140.0,
+        "recent_sell_volume": 39623460.0,
+        "recent_delta": -1428320.0,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.9639526684444014,
+        "cumulative_delta": -1428320.0
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -147062.3491775847,
+        "current_value": -8421355.890278336,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 12,
+        "last_wave": {
+          "start_idx": 20,
+          "direction": "down",
+          "volume": 3076000,
+          "price_change": -0.015386137158699612,
+          "end_idx": 20,
+          "bars": 1
+        }
+      },
+      "volume_profile": {
+        "poc_range": "307.92-309.02",
+        "poc_volume_pct": 9.353103762942855,
+        "near_poc": false,
+        "current_price": 300.1300048828125
+      }
+    }
+  },
+  "shorthand": "GE | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+}

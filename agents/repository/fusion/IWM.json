@@ -1,0 +1,34 @@
+{
+  "symbol": "IWM",
+  "timestamp": "2025-11-19T13:01:47.741086",
+  "agent": "fusion_agent",
+  "total_score": 21.923076923076923,
+  "confidence": 0.5192307692307693,
+  "recommendation": "sell",
+  "emojis": [
+    "📉",
+    "❌",
+    "💸"
+  ],
+  "emoji_string": "📉❌💸",
+  "shorthand": "IWM | 📉❌💸 | 21 | 0.52 | 2025-11-19",
+  "weighted_scores": {
+    "indicators_agent": {
+      "score": 20,
+      "confidence": 0.5,
+      "weight": 0.4,
+      "contribution": 8.0
+    },
+    "volume_agent": {
+      "score": 25,
+      "confidence": 0.55,
+      "weight": 0.25,
+      "contribution": 6.25
+    }
+  },
+  "metadata": {
+    "total_weight_used": 0.65,
+    "agents_contributing": 2,
+    "signals_collected": 2
+  }
+}

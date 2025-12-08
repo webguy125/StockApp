@@ -1,0 +1,32 @@
+{
+  "symbol": "AVAX-USD",
+  "timestamp": "2025-11-17T22:02:18.735354",
+  "agent": "indicators_agent",
+  "signals": {
+    "emoji": "📉⚪❌🌧️",
+    "score": 4,
+    "confidence": 0.33999999999999997,
+    "metadata": {
+      "indicators": {
+        "price": 14.450663566589355,
+        "rsi": 37.58259140032464,
+        "macd": -1.6015865688470043,
+        "macd_signal": -1.592024376470336,
+        "macd_histogram": -0.009562192376668444,
+        "ma_20": 17.016026639938353,
+        "ma_50": 21.2587140083313,
+        "ma_200": null,
+        "atr": 1.2896582058497839,
+        "atr_pct": 0.08924560452929906
+      },
+      "signals": {
+        "rsi_signal": "neutral",
+        "macd_signal": "bearish",
+        "ma_signal": "bearish",
+        "trend": "strong_downtrend",
+        "volatility": "high"
+      }
+    }
+  },
+  "shorthand": "AVAX-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+}

@@ -111,17 +111,40 @@ class EmojiCodec:
 
 # Example usage
 if __name__ == "__main__":
-    codec = EmojiCodec()
+    import sys
+    import io
 
-    # Encode
-    shorthand = codec.encode_to_shorthand(
-        symbol="AAPL",
-        emojis=["🙂", "📈", "💵", "📰"],
-        score=82,
-        confidence=0.78
-    )
-    print(f"Encoded: {shorthand}")
+    # Fix Windows console encoding for emojis
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-    # Decode
-    decoded = codec.decode_from_shorthand(shorthand)
-    print(f"Decoded: {json.dumps(decoded, indent=2)}")
+    try:
+        codec = EmojiCodec()
+        print("✅ Emoji codec initialized successfully!")
+
+        # Test encoding
+        shorthand = codec.encode_to_shorthand(
+            symbol="BTC-USD",
+            emojis=["🙂", "📈", "💵", "📰"],
+            score=82,
+            confidence=0.78
+        )
+        print(f"Encoded: {shorthand}")
+
+        # Test decoding
+        decoded = codec.decode_from_shorthand(shorthand)
+        print(f"Decoded: {json.dumps(decoded, indent=2, ensure_ascii=False)}")
+
+        # Test validation
+        valid = codec.validate_emojis(["📈", "💵"])
+        print(f"Emojis valid: {valid}")
+
+        # Test categories
+        outcomes = codec.get_emojis_by_category("outcomes")
+        print(f"Outcome emojis: {outcomes}")
+
+        print("\n✅ All emoji codec tests passed!")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()

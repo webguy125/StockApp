@@ -1,0 +1,44 @@
+{
+  "symbol": "BAC",
+  "timestamp": "2025-11-17T22:02:48.456324",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💰🔄⬆️🌊⬇️",
+    "score": 50,
+    "confidence": 0.8,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 351813920.0,
+        "recent_sell_volume": 361476880.0,
+        "recent_delta": -9662960.0,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.973268110535866,
+        "cumulative_delta": -9662960.0
+      },
+      "accumulation_distribution": {
+        "signal": "accumulation",
+        "slope": 3010362.9939286737,
+        "current_value": 49786037.18244541,
+        "divergence": "bullish_divergence"
+      },
+      "weis_waves": {
+        "total_waves": 9,
+        "last_wave": {
+          "start_idx": 18,
+          "direction": "down",
+          "volume": 105613800,
+          "price_change": -0.049312829841839434,
+          "end_idx": 20,
+          "bars": 3
+        }
+      },
+      "volume_profile": {
+        "poc_range": "52.56-52.78",
+        "poc_volume_pct": 12.540423561619418,
+        "near_poc": false,
+        "current_price": 51.47999954223633
+      }
+    }
+  },
+  "shorthand": "BAC | ⚖️💰🔄⬆️🌊⬇️ | 50 | 0.80 | 2025-11-17"
+}

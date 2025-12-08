@@ -1,0 +1,20 @@
+[
+  {
+    "action": "place-horizontal-line",
+    "y": 329,
+    "color": "#ff9800",
+    "width": 2,
+    "style": "solid",
+    "extend": "both",
+    "id": "034b42d8-3072-4f8e-b1d5-f65e687bb363"
+  },
+  {
+    "action": "place-vertical-line",
+    "x": 987,
+    "color": "#9c27b0",
+    "width": 2,
+    "style": "solid",
+    "extend": "both",
+    "id": "882208c6-86fa-4518-8464-0281f1d6fef5"
+  }
+]

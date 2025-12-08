@@ -10,7 +10,7 @@ export class MACD extends IndicatorBase {
   constructor() {
     super({
       name: 'MACD',
-      version: '1.0.0',
+      version: '2.0.0',
       description: 'Moving Average Convergence Divergence with signal line and histogram',
       tags: ['momentum', 'trend'],
       dependencies: [],
@@ -25,7 +25,20 @@ export class MACD extends IndicatorBase {
         histogram_opacity: 0.6,
         fast_period: 12,
         slow_period: 26,
-        signal_period: 9
+        signal_period: 9,
+
+        // Signal Detection
+        enable_signals: true,
+        signal_cooldown: 3,          // Bars between signals
+
+        // Machine Learning Filter
+        enable_ml_filter: false,     // Disabled - MACD signals show without ML filtering
+        ml_confidence_threshold: 0.7,
+        show_ml_score: false,
+
+        // Signal Colors
+        buy_signal_color: '#00FF00',
+        sell_signal_color: '#FF0000'
       },
       alerts: {
         enabled: true,
@@ -81,7 +94,7 @@ export class MACD extends IndicatorBase {
    * @param {Array} candles - Array of OHLCV candles
    * @returns {Array} MACD values with metadata
    */
-  calculate(candles) {
+  async calculate(candles) {
     if (!candles || candles.length < this.currentSettings.slow_period + this.currentSettings.signal_period) {
       return [];
     }
@@ -123,7 +136,9 @@ export class MACD extends IndicatorBase {
         date: candles[i].Date,
         macd: null,
         signal: null,
-        histogram: null
+        histogram: null,
+        crossover_signal: null,
+        ml_score: null
       });
     }
 
@@ -141,12 +156,277 @@ export class MACD extends IndicatorBase {
           date: candles[candleIndex].Date,
           macd: macdValue,
           signal: signalValue,
-          histogram: histogram
+          histogram: histogram,
+          crossover_signal: null,
+          ml_score: null
         });
       }
     }
 
+    // === Signal Detection ===
+    if (this.currentSettings.enable_signals) {
+      await this._detectSignals(result, candles, this.currentSettings);
+    }
+
     return result;
+  }
+
+  /**
+   * Detect MACD crossover signals with momentum confirmation
+   * Buy: MACD crosses above Signal line WITH both rising AND in bullish zone
+   * Sell: MACD crosses below Signal line WITH both falling AND in bearish zone
+   * This filters out low-probability whipsaws in ranging markets
+   * @private
+   */
+  async _detectSignals(data, candles, settings) {
+    if (data.length < 2) return;
+
+    let lastSignalIndex = -settings.signal_cooldown;
+
+    for (let i = 1; i < data.length; i++) {
+      const current = data[i];
+      const prev = data[i - 1];
+
+      // Skip if values are null
+      if (current.macd === null || current.signal === null ||
+          prev.macd === null || prev.signal === null) continue;
+
+      // Check cooldown
+      if (i - lastSignalIndex < settings.signal_cooldown) continue;
+
+      let crossoverSignal = null;
+
+      // Buy signal: MACD crosses above Signal line WITH momentum confirmation
+      // Requires: 1) Crossover, 2) Both lines rising, 3) Above zero line (bullish zone)
+      if (prev.macd <= prev.signal && current.macd > current.signal) {
+        // Check momentum: both MACD and Signal should be rising
+        const macdRising = current.macd > prev.macd;
+        const signalRising = current.signal > prev.signal;
+
+        // Check zone: crossing in bullish territory (above zero)
+        const inBullishZone = current.macd > 0;
+
+        // All conditions must be met for high-quality buy signal
+        if (macdRising && signalRising && inBullishZone) {
+          crossoverSignal = 'buy';
+        }
+      }
+      // Sell signal: MACD crosses below Signal line WITH momentum confirmation
+      // Requires: 1) Crossover, 2) Both lines falling, 3) Below zero line (bearish zone)
+      else if (prev.macd >= prev.signal && current.macd < current.signal) {
+        // Check momentum: both MACD and Signal should be falling
+        const macdFalling = current.macd < prev.macd;
+        const signalFalling = current.signal < prev.signal;
+
+        // Check zone: crossing in bearish territory (below zero)
+        const inBearishZone = current.macd < 0;
+
+        // All conditions must be met for high-quality sell signal
+        if (macdFalling && signalFalling && inBearishZone) {
+          crossoverSignal = 'sell';
+        }
+      }
+
+      if (crossoverSignal) {
+        // Apply ML filter if enabled
+        if (settings.enable_ml_filter) {
+          const mlScore = await this._getMLScore(candles, i, current, settings);
+          current.ml_score = mlScore;
+
+          if (mlScore >= settings.ml_confidence_threshold) {
+            current.crossover_signal = crossoverSignal;
+            lastSignalIndex = i;
+            console.log(`🎯 MACD: ${crossoverSignal.toUpperCase()} signal at ${current.date} (MACD: ${current.macd.toFixed(2)}, Signal: ${current.signal.toFixed(2)}, ML: ${(mlScore * 100).toFixed(0)}%)`);
+          } else {
+            console.log(`❌ MACD: ${crossoverSignal.toUpperCase()} rejected by ML at ${current.date} (ML: ${(mlScore * 100).toFixed(0)}% < ${(settings.ml_confidence_threshold * 100).toFixed(0)}%)`);
+          }
+        } else {
+          // No ML filter, show signal
+          current.crossover_signal = crossoverSignal;
+          lastSignalIndex = i;
+          console.log(`🎯 MACD: ${crossoverSignal.toUpperCase()} signal at ${current.date} (MACD: ${current.macd.toFixed(2)}, Signal: ${current.signal.toFixed(2)})`);
+        }
+      }
+    }
+  }
+
+  /**
+   * Get ML confidence score for a signal
+   * @private
+   */
+  async _getMLScore(candles, index, signalData, settings) {
+    try {
+      // Calculate ML features
+      const features = this._calculateMLFeatures(candles, index, signalData, settings);
+
+      if (!features || features.some(f => isNaN(f))) {
+        return 0.5; // Fallback score
+      }
+
+      // Get symbol from window
+      const symbol = window.currentSymbol || 'UNKNOWN';
+
+      // Call ML API
+      const response = await fetch('http://127.0.0.1:5000/ml/pivot-reliability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: symbol,
+          features: features
+        })
+      });
+
+      if (!response.ok) {
+        return 0.5;
+      }
+
+      const result = await response.json();
+      return result.scores[0];
+
+    } catch (error) {
+      console.error('❌ MACD ML score calculation failed:', error);
+      return 0.5;
+    }
+  }
+
+  /**
+   * Calculate ML features for signal validation
+   * Returns 9 features matching the TriadTrendPulse model
+   * @private
+   */
+  _calculateMLFeatures(candles, index, signalData, settings) {
+    try {
+      const closes = candles.map(c => c.Close);
+      const highs = candles.map(c => c.High);
+      const lows = candles.map(c => c.Low);
+      const volumes = candles.map(c => c.Volume || 0);
+
+      // Feature 1: Oscillator range (MACD histogram normalized)
+      const histogramRange = signalData.histogram;
+      const avgPrice = closes[index];
+      const oscillatorRange = Math.tanh(histogramRange / avgPrice * 50) / 2 + 0.5;
+
+      // Feature 2: Weighted price trend (MACD line normalized)
+      const weightedPriceTrend = Math.tanh(signalData.macd / avgPrice * 50) / 2 + 0.5;
+
+      // Feature 3: Short-term trend (5-bar)
+      let shortTrend = 0.5;
+      if (index >= 5) {
+        const change = (closes[index] - closes[index - 5]) / closes[index - 5];
+        shortTrend = Math.tanh(change * 10) / 2 + 0.5;
+      }
+
+      // Feature 4: ADX
+      const adx = this._calculateADX(highs, lows, closes, index, 14);
+      const adxNorm = adx / 100.0;
+
+      // Feature 5: Volume change
+      let volumeChange = 1.0;
+      if (index >= 20) {
+        const volumeSMA = volumes.slice(index - 19, index + 1).reduce((a, b) => a + b, 0) / 20;
+        volumeChange = Math.min(volumes[index] / volumeSMA, 3) / 3;
+      }
+
+      // Feature 6: ATR (volatility)
+      const atr = this._calculateATR(highs, lows, closes, index, 14);
+      const atrNorm = atr / closes[index];
+
+      // Feature 7: RSI
+      const rsi = this._calculateRSI(closes, index, 14);
+      const rsiNorm = rsi / 100.0;
+
+      // Feature 8: Momentum (20-bar)
+      let momentum = 0.5;
+      if (index >= 20) {
+        const change = (closes[index] - closes[index - 20]) / closes[index - 20];
+        momentum = Math.tanh(change * 10) / 2 + 0.5;
+      }
+
+      // Feature 9: Timeframe (default daily)
+      const timeframeNorm = 0.5;
+
+      return [
+        oscillatorRange,
+        weightedPriceTrend,
+        shortTrend,
+        adxNorm,
+        volumeChange,
+        atrNorm,
+        rsiNorm,
+        momentum,
+        timeframeNorm
+      ];
+
+    } catch (error) {
+      console.error('❌ MACD ML feature calculation failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Calculate RSI at specific index
+   * @private
+   */
+  _calculateRSI(closes, index, period) {
+    if (index < period) return 50;
+
+    const changes = [];
+    for (let i = Math.max(1, index - period); i <= index; i++) {
+      changes.push(closes[i] - closes[i - 1]);
+    }
+
+    let avgGain = 0, avgLoss = 0;
+    for (let i = 0; i < period && i < changes.length; i++) {
+      if (changes[i] > 0) avgGain += changes[i];
+      else avgLoss += Math.abs(changes[i]);
+    }
+    avgGain /= period;
+    avgLoss /= period;
+
+    if (avgLoss === 0) return 100;
+    const rs = avgGain / avgLoss;
+    return 100 - (100 / (1 + rs));
+  }
+
+  /**
+   * Calculate ATR at specific index
+   * @private
+   */
+  _calculateATR(highs, lows, closes, index, period) {
+    if (index < period) return 0;
+
+    let tr = 0;
+    for (let i = Math.max(1, index - period + 1); i <= index; i++) {
+      const high = highs[i];
+      const low = lows[i];
+      const prevClose = closes[i - 1];
+      tr += Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
+    }
+
+    return tr / period;
+  }
+
+  /**
+   * Calculate ADX at specific index (simplified)
+   * @private
+   */
+  _calculateADX(highs, lows, closes, index, period) {
+    if (index < period) return 0;
+
+    let upMoves = 0, downMoves = 0;
+    for (let i = Math.max(1, index - period + 1); i <= index; i++) {
+      const upMove = highs[i] - highs[i - 1];
+      const downMove = lows[i - 1] - lows[i];
+
+      if (upMove > downMove && upMove > 0) upMoves += upMove;
+      if (downMove > upMove && downMove > 0) downMoves += downMove;
+    }
+
+    const total = upMoves + downMoves;
+    if (total === 0) return 0;
+
+    const dx = Math.abs((upMoves - downMoves) / total) * 100;
+    return Math.min(dx, 100);
   }
 
   /**
@@ -223,6 +503,54 @@ export class MACD extends IndicatorBase {
         step: 0.1,
         default: 0.6,
         description: 'Opacity of histogram bars (0-1)'
+      },
+      enable_signals: {
+        type: 'boolean',
+        label: 'Enable Signals',
+        default: true,
+        description: 'Enable buy/sell signal detection at MACD/Signal crossovers'
+      },
+      signal_cooldown: {
+        type: 'number',
+        label: 'Signal Cooldown',
+        min: 1,
+        max: 10,
+        step: 1,
+        default: 3,
+        description: 'Minimum bars between signals'
+      },
+      enable_ml_filter: {
+        type: 'boolean',
+        label: 'Enable ML Filter',
+        default: true,
+        description: 'Use machine learning to validate signal quality'
+      },
+      ml_confidence_threshold: {
+        type: 'number',
+        label: 'ML Confidence Threshold',
+        min: 0.5,
+        max: 0.95,
+        step: 0.05,
+        default: 0.7,
+        description: 'Minimum ML confidence score to display signal (0.7 = 70%)'
+      },
+      show_ml_score: {
+        type: 'boolean',
+        label: 'Show ML Score',
+        default: true,
+        description: 'Display ML confidence percentage on signal labels'
+      },
+      buy_signal_color: {
+        type: 'color',
+        label: 'Buy Signal Color',
+        default: '#00FF00',
+        description: 'Color for buy signal markers'
+      },
+      sell_signal_color: {
+        type: 'color',
+        label: 'Sell Signal Color',
+        default: '#FF0000',
+        description: 'Color for sell signal markers'
       }
     };
   }
@@ -406,5 +734,58 @@ export class MACD extends IndicatorBase {
         : settings.histogram_color_negative;
       ctx.fillText(`Hist: ${lastData.histogram.toFixed(2)}`, x + 5, y + 45);
     }
+
+    // Draw signal markers
+    if (settings.enable_signals) {
+      this._drawSignalMarkers(ctx, mappings, data, x, totalWidth, centerOffset, startIndex, valueToY, settings);
+    }
+  }
+
+  /**
+   * Draw signal markers (buy/sell arrows) in MACD panel
+   * @private
+   */
+  _drawSignalMarkers(ctx, mappings, data, x, totalWidth, centerOffset, startIndex, valueToY, settings) {
+    mappings.forEach(mapping => {
+      const { candleIndex, indicatorIndex } = mapping;
+      const d = data[indicatorIndex];
+
+      if (!d || !d.crossover_signal || d.macd === null) return;
+
+      const xPos = x + ((candleIndex - startIndex) * totalWidth) + centerOffset;
+      const yPos = valueToY(d.macd);
+
+      // Draw arrow
+      const arrowSize = 8;
+      ctx.fillStyle = d.crossover_signal === 'buy' ? settings.buy_signal_color : settings.sell_signal_color;
+
+      ctx.beginPath();
+      if (d.crossover_signal === 'buy') {
+        // Up arrow
+        ctx.moveTo(xPos, yPos - arrowSize);
+        ctx.lineTo(xPos - arrowSize / 2, yPos);
+        ctx.lineTo(xPos + arrowSize / 2, yPos);
+      } else {
+        // Down arrow
+        ctx.moveTo(xPos, yPos + arrowSize);
+        ctx.lineTo(xPos - arrowSize / 2, yPos);
+        ctx.lineTo(xPos + arrowSize / 2, yPos);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      // Draw ML score if enabled
+      if (settings.show_ml_score && d.ml_score !== null) {
+        const scoreText = `${(d.ml_score * 100).toFixed(0)}%`;
+        ctx.font = '9px monospace';
+        ctx.fillStyle = d.crossover_signal === 'buy' ? settings.buy_signal_color : settings.sell_signal_color;
+
+        const textMetrics = ctx.measureText(scoreText);
+        const textX = xPos - textMetrics.width / 2;
+        const textY = d.crossover_signal === 'buy' ? yPos - arrowSize - 4 : yPos + arrowSize + 12;
+
+        ctx.fillText(scoreText, textX, textY);
+      }
+    });
   }
 }

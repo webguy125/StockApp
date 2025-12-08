@@ -1,0 +1,44 @@
+{
+  "symbol": "AVAX-USD",
+  "timestamp": "2025-11-17T22:02:45.976203",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 10,
+    "confidence": 0.4,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 4675571850.2,
+        "recent_sell_volume": 5703991819.799999,
+        "recent_delta": -1028419969.5999994,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.8197017102952193,
+        "cumulative_delta": -1320648447.6
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -29045508.25560103,
+        "current_value": -1652557065.3150356,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 16,
+        "last_wave": {
+          "start_idx": 29,
+          "direction": "down",
+          "volume": 1107588637,
+          "price_change": -0.07026715917448902,
+          "end_idx": 30,
+          "bars": 2
+        }
+      },
+      "volume_profile": {
+        "poc_range": "17.62-17.98",
+        "poc_volume_pct": 7.521814522747189,
+        "near_poc": false,
+        "current_price": 14.450663566589355
+      }
+    }
+  },
+  "shorthand": "AVAX-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+}

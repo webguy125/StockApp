@@ -1,0 +1,32 @@
+{
+  "symbol": "DIA",
+  "timestamp": "2025-11-17T22:02:24.054724",
+  "agent": "indicators_agent",
+  "signals": {
+    "emoji": "➖⚪❌☁️",
+    "score": 35,
+    "confidence": 0.6499999999999999,
+    "metadata": {
+      "indicators": {
+        "price": 466.32000732421875,
+        "rsi": 37.56031831384242,
+        "macd": 2.1253493726534884,
+        "macd_signal": 2.977365669326629,
+        "macd_histogram": -0.8520162966731406,
+        "ma_20": 472.9759994506836,
+        "ma_50": 466.2036358642578,
+        "ma_200": null,
+        "atr": 5.599999564034598,
+        "atr_pct": 0.012008919789154748
+      },
+      "signals": {
+        "rsi_signal": "neutral",
+        "macd_signal": "bearish",
+        "ma_signal": "neutral",
+        "trend": "sideways",
+        "volatility": "normal"
+      }
+    }
+  },
+  "shorthand": "DIA | ➖⚪❌☁️ | 35 | 0.65 | 2025-11-17"
+}

@@ -6,12 +6,16 @@
 
 // Import working timeframes (standalone implementations only)
 import { Timeframe1m } from './minutes/1m.js';
+import { Timeframe2m } from './minutes/2m.js';
+import { Timeframe3m } from './minutes/3m.js';
 import { Timeframe5m } from './minutes/5m.js';
+import { Timeframe10m } from './minutes/10m.js';
 import { Timeframe15m } from './minutes/15m.js';
 import { Timeframe30m } from './minutes/30m.js';
 import { Timeframe45m } from './minutes/45m.js';
 import { Timeframe1h } from './hours/1h.js';
 import { Timeframe2h } from './hours/2h.js';
+import { Timeframe3h } from './hours/3h.js';
 import { Timeframe4h } from './hours/4h.js';
 import { Timeframe6h } from './hours/6h.js';
 import { Timeframe1d } from './days/1d.js';
@@ -37,7 +41,10 @@ export class TimeframeRegistry {
   registerAllTimeframes() {
     // Minutes (standalone implementations with volume accumulation)
     this.register(new Timeframe1m());
+    this.register(new Timeframe2m());
+    this.register(new Timeframe3m());
     this.register(new Timeframe5m());
+    this.register(new Timeframe10m());
     this.register(new Timeframe15m());
     this.register(new Timeframe30m());
     this.register(new Timeframe45m());
@@ -45,6 +52,7 @@ export class TimeframeRegistry {
     // Hours (standalone implementations with volume accumulation)
     this.register(new Timeframe1h());
     this.register(new Timeframe2h());
+    this.register(new Timeframe3h());
     this.register(new Timeframe4h());
     this.register(new Timeframe6h());
 

@@ -1225,9 +1225,16 @@ export class CanvasRenderer {
         ? `<span style="color: #a0a0a0;">Vol: <span style="color: #e0e0e0;">${candle.Volume.toLocaleString()}</span></span>`
         : '';
 
+      // Format date: show only date portion for daily charts, full timestamp for intraday
+      let displayDate = candle.Date;
+      if (displayDate && displayDate.includes(' 00:00:00')) {
+        // Strip the time if it's 00:00:00 (daily chart)
+        displayDate = displayDate.split(' ')[0];
+      }
+
       dataBar.innerHTML = `
         ${prefix}
-        <span style="color: #a0a0a0;">Date: <span style="color: #e0e0e0;">${candle.Date}</span></span>
+        <span style="color: #a0a0a0;">Date: <span style="color: #e0e0e0;">${displayDate}</span></span>
         <span style="color: #a0a0a0;">O: <span style="color: #e0e0e0;">${candle.Open.toFixed(2)}</span></span>
         <span style="color: #a0a0a0;">H: <span style="color: #e0e0e0;">${candle.High.toFixed(2)}</span></span>
         <span style="color: #a0a0a0;">L: <span style="color: #e0e0e0;">${candle.Low.toFixed(2)}</span></span>
@@ -1666,7 +1673,7 @@ export class CanvasRenderer {
       // Mark that user has manually scaled the Y-axis
       this.manualPriceScale = true;
 
-      console.log(`📏 Y-axis: dy=${dy.toFixed(0)}px, scale=${scaleFactor.toFixed(2)}x, range=${newRange.toFixed(0)}`);
+      // console.log(`📏 Y-axis: dy=${dy.toFixed(0)}px, scale=${scaleFactor.toFixed(2)}x, range=${newRange.toFixed(0)}`);
     }
     // X-axis expand/compress
     else if (this.isDraggingXAxis) {

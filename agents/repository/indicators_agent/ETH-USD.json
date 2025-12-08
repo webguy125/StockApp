@@ -1,0 +1,32 @@
+{
+  "symbol": "ETH-USD",
+  "timestamp": "2025-11-17T22:02:17.181247",
+  "agent": "indicators_agent",
+  "signals": {
+    "emoji": "📉⚪❌🌧️",
+    "score": 4,
+    "confidence": 0.33999999999999997,
+    "metadata": {
+      "indicators": {
+        "price": 3019.40576171875,
+        "rsi": 31.604535040609875,
+        "macd": -221.81885804588592,
+        "macd_signal": -190.43356726684223,
+        "macd_histogram": -31.385290779043686,
+        "ma_20": 3470.1466674804688,
+        "ma_50": 3870.9851220703126,
+        "ma_200": null,
+        "atr": 246.44464983258928,
+        "atr_pct": 0.0816202489102705
+      },
+      "signals": {
+        "rsi_signal": "neutral",
+        "macd_signal": "bearish",
+        "ma_signal": "bearish",
+        "trend": "strong_downtrend",
+        "volatility": "high"
+      }
+    }
+  },
+  "shorthand": "ETH-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+}

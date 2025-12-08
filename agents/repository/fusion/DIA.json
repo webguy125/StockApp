@@ -1,0 +1,34 @@
+{
+  "symbol": "DIA",
+  "timestamp": "2025-11-19T13:01:47.747663",
+  "agent": "fusion_agent",
+  "total_score": 33.07692307692307,
+  "confidence": 0.6307692307692306,
+  "recommendation": "sell",
+  "emojis": [
+    "➖",
+    "❌",
+    "💸"
+  ],
+  "emoji_string": "➖❌💸",
+  "shorthand": "DIA | ➖❌💸 | 33 | 0.63 | 2025-11-19",
+  "weighted_scores": {
+    "indicators_agent": {
+      "score": 35,
+      "confidence": 0.6499999999999999,
+      "weight": 0.4,
+      "contribution": 14.0
+    },
+    "volume_agent": {
+      "score": 30,
+      "confidence": 0.6,
+      "weight": 0.25,
+      "contribution": 7.5
+    }
+  },
+  "metadata": {
+    "total_weight_used": 0.65,
+    "agents_contributing": 2,
+    "signals_collected": 2
+  }
+}

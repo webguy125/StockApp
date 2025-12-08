@@ -1,0 +1,887 @@
+{
+  "timestamp": "2025-11-17T22:02:50.806952",
+  "agent": "volume_agent",
+  "symbols_analyzed": 20,
+  "analyses": [
+    {
+      "symbol": "BTC-USD",
+      "timestamp": "2025-11-17T22:02:44.191505",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 10,
+        "confidence": 0.4,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 608204317184.1,
+            "recent_sell_volume": 808790007346.8999,
+            "recent_delta": -200585690162.79993,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.7519928679376398,
+            "cumulative_delta": -211627661126.39996
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -10576441012.580713,
+            "current_value": -295523827442.28937,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 14,
+            "last_wave": {
+              "start_idx": 29,
+              "direction": "down",
+              "volume": 176794116310,
+              "price_change": -0.05119445477914307,
+              "end_idx": 30,
+              "bars": 2
+            }
+          },
+          "volume_profile": {
+            "poc_range": "106963.37-108293.36",
+            "poc_volume_pct": 9.326768202341619,
+            "near_poc": false,
+            "current_price": 90708.1015625
+          }
+        }
+      },
+      "shorthand": "BTC-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+    },
+    {
+      "symbol": "ETH-USD",
+      "timestamp": "2025-11-17T22:02:44.469992",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 10,
+        "confidence": 0.4,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 314471147682.8,
+            "recent_sell_volume": 448312207977.19995,
+            "recent_delta": -133841060294.39996,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.7014556866557451,
+            "cumulative_delta": -161290926287.2
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -4680694288.164812,
+            "current_value": -152805642101.94598,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 14,
+            "last_wave": {
+              "start_idx": 29,
+              "direction": "down",
+              "volume": 75631562684,
+              "price_change": -0.04704609301545383,
+              "end_idx": 30,
+              "bars": 2
+            }
+          },
+          "volume_profile": {
+            "poc_range": "3861.99-3926.77",
+            "poc_volume_pct": 9.799101694580656,
+            "near_poc": false,
+            "current_price": 3019.40576171875
+          }
+        }
+      },
+      "shorthand": "ETH-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+    },
+    {
+      "symbol": "SOL-USD",
+      "timestamp": "2025-11-17T22:02:44.754083",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 10,
+        "confidence": 0.4,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 52620050159.8,
+            "recent_sell_volume": 74554600626.19998,
+            "recent_delta": -21934550466.39998,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.7057921270831442,
+            "cumulative_delta": -21625599494.4
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -776007394.348698,
+            "current_value": -19328259199.892014,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 16,
+            "last_wave": {
+              "start_idx": 29,
+              "direction": "down",
+              "volume": 12684806633,
+              "price_change": -0.037673267283190676,
+              "end_idx": 30,
+              "bars": 2
+            }
+          },
+          "volume_profile": {
+            "poc_range": "186.13-189.90",
+            "poc_volume_pct": 9.340046176680545,
+            "near_poc": false,
+            "current_price": 134.32704162597656
+          }
+        }
+      },
+      "shorthand": "SOL-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+    },
+    {
+      "symbol": "XRP-USD",
+      "timestamp": "2025-11-17T22:02:45.110152",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 10,
+        "confidence": 0.4,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 43670585124.8,
+            "recent_sell_volume": 62317349535.19999,
+            "recent_delta": -18646764410.399986,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.7007773188449333,
+            "cumulative_delta": -17460556772.799995
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -272111333.96089345,
+            "current_value": -7221400551.641549,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 14,
+            "last_wave": {
+              "start_idx": 24,
+              "direction": "down",
+              "volume": 37743886251,
+              "price_change": -0.15449865719660869,
+              "end_idx": 30,
+              "bars": 7
+            }
+          },
+          "volume_profile": {
+            "poc_range": "2.35-2.38",
+            "poc_volume_pct": 8.828585027870933,
+            "near_poc": false,
+            "current_price": 2.1585183143615723
+          }
+        }
+      },
+      "shorthand": "XRP-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+    },
+    {
+      "symbol": "DOGE-USD",
+      "timestamp": "2025-11-17T22:02:45.422528",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 10,
+        "confidence": 0.4,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 19130771685.9,
+            "recent_sell_volume": 27484922407.100002,
+            "recent_delta": -8354150721.200001,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.6960460503595263,
+            "cumulative_delta": -9219212373.6
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -25789105.57265067,
+            "current_value": -2112024220.885538,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 16,
+            "last_wave": {
+              "start_idx": 29,
+              "direction": "down",
+              "volume": 4796646757,
+              "price_change": -0.05593520877341994,
+              "end_idx": 30,
+              "bars": 2
+            }
+          },
+          "volume_profile": {
+            "poc_range": "0.16-0.17",
+            "poc_volume_pct": 11.833995816803633,
+            "near_poc": false,
+            "current_price": 0.1541394591331482
+          }
+        }
+      },
+      "shorthand": "DOGE-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+    },
+    {
+      "symbol": "ADA-USD",
+      "timestamp": "2025-11-17T22:02:45.705493",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 10,
+        "confidence": 0.4,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 8477110452.599999,
+            "recent_sell_volume": 11728200921.399998,
+            "recent_delta": -3251090468.7999983,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.7227971714853675,
+            "cumulative_delta": -3604101965.9999995
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -96623922.81467977,
+            "current_value": -3071504174.9631906,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 16,
+            "last_wave": {
+              "start_idx": 29,
+              "direction": "down",
+              "volume": 2284381657,
+              "price_change": -0.0720169594662982,
+              "end_idx": 30,
+              "bars": 2
+            }
+          },
+          "volume_profile": {
+            "poc_range": "0.65-0.66",
+            "poc_volume_pct": 8.832782054058502,
+            "near_poc": false,
+            "current_price": 0.46779903769493103
+          }
+        }
+      },
+      "shorthand": "ADA-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+    },
+    {
+      "symbol": "AVAX-USD",
+      "timestamp": "2025-11-17T22:02:45.976203",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 10,
+        "confidence": 0.4,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 4675571850.2,
+            "recent_sell_volume": 5703991819.799999,
+            "recent_delta": -1028419969.5999994,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.8197017102952193,
+            "cumulative_delta": -1320648447.6
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -29045508.25560103,
+            "current_value": -1652557065.3150356,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 16,
+            "last_wave": {
+              "start_idx": 29,
+              "direction": "down",
+              "volume": 1107588637,
+              "price_change": -0.07026715917448902,
+              "end_idx": 30,
+              "bars": 2
+            }
+          },
+          "volume_profile": {
+            "poc_range": "17.62-17.98",
+            "poc_volume_pct": 7.521814522747189,
+            "near_poc": false,
+            "current_price": 14.450663566589355
+          }
+        }
+      },
+      "shorthand": "AVAX-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+    },
+    {
+      "symbol": "DOT-USD",
+      "timestamp": "2025-11-17T22:02:46.312229",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💰🔄⬆️🌊⬇️",
+        "score": 50,
+        "confidence": 0.8,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 3194784138.7,
+            "recent_sell_volume": 3357272626.3,
+            "recent_delta": -162488487.60000038,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.951601044750698,
+            "cumulative_delta": -311089349.59999985
+          },
+          "accumulation_distribution": {
+            "signal": "accumulation",
+            "slope": 21177840.436825126,
+            "current_value": 190048441.64021873,
+            "divergence": "bullish_divergence"
+          },
+          "weis_waves": {
+            "total_waves": 16,
+            "last_wave": {
+              "start_idx": 29,
+              "direction": "down",
+              "volume": 490476515,
+              "price_change": -0.03576981309883976,
+              "end_idx": 30,
+              "bars": 2
+            }
+          },
+          "volume_profile": {
+            "poc_range": "3.00-3.06",
+            "poc_volume_pct": 10.21674224849467,
+            "near_poc": false,
+            "current_price": 2.7309319972991943
+          }
+        }
+      },
+      "shorthand": "DOT-USD | ⚖️💰🔄⬆️🌊⬇️ | 50 | 0.80 | 2025-11-17"
+    },
+    {
+      "symbol": "LINK-USD",
+      "timestamp": "2025-11-17T22:02:46.668943",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 10,
+        "confidence": 0.4,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 7868114116.099998,
+            "recent_sell_volume": 9953214362.899998,
+            "recent_delta": -2085100246.7999992,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.7905098623644554,
+            "cumulative_delta": -1931482877.1999993
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -85480841.69089398,
+            "current_value": -2615224797.6695733,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 18,
+            "last_wave": {
+              "start_idx": 29,
+              "direction": "down",
+              "volume": 1730966563,
+              "price_change": -0.05096576536470424,
+              "end_idx": 30,
+              "bars": 2
+            }
+          },
+          "volume_profile": {
+            "poc_range": "17.36-17.66",
+            "poc_volume_pct": 8.220317998769332,
+            "near_poc": false,
+            "current_price": 13.410402297973633
+          }
+        }
+      },
+      "shorthand": "LINK-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+    },
+    {
+      "symbol": "LTC-USD",
+      "timestamp": "2025-11-17T22:02:46.976971",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💰🔄⬆️🌊⬇️",
+        "score": 65,
+        "confidence": 0.95,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 9923235901.099998,
+            "recent_sell_volume": 9995692735.9,
+            "recent_delta": -72456834.80000114,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.9927511942679301,
+            "cumulative_delta": -504033475.59999985
+          },
+          "accumulation_distribution": {
+            "signal": "accumulation",
+            "slope": 35868927.19299031,
+            "current_value": -139274400.12548625,
+            "divergence": "bullish_divergence"
+          },
+          "weis_waves": {
+            "total_waves": 14,
+            "last_wave": {
+              "start_idx": 29,
+              "direction": "down",
+              "volume": 1610771982,
+              "price_change": -0.0900140688561838,
+              "end_idx": 30,
+              "bars": 2
+            }
+          },
+          "volume_profile": {
+            "poc_range": "98.33-99.98",
+            "poc_volume_pct": 11.625737612785185,
+            "near_poc": false,
+            "current_price": 92.7970199584961
+          }
+        }
+      },
+      "shorthand": "LTC-USD | ⚖️💰🔄⬆️🌊⬇️ | 65 | 0.95 | 2025-11-17"
+    },
+    {
+      "symbol": "SPY",
+      "timestamp": "2025-11-17T22:02:47.385635",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💰🔄⬆️🌊⬇️",
+        "score": 70,
+        "confidence": 0.95,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 807234570.0,
+            "recent_sell_volume": 727175730.0,
+            "recent_delta": 80058840.0,
+            "delta_trend": "bullish",
+            "buy_sell_ratio": 1.1100955885862693,
+            "cumulative_delta": 80058840.0
+          },
+          "accumulation_distribution": {
+            "signal": "accumulation",
+            "slope": 5190291.022850946,
+            "current_value": 134723025.75662813,
+            "divergence": "bullish_divergence"
+          },
+          "weis_waves": {
+            "total_waves": 9,
+            "last_wave": {
+              "start_idx": 18,
+              "direction": "down",
+              "volume": 290520500,
+              "price_change": -0.026074148113230028,
+              "end_idx": 20,
+              "bars": 3
+            }
+          },
+          "volume_profile": {
+            "poc_range": "669.76-671.18",
+            "poc_volume_pct": 8.059384956708806,
+            "near_poc": false,
+            "current_price": 665.6699829101562
+          }
+        }
+      },
+      "shorthand": "SPY | ⚖️💰🔄⬆️🌊⬇️ | 70 | 0.95 | 2025-11-17"
+    },
+    {
+      "symbol": "QQQ",
+      "timestamp": "2025-11-17T22:02:47.690860",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💰🔄⬆️🌊⬇️",
+        "score": 50,
+        "confidence": 0.8,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 576750640.0,
+            "recent_sell_volume": 597286160.0,
+            "recent_delta": -20535520.0,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.9656186240779462,
+            "cumulative_delta": -20535519.999999993
+          },
+          "accumulation_distribution": {
+            "signal": "accumulation",
+            "slope": 3436541.5925986143,
+            "current_value": 103798879.04119383,
+            "divergence": "bullish_divergence"
+          },
+          "weis_waves": {
+            "total_waves": 9,
+            "last_wave": {
+              "start_idx": 16,
+              "direction": "down",
+              "volume": 307348200,
+              "price_change": -0.03165240202787684,
+              "end_idx": 20,
+              "bars": 5
+            }
+          },
+          "volume_profile": {
+            "poc_range": "609.12-611.11",
+            "poc_volume_pct": 8.910138310262967,
+            "near_poc": false,
+            "current_price": 603.6599731445312
+          }
+        }
+      },
+      "shorthand": "QQQ | ⚖️💰🔄⬆️🌊⬇️ | 50 | 0.80 | 2025-11-17"
+    },
+    {
+      "symbol": "IWM",
+      "timestamp": "2025-11-17T22:02:48.041595",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 25,
+        "confidence": 0.55,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 372563560.0,
+            "recent_sell_volume": 423476040.0,
+            "recent_delta": -50912480.0,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.8797748274022776,
+            "cumulative_delta": -50912479.99999999
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -4944538.086911887,
+            "current_value": -70477247.96133868,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 11,
+            "last_wave": {
+              "start_idx": 20,
+              "direction": "down",
+              "volume": 55683200,
+              "price_change": -0.019875363422687548,
+              "end_idx": 20,
+              "bars": 1
+            }
+          },
+          "volume_profile": {
+            "poc_range": "244.03-245.05",
+            "poc_volume_pct": 10.46356143417669,
+            "near_poc": false,
+            "current_price": 232.75999450683594
+          }
+        }
+      },
+      "shorthand": "IWM | ⚖️💸🌊⬇️ | 25 | 0.55 | 2025-11-17"
+    },
+    {
+      "symbol": "BAC",
+      "timestamp": "2025-11-17T22:02:48.456324",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💰🔄⬆️🌊⬇️",
+        "score": 50,
+        "confidence": 0.8,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 351813920.0,
+            "recent_sell_volume": 361476880.0,
+            "recent_delta": -9662960.0,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.973268110535866,
+            "cumulative_delta": -9662960.0
+          },
+          "accumulation_distribution": {
+            "signal": "accumulation",
+            "slope": 3010362.9939286737,
+            "current_value": 49786037.18244541,
+            "divergence": "bullish_divergence"
+          },
+          "weis_waves": {
+            "total_waves": 9,
+            "last_wave": {
+              "start_idx": 18,
+              "direction": "down",
+              "volume": 105613800,
+              "price_change": -0.049312829841839434,
+              "end_idx": 20,
+              "bars": 3
+            }
+          },
+          "volume_profile": {
+            "poc_range": "52.56-52.78",
+            "poc_volume_pct": 12.540423561619418,
+            "near_poc": false,
+            "current_price": 51.47999954223633
+          }
+        }
+      },
+      "shorthand": "BAC | ⚖️💰🔄⬆️🌊⬇️ | 50 | 0.80 | 2025-11-17"
+    },
+    {
+      "symbol": "XOM",
+      "timestamp": "2025-11-17T22:02:48.881852",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💰🌊⬇️",
+        "score": 75,
+        "confidence": 0.95,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 153808350.0,
+            "recent_sell_volume": 128978150.0,
+            "recent_delta": 24830200.0,
+            "delta_trend": "bullish",
+            "buy_sell_ratio": 1.1925147786659989,
+            "cumulative_delta": 24830200.0
+          },
+          "accumulation_distribution": {
+            "signal": "accumulation",
+            "slope": 506586.9081046285,
+            "current_value": 12799593.539219424,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 12,
+            "last_wave": {
+              "start_idx": 20,
+              "direction": "down",
+              "volume": 16032500,
+              "price_change": -0.013496526096027528,
+              "end_idx": 20,
+              "bars": 1
+            }
+          },
+          "volume_profile": {
+            "poc_range": "114.07-114.51",
+            "poc_volume_pct": 9.532105752948176,
+            "near_poc": false,
+            "current_price": 117.68000030517578
+          }
+        }
+      },
+      "shorthand": "XOM | ⚖️💰🌊⬇️ | 75 | 0.95 | 2025-11-17"
+    },
+    {
+      "symbol": "AMD",
+      "timestamp": "2025-11-17T22:02:49.209421",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💰🌊⬇️",
+        "score": 40,
+        "confidence": 0.7,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 536194750.0,
+            "recent_sell_volume": 563567750.0,
+            "recent_delta": -27373000.0,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.9514290872747775,
+            "cumulative_delta": -27372999.999999993
+          },
+          "accumulation_distribution": {
+            "signal": "accumulation",
+            "slope": 2058426.263512972,
+            "current_value": 65604691.392703414,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 13,
+            "last_wave": {
+              "start_idx": 18,
+              "direction": "down",
+              "volume": 148654200,
+              "price_change": -0.07234177688128213,
+              "end_idx": 20,
+              "bars": 3
+            }
+          },
+          "volume_profile": {
+            "poc_range": "247.98-250.10",
+            "poc_volume_pct": 8.960742682761987,
+            "near_poc": false,
+            "current_price": 240.52000427246094
+          }
+        }
+      },
+      "shorthand": "AMD | ⚖️💰🌊⬇️ | 40 | 0.70 | 2025-11-17"
+    },
+    {
+      "symbol": "CVX",
+      "timestamp": "2025-11-17T22:02:49.659815",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🔄⬇️🌊⬇️🎯",
+        "score": 40,
+        "confidence": 0.7,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 78937320.0,
+            "recent_sell_volume": 74971080.0,
+            "recent_delta": 3966240.0,
+            "delta_trend": "bullish",
+            "buy_sell_ratio": 1.0529035996280165,
+            "cumulative_delta": 3966240.000000001
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -1282604.089611966,
+            "current_value": -24533675.646849837,
+            "divergence": "bearish_divergence"
+          },
+          "weis_waves": {
+            "total_waves": 11,
+            "last_wave": {
+              "start_idx": 20,
+              "direction": "down",
+              "volume": 8734900,
+              "price_change": -0.017764166220707034,
+              "end_idx": 20,
+              "bars": 1
+            }
+          },
+          "volume_profile": {
+            "poc_range": "154.56-154.92",
+            "poc_volume_pct": 8.535451351736823,
+            "near_poc": true,
+            "current_price": 154.82000732421875
+          }
+        }
+      },
+      "shorthand": "CVX | ⚖️💸🔄⬇️🌊⬇️🎯 | 40 | 0.70 | 2025-11-17"
+    },
+    {
+      "symbol": "META",
+      "timestamp": "2025-11-17T22:02:49.961241",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 25,
+        "confidence": 0.55,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 214580700.0,
+            "recent_sell_volume": 265877500.0,
+            "recent_delta": -51296800.0,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.8070660360504368,
+            "cumulative_delta": -51296799.99999999
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -4052196.50646661,
+            "current_value": -74796329.29017806,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 8,
+            "last_wave": {
+              "start_idx": 20,
+              "direction": "down",
+              "volume": 16448200,
+              "price_change": -0.012223955531845366,
+              "end_idx": 20,
+              "bars": 1
+            }
+          },
+          "volume_profile": {
+            "poc_range": "644.39-652.59",
+            "poc_volume_pct": 10.310275327278907,
+            "near_poc": false,
+            "current_price": 602.010009765625
+          }
+        }
+      },
+      "shorthand": "META | ⚖️💸🌊⬇️ | 25 | 0.55 | 2025-11-17"
+    },
+    {
+      "symbol": "DIA",
+      "timestamp": "2025-11-17T22:02:50.378243",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 30,
+        "confidence": 0.6,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 73215810.0,
+            "recent_sell_volume": 72638890.0,
+            "recent_delta": 576920.0,
+            "delta_trend": "bullish",
+            "buy_sell_ratio": 1.0079423019817622,
+            "cumulative_delta": 576920.0000000009
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -118913.13702207283,
+            "current_value": 1428696.9135813527,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 11,
+            "last_wave": {
+              "start_idx": 19,
+              "direction": "down",
+              "volume": 27259500,
+              "price_change": -0.034420768574742085,
+              "end_idx": 21,
+              "bars": 3
+            }
+          },
+          "volume_profile": {
+            "poc_range": "473.91-474.96",
+            "poc_volume_pct": 8.72824036939886,
+            "near_poc": false,
+            "current_price": 466.32000732421875
+          }
+        }
+      },
+      "shorthand": "DIA | ⚖️💸🌊⬇️ | 30 | 0.60 | 2025-11-17"
+    },
+    {
+      "symbol": "GE",
+      "timestamp": "2025-11-17T22:02:50.805953",
+      "agent": "volume_agent",
+      "signals": {
+        "emoji": "⚖️💸🌊⬇️",
+        "score": 10,
+        "confidence": 0.4,
+        "metadata": {
+          "ord_volume": {
+            "recent_buy_volume": 38195140.0,
+            "recent_sell_volume": 39623460.0,
+            "recent_delta": -1428320.0,
+            "delta_trend": "bearish",
+            "buy_sell_ratio": 0.9639526684444014,
+            "cumulative_delta": -1428320.0
+          },
+          "accumulation_distribution": {
+            "signal": "distribution",
+            "slope": -147062.3491775847,
+            "current_value": -8421355.890278336,
+            "divergence": null
+          },
+          "weis_waves": {
+            "total_waves": 12,
+            "last_wave": {
+              "start_idx": 20,
+              "direction": "down",
+              "volume": 3076000,
+              "price_change": -0.015386137158699612,
+              "end_idx": 20,
+              "bars": 1
+            }
+          },
+          "volume_profile": {
+            "poc_range": "307.92-309.02",
+            "poc_volume_pct": 9.353103762942855,
+            "near_poc": false,
+            "current_price": 300.1300048828125
+          }
+        }
+      },
+      "shorthand": "GE | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+    }
+  ]
+}

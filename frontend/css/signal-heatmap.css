@@ -1,0 +1,256 @@
+/* Signal Heatmap Styles */
+.tos-signal-heatmap {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.tos-heatmap-container {
+  padding: 8px;
+  height: 250px;
+  min-height: 50px;
+  overflow-y: auto;
+  transition: height 0.3s ease;
+}
+
+.tos-heatmap-container.expanded {
+  height: auto;
+  max-height: 600px;
+}
+
+.tos-heatmap-container.collapsed {
+  max-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.heatmap-grid {
+  min-height: 50px;
+}
+
+.heatmap-section-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 8px 4px 4px 4px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 8px;
+}
+
+.heatmap-section-header span {
+  background: var(--panel-bg);
+  padding: 0 8px;
+}
+
+.heatmap-section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.signal-cell {
+  padding: 8px 4px;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  font-size: 11px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.signal-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-color: var(--accent-color);
+  z-index: 10;
+}
+
+.signal-symbol {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 2px;
+  color: var(--text-primary);
+}
+
+.signal-emoji {
+  font-size: 16px;
+  margin: 2px 0;
+}
+
+.signal-score {
+  font-size: 10px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.signal-recommendation {
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 2px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Signal strength colors */
+.signal-strong-buy {
+  background: linear-gradient(135deg, #00ff00, #00cc00);
+  color: #000;
+}
+
+.signal-buy {
+  background: linear-gradient(135deg, #90ee90, #7dd87d);
+  color: #000;
+}
+
+.signal-hold {
+  background: linear-gradient(135deg, #ffff00, #ffcc00);
+  color: #000;
+}
+
+.signal-sell {
+  background: linear-gradient(135deg, #ffb6c1, #ffa0b4);
+  color: #000;
+}
+
+.signal-strong-sell {
+  background: linear-gradient(135deg, #ff0000, #cc0000);
+  color: #fff;
+}
+
+/* Confidence indicator */
+.signal-confidence {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 20px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.confidence-bar {
+  height: 100%;
+  background: var(--accent-color);
+  transition: width 0.3s ease;
+}
+
+/* Empty state */
+.heatmap-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Loading state */
+.heatmap-loading {
+  text-align: center;
+  padding: 20px;
+}
+
+.heatmap-loading::after {
+  content: "Loading signals...";
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Refresh animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.refreshing {
+  animation: spin 1s linear infinite;
+}
+
+/* Resize handle for vertical resizing */
+.resize-handle-horizontal {
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(to bottom, transparent 2px, var(--border-color) 2px, var(--border-color) 6px, transparent 6px);
+  cursor: ns-resize;
+  position: relative;
+  margin: 4px 0;
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.resize-handle-horizontal:hover,
+.resize-handle-horizontal.active {
+  background: linear-gradient(to bottom, transparent 2px, var(--accent-color) 2px, var(--accent-color) 6px, transparent 6px);
+}
+
+.resize-handle-horizontal::after {
+  content: '⋯';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Make watchlist resizable too */
+.tos-watchlist-content {
+  height: 200px;
+  min-height: 100px;
+  max-height: 500px;
+  overflow-y: auto;
+  transition: height 0.3s ease;
+}
+
+/* Tooltip for signal details */
+.signal-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  margin-bottom: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.signal-cell:hover .signal-tooltip {
+  opacity: 1;
+}
+
+.tooltip-row {
+  margin: 2px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tooltip-label {
+  color: var(--text-secondary);
+}
+
+.tooltip-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}

@@ -1,0 +1,34 @@
+{
+  "symbol": "XOM",
+  "timestamp": "2025-12-04T00:02:31.591040",
+  "agent": "fusion_agent",
+  "total_score": 87.3076923076923,
+  "confidence": 0.9499999999999998,
+  "recommendation": "strong_buy",
+  "emojis": [
+    "📈",
+    "✅",
+    "💰"
+  ],
+  "emoji_string": "📈✅💰",
+  "shorthand": "XOM | 📈✅💰 | 87 | 0.95 | 2025-12-04",
+  "weighted_scores": {
+    "indicators_agent": {
+      "score": 95,
+      "confidence": 0.95,
+      "weight": 0.4,
+      "contribution": 38.0
+    },
+    "volume_agent": {
+      "score": 75,
+      "confidence": 0.95,
+      "weight": 0.25,
+      "contribution": 18.75
+    }
+  },
+  "metadata": {
+    "total_weight_used": 0.65,
+    "agents_contributing": 2,
+    "signals_collected": 2
+  }
+}

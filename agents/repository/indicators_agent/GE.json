@@ -1,0 +1,32 @@
+{
+  "symbol": "GE",
+  "timestamp": "2025-11-17T22:02:24.433195",
+  "agent": "indicators_agent",
+  "signals": {
+    "emoji": "📉⚪❌🌧️",
+    "score": 9,
+    "confidence": 0.39,
+    "metadata": {
+      "indicators": {
+        "price": 300.1300048828125,
+        "rsi": 36.36361286564924,
+        "macd": 1.5315544858141266,
+        "macd_signal": 2.843239997865573,
+        "macd_histogram": -1.3116855120514463,
+        "ma_20": 307.13300170898435,
+        "ma_50": 300.25378356933595,
+        "ma_200": null,
+        "atr": 7.702150617327009,
+        "atr_pct": 0.02566271446380164
+      },
+      "signals": {
+        "rsi_signal": "neutral",
+        "macd_signal": "bearish",
+        "ma_signal": "bearish",
+        "trend": "downtrend",
+        "volatility": "high"
+      }
+    }
+  },
+  "shorthand": "GE | 📉⚪❌🌧️ | 9 | 0.39 | 2025-11-17"
+}

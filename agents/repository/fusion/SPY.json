@@ -1,0 +1,34 @@
+{
+  "symbol": "SPY",
+  "timestamp": "2025-11-19T13:01:47.739069",
+  "agent": "fusion_agent",
+  "total_score": 39.230769230769226,
+  "confidence": 0.673076923076923,
+  "recommendation": "hold",
+  "emojis": [
+    "➖",
+    "❌",
+    "💰"
+  ],
+  "emoji_string": "➖❌💰",
+  "shorthand": "SPY | ➖❌💰 | 39 | 0.67 | 2025-11-19",
+  "weighted_scores": {
+    "indicators_agent": {
+      "score": 20,
+      "confidence": 0.5,
+      "weight": 0.4,
+      "contribution": 8.0
+    },
+    "volume_agent": {
+      "score": 70,
+      "confidence": 0.95,
+      "weight": 0.25,
+      "contribution": 17.5
+    }
+  },
+  "metadata": {
+    "total_weight_used": 0.65,
+    "agents_contributing": 2,
+    "signals_collected": 2
+  }
+}

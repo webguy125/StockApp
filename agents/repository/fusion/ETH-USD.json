@@ -1,0 +1,34 @@
+{
+  "symbol": "ETH-USD",
+  "timestamp": "2025-12-04T00:02:31.296844",
+  "agent": "fusion_agent",
+  "total_score": 6.307692307692307,
+  "confidence": 0.363076923076923,
+  "recommendation": "strong_sell",
+  "emojis": [
+    "📉",
+    "❌",
+    "💸"
+  ],
+  "emoji_string": "📉❌💸",
+  "shorthand": "ETH-USD | 📉❌💸 | 6 | 0.36 | 2025-12-04",
+  "weighted_scores": {
+    "indicators_agent": {
+      "score": 4,
+      "confidence": 0.33999999999999997,
+      "weight": 0.4,
+      "contribution": 1.6
+    },
+    "volume_agent": {
+      "score": 10,
+      "confidence": 0.4,
+      "weight": 0.25,
+      "contribution": 2.5
+    }
+  },
+  "metadata": {
+    "total_weight_used": 0.65,
+    "agents_contributing": 2,
+    "signals_collected": 2
+  }
+}

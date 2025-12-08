@@ -1,29 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(timeout 5 bash -c 'while ! curl -s http://127.0.0.1:5000 > /dev/null; do sleep 0.5; done; echo \"\"Server is ready!\"\"')",
-      "Bash(venv/Scripts/pip list:*)",
-      "Bash(venv/Scripts/pip install:*)",
-      "Bash(venv/Scripts/python.exe:*)",
-      "Bash(timeout 5 bash -c 'while ! curl -s http://127.0.0.1:5000 > /dev/null; do sleep 0.5; done; echo \"\"Server ready\"\"')",
-      "Bash(dir /b C:StockApp*.md)",
-      "Bash(curl:*)",
-      "Bash(pip install:*)",
-      "Bash(timeout 5 python:*)",
-      "Bash(python:*)",
-      "Bash(dir C:StockAppfrontend)",
-      "Bash(tree:*)",
-      "Bash(dir C:StockApp)",
-      "Bash(venvScriptspython.exe backendapi_server.py)",
-      "Bash(powershell -Command \"(Get-Content ''C:\\StockApp\\frontend\\index_tos_style.html'').Length\")",
-      "Bash(powershell -Command \"(Get-Content ''C:\\StockApp\\frontend\\js\\tos-app.js'').Length\")",
-      "Bash(timeout 10 python test_coinbase_ws.py)",
-      "Bash(venvScriptspython.exe test_coinbase_ws.py)",
-      "Bash(timeout 5 bash -c 'while ! curl -s http://127.0.0.1:5000 &gt; /dev/null; do sleep 0.5; done; echo \"\"Server ready\"\"')",
-      "Bash(timeout 3 python -c \"import time; time.sleep(3)\")",
-      "Bash(powershell -Command \"Get-Process python -ErrorAction SilentlyContinue | Select-Object Id, ProcessName\")",
-      "Bash(powershell -Command \"Get-Process python -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, StartTime | Format-Table\")",
-      "Bash(powershell -Command \"Stop-Process -Name python -Force\")"
+      "Bash(python fix_duplicate_candles.py)"
     ],
     "deny": [],
     "ask": []

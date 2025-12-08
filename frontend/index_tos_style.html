@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="css/tos-theme.css">
   <link rel="stylesheet" href="css/timeframe-selector.css">
   <link rel="stylesheet" href="css/tool-panel.css">
+  <link rel="stylesheet" href="css/signal-heatmap.css">
 </head>
 <body class="tos-theme">
   <div class="tos-container">
@@ -62,6 +63,8 @@
       <div class="tos-menu-item" data-menu="analysis" onclick="window.tosApp.menuBar.toggleMenu('analysis')">
         Analysis
         <div class="tos-dropdown">
+          <div class="tos-dropdown-item" onclick="window.location.href='/heatmap'">Signal Heat Maps</div>
+          <div class="tos-dropdown-separator"></div>
           <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('technicalStudies')">Technical Studies</div>
           <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('drawingTools')">Drawing Tools</div>
           <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('fundamentals')">Fundamentals</div>
@@ -248,6 +251,29 @@
             <!-- Items will be dynamically added here -->
           </div>
         </div>
+
+        <!-- Resize handle between watchlist and heatmap -->
+        <div class="resize-handle-horizontal"></div>
+
+        <!-- Signal Heatmap Section -->
+        <div class="tos-signal-heatmap">
+          <div class="tos-panel-header">
+            <div class="tos-panel-header-title">Agent Signals</div>
+            <div class="tos-panel-header-actions">
+              <button class="tos-panel-icon-btn" onclick="toggleHeatmap()" title="Expand/Collapse">▼</button>
+              <button class="tos-panel-icon-btn" onclick="refreshAgentSignals()" title="Refresh Signals">↻</button>
+            </div>
+          </div>
+
+          <div class="tos-heatmap-container" id="signal-heatmap">
+            <div class="heatmap-grid" id="heatmap-grid">
+              <!-- Signal cells will be dynamically added here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Resize handle between heatmap and news -->
+        <div class="resize-handle-horizontal"></div>
 
         <!-- News Feed Section -->
         <div class="tos-news-feed">
@@ -450,5 +476,85 @@
 
   <!-- ORD Volume Feature (Completely Segregated) -->
   <script type="module" src="js/ord-volume/ord-volume-integration.js"></script>
+
+  <!-- Signal Heatmap Integration -->
+  <script src="js/signal-heatmap.js"></script>
+
+  <!-- Panel Resize Functionality -->
+  <script>
+    // Panel resize functionality
+    let isResizing = false;
+    let currentHandle = null;
+    let startY = 0;
+    let startHeight = 0;
+    let targetPanel = null;
+
+    // Initialize resize handles
+    document.addEventListener('DOMContentLoaded', function() {
+      const resizeHandles = document.querySelectorAll('.resize-handle-horizontal');
+
+      resizeHandles.forEach((handle, index) => {
+        handle.addEventListener('mousedown', function(e) {
+          isResizing = true;
+          currentHandle = handle;
+          startY = e.clientY;
+
+          // Determine which panel to resize based on handle position
+          if (index === 0) {
+            // First handle - resize watchlist
+            targetPanel = document.querySelector('.tos-watchlist-content');
+          } else if (index === 1) {
+            // Second handle - resize heatmap
+            targetPanel = document.querySelector('.tos-heatmap-container');
+          }
+
+          if (targetPanel) {
+            startHeight = parseInt(document.defaultView.getComputedStyle(targetPanel).height, 10);
+          }
+
+          // Add active class for visual feedback
+          handle.classList.add('active');
+          document.body.style.cursor = 'ns-resize';
+          document.body.style.userSelect = 'none';
+
+          // Prevent text selection while dragging
+          e.preventDefault();
+        });
+      });
+
+      document.addEventListener('mousemove', function(e) {
+        if (!isResizing || !targetPanel) return;
+
+        const deltaY = e.clientY - startY;
+        const newHeight = startHeight + deltaY;
+
+        // Apply min/max constraints
+        let constrainedHeight = newHeight;
+        if (targetPanel.classList.contains('tos-watchlist-content')) {
+          constrainedHeight = Math.min(Math.max(newHeight, 100), 500);
+        } else if (targetPanel.classList.contains('tos-heatmap-container')) {
+          constrainedHeight = Math.min(Math.max(newHeight, 50), 600);
+        }
+
+        targetPanel.style.height = constrainedHeight + 'px';
+      });
+
+      document.addEventListener('mouseup', function() {
+        if (currentHandle) {
+          currentHandle.classList.remove('active');
+        }
+        isResizing = false;
+        currentHandle = null;
+        targetPanel = null;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+
+      // Prevent text selection on handles
+      resizeHandles.forEach(handle => {
+        handle.addEventListener('selectstart', e => e.preventDefault());
+      });
+    });
+  </script>
 </body>
 </html>

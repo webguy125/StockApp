@@ -1,0 +1,32 @@
+{
+  "symbol": "XOM",
+  "timestamp": "2025-11-17T22:02:22.327830",
+  "agent": "indicators_agent",
+  "signals": {
+    "emoji": "📈⚪✅☀️",
+    "score": 95,
+    "confidence": 0.95,
+    "metadata": {
+      "indicators": {
+        "price": 117.68000030517578,
+        "rsi": 61.11744673963698,
+        "macd": 1.5398206295782728,
+        "macd_signal": 1.1501033024566913,
+        "macd_histogram": 0.38971732712158147,
+        "ma_20": 115.11873893737793,
+        "ma_50": 113.28360885620117,
+        "ma_200": null,
+        "atr": 2.146621014909013,
+        "atr_pct": 0.018241171051514692
+      },
+      "signals": {
+        "rsi_signal": "neutral",
+        "macd_signal": "bullish",
+        "ma_signal": "bullish",
+        "trend": "strong_uptrend",
+        "volatility": "normal"
+      }
+    }
+  },
+  "shorthand": "XOM | 📈⚪✅☀️ | 95 | 0.95 | 2025-11-17"
+}

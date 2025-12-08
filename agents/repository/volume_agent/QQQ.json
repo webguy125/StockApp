@@ -1,0 +1,44 @@
+{
+  "symbol": "QQQ",
+  "timestamp": "2025-11-17T22:02:47.690860",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💰🔄⬆️🌊⬇️",
+    "score": 50,
+    "confidence": 0.8,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 576750640.0,
+        "recent_sell_volume": 597286160.0,
+        "recent_delta": -20535520.0,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.9656186240779462,
+        "cumulative_delta": -20535519.999999993
+      },
+      "accumulation_distribution": {
+        "signal": "accumulation",
+        "slope": 3436541.5925986143,
+        "current_value": 103798879.04119383,
+        "divergence": "bullish_divergence"
+      },
+      "weis_waves": {
+        "total_waves": 9,
+        "last_wave": {
+          "start_idx": 16,
+          "direction": "down",
+          "volume": 307348200,
+          "price_change": -0.03165240202787684,
+          "end_idx": 20,
+          "bars": 5
+        }
+      },
+      "volume_profile": {
+        "poc_range": "609.12-611.11",
+        "poc_volume_pct": 8.910138310262967,
+        "near_poc": false,
+        "current_price": 603.6599731445312
+      }
+    }
+  },
+  "shorthand": "QQQ | ⚖️💰🔄⬆️🌊⬇️ | 50 | 0.80 | 2025-11-17"
+}

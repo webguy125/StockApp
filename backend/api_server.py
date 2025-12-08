@@ -343,6 +343,14 @@ def serve_index():
 def serve_classic():
     return send_from_directory(FRONTEND_DIR, "index.html")
 
+@app.route("/heatmap")
+def serve_heatmap():
+    response = make_response(send_from_directory(FRONTEND_DIR, "heatmap.html"))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
 @app.route("/css/<path:filename>")
 def serve_css(filename):
     response = make_response(send_from_directory(os.path.join(FRONTEND_DIR, "css"), filename))
@@ -400,8 +408,8 @@ def get_chart_data(symbol):
 
     # STOCKS: Always use yfinance
     # CRYPTO: Use yfinance for weekly/monthly intervals (fallback)
-    # Yahoo Finance doesn't support 2h, 6h, and 45m intervals for stocks, so we aggregate from smaller intervals
-    unsupported_intervals = {'2h': '1h', '6h': '1h', '45m': '15m'}
+    # Yahoo Finance doesn't support 2h, 6h, 45m, 2m, 3m, 10m, 3h intervals for stocks, so we aggregate from smaller intervals
+    unsupported_intervals = {'2h': '1h', '3h': '1h', '6h': '1h', '2m': '1m', '3m': '1m', '10m': '5m', '45m': '15m'}
     source_interval = unsupported_intervals.get(interval, interval)
 
     # print(f"[ROUTING] Using yfinance for {market_type} {symbol} {interval}")
@@ -429,14 +437,30 @@ def get_chart_data(symbol):
         data.columns = data.columns.get_level_values(0)
 
     # Aggregate data if we fetched a smaller interval than requested
-    if interval in unsupported_intervals and market_type == 'stock':
+    if interval in unsupported_intervals:
         print(f"[AGGREGATION] Building {interval} candles from {source_interval} data for {symbol}")
 
-        # Determine resampling rule
-        resample_rule = interval.upper()  # '2h' -> '2H', '6h' -> '6H'
+        # Determine resampling rule for pandas
+        # Hours: '2h' -> '2h', '6h' -> '6h'
+        # Minutes: '45m' -> '45min' (min for minutes in pandas 2.0+)
+        if interval.endswith('m'):
+            # Extract number and use 'min' for minutes
+            minutes = interval[:-1]  # '45m' -> '45'
+            resample_rule = f"{minutes}min"  # '45min'
+        else:
+            # Hours: lowercase 'h'
+            resample_rule = interval  # '2h' stays '2h'
+
+        print(f"[AGGREGATION] Resample rule: {resample_rule}")
+
+        # Ensure datetime is in the index for resampling
+        if 'Date' in data.columns or 'Datetime' in data.columns:
+            date_col = 'Datetime' if 'Datetime' in data.columns else 'Date'
+            data = data.set_index(date_col)
 
         # Resample to create larger candles
-        data_resampled = data.resample(resample_rule, on=data.index).agg({
+        # No need for 'on' parameter when datetime is already the index
+        data_resampled = data.resample(resample_rule).agg({
             'Open': 'first',
             'High': 'max',
             'Low': 'min',
@@ -445,6 +469,10 @@ def get_chart_data(symbol):
         }).dropna()
 
         data = data_resampled.reset_index()
+
+        # Ensure the datetime column is named 'Date' for consistency
+        if 'Datetime' in data.columns:
+            data = data.rename(columns={'Datetime': 'Date'})
 
     # Ensure we have a Date column from the index
     if 'Date' not in data.columns:
@@ -460,7 +488,7 @@ def get_chart_data(symbol):
                 data = data.rename(columns={data.columns[0]: 'Date'})
 
     # Format dates based on interval type - intraday intervals need time
-    intraday_intervals = ['1m', '2m', '5m', '15m', '30m', '45m', '60m', '90m', '1h', '2h', '4h', '6h']
+    intraday_intervals = ['1m', '2m', '3m', '5m', '10m', '15m', '30m', '45m', '60m', '90m', '1h', '2h', '3h', '4h', '6h']
     if interval in intraday_intervals:
         data['Date'] = pd.to_datetime(data['Date']).dt.strftime("%Y-%m-%d %H:%M:%S")
     else:
@@ -1664,6 +1692,123 @@ def refresh_agent_signals():
     except Exception as e:
         app.logger.error(f"Error refreshing agent signals: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/heatmap-data", methods=["GET"])
+def get_heatmap_data():
+    """
+    Get heat map data categorized by timeframe (intraday, daily, monthly).
+    Returns dynamic heat maps from the agent learning loop.
+
+    Query params:
+        - timeframe: Optional filter ('intraday', 'daily', 'monthly', 'all')
+    """
+    try:
+        timeframe_filter = request.args.get('timeframe', 'all').lower()
+
+        # Path to the agent repository
+        agent_repo = os.path.join(BASE_DIR, "..", "agents", "repository")
+
+        # Load fusion output (contains all agent signals)
+        fusion_file = os.path.join(agent_repo, "fusion_output.json")
+        if not os.path.exists(fusion_file):
+            return jsonify({
+                "status": "no_data",
+                "message": "No heat map data available. Run scanner and fusion agents first.",
+                "heatmaps": {
+                    'intraday': [],
+                    'daily': [],
+                    'monthly': []
+                }
+            }), 200
+
+        with open(fusion_file, 'r', encoding='utf-8') as f:
+            fusion_data = json.load(f)
+
+        # Get all fusions
+        all_fusions = fusion_data.get('all_fusions', [])
+
+        # Categorize signals by timeframe
+        # Based on signal characteristics and confidence levels
+        heatmaps = {
+            'intraday': [],
+            'daily': [],
+            'monthly': [],
+            'metadata': {
+                'generated_at': datetime.now().isoformat(),
+                'source': 'agent_learning_loop',
+                'version': '1.0',
+                'total_signals': len(all_fusions)
+            }
+        }
+
+        for fusion in all_fusions:
+            signal_data = {
+                'symbol': fusion['symbol'],
+                'score': fusion['total_score'],
+                'confidence': fusion['confidence'],
+                'recommendation': fusion['recommendation'],
+                'emoji': fusion.get('emoji_string', ''),
+                'timestamp': fusion.get('timestamp', ''),
+                'color': get_signal_color(fusion['recommendation'], fusion['total_score']),
+                'intensity': min(100, int(fusion['confidence'] * 100)),
+
+                # Add agent breakdown for detailed view
+                'agent_scores': fusion.get('weighted_scores', {}),
+                'components': fusion.get('components', {}),
+                'metadata': fusion.get('metadata', {})
+            }
+
+            # Categorize based on signal characteristics
+            # Intraday: High confidence (>=0.7), high score (>=65), suitable for quick trades
+            if fusion['confidence'] >= 0.7 and fusion['total_score'] >= 65:
+                heatmaps['intraday'].append(signal_data.copy())
+
+            # Daily: Medium-to-high confidence (>=0.55), good score (>=55), suitable for swing trades
+            if fusion['confidence'] >= 0.55 and fusion['total_score'] >= 55:
+                heatmaps['daily'].append(signal_data.copy())
+
+            # Monthly: All signals with reasonable confidence (>=0.4), suitable for position trades
+            if fusion['confidence'] >= 0.4 and fusion['total_score'] >= 45:
+                heatmaps['monthly'].append(signal_data.copy())
+
+        # Sort each timeframe by score * confidence (strongest signals first)
+        for timeframe in ['intraday', 'daily', 'monthly']:
+            heatmaps[timeframe].sort(
+                key=lambda x: x['score'] * x['confidence'],
+                reverse=True
+            )
+
+        # Filter if specific timeframe requested
+        if timeframe_filter in ['intraday', 'daily', 'monthly']:
+            filtered_data = {
+                timeframe_filter: heatmaps[timeframe_filter],
+                'metadata': heatmaps['metadata']
+            }
+            return jsonify({
+                "status": "success",
+                "timeframe": timeframe_filter,
+                "heatmaps": filtered_data,
+                "count": len(heatmaps[timeframe_filter])
+            }), 200
+
+        # Return all timeframes
+        return jsonify({
+            "status": "success",
+            "timeframe": "all",
+            "heatmaps": heatmaps,
+            "summary": {
+                'intraday_count': len(heatmaps['intraday']),
+                'daily_count': len(heatmaps['daily']),
+                'monthly_count': len(heatmaps['monthly']),
+                'total_unique_symbols': len(set(f['symbol'] for f in all_fusions))
+            }
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error getting heatmap data: {e}")
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     # Use socketio.run instead of app.run for WebSocket support

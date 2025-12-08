@@ -1,0 +1,32 @@
+{
+  "symbol": "META",
+  "timestamp": "2025-11-17T22:02:23.687690",
+  "agent": "indicators_agent",
+  "signals": {
+    "emoji": "📉🔵❌🌧️",
+    "score": 18,
+    "confidence": 0.48,
+    "metadata": {
+      "indicators": {
+        "price": 602.010009765625,
+        "rsi": 11.5959902205705,
+        "macd": -32.487949095653335,
+        "macd_signal": -27.958267755745652,
+        "macd_histogram": -4.5296813399076825,
+        "ma_20": 666.9315032958984,
+        "ma_50": 710.6250915527344,
+        "ma_200": null,
+        "atr": 24.347852434430802,
+        "atr_pct": 0.04044426511099031
+      },
+      "signals": {
+        "rsi_signal": "oversold",
+        "macd_signal": "bearish",
+        "ma_signal": "bearish",
+        "trend": "strong_downtrend",
+        "volatility": "high"
+      }
+    }
+  },
+  "shorthand": "META | 📉🔵❌🌧️ | 18 | 0.48 | 2025-11-17"
+}

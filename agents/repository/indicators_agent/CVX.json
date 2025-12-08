@@ -1,0 +1,32 @@
+{
+  "symbol": "CVX",
+  "timestamp": "2025-11-17T22:02:23.394657",
+  "agent": "indicators_agent",
+  "signals": {
+    "emoji": "➖⚪✅🌧️",
+    "score": 50,
+    "confidence": 0.8,
+    "metadata": {
+      "indicators": {
+        "price": 154.82000732421875,
+        "rsi": 51.357739414917006,
+        "macd": 0.22377375180920467,
+        "macd_signal": 0.020895427589451197,
+        "macd_histogram": 0.20287832421975346,
+        "ma_20": 154.9255012512207,
+        "ma_50": 155.27680053710938,
+        "ma_200": null,
+        "atr": 3.0471387590680803,
+        "atr_pct": 0.019681815107312758
+      },
+      "signals": {
+        "rsi_signal": "neutral",
+        "macd_signal": "bullish",
+        "ma_signal": "bearish",
+        "trend": "sideways",
+        "volatility": "normal"
+      }
+    }
+  },
+  "shorthand": "CVX | ➖⚪✅🌧️ | 50 | 0.80 | 2025-11-17"
+}

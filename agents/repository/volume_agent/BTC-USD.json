@@ -1,0 +1,44 @@
+{
+  "symbol": "BTC-USD",
+  "timestamp": "2025-11-17T22:02:44.191505",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 10,
+    "confidence": 0.4,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 608204317184.1,
+        "recent_sell_volume": 808790007346.8999,
+        "recent_delta": -200585690162.79993,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.7519928679376398,
+        "cumulative_delta": -211627661126.39996
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -10576441012.580713,
+        "current_value": -295523827442.28937,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 14,
+        "last_wave": {
+          "start_idx": 29,
+          "direction": "down",
+          "volume": 176794116310,
+          "price_change": -0.05119445477914307,
+          "end_idx": 30,
+          "bars": 2
+        }
+      },
+      "volume_profile": {
+        "poc_range": "106963.37-108293.36",
+        "poc_volume_pct": 9.326768202341619,
+        "near_poc": false,
+        "current_price": 90708.1015625
+      }
+    }
+  },
+  "shorthand": "BTC-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+}

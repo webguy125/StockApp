@@ -59,15 +59,30 @@ export class ORDVolumeBridge {
 
   /**
    * Store analysis result for persistent rendering (per chart)
+   * @param {Object} analysisResult - Analysis result
+   * @param {Array} candles - Candle data
+   * @param {String} symbol - Optional symbol (defaults to current)
+   * @param {String} timeframeId - Optional timeframe ID (defaults to current)
    */
-  setAnalysis(analysisResult, candles) {
+  setAnalysis(analysisResult, candles, symbol = null, timeframeId = null) {
     const chartKey = this._getChartKey();
 
-    // Store in per-chart map
+    // Get current symbol and timeframe if not provided
+    if (!symbol && window.tosApp) {
+      symbol = window.tosApp.currentSymbol || null;
+    }
+    if (!timeframeId && window.tosApp) {
+      timeframeId = window.tosApp.currentTimeframeId || window.tosApp.currentTickChartId || null;
+    }
+
+    // Store in per-chart map with metadata
     this.analysisStore.set(chartKey, {
       analysis: analysisResult,
       candles: candles,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      candleCount: candles ? candles.length : null,
+      symbol: symbol,
+      timeframeId: timeframeId
     });
 
     // Also update legacy properties for current chart
@@ -76,7 +91,7 @@ export class ORDVolumeBridge {
     this.isActive = true;
     this._hasLoggedDrawing = false;
 
-    console.log(`[ORD Bridge] Analysis stored for ${chartKey}`);
+    console.log(`[ORD Bridge] Analysis stored for ${chartKey} (${symbol} @ ${timeframeId}, ${candles ? candles.length : 0} candles)`);
   }
 
   /**
@@ -85,6 +100,9 @@ export class ORDVolumeBridge {
    */
   getAnalysis() {
     const chartKey = this._getChartKey();
+    console.log(`[ORD Bridge] 🔑 Getting analysis for key: "${chartKey}"`);
+    console.log(`[ORD Bridge] 📦 Store contents:`, Array.from(this.analysisStore.keys()));
+
     const stored = this.analysisStore.get(chartKey);
 
     if (stored) {
@@ -92,10 +110,65 @@ export class ORDVolumeBridge {
       this.currentAnalysis = stored.analysis;
       this.candles = stored.candles;
       this.isActive = true;
+      console.log(`[ORD Bridge] ✅ Found and loaded analysis for "${chartKey}", isActive=${this.isActive}`);
       return stored.analysis;
     }
 
+    console.log(`[ORD Bridge] ❌ No analysis found for "${chartKey}"`);
     return null;
+  }
+
+  /**
+   * Get analysis with full metadata (timestamp, candle count)
+   * @returns {Object|null} {analysis, timestamp, candleCount, symbol, timeframeId} or null
+   */
+  getAnalysisWithMetadata() {
+    const chartKey = this._getChartKey();
+    const stored = this.analysisStore.get(chartKey);
+
+    if (stored) {
+      return {
+        analysis: stored.analysis,
+        timestamp: stored.timestamp,
+        candleCount: stored.candleCount || null,
+        symbol: stored.symbol || null,
+        timeframeId: stored.timeframeId || null
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Check if saved analysis is stale (more than 3 candles old)
+   * @param {Number} savedCandleCount - Candle count when analysis was saved
+   * @param {Number} currentCandleCount - Current candle count
+   * @returns {Boolean} True if stale (difference > 3)
+   */
+  isAnalysisStale(savedCandleCount, currentCandleCount) {
+    if (!savedCandleCount || !currentCandleCount) {
+      return false; // Can't determine staleness
+    }
+
+    const difference = Math.abs(currentCandleCount - savedCandleCount);
+    return difference > 3;
+  }
+
+  /**
+   * Clear current chart display without deleting from storage
+   * (Useful when switching charts)
+   */
+  clearCurrentChartDisplay() {
+    this.currentAnalysis = null;
+    this.candles = null;
+    this.isActive = false;
+
+    // Hide info panel
+    if (this.infoPanelElement) {
+      this.infoPanelElement.style.display = 'none';
+    }
+
+    console.log('[ORD Bridge] Cleared current chart display (storage preserved)');
   }
 
   /**
@@ -140,12 +213,13 @@ export class ORDVolumeBridge {
     if (this.ordVolumeRenderer) {
       const drawingState = this.ordVolumeRenderer.getDrawingState();
 
-      console.log('[ORD Bridge] drawOverlays called, drawingState:', {
-        hasRenderer: !!this.ordVolumeRenderer,
-        isDrawMode: drawingState.isDrawMode,
-        drawnLines: drawingState.drawnLines?.length || 0,
-        hasCurrent: !!drawingState.currentLine
-      });
+      // Debug logging disabled - was causing excessive console spam
+      // console.log('[ORD Bridge] drawOverlays called, drawingState:', {
+      //   hasRenderer: !!this.ordVolumeRenderer,
+      //   isDrawMode: drawingState.isDrawMode,
+      //   drawnLines: drawingState.drawnLines?.length || 0,
+      //   hasCurrent: !!drawingState.currentLine
+      // });
 
       if (drawingState.isDrawMode) {
         this._drawManualLines(ctx, chartState, drawingState);
@@ -283,29 +357,50 @@ export class ORDVolumeBridge {
 
     ctx.save();
 
-    // Only log once when first activated
-    const shouldLog = !this._hasLoggedDrawing;
-    if (shouldLog) {
-      console.log('[ORD Bridge] First draw - trendlines:', this.currentAnalysis.trendlines.length);
-    }
+    // Debug logging disabled - no longer needed
+    // const shouldLog = !this._hasLoggedDrawing;
+    // if (shouldLog) {
+    //   console.log('[ORD Bridge] First draw - trendlines:', this.currentAnalysis.trendlines.length);
+    // }
 
-    for (const line of this.currentAnalysis.trendlines) {
+    const trendlines = this.currentAnalysis.trendlines;
+    const lastTrendlineIndex = trendlines.length - 1;
+
+    for (let i = 0; i < trendlines.length; i++) {
+      const line = trendlines[i];
+      const isLastLine = (i === lastTrendlineIndex);
+
+      // For the LAST trendline, make it follow the current candle's high/low
+      let adjustedY2 = line.y2;
+
+      if (isLastLine && this.candles && this.candles.length > 0) {
+        const currentCandle = this.candles[this.candles.length - 1];
+        const isUptrend = line.y2 > line.y1;
+
+        // Uptrend → follow HIGH, Downtrend → follow LOW
+        if (isUptrend) {
+          adjustedY2 = currentCandle.High || currentCandle.high;
+        } else {
+          adjustedY2 = currentCandle.Low || currentCandle.low;
+        }
+      }
+
       // Convert indices to screen coordinates
       const x1 = this._indexToX(line.x1, chartState);
       const y1 = this._priceToY(line.y1, chartState);
       const x2 = this._indexToX(line.x2, chartState);
-      const y2 = this._priceToY(line.y2, chartState);
+      const y2 = this._priceToY(adjustedY2, chartState);
 
-      // Log first time only
-      if (shouldLog) {
-        console.log(`[ORD Bridge] Line: candle ${line.x1}-${line.x2} → screen ${x1.toFixed(0)},${y1.toFixed(0)} to ${x2.toFixed(0)},${y2.toFixed(0)} | canvas ${ctx.canvas.width}x${ctx.canvas.height}`);
-      }
+      // Debug logging disabled
+      // if (shouldLog) {
+      //   console.log(`[ORD Bridge] Line: candle ${line.x1}-${line.x2} → screen ${x1.toFixed(0)},${y1.toFixed(0)} to ${x2.toFixed(0)},${y2.toFixed(0)} | canvas ${ctx.canvas.width}x${ctx.canvas.height}`);
+      // }
 
       // Skip if off-screen
       if (!this._isOnScreen(x1, y1, x2, y2, ctx.canvas)) {
-        if (shouldLog) {
-          console.log(`[ORD Bridge] ↑ Line OFF-SCREEN, skipped`);
-        }
+        // if (shouldLog) {
+        //   console.log(`[ORD Bridge] ↑ Line OFF-SCREEN, skipped`);
+        // }
         continue;
       }
 
@@ -341,15 +436,17 @@ export class ORDVolumeBridge {
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
 
-      if (shouldLog) {
-        console.log(`[ORD Bridge] ✅ Line drawn successfully`);
-      }
+      // Debug logging disabled
+      // if (shouldLog) {
+      //   console.log(`[ORD Bridge] ✅ Line drawn successfully`);
+      // }
     }
 
+    // Debug logging disabled
     // Mark as logged after first draw
-    if (shouldLog) {
-      this._hasLoggedDrawing = true;
-    }
+    // if (shouldLog) {
+    //   this._hasLoggedDrawing = true;
+    // }
 
     ctx.restore();
   }
@@ -363,12 +460,43 @@ export class ORDVolumeBridge {
 
     ctx.save();
 
+    // Get last trendline info for live tracking
+    const trendlines = this.currentAnalysis.trendlines || [];
+    const lastTrendline = trendlines[trendlines.length - 1];
+    let lastTrendlineAdjustedY2 = null;
+
+    if (lastTrendline && this.candles && this.candles.length > 0) {
+      const currentCandle = this.candles[this.candles.length - 1];
+      const isUptrend = lastTrendline.y2 > lastTrendline.y1;
+
+      // Calculate adjusted endpoint (same logic as trendline drawing)
+      if (isUptrend) {
+        lastTrendlineAdjustedY2 = currentCandle.High || currentCandle.high;
+      } else {
+        lastTrendlineAdjustedY2 = currentCandle.Low || currentCandle.low;
+      }
+    }
+
     for (let i = 0; i < this.currentAnalysis.labels.length; i++) {
       const label = this.currentAnalysis.labels[i];
 
+      // Adjust Y coordinate for the last wave's percentage label to follow the trendline
+      let adjustedLabelY = label.y;
+
+      if (label.isPercentageLabel && lastTrendlineAdjustedY2 !== null) {
+        // Check if this label is for the last trendline (wave)
+        const isLastWaveLabel = (i === this.currentAnalysis.labels.length - 1 ||
+                                  label.waveIndex === (trendlines.length - 1));
+
+        if (isLastWaveLabel) {
+          // Adjust label Y to match the adjusted trendline endpoint
+          adjustedLabelY = lastTrendlineAdjustedY2;
+        }
+      }
+
       // Convert to screen coordinates
       let x = this._indexToX(label.x, chartState);
-      let y = this._priceToY(label.y, chartState);
+      let y = this._priceToY(adjustedLabelY, chartState);
 
       // Apply fixed pixel offset for percentage and wave labels
       if (label.pixelOffset !== undefined && label.isUpward !== undefined) {
@@ -777,19 +905,12 @@ export class ORDVolumeBridge {
   }
 
   /**
-   * Get current analysis data
-   */
-  getAnalysis() {
-    return this.currentAnalysis;
-  }
-
-  /**
    * Check if ORD Volume is active
    */
   isActiveAnalysis() {
     // Active if there's an analysis OR if we're in draw mode
     if (this.isActive) {
-      console.log('[ORD Bridge] isActiveAnalysis: true (has analysis)');
+      // console.log('[ORD Bridge] isActiveAnalysis: true (has analysis)');
       return true;
     }
 
@@ -797,11 +918,12 @@ export class ORDVolumeBridge {
     if (this.ordVolumeRenderer) {
       const drawingState = this.ordVolumeRenderer.getDrawingState();
       if (drawingState.isDrawMode) {
-        console.log('[ORD Bridge] isActiveAnalysis: true (draw mode active)');
+        // console.log('[ORD Bridge] isActiveAnalysis: true (draw mode active)');
         return true;
       }
     }
 
+    // console.log('[ORD Bridge] isActiveAnalysis: false (no analysis, not in draw mode)');
     return false;
   }
 

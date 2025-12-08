@@ -1,0 +1,44 @@
+{
+  "symbol": "SPY",
+  "timestamp": "2025-11-17T22:02:47.385635",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💰🔄⬆️🌊⬇️",
+    "score": 70,
+    "confidence": 0.95,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 807234570.0,
+        "recent_sell_volume": 727175730.0,
+        "recent_delta": 80058840.0,
+        "delta_trend": "bullish",
+        "buy_sell_ratio": 1.1100955885862693,
+        "cumulative_delta": 80058840.0
+      },
+      "accumulation_distribution": {
+        "signal": "accumulation",
+        "slope": 5190291.022850946,
+        "current_value": 134723025.75662813,
+        "divergence": "bullish_divergence"
+      },
+      "weis_waves": {
+        "total_waves": 9,
+        "last_wave": {
+          "start_idx": 18,
+          "direction": "down",
+          "volume": 290520500,
+          "price_change": -0.026074148113230028,
+          "end_idx": 20,
+          "bars": 3
+        }
+      },
+      "volume_profile": {
+        "poc_range": "669.76-671.18",
+        "poc_volume_pct": 8.059384956708806,
+        "near_poc": false,
+        "current_price": 665.6699829101562
+      }
+    }
+  },
+  "shorthand": "SPY | ⚖️💰🔄⬆️🌊⬇️ | 70 | 0.95 | 2025-11-17"
+}

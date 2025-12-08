@@ -1,0 +1,34 @@
+{
+  "symbol": "META",
+  "timestamp": "2025-12-04T00:02:31.632705",
+  "agent": "fusion_agent",
+  "total_score": 20.69230769230769,
+  "confidence": 0.5069230769230769,
+  "recommendation": "sell",
+  "emojis": [
+    "📉",
+    "❌",
+    "💸"
+  ],
+  "emoji_string": "📉❌💸",
+  "shorthand": "META | 📉❌💸 | 20 | 0.51 | 2025-12-04",
+  "weighted_scores": {
+    "indicators_agent": {
+      "score": 18,
+      "confidence": 0.48,
+      "weight": 0.4,
+      "contribution": 7.2
+    },
+    "volume_agent": {
+      "score": 25,
+      "confidence": 0.55,
+      "weight": 0.25,
+      "contribution": 6.25
+    }
+  },
+  "metadata": {
+    "total_weight_used": 0.65,
+    "agents_contributing": 2,
+    "signals_collected": 2
+  }
+}

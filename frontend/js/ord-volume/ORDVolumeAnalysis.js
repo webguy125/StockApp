@@ -41,7 +41,8 @@ export class ORDVolumeAnalysis {
     } else {
       this.sensitivity = sensitivity;
     }
-    console.log(`[ORD Volume] Sensitivity set to: ${this.sensitivity} (lookback ${this.sensitivity === 'high' ? 1 : 2})`);
+    // Debug logging disabled for performance
+    // console.log(`[ORD Volume] Sensitivity set to: ${this.sensitivity} (lookback ${this.sensitivity === 'high' ? 1 : 2})`);
   }
 
   /**
@@ -77,7 +78,8 @@ export class ORDVolumeAnalysis {
       return startA - startB;
     });
 
-    console.log('[ORD Volume] Lines sorted by chronological order (left to right)');
+    // Debug logging disabled for performance
+    // console.log('[ORD Volume] Lines sorted by chronological order (left to right)');
 
     this.mode = 'draw';
     this.waveLines = waveLines;
@@ -158,49 +160,84 @@ export class ORDVolumeAnalysis {
    */
   _detectSwingPoints() {
     const swings = [];
-    // Use sensitivity setting: 'high' = lookback 1 (more swings), 'normal' = lookback 2 (fewer swings)
-    const lookback = this.sensitivity === 'high' ? 1 : 2;
+
+    // IMPROVED: Use larger lookback for more significant swings
+    // high sensitivity = 5 bars, normal = 8 bars, low = 12 bars
+    const lookback = this.sensitivity === 'high' ? 5 : (this.sensitivity === 'normal' ? 8 : 12);
+
+    // Calculate average candle body size for significance threshold
+    let totalBodySize = 0;
+    for (let i = 0; i < this.candles.length; i++) {
+      totalBodySize += Math.abs(this.candles[i].high - this.candles[i].low);
+    }
+    const avgBodySize = totalBodySize / this.candles.length;
+    const significanceThreshold = avgBodySize * 0.5; // Swing must be at least 50% of avg range
 
     for (let i = lookback; i < this.candles.length - lookback; i++) {
       const candle = this.candles[i];
 
       // Check if this is a swing high (fractal high)
       let isSwingHigh = true;
+      let highestInRange = candle.high;
+
+      // Look both directions for a true fractal
       for (let j = i - lookback; j <= i + lookback; j++) {
         if (j !== i && this.candles[j].high >= candle.high) {
           isSwingHigh = false;
           break;
         }
+        if (this.candles[j].high > highestInRange) {
+          highestInRange = this.candles[j].high;
+        }
       }
 
-      if (isSwingHigh) {
-        swings.push({
-          index: i,
-          price: candle.high,
-          type: 'high'
-        });
-        continue;
+      // Only count if this is a significant swing (not just noise)
+      if (isSwingHigh && i > lookback) {
+        const prevLows = this.candles.slice(Math.max(0, i - lookback * 2), i).map(c => c.low);
+        const minLow = Math.min(...prevLows);
+        const swingSize = candle.high - minLow;
+
+        if (swingSize >= significanceThreshold) {
+          swings.push({
+            index: i,
+            price: candle.high,
+            type: 'high'
+          });
+          continue;
+        }
       }
 
       // Check if this is a swing low (fractal low)
       let isSwingLow = true;
+      let lowestInRange = candle.low;
+
       for (let j = i - lookback; j <= i + lookback; j++) {
         if (j !== i && this.candles[j].low <= candle.low) {
           isSwingLow = false;
           break;
         }
+        if (this.candles[j].low < lowestInRange) {
+          lowestInRange = this.candles[j].low;
+        }
       }
 
-      if (isSwingLow) {
-        swings.push({
-          index: i,
-          price: candle.low,
-          type: 'low'
-        });
+      // Only count if this is a significant swing
+      if (isSwingLow && i > lookback) {
+        const prevHighs = this.candles.slice(Math.max(0, i - lookback * 2), i).map(c => c.high);
+        const maxHigh = Math.max(...prevHighs);
+        const swingSize = maxHigh - candle.low;
+
+        if (swingSize >= significanceThreshold) {
+          swings.push({
+            index: i,
+            price: candle.low,
+            type: 'low'
+          });
+        }
       }
     }
 
-    console.log(`[ORD Volume] Detected ${swings.length} raw swing points (lookback=${lookback}, sensitivity=${this.sensitivity})`);
+    console.log(`[ORD Volume] Detected ${swings.length} significant swing points (lookback=${lookback}, threshold=${significanceThreshold.toFixed(2)})`);
 
     // Filter to create proper zigzag (alternating highs and lows)
     const zigzag = this._createZigzag(swings);
@@ -260,10 +297,11 @@ export class ORDVolumeAnalysis {
     const startIndex = Math.max(0, swingPoints.length - numPointsNeeded);
     const recentSwings = swingPoints.slice(startIndex);
 
-    console.log('[ORD Volume] Total swing points:', swingPoints.length);
-    console.log('[ORD Volume] Rightmost candle index:', rightmostCandleIndex);
-    console.log('[ORD Volume] Taking last', numPointsNeeded, 'swing points starting at index', startIndex);
-    console.log('[ORD Volume] Recent swings:', recentSwings.map(s => `${s.type} at index ${s.index}`));
+    // Debug logging disabled for performance
+    // console.log('[ORD Volume] Total swing points:', swingPoints.length);
+    // console.log('[ORD Volume] Rightmost candle index:', rightmostCandleIndex);
+    // console.log('[ORD Volume] Taking last', numPointsNeeded, 'swing points starting at index', startIndex);
+    // console.log('[ORD Volume] Recent swings:', recentSwings.map(s => `${s.type} at index ${s.index}`));
 
     // IMPORTANT: Build lines in REVERSE order (from right to left)
     // This ensures the first line (Retest) starts at the rightmost candle
@@ -281,7 +319,8 @@ export class ORDVolumeAnalysis {
         price2
       ]);
 
-      console.log(`[ORD Volume] Line 0 (Retest): candle ${lastSwing.index} @ ${price1} → candle ${rightmostCandleIndex} @ ${price2}`);
+      // Debug logging disabled for performance
+      // console.log(`[ORD Volume] Line 0 (Retest): candle ${lastSwing.index} @ ${price1} → candle ${rightmostCandleIndex} @ ${price2}`);
     }
 
     // Remaining lines: Connect consecutive swing points (working backward)
@@ -299,14 +338,16 @@ export class ORDVolumeAnalysis {
         price2
       ]);
 
-      console.log(`[ORD Volume] Line ${lines.length - 1}: candle ${point1.index} @ ${price1} → candle ${point2.index} @ ${price2}`);
+      // Debug logging disabled for performance
+      // console.log(`[ORD Volume] Line ${lines.length - 1}: candle ${point1.index} @ ${price1} → candle ${point2.index} @ ${price2}`);
     }
 
     // IMPORTANT: Reverse the lines array so they're in correct order (Initial, Correction, Retest)
     lines.reverse();
 
-    console.log('[ORD Volume] Generated', lines.length, 'trendlines');
-    console.log('[ORD Volume] Last line ends at candle index:', lines[lines.length - 1][2]);
+    // Debug logging disabled for performance
+    // console.log('[ORD Volume] Generated', lines.length, 'trendlines');
+    // console.log('[ORD Volume] Last line ends at candle index:', lines[lines.length - 1][2]);
 
     return lines;
   }
@@ -440,11 +481,13 @@ export class ORDVolumeAnalysis {
 
       if (wave1Index === -1) {
         // No more Wave 1 patterns found, rest are neutral
-        console.log(`[Elliott Wave] No more Wave 1 patterns found after index ${i}`);
+        // Debug logging disabled for performance
+        // console.log(`[Elliott Wave] No more Wave 1 patterns found after index ${i}`);
         break;
       }
 
-      console.log(`[Elliott Wave] Found Wave 1 at index ${wave1Index}`);
+      // Debug logging disabled for performance
+      // console.log(`[Elliott Wave] Found Wave 1 at index ${wave1Index}`);
 
       // Label this complete 8-wave cycle (1-5, A-C)
       for (let cyclePos = 0; cyclePos < 8 && (wave1Index + cyclePos) < waveData.length; cyclePos++) {
@@ -468,7 +511,8 @@ export class ORDVolumeAnalysis {
       i = wave1Index + 8;
     }
 
-    console.log('[Elliott Wave] Labeling complete. Unlabeled waves are neutral.');
+    // Debug logging disabled for performance
+    // console.log('[Elliott Wave] Labeling complete. Unlabeled waves are neutral.');
   }
 
   /**
@@ -499,16 +543,19 @@ export class ORDVolumeAnalysis {
       const wave2DoesntExceed100Percent = ny2 > cy1;
 
       if (isUpward && higherHigh && wave2Retraces && wave2DoesntExceed100Percent) {
-        console.log(`[Elliott Wave] Found potential Wave 1 at index ${i}`);
+        // Debug logging disabled for performance
+        // console.log(`[Elliott Wave] Found potential Wave 1 at index ${i}`);
         return i;
       }
     }
 
-    // If no perfect Wave 1 found, start at first upward wave
-    for (let i = 0; i < waveData.length; i++) {
+    // If no perfect Wave 1 found, start at first upward wave from startIndex
+    // CRITICAL FIX: Must start from startIndex to prevent infinite loop
+    for (let i = startIndex; i < waveData.length; i++) {
       const [x1, y1, x2, y2] = waveData[i].line;
       if (y2 > y1) {
-        console.log(`[Elliott Wave] Using first upward wave at index ${i} as Wave 1`);
+        // Debug logging disabled for performance
+        // console.log(`[Elliott Wave] Using first upward wave at index ${i} as Wave 1`);
         return i;
       }
     }
@@ -662,20 +709,25 @@ export class ORDVolumeAnalysis {
         pixelOffset: 30 // Fixed pixel offset from connection point
       });
 
-      // Elliott Wave label for the ENDING wave (between percentage and pivot point)
+      // Elliott Wave label for the ENDING wave - positioned in the MIDDLE of the trendline
       if (endingWave.label) {
+        // Calculate middle of the trendline
+        const midX = (ex1 + ex2) / 2;
+        const midY = (ey1 + ey2) / 2;
+
         labels.push({
-          x: ex2,
-          y: ey2, // Y position at END of ending wave (bridge will apply pixel offset)
+          x: midX, // MIDDLE of the trendline (X)
+          y: midY, // MIDDLE of the trendline (Y)
+          lineX1: ex1, // Store line endpoints for angle calculation
+          lineY1: ey1,
+          lineX2: ex2,
+          lineY2: ey2,
           text: endingWave.label, // "1", "2", "3", "4", "5", "A", "B", "C"
           color: '#FFFFFF', // White for visibility
           fontSize: 14,
           fontWeight: 'bold',
-          angle: 0,
           draggable: true,
-          isWaveLabel: true, // Marker for wave labels
-          isUpward: isEndingWaveUp, // Direction for pixel offset
-          pixelOffset: 15 // Halfway between connection and percentage label
+          isWaveLabel: true // Marker for wave labels
         });
       }
     }

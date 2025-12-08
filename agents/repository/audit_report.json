@@ -1,0 +1,81 @@
+{
+  "timestamp": "2025-11-17T21:18:39.713432",
+  "agent": "criteria_auditor",
+  "total_audited": 2,
+  "audit_summary": {
+    "excellent_signals": 2,
+    "good_signals": 0,
+    "weak_signals": 0,
+    "poor_signals": 0,
+    "mismatches": 1
+  },
+  "average_validity_score": 100.0,
+  "best_signals": {
+    "symbol": "AAPL",
+    "validity_score": 100.0
+  },
+  "worst_signals": {
+    "symbol": "AAPL",
+    "validity_score": 100.0
+  },
+  "top_recommendations": [
+    {
+      "recommendation": "Signals performing as expected",
+      "frequency": 1
+    },
+    {
+      "recommendation": "Review exit strategy - good entries but poor exits",
+      "frequency": 1
+    }
+  ],
+  "detailed_audits": [
+    {
+      "trade_id": "c24fc5078fa3",
+      "symbol": "AAPL",
+      "trade_verdict": "win",
+      "quality_score": 60.526315789473685,
+      "validity_analysis": {
+        "entry_signals": {},
+        "signal_holds": {
+          "price_breakout": true
+        },
+        "signal_failures": [],
+        "validity_score": 100.0
+      },
+      "audit_verdict": {
+        "audit_class": "excellent_signals",
+        "audit_emoji": "✅",
+        "validity_score": 100.0,
+        "mismatch": false,
+        "mismatch_reason": null
+      },
+      "recommendations": [
+        "Signals performing as expected"
+      ]
+    },
+    {
+      "trade_id": "ebb27c2d80d0",
+      "symbol": "TSLA",
+      "trade_verdict": "loss",
+      "quality_score": 33.0,
+      "validity_analysis": {
+        "entry_signals": {},
+        "signal_holds": {
+          "price_breakout": true
+        },
+        "signal_failures": [],
+        "validity_score": 100.0
+      },
+      "audit_verdict": {
+        "audit_class": "excellent_signals",
+        "audit_emoji": "✅",
+        "validity_score": 100.0,
+        "mismatch": true,
+        "mismatch_reason": "Lost despite strong signals (unlucky or bad exit)"
+      },
+      "recommendations": [
+        "Review exit strategy - good entries but poor exits"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "trade_id": "ebb27c2d80d0",
+  "symbol": "TSLA",
+  "verdict": "loss",
+  "verdict_emoji": "🛑",
+  "quality_score": 33.0,
+  "metrics": {
+    "return_pct": -0.012,
+    "return_usd": -3.0,
+    "hold_time": "1 day, 0:00:00",
+    "max_drawdown_pct": 0,
+    "max_gain_pct": 0,
+    "risk_reward_realized": 0
+  },
+  "trade_details": {
+    "entry_price": 250.0,
+    "exit_price": 247.0,
+    "entry_time": "2025-11-16T21:09:45.930794",
+    "exit_time": "2025-11-17T21:09:45.930794",
+    "position_size": 5000
+  },
+  "features": {},
+  "market_context": {
+    "symbol": "TSLA",
+    "timestamp": "2025-11-16T21:09:45.930794",
+    "day_of_week": "Sunday",
+    "hour_of_day": 21,
+    "market_type": "stock",
+    "liquidity": "high"
+  },
+  "archived_at": "2025-11-17T21:15:27.533485",
+  "archive_version": "1.0"
+}

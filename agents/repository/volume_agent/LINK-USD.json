@@ -1,0 +1,44 @@
+{
+  "symbol": "LINK-USD",
+  "timestamp": "2025-11-17T22:02:46.668943",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 10,
+    "confidence": 0.4,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 7868114116.099998,
+        "recent_sell_volume": 9953214362.899998,
+        "recent_delta": -2085100246.7999992,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.7905098623644554,
+        "cumulative_delta": -1931482877.1999993
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -85480841.69089398,
+        "current_value": -2615224797.6695733,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 18,
+        "last_wave": {
+          "start_idx": 29,
+          "direction": "down",
+          "volume": 1730966563,
+          "price_change": -0.05096576536470424,
+          "end_idx": 30,
+          "bars": 2
+        }
+      },
+      "volume_profile": {
+        "poc_range": "17.36-17.66",
+        "poc_volume_pct": 8.220317998769332,
+        "near_poc": false,
+        "current_price": 13.410402297973633
+      }
+    }
+  },
+  "shorthand": "LINK-USD | ⚖️💸🌊⬇️ | 10 | 0.40 | 2025-11-17"
+}

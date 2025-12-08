@@ -1,0 +1,44 @@
+{
+  "symbol": "META",
+  "timestamp": "2025-11-17T22:02:49.961241",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🌊⬇️",
+    "score": 25,
+    "confidence": 0.55,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 214580700.0,
+        "recent_sell_volume": 265877500.0,
+        "recent_delta": -51296800.0,
+        "delta_trend": "bearish",
+        "buy_sell_ratio": 0.8070660360504368,
+        "cumulative_delta": -51296799.99999999
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -4052196.50646661,
+        "current_value": -74796329.29017806,
+        "divergence": null
+      },
+      "weis_waves": {
+        "total_waves": 8,
+        "last_wave": {
+          "start_idx": 20,
+          "direction": "down",
+          "volume": 16448200,
+          "price_change": -0.012223955531845366,
+          "end_idx": 20,
+          "bars": 1
+        }
+      },
+      "volume_profile": {
+        "poc_range": "644.39-652.59",
+        "poc_volume_pct": 10.310275327278907,
+        "near_poc": false,
+        "current_price": 602.010009765625
+      }
+    }
+  },
+  "shorthand": "META | ⚖️💸🌊⬇️ | 25 | 0.55 | 2025-11-17"
+}

@@ -1,0 +1,44 @@
+{
+  "symbol": "CVX",
+  "timestamp": "2025-11-17T22:02:49.659815",
+  "agent": "volume_agent",
+  "signals": {
+    "emoji": "⚖️💸🔄⬇️🌊⬇️🎯",
+    "score": 40,
+    "confidence": 0.7,
+    "metadata": {
+      "ord_volume": {
+        "recent_buy_volume": 78937320.0,
+        "recent_sell_volume": 74971080.0,
+        "recent_delta": 3966240.0,
+        "delta_trend": "bullish",
+        "buy_sell_ratio": 1.0529035996280165,
+        "cumulative_delta": 3966240.000000001
+      },
+      "accumulation_distribution": {
+        "signal": "distribution",
+        "slope": -1282604.089611966,
+        "current_value": -24533675.646849837,
+        "divergence": "bearish_divergence"
+      },
+      "weis_waves": {
+        "total_waves": 11,
+        "last_wave": {
+          "start_idx": 20,
+          "direction": "down",
+          "volume": 8734900,
+          "price_change": -0.017764166220707034,
+          "end_idx": 20,
+          "bars": 1
+        }
+      },
+      "volume_profile": {
+        "poc_range": "154.56-154.92",
+        "poc_volume_pct": 8.535451351736823,
+        "near_poc": true,
+        "current_price": 154.82000732421875
+      }
+    }
+  },
+  "shorthand": "CVX | ⚖️💸🔄⬇️🌊⬇️🎯 | 40 | 0.70 | 2025-11-17"
+}

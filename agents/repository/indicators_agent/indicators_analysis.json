@@ -1,0 +1,647 @@
+{
+  "timestamp": "2025-11-17T22:02:24.434192",
+  "agent": "indicators_agent",
+  "symbols_analyzed": 20,
+  "analyses": [
+    {
+      "symbol": "BTC-USD",
+      "timestamp": "2025-11-17T22:02:16.912333",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉🔵❌🌧️",
+        "score": 18,
+        "confidence": 0.48,
+        "metadata": {
+          "indicators": {
+            "price": 90708.1015625,
+            "rsi": 26.92119782116646,
+            "macd": -4400.722963314402,
+            "macd_signal": -3288.6764062792713,
+            "macd_histogram": -1112.0465570351303,
+            "ma_20": 102875.642578125,
+            "ma_50": 109894.01515625,
+            "ma_200": null,
+            "atr": 4443.735491071428,
+            "atr_pct": 0.048989400224737266
+          },
+          "signals": {
+            "rsi_signal": "oversold",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "BTC-USD | 📉🔵❌🌧️ | 18 | 0.48 | 2025-11-17"
+    },
+    {
+      "symbol": "ETH-USD",
+      "timestamp": "2025-11-17T22:02:17.181247",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 4,
+        "confidence": 0.33999999999999997,
+        "metadata": {
+          "indicators": {
+            "price": 3019.40576171875,
+            "rsi": 31.604535040609875,
+            "macd": -221.81885804588592,
+            "macd_signal": -190.43356726684223,
+            "macd_histogram": -31.385290779043686,
+            "ma_20": 3470.1466674804688,
+            "ma_50": 3870.9851220703126,
+            "ma_200": null,
+            "atr": 246.44464983258928,
+            "atr_pct": 0.0816202489102705
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "ETH-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+    },
+    {
+      "symbol": "SOL-USD",
+      "timestamp": "2025-11-17T22:02:17.470336",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 4,
+        "confidence": 0.33999999999999997,
+        "metadata": {
+          "indicators": {
+            "price": 134.32704162597656,
+            "rsi": 30.052999385778236,
+            "macd": -14.303106139876604,
+            "macd_signal": -12.357585267475907,
+            "macd_histogram": -1.9455208724006976,
+            "ma_20": 161.69758071899415,
+            "ma_50": 186.88007385253906,
+            "ma_200": null,
+            "atr": 11.317738124302455,
+            "atr_pct": 0.08425509850664199
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "SOL-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+    },
+    {
+      "symbol": "XRP-USD",
+      "timestamp": "2025-11-17T22:02:17.778604",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 4,
+        "confidence": 0.33999999999999997,
+        "metadata": {
+          "indicators": {
+            "price": 2.1585183143615723,
+            "rsi": 43.20236414472179,
+            "macd": -0.08138099402063093,
+            "macd_signal": -0.07071347286413068,
+            "macd_histogram": -0.010667521156500243,
+            "ma_20": 2.3534000158309936,
+            "ma_50": 2.522853722572327,
+            "ma_200": null,
+            "atr": 0.1671713250023978,
+            "atr_pct": 0.07744725809836008
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "XRP-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+    },
+    {
+      "symbol": "DOGE-USD",
+      "timestamp": "2025-11-17T22:02:18.062991",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 4,
+        "confidence": 0.33999999999999997,
+        "metadata": {
+          "indicators": {
+            "price": 0.1541394591331482,
+            "rsi": 41.77053277172765,
+            "macd": -0.010836027316269786,
+            "macd_signal": -0.01039296676643439,
+            "macd_histogram": -0.0004430605498353963,
+            "ma_20": 0.17249227315187454,
+            "ma_50": 0.1988231885433197,
+            "ma_200": null,
+            "atr": 0.011824550373213632,
+            "atr_pct": 0.07671332467177915
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "DOGE-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+    },
+    {
+      "symbol": "ADA-USD",
+      "timestamp": "2025-11-17T22:02:18.425622",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 4,
+        "confidence": 0.33999999999999997,
+        "metadata": {
+          "indicators": {
+            "price": 0.46779903769493103,
+            "rsi": 35.064077735763746,
+            "macd": -0.04610077025434245,
+            "macd_signal": -0.04197870861513195,
+            "macd_histogram": -0.0041220616392105,
+            "ma_20": 0.5563901513814926,
+            "ma_50": 0.6570868015289306,
+            "ma_200": null,
+            "atr": 0.04017089094434466,
+            "atr_pct": 0.0858721111148193
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "ADA-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+    },
+    {
+      "symbol": "AVAX-USD",
+      "timestamp": "2025-11-17T22:02:18.735354",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 4,
+        "confidence": 0.33999999999999997,
+        "metadata": {
+          "indicators": {
+            "price": 14.450663566589355,
+            "rsi": 37.58259140032464,
+            "macd": -1.6015865688470043,
+            "macd_signal": -1.592024376470336,
+            "macd_histogram": -0.009562192376668444,
+            "ma_20": 17.016026639938353,
+            "ma_50": 21.2587140083313,
+            "ma_200": null,
+            "atr": 1.2896582058497839,
+            "atr_pct": 0.08924560452929906
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "AVAX-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+    },
+    {
+      "symbol": "DOT-USD",
+      "timestamp": "2025-11-17T22:02:19.040439",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 4,
+        "confidence": 0.33999999999999997,
+        "metadata": {
+          "indicators": {
+            "price": 2.7309319972991943,
+            "rsi": 55.12671052082499,
+            "macd": -0.10070427876351884,
+            "macd_signal": -0.09856335659095225,
+            "macd_histogram": -0.0021409221725665895,
+            "ma_20": 2.9102252960205077,
+            "ma_50": 3.247844796180725,
+            "ma_200": null,
+            "atr": 0.2647908755711147,
+            "atr_pct": 0.09695989348434327
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "DOT-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+    },
+    {
+      "symbol": "LINK-USD",
+      "timestamp": "2025-11-17T22:02:19.358015",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 4,
+        "confidence": 0.33999999999999997,
+        "metadata": {
+          "indicators": {
+            "price": 13.410402297973633,
+            "rsi": 37.07428216243269,
+            "macd": -1.1580713305279637,
+            "macd_signal": -1.0643323310186976,
+            "macd_histogram": -0.09373899950926612,
+            "ma_20": 15.518224620819092,
+            "ma_50": 17.90787868499756,
+            "ma_200": null,
+            "atr": 1.133765425000872,
+            "atr_pct": 0.08454372954733719
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "LINK-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+    },
+    {
+      "symbol": "LTC-USD",
+      "timestamp": "2025-11-17T22:02:19.974025",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 4,
+        "confidence": 0.33999999999999997,
+        "metadata": {
+          "indicators": {
+            "price": 92.7970199584961,
+            "rsi": 54.5739436724393,
+            "macd": -0.4911840626198085,
+            "macd_signal": -0.3940353456167478,
+            "macd_histogram": -0.09714871700306071,
+            "ma_20": 97.10328102111816,
+            "ma_50": 100.81265518188476,
+            "ma_200": null,
+            "atr": 8.88271495274135,
+            "atr_pct": 0.095721985002473
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "LTC-USD | 📉⚪❌🌧️ | 4 | 0.34 | 2025-11-17"
+    },
+    {
+      "symbol": "SPY",
+      "timestamp": "2025-11-17T22:02:20.361041",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "➖⚪❌🌧️",
+        "score": 20,
+        "confidence": 0.5,
+        "metadata": {
+          "indicators": {
+            "price": 665.6699829101562,
+            "rsi": 32.1422893481717,
+            "macd": 1.4480909510372157,
+            "macd_signal": 3.2984848464642265,
+            "macd_histogram": -1.8503938954270107,
+            "ma_20": 677.2289978027344,
+            "ma_50": 668.5243481445312,
+            "ma_200": null,
+            "atr": 8.36572265625,
+            "atr_pct": 0.012567372528466706
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "sideways",
+            "volatility": "normal"
+          }
+        }
+      },
+      "shorthand": "SPY | ➖⚪❌🌧️ | 20 | 0.50 | 2025-11-17"
+    },
+    {
+      "symbol": "QQQ",
+      "timestamp": "2025-11-17T22:02:20.699143",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 10,
+        "confidence": 0.4,
+        "metadata": {
+          "indicators": {
+            "price": 603.6599731445312,
+            "rsi": 32.36926150347249,
+            "macd": 1.3131075402599208,
+            "macd_signal": 4.2871543695412075,
+            "macd_histogram": -2.9740468292812867,
+            "ma_20": 618.9635009765625,
+            "ma_50": 606.2284692382813,
+            "ma_200": null,
+            "atr": 10.828569684709821,
+            "atr_pct": 0.017938193960919106
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "downtrend",
+            "volatility": "normal"
+          }
+        }
+      },
+      "shorthand": "QQQ | 📉⚪❌🌧️ | 10 | 0.40 | 2025-11-17"
+    },
+    {
+      "symbol": "IWM",
+      "timestamp": "2025-11-17T22:02:21.101717",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉🔵❌🌧️",
+        "score": 20,
+        "confidence": 0.5,
+        "metadata": {
+          "indicators": {
+            "price": 232.75999450683594,
+            "rsi": 26.90989394528583,
+            "macd": -1.6959754048501452,
+            "macd_signal": -0.33272868938578104,
+            "macd_histogram": -1.3632467154643642,
+            "ma_20": 243.77899932861328,
+            "ma_50": 243.10458221435547,
+            "ma_200": null,
+            "atr": 4.587140764508929,
+            "atr_pct": 0.019707599556478803
+          },
+          "signals": {
+            "rsi_signal": "oversold",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "normal"
+          }
+        }
+      },
+      "shorthand": "IWM | 📉🔵❌🌧️ | 20 | 0.50 | 2025-11-17"
+    },
+    {
+      "symbol": "BAC",
+      "timestamp": "2025-11-17T22:02:21.453369",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "➖⚪❌🌧️",
+        "score": 18,
+        "confidence": 0.48,
+        "metadata": {
+          "indicators": {
+            "price": 51.47999954223633,
+            "rsi": 39.85401679358195,
+            "macd": 0.39543968895084447,
+            "macd_signal": 0.593198147434683,
+            "macd_histogram": -0.19775845848383855,
+            "ma_20": 52.80300006866455,
+            "ma_50": 51.67960006713867,
+            "ma_200": null,
+            "atr": 1.049999782017299,
+            "atr_pct": 0.020396266343317187
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "sideways",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "BAC | ➖⚪❌🌧️ | 18 | 0.48 | 2025-11-17"
+    },
+    {
+      "symbol": "XOM",
+      "timestamp": "2025-11-17T22:02:22.327830",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📈⚪✅☀️",
+        "score": 95,
+        "confidence": 0.95,
+        "metadata": {
+          "indicators": {
+            "price": 117.68000030517578,
+            "rsi": 61.11744673963698,
+            "macd": 1.5398206295782728,
+            "macd_signal": 1.1501033024566913,
+            "macd_histogram": 0.38971732712158147,
+            "ma_20": 115.11873893737793,
+            "ma_50": 113.28360885620117,
+            "ma_200": null,
+            "atr": 2.146621014909013,
+            "atr_pct": 0.018241171051514692
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bullish",
+            "ma_signal": "bullish",
+            "trend": "strong_uptrend",
+            "volatility": "normal"
+          }
+        }
+      },
+      "shorthand": "XOM | 📈⚪✅☀️ | 95 | 0.95 | 2025-11-17"
+    },
+    {
+      "symbol": "AMD",
+      "timestamp": "2025-11-17T22:02:22.643090",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📈⚪❌☁️",
+        "score": 40,
+        "confidence": 0.7,
+        "metadata": {
+          "indicators": {
+            "price": 240.52000427246094,
+            "rsi": 42.45664905361375,
+            "macd": 8.353507711232396,
+            "macd_signal": 11.80818066924407,
+            "macd_histogram": -3.454672958011674,
+            "ma_20": 248.10449981689453,
+            "ma_50": 209.83039978027344,
+            "ma_200": null,
+            "atr": 14.20785631452288,
+            "atr_pct": 0.05907141219916256
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "neutral",
+            "trend": "uptrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "AMD | 📈⚪❌☁️ | 40 | 0.70 | 2025-11-17"
+    },
+    {
+      "symbol": "CVX",
+      "timestamp": "2025-11-17T22:02:23.394657",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "➖⚪✅🌧️",
+        "score": 50,
+        "confidence": 0.8,
+        "metadata": {
+          "indicators": {
+            "price": 154.82000732421875,
+            "rsi": 51.357739414917006,
+            "macd": 0.22377375180920467,
+            "macd_signal": 0.020895427589451197,
+            "macd_histogram": 0.20287832421975346,
+            "ma_20": 154.9255012512207,
+            "ma_50": 155.27680053710938,
+            "ma_200": null,
+            "atr": 3.0471387590680803,
+            "atr_pct": 0.019681815107312758
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bullish",
+            "ma_signal": "bearish",
+            "trend": "sideways",
+            "volatility": "normal"
+          }
+        }
+      },
+      "shorthand": "CVX | ➖⚪✅🌧️ | 50 | 0.80 | 2025-11-17"
+    },
+    {
+      "symbol": "META",
+      "timestamp": "2025-11-17T22:02:23.687690",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉🔵❌🌧️",
+        "score": 18,
+        "confidence": 0.48,
+        "metadata": {
+          "indicators": {
+            "price": 602.010009765625,
+            "rsi": 11.5959902205705,
+            "macd": -32.487949095653335,
+            "macd_signal": -27.958267755745652,
+            "macd_histogram": -4.5296813399076825,
+            "ma_20": 666.9315032958984,
+            "ma_50": 710.6250915527344,
+            "ma_200": null,
+            "atr": 24.347852434430802,
+            "atr_pct": 0.04044426511099031
+          },
+          "signals": {
+            "rsi_signal": "oversold",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "strong_downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "META | 📉🔵❌🌧️ | 18 | 0.48 | 2025-11-17"
+    },
+    {
+      "symbol": "DIA",
+      "timestamp": "2025-11-17T22:02:24.054724",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "➖⚪❌☁️",
+        "score": 35,
+        "confidence": 0.6499999999999999,
+        "metadata": {
+          "indicators": {
+            "price": 466.32000732421875,
+            "rsi": 37.56031831384242,
+            "macd": 2.1253493726534884,
+            "macd_signal": 2.977365669326629,
+            "macd_histogram": -0.8520162966731406,
+            "ma_20": 472.9759994506836,
+            "ma_50": 466.2036358642578,
+            "ma_200": null,
+            "atr": 5.599999564034598,
+            "atr_pct": 0.012008919789154748
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "neutral",
+            "trend": "sideways",
+            "volatility": "normal"
+          }
+        }
+      },
+      "shorthand": "DIA | ➖⚪❌☁️ | 35 | 0.65 | 2025-11-17"
+    },
+    {
+      "symbol": "GE",
+      "timestamp": "2025-11-17T22:02:24.433195",
+      "agent": "indicators_agent",
+      "signals": {
+        "emoji": "📉⚪❌🌧️",
+        "score": 9,
+        "confidence": 0.39,
+        "metadata": {
+          "indicators": {
+            "price": 300.1300048828125,
+            "rsi": 36.36361286564924,
+            "macd": 1.5315544858141266,
+            "macd_signal": 2.843239997865573,
+            "macd_histogram": -1.3116855120514463,
+            "ma_20": 307.13300170898435,
+            "ma_50": 300.25378356933595,
+            "ma_200": null,
+            "atr": 7.702150617327009,
+            "atr_pct": 0.02566271446380164
+          },
+          "signals": {
+            "rsi_signal": "neutral",
+            "macd_signal": "bearish",
+            "ma_signal": "bearish",
+            "trend": "downtrend",
+            "volatility": "high"
+          }
+        }
+      },
+      "shorthand": "GE | 📉⚪❌🌧️ | 9 | 0.39 | 2025-11-17"
+    }
+  ]
+}
