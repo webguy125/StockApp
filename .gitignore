@@ -36,6 +36,14 @@ instance/
 backend/data/tick_bars/*.json
 backend/data/ord-volume/*.json
 
+# Large ML data files (databases, models, training results)
+*.db
+*.joblib
+*.pkl
+backend/data/training_results.json
+backend/backend/data/training_results*.json
+backend/data/rare_event_archive/archive.db
+
 # Backup files
 backend/backup*.py
 frontend/Backup*.html

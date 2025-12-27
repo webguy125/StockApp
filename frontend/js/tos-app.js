@@ -2540,10 +2540,8 @@ if (document.readyState === 'loading') {
 
 // Make functions globally accessible for inline onclick handlers
 import { detectPatterns } from './analysis/patterns.js';
-import { getPredictions } from './analysis/predictions.js';
 import { getTradeIdeas } from './analysis/trade-ideas.js';
 // Trendlines removed - Canvas renderer handles drawing natively
 
 window.detectPatterns = detectPatterns;
-window.getPredictions = getPredictions;
 window.getTradeIdeas = getTradeIdeas;

@@ -1,0 +1,58 @@
+{
+  "base_model_names": [
+    "random_forest",
+    "xgboost",
+    "lightgbm",
+    "extratrees",
+    "gradientboost",
+    "neural_network",
+    "logistic_regression",
+    "svm"
+  ],
+  "training_metrics": {
+    "train_accuracy": 0.999963326976676,
+    "n_samples": 27268,
+    "n_base_models": 8,
+    "n_meta_features": 24,
+    "model_importance": {
+      "random_forest": 0.41708556849406375,
+      "xgboost": 0.330107502870729,
+      "lightgbm": 6.149775094192609,
+      "extratrees": 33.86954287000912,
+      "gradientboost": 37.54862773760817,
+      "neural_network": 9.150413611445583,
+      "logistic_regression": 6.838468628520891,
+      "svm": 5.695978986858837
+    },
+    "timestamp": "2025-12-27T03:23:26.956810"
+  },
+  "model_weights": {
+    "extratrees_buy_prob": 2.5387579957856157,
+    "extratrees_hold_prob": 2.79085094868802,
+    "extratrees_sell_prob": 2.6780655093588432,
+    "gradientboost_buy_prob": 2.6938811016706197,
+    "gradientboost_hold_prob": 3.3747173335239786,
+    "gradientboost_sell_prob": 2.808911021159915,
+    "lightgbm_buy_prob": 0.5476349735881126,
+    "lightgbm_hold_prob": 0.367879152413545,
+    "lightgbm_sell_prob": 0.5384587577654658,
+    "logistic_regression_buy_prob": 0.46645367962471385,
+    "logistic_regression_hold_prob": 0.8039663585238385,
+    "logistic_regression_sell_prob": 0.3463785927072178,
+    "neural_network_buy_prob": 0.9318359581942364,
+    "neural_network_hold_prob": 0.4143574316702752,
+    "neural_network_sell_prob": 0.8172114603159791,
+    "random_forest_buy_prob": 0.024492709251064018,
+    "random_forest_hold_prob": 0.050833048173851904,
+    "random_forest_sell_prob": 0.023284532791003103,
+    "svm_buy_prob": 0.667674707502205,
+    "svm_hold_prob": 0.5664136049782802,
+    "svm_sell_prob": 0.11259491845926022,
+    "xgboost_buy_prob": 0.03093939631901203,
+    "xgboost_hold_prob": 0.01029206308929885,
+    "xgboost_sell_prob": 0.03681486757938066
+  },
+  "is_trained": true,
+  "model_version": "1.0.0",
+  "saved_at": "2025-12-27T03:23:27.110739"
+}

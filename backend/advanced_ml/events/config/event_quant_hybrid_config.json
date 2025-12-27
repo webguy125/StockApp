@@ -1,0 +1,240 @@
+{
+  "module_name": "event_quant_hybrid",
+  "version": "1.1.0",
+  "description": "Unified SEC + news event intelligence module for the supervised 8-model ensemble trading system",
+  "ingestion": {
+    "sec": {
+      "enabled": true,
+      "filing_types": [
+        "8-K",
+        "10-Q",
+        "10-K",
+        "13D",
+        "13G",
+        "13F",
+        "S-1",
+        "S-3",
+        "424B",
+        "DEF 14A"
+      ],
+      "max_lag_minutes": 15,
+      "normalize_schema": [
+        "source_type",
+        "ticker",
+        "timestamp",
+        "filing_type",
+        "raw_text",
+        "metadata",
+        "accession_number",
+        "item_codes",
+        "is_amendment"
+      ],
+      "processing_enhancements": {
+        "table_extraction": "enabled",
+        "exhibit_parsing": [
+          "99.1",
+          "10.1"
+        ],
+        "redline_comparison": "vs_previous_filing"
+      }
+    },
+    "news": {
+      "enabled": true,
+      "sources": [
+        "dow_jones",
+        "reuters",
+        "company_wires",
+        "bloomberg_terminal_feed",
+        "nasdaq_disclosures"
+      ],
+      "languages": [
+        "en"
+      ],
+      "dedupe_window_minutes": 10,
+      "normalize_schema": [
+        "source_type",
+        "ticker",
+        "timestamp",
+        "headline",
+        "raw_text",
+        "metadata",
+        "urgency_level",
+        "entity_relevance_score"
+      ],
+      "noise_filtering": {
+        "exclude_clickbait": true,
+        "min_article_length_chars": 150,
+        "blacklist_keywords": [
+          "sponsored",
+          "stock_picks"
+        ]
+      }
+    }
+  },
+  "event_classifier": {
+    "model_id": "event_cls_v1_distilbert_ensemble",
+    "label_space": {
+      "event_type": [
+        "refinancing",
+        "dividend_change",
+        "earnings",
+        "guidance",
+        "litigation",
+        "credit_facility",
+        "covenant_change",
+        "management_change",
+        "regulatory",
+        "macro",
+        "m_and_a",
+        "stock_buyback",
+        "product_recall",
+        "cybersecurity_incident",
+        "other"
+      ]
+    },
+    "output_schema": [
+      "event_type",
+      "event_subtype",
+      "event_severity",
+      "impact_dividend",
+      "impact_liquidity",
+      "impact_credit",
+      "impact_growth",
+      "is_rare_event",
+      "confidence",
+      "sentiment_score",
+      "temporal_relevance"
+    ],
+    "thresholds": {
+      "min_confidence": 0.6,
+      "high_severity_cutoff": 0.75,
+      "ambiguity_flag_threshold": 0.2
+    },
+    "alternative_approaches": [
+      "zero_shot_llm_verification",
+      "semantic_similarity_clustering"
+    ]
+  },
+  "feature_encoder": {
+    "lookback_windows_days": [
+      1,
+      7,
+      30,
+      90,
+      365
+    ],
+    "encoded_features": [
+      "event_count_refinancing_30d",
+      "event_count_dividend_30d",
+      "event_count_litigation_30d",
+      "event_count_negative_news_7d",
+      "max_event_severity_30d",
+      "sum_impact_dividend_90d",
+      "sum_impact_liquidity_90d",
+      "sum_impact_credit_90d",
+      "time_since_last_high_severity_event",
+      "news_sentiment_mean_7d",
+      "news_sentiment_min_7d",
+      "event_intensity_acceleration_ratio",
+      "cross_source_confirmation_flag",
+      "information_asymmetry_proxy_score",
+      "filing_complexity_index"
+    ],
+    "missing_policy": "zero_fill_and_flag",
+    "scaling_method": "robust_scaler"
+  },
+  "integration": {
+    "join_key": [
+      "ticker",
+      "date",
+      "timestamp_utc"
+    ],
+    "merge_with": [
+      "regime_features",
+      "sector_features",
+      "drift_features",
+      "price_volume_features",
+      "volatility_features",
+      "rare_event_archive_features",
+      "analyst_estimate_features",
+      "options_implied_skew"
+    ],
+    "downstream_targets": [
+      "ensemble_alpha_model",
+      "risk_model",
+      "dividend_safety_model",
+      "execution_algo_router"
+    ],
+    "collision_logic": "timestamp_precedence"
+  },
+  "ensemble_interface": {
+    "canonical_feature_vector": "event_features + quant_features + regime_features + sector_features + drift_features + sentiment_context",
+    "model_outputs": [
+      "score_buy",
+      "score_hold",
+      "score_reduce",
+      "risk_score",
+      "uncertainty",
+      "expected_tracking_error",
+      "liquidity_adjusted_alpha"
+    ],
+    "optimization_targets": [
+      "sharpe_ratio",
+      "max_drawdown_minimization"
+    ]
+  },
+  "shap_logging": {
+    "enabled": true,
+    "log_path": "C:/NeuralNet/ShapLogs",
+    "store_top_features": 20,
+    "store_event_vs_quant_attribution": true,
+    "periodic_summary_days": 7,
+    "anomaly_detection": {
+      "alert_on_top_feature_flip": true,
+      "shap_value_drift_threshold": 0.15
+    }
+  },
+  "rare_event_archive": {
+    "enabled": true,
+    "severity_threshold": 0.8,
+    "post_event_window_days": 60,
+    "stored_fields": [
+      "event_type",
+      "event_severity",
+      "impact_credit",
+      "impact_liquidity",
+      "pre_post_returns",
+      "drawdown_outcomes",
+      "recovery_time_days",
+      "volatility_spike_magnitude"
+    ],
+    "retrieval_mechanism": "k_nearest_neighbors_on_embeddings"
+  },
+  "promotion_gate": {
+    "shadow_mode_enabled": true,
+    "compare_metrics": [
+      "calibration",
+      "drift",
+      "decision_stability",
+      "feature_importance_shift",
+      "precision_recall_auc",
+      "information_coefficient"
+    ],
+    "promotion_condition": "no_regime_mismatch AND stable_metrics_30d AND tracking_error_within_bounds",
+    "failure_modes_monitored": [
+      "data_source_latency_spike",
+      "event_type_misclassification_cluster",
+      "api_rate_limit_saturation"
+    ]
+  },
+  "architectural_enhancements": {
+    "feedback_loop": {
+      "manual_override_logging": true,
+      "pnl_attribution_to_event_type": "enabled"
+    },
+    "contingency_handling": {
+      "sec_edgar_down_policy": "fallback_to_secondary_aggregators",
+      "stale_data_cutoff_hours": 24
+    }
+  }
+}

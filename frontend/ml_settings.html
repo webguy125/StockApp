@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Configuration - StockApp</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/tos-theme.css">
+    <link rel="stylesheet" href="css/heatmap-page.css">
+    <style>
+        .settings-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .settings-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .settings-section h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: var(--hover-bg);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            flex: 1;
+            margin: 0;
+            font-weight: normal;
+        }
+
+        .checkbox-description {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .model-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .model-card {
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .model-card.active {
+            border-color: #10b981;
+            background: linear-gradient(to right, rgba(16, 185, 129, 0.1), transparent);
+        }
+
+        .model-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .model-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .model-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .model-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .model-stat {
+            text-align: center;
+        }
+
+        .model-stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .model-stat-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        .model-config-summary {
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
+        .model-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .info-box-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="tos-theme">
+    <div class="settings-container">
+        <!-- Header -->
+        <div class="heatmap-header">
+            <div class="heatmap-title">
+                <h1>ML Configuration Manager</h1>
+                <p class="heatmap-subtitle">Create and manage multiple ML models with different analysis approaches</p>
+            </div>
+            <div class="heatmap-actions">
+                <button class="tos-btn-secondary" onclick="window.location.href='/ml-trading'">
+                    ← Back to ML Trading
+                </button>
+                <button class="tos-btn-secondary" onclick="window.location.href='/'">
+                    🏠 Home
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings Grid -->
+        <div class="settings-grid">
+            <!-- Left: Create New Model -->
+            <div class="settings-section">
+                <h2>🎯 Create New Model</h2>
+
+                <div class="info-box">
+                    <div class="info-box-title">Mix and Match Approaches</div>
+                    Test different analysis methods to find what works best!
+                </div>
+
+                <form id="create-model-form">
+                    <!-- Model Name -->
+                    <div class="form-group">
+                        <label>Model Name *</label>
+                        <input type="text" id="model-name" placeholder="e.g., Pure Price Action Model" required>
+                    </div>
+
+                    <!-- Analysis Type -->
+                    <div class="form-group">
+                        <label>Analysis Type *</label>
+                        <select id="analysis-type" required>
+                            <option value="">-- Select Analysis Type --</option>
+                            <option value="price_action">Pure Price Action (candlestick patterns, support/resistance)</option>
+                            <option value="volume_profile">Volume Profile (order flow, institutional activity)</option>
+                            <option value="raw_ohlcv">Raw OHLCV Data (let ML discover patterns naturally)</option>
+                            <option value="market_structure">Market Structure (higher highs/lows, breakouts)</option>
+                        </select>
+                    </div>
+
+                    <!-- Philosophy -->
+                    <div class="form-group">
+                        <label>Philosophy (select all that apply)</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="phil-lag" value="indicators_lag">
+                                <label for="phil-lag">
+                                    Indicators lag price action
+                                    <div class="checkbox-description">Traditional indicators are delayed - price action is more immediate</div>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="phil-curve" value="curve_fitting">
+                                <label for="phil-curve">
+                                    Over-optimization / curve fitting
+                                    <div class="checkbox-description">Indicators can be tweaked to fit past data but fail in real trading</div>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="phil-ml" value="ml_discover">
+                                <label for="phil-ml">
+                                    Let ML discover patterns naturally
+                                    <div class="checkbox-description">ML should learn directly from price, not from pre-calculated indicators</div>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="phil-simple" value="simpler">
+                                <label for="phil-simple">
+                                    Simpler is better
+                                    <div class="checkbox-description">Fewer inputs = less noise, cleaner signals</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Win Criteria -->
+                    <div class="form-group">
+                        <label>Win Criteria *</label>
+                        <select id="win-criteria" required>
+                            <option value="">-- Select Win Criteria --</option>
+                            <option value="price_movement">Just price movement (did it go up 10% in 14 days?)</option>
+                            <option value="quality_of_move">Quality of the move (smooth trend vs choppy)</option>
+                            <option value="speed_of_move">Speed of the move (faster is better)</option>
+                            <option value="risk_adjusted">Risk-adjusted (size of move vs volatility)</option>
+                        </select>
+                    </div>
+
+                    <!-- Advanced Settings -->
+                    <div class="form-group">
+                        <label>Hold Period (days)</label>
+                        <input type="number" id="hold-period" value="14" min="1" max="90">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Win Threshold (%)</label>
+                        <input type="number" id="win-threshold" value="10.0" step="0.1" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Loss Threshold (%)</label>
+                        <input type="number" id="loss-threshold" value="-5.0" step="0.1" max="0">
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="tos-btn-primary" style="width: 100%; margin-top: 20px;">
+                        💾 Create Model
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right: Saved Models -->
+            <div class="settings-section">
+                <h2>📊 Saved Models</h2>
+
+                <div id="models-list" class="model-list">
+                    <!-- Models will be loaded here -->
+                </div>
+
+                <div id="empty-models" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📭</div>
+                    <div>No models yet. Create one to get started!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/ml-settings-page.js"></script>
+</body>
+</html>

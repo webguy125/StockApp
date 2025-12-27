@@ -11,7 +11,6 @@ from services.pattern_service import (
     detect_double_top, detect_double_bottom,
     detect_head_shoulders, calculate_volume_profile
 )
-from services.prediction_service import predict_price
 from services.trade_service import generate_trade_ideas
 
 analysis_bp = Blueprint('analysis', __name__)
@@ -142,33 +141,6 @@ def compare_symbols():
                     correlations[f"{sym1}_{sym2}"] = float(corr)
 
         result['correlations'] = correlations
-
-    return jsonify(result)
-
-
-@analysis_bp.route("/predict", methods=["POST"])
-def predict_price_route():
-    """ML-based price prediction using linear regression and trend analysis"""
-    data = request.get_json()
-    symbol = data["symbol"]
-    period = data.get("period", "1y")
-    interval = data.get("interval", "1d")
-    forecast_days = data.get("days", 30)
-
-    df = yf.download(symbol, period=period, interval=interval)
-
-    if df.empty:
-        return jsonify({"error": "No data found"}), 404
-
-    # Flatten multi-level columns
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
-
-    df.reset_index(inplace=True)
-    date_col = 'Datetime' if 'Datetime' in df.columns else 'Date'
-    df = df.rename(columns={date_col: 'Date'})
-
-    result = predict_price(df, forecast_days, interval)
 
     return jsonify(result)
 

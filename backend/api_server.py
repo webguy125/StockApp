@@ -21,6 +21,29 @@ import secrets
 app = Flask(__name__)
 CORS(app)
 
+# Initialize ML Automation Service (built-in scheduler)
+try:
+    from trading_system.ml_automation_service import (
+        init_automation_service,
+        start_automation,
+        stop_automation,
+        get_automation_status,
+        run_daily_cycle
+    )
+    ML_AUTOMATION_AVAILABLE = True
+except ImportError as e:
+    print(f"[ML AUTOMATION] Not available: {e}")
+    ML_AUTOMATION_AVAILABLE = False
+
+# Initialize ML Model Manager (multi-model configuration system)
+try:
+    from trading_system.ml_model_manager import MLModelManager
+    ml_model_manager = MLModelManager()
+    ML_MODEL_MANAGER_AVAILABLE = True
+except ImportError as e:
+    print(f"[ML MODEL MANAGER] Not available: {e}")
+    ML_MODEL_MANAGER_AVAILABLE = False
+
 # Load environment variables from .env file
 load_dotenv()
 COINBASE_API_KEY = os.getenv('COINBASE_API_KEY')
@@ -346,6 +369,23 @@ def serve_classic():
 @app.route("/heatmap")
 def serve_heatmap():
     response = make_response(send_from_directory(FRONTEND_DIR, "heatmap.html"))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+@app.route("/turbomode.html")
+@app.route("/turbomode")
+def serve_turbomode():
+    response = make_response(send_from_directory(FRONTEND_DIR, "turbomode.html"))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+@app.route("/turbomode/<path:filename>")
+def serve_turbomode_pages(filename):
+    response = make_response(send_from_directory(os.path.join(FRONTEND_DIR, "turbomode"), filename))
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
@@ -1810,7 +1850,1202 @@ def get_heatmap_data():
         return jsonify({"error": str(e)}), 500
 
 
+# =============================================================================
+# ML TRADING SYSTEM ENDPOINTS (Separate from Multi-Agent System)
+# =============================================================================
+
+@app.route("/ml-trading")
+def serve_ml_trading():
+    """Serve ML Trading System page"""
+    response = make_response(send_from_directory(FRONTEND_DIR, "ml_trading.html"))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+
+@app.route('/ml-signals', methods=['GET'])
+def get_ml_signals():
+    """Get ML trading signals (separate from agent system)"""
+    try:
+        signals_file = os.path.join(DATA_DIR, 'ml_trading_signals.json')
+
+        if not os.path.exists(signals_file):
+            return jsonify({
+                "status": "no_data",
+                "message": "No ML signals found. Run a scan first.",
+                "signals": []
+            }), 200
+
+        with open(signals_file, 'r') as f:
+            data = json.load(f)
+
+        return jsonify({
+            "status": "success",
+            "signals": data.get('all_signals', []),
+            "intraday": data.get('intraday', []),
+            "daily": data.get('daily', []),
+            "monthly": data.get('monthly', []),
+            "timestamp": data.get('timestamp'),
+            "total_count": data.get('total_count', 0),
+            "scan_metadata": data.get('scan_metadata', {})
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-scan', methods=['POST'])
+def run_ml_scan():
+    """Trigger ML system scan in background"""
+    try:
+        import sys
+        # Add trading_system to path
+        trading_system_path = os.path.join(BASE_DIR, 'trading_system')
+        if trading_system_path not in sys.path:
+            sys.path.insert(0, BASE_DIR)
+
+        from trading_system.core.trading_system import TradingSystem
+        from trading_system.core.scan_job_manager import get_job_manager
+
+        # Get parameters
+        data = request.get_json() or {}
+        max_stocks = data.get('max_stocks', 500)  # Default to full S&P 500
+        include_crypto = data.get('include_crypto', True)
+
+        # Calculate total items to scan (S&P 500 + cryptos)
+        total_items = max_stocks + (100 if include_crypto else 0)
+
+        # Create job
+        job_manager = get_job_manager()
+        job_id = job_manager.create_job(total_items)
+
+        # Define background scan function
+        def run_scan_background():
+            try:
+                system = TradingSystem()
+
+                # Progress callback
+                def progress_callback(current, total, symbol):
+                    job_manager.update_progress(job_id, current, symbol)
+
+                # Run scan with progress tracking
+                signals = system.run_daily_scan(
+                    max_stocks=max_stocks,
+                    include_crypto=include_crypto,
+                    progress_callback=progress_callback
+                )
+
+                # Mark job as complete
+                job_manager.complete_job(job_id, len(signals))
+
+            except Exception as e:
+                # Mark job as failed
+                job_manager.fail_job(job_id, str(e))
+                print(f"[ML SCAN ERROR] {e}")
+
+        # Start background thread
+        scan_thread = threading.Thread(target=run_scan_background, daemon=True)
+        scan_thread.start()
+
+        return jsonify({
+            "status": "started",
+            "message": "Scan started in background",
+            "job_id": job_id,
+            "total_items": total_items
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-scan-progress/<job_id>', methods=['GET'])
+def get_ml_scan_progress(job_id):
+    """Get progress for a specific scan job"""
+    try:
+        import sys
+        if BASE_DIR not in sys.path:
+            sys.path.insert(0, BASE_DIR)
+
+        from trading_system.core.scan_job_manager import get_job_manager
+
+        job_manager = get_job_manager()
+        job = job_manager.get_job(job_id)
+
+        if not job:
+            return jsonify({
+                "status": "error",
+                "message": f"Job {job_id} not found"
+            }), 404
+
+        return jsonify({
+            "status": "success",
+            "job": job
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-scan-active', methods=['GET'])
+def get_ml_scan_active():
+    """Check if any scan is currently running"""
+    try:
+        import sys
+        if BASE_DIR not in sys.path:
+            sys.path.insert(0, BASE_DIR)
+
+        from trading_system.core.scan_job_manager import get_job_manager
+
+        job_manager = get_job_manager()
+        active_job = job_manager.get_active_job()
+
+        if active_job:
+            return jsonify({
+                "status": "success",
+                "active": True,
+                "job": active_job
+            }), 200
+        else:
+            return jsonify({
+                "status": "success",
+                "active": False,
+                "job": None
+            }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-stats', methods=['GET'])
+def get_ml_stats():
+    """Get ML system performance statistics"""
+    try:
+        import sys
+        if BASE_DIR not in sys.path:
+            sys.path.insert(0, BASE_DIR)
+
+        from trading_system.core.trading_system import TradingSystem
+
+        system = TradingSystem()
+        stats = system.get_performance_stats()
+
+        return jsonify({
+            "status": "success",
+            "stats": stats
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-training-progress', methods=['GET'])
+def get_training_progress():
+    """Get ML training progress for countdown timer"""
+    try:
+        import sys
+        if BASE_DIR not in sys.path:
+            sys.path.insert(0, BASE_DIR)
+
+        from trading_system.core.trade_tracker import TradeTracker
+
+        tracker = TradeTracker()
+        stats = tracker.get_performance_stats()
+
+        # Calculate training progress
+        total_trades = stats.get('total_trades', 0)
+        wins = stats.get('wins', 0)
+        losses = stats.get('losses', 0)
+        completed_trades = wins + losses
+        win_rate = (wins / completed_trades * 100) if completed_trades > 0 else 0
+
+        # Determine training level
+        if total_trades >= 840:
+            level = 'expert'
+            level_name = '🧠 Expert'
+        elif total_trades >= 420:
+            level = 'well_trained'
+            level_name = '📈 Well Trained'
+        elif total_trades >= 100:
+            level = 'trained'
+            level_name = '🎓 Trained'
+        elif total_trades >= 30:
+            level = 'learning'
+            level_name = '📊 Learning'
+        else:
+            level = 'untrained'
+            level_name = 'Untrained'
+
+        return jsonify({
+            "status": "success",
+            "total_trades": total_trades,
+            "completed_trades": completed_trades,
+            "wins": wins,
+            "losses": losses,
+            "win_rate": win_rate,
+            "level": level,
+            "level_name": level_name,
+            "expert_target": 840,
+            "progress_pct": min((total_trades / 840) * 100, 100)
+        }), 200
+
+    except Exception as e:
+        # Return default values if database doesn't exist yet
+        return jsonify({
+            "status": "success",
+            "total_trades": 0,
+            "completed_trades": 0,
+            "wins": 0,
+            "losses": 0,
+            "win_rate": 0,
+            "level": "untrained",
+            "level_name": "Untrained",
+            "expert_target": 840,
+            "progress_pct": 0
+        }), 200
+
+
+@app.route('/ml-heatmap-data', methods=['GET'])
+def get_ml_heatmap_data():
+    """Get ML system heat map data (separate from agent heatmaps)"""
+    try:
+        signals_file = os.path.join(DATA_DIR, 'ml_trading_signals.json')
+
+        if not os.path.exists(signals_file):
+            return jsonify({
+                "status": "no_data",
+                "message": "No ML signals found",
+                "heatmaps": {'intraday': [], 'daily': [], 'monthly': []}
+            }), 200
+
+        with open(signals_file, 'r') as f:
+            data = json.load(f)
+
+        # Transform to heat map format
+        heatmaps = {
+            'intraday': data.get('intraday', []),
+            'daily': data.get('daily', []),
+            'monthly': data.get('monthly', []),
+            'metadata': {
+                'timestamp': data.get('timestamp'),
+                'system': 'ML Trading System',
+                'total_signals': data.get('total_count', 0)
+            }
+        }
+
+        return jsonify({
+            "status": "success",
+            "heatmaps": heatmaps,
+            "summary": {
+                'intraday_count': len(heatmaps['intraday']),
+                'daily_count': len(heatmaps['daily']),
+                'monthly_count': len(heatmaps['monthly'])
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-run-full-cycle', methods=['POST'])
+def run_ml_full_cycle():
+    """
+    Trigger a complete ML automated cycle (scan + learner + retrain)
+    Runs immediately without waiting for scheduled time
+    """
+    try:
+        import subprocess
+        import sys
+
+        # Path to automated scheduler
+        scheduler_path = os.path.join(BASE_DIR, 'trading_system', 'automated_scheduler.py')
+
+        if not os.path.exists(scheduler_path):
+            return jsonify({
+                "status": "error",
+                "message": "Automated scheduler not found"
+            }), 404
+
+        # Run with --now flag to execute immediately
+        process = subprocess.Popen(
+            [sys.executable, scheduler_path, '--now'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=os.path.dirname(scheduler_path)
+        )
+
+        # Wait for completion
+        stdout, stderr = process.communicate()
+
+        if process.returncode != 0:
+            return jsonify({
+                "status": "error",
+                "message": f"Full cycle failed: {stderr}"
+            }), 500
+
+        return jsonify({
+            "status": "success",
+            "message": "Full ML cycle completed successfully",
+            "output": stdout
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error running full ML cycle: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-run-scan-only', methods=['POST'])
+def run_ml_scan_only():
+    """Trigger just the ML scan (no learner)"""
+    try:
+        import sys
+        if BASE_DIR not in sys.path:
+            sys.path.insert(0, BASE_DIR)
+
+        from trading_system.core.trading_system import TradingSystem
+
+        # Get parameters
+        data = request.get_json() or {}
+        max_stocks = data.get('max_stocks', 500)  # Default: scan ENTIRE S&P 500
+        include_crypto = data.get('include_crypto', True)
+
+        # Run scan
+        system = TradingSystem()
+        signals = system.run_daily_scan(max_stocks=max_stocks, include_crypto=include_crypto)
+
+        return jsonify({
+            "status": "success",
+            "message": f"Scan complete. Generated {len(signals)} signals.",
+            "signals_count": len(signals)
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-run-learner-only', methods=['POST'])
+def run_ml_learner_only():
+    """Trigger just the automated learner (no scan)"""
+    try:
+        import subprocess
+        import sys
+
+        # Path to automated learner
+        learner_path = os.path.join(BASE_DIR, 'trading_system', 'automated_learner.py')
+
+        if not os.path.exists(learner_path):
+            return jsonify({
+                "status": "error",
+                "message": "Automated learner not found"
+            }), 404
+
+        # Run learner
+        process = subprocess.Popen(
+            [sys.executable, learner_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=os.path.dirname(learner_path)
+        )
+
+        # Wait for completion
+        stdout, stderr = process.communicate()
+
+        if process.returncode != 0:
+            return jsonify({
+                "status": "error",
+                "message": f"Learner failed: {stderr}"
+            }), 500
+
+        return jsonify({
+            "status": "success",
+            "message": "Automated learner completed successfully",
+            "output": stdout
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error running automated learner: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-automation-status', methods=['GET'])
+def get_ml_automation_status_api():
+    """
+    Get ML automation status (built-in scheduler)
+    Works on any platform - no Windows dependencies
+    """
+    try:
+        if not ML_AUTOMATION_AVAILABLE:
+            return jsonify({
+                "status": "unavailable",
+                "message": "ML Automation service not available. Install APScheduler."
+            }), 503
+
+        status = get_automation_status()
+
+        if status['enabled']:
+            return jsonify({
+                "status": "enabled",
+                "enabled": True,
+                "schedule_time": status['schedule_time'],
+                "last_run": status['last_run'],
+                "next_run": status['next_run'],
+                "scheduler_running": status['scheduler_running']
+            }), 200
+        else:
+            return jsonify({
+                "status": "disabled",
+                "enabled": False,
+                "message": "Automation is disabled. Click 'Start Automation' to enable."
+            }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error checking automation status: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-automation-start', methods=['POST'])
+def start_ml_automation():
+    """
+    Start ML automation (built-in scheduler)
+    Runs daily at specified time inside Flask application
+    """
+    try:
+        if not ML_AUTOMATION_AVAILABLE:
+            return jsonify({
+                "status": "error",
+                "message": "ML Automation service not available"
+            }), 503
+
+        # Get schedule time from request (default 18:00)
+        data = request.get_json() or {}
+        schedule_time = data.get('schedule_time', '18:00')
+
+        # Validate time format
+        try:
+            hour, minute = map(int, schedule_time.split(':'))
+            if not (0 <= hour <= 23 and 0 <= minute <= 59):
+                raise ValueError()
+        except:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid time format. Use HH:MM (24-hour format)"
+            }), 400
+
+        # Start automation
+        success = start_automation(schedule_time=schedule_time)
+
+        if success:
+            status = get_automation_status()
+            return jsonify({
+                "status": "success",
+                "message": f"Automation started! Will run daily at {schedule_time}",
+                "enabled": True,
+                "schedule_time": schedule_time,
+                "next_run": status['next_run']
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Automation already running"
+            }), 400
+
+    except Exception as e:
+        app.logger.error(f"Error starting automation: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-automation-stop', methods=['POST'])
+def stop_ml_automation():
+    """Stop ML automation (built-in scheduler)"""
+    try:
+        if not ML_AUTOMATION_AVAILABLE:
+            return jsonify({
+                "status": "error",
+                "message": "ML Automation service not available"
+            }), 503
+
+        success = stop_automation()
+
+        if success:
+            return jsonify({
+                "status": "success",
+                "message": "Automation stopped",
+                "enabled": False
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Automation not running"
+            }), 400
+
+    except Exception as e:
+        app.logger.error(f"Error stopping automation: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ==================== ML MODEL CONFIGURATION ENDPOINTS ====================
+
+@app.route('/ml-settings')
+def serve_ml_settings():
+    """Serve ML Settings page"""
+    return send_from_directory('../frontend', 'ml_settings.html')
+
+
+@app.route('/ml-configs', methods=['GET'])
+def get_ml_configs():
+    """Get all model configurations"""
+    try:
+        if not ML_MODEL_MANAGER_AVAILABLE:
+            return jsonify({
+                "status": "error",
+                "message": "ML Model Manager not available"
+            }), 503
+
+        configs = ml_model_manager.get_all_configurations()
+
+        return jsonify({
+            "status": "success",
+            "configurations": configs
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error getting configurations: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-config-create', methods=['POST'])
+def create_ml_config():
+    """Create new model configuration"""
+    try:
+        if not ML_MODEL_MANAGER_AVAILABLE:
+            return jsonify({
+                "status": "error",
+                "message": "ML Model Manager not available"
+            }), 503
+
+        data = request.get_json()
+
+        if not data or 'name' not in data:
+            return jsonify({
+                "status": "error",
+                "message": "Model name is required"
+            }), 400
+
+        name = data['name']
+        config = {
+            'analysis_type': data.get('analysis_type', 'price_action'),
+            'philosophy': data.get('philosophy', []),
+            'win_criteria': data.get('win_criteria', 'price_movement'),
+            'hold_period_days': data.get('hold_period_days', 14),
+            'win_threshold_pct': data.get('win_threshold_pct', 10.0),
+            'loss_threshold_pct': data.get('loss_threshold_pct', -5.0)
+        }
+
+        success = ml_model_manager.create_configuration(name, config)
+
+        if success:
+            return jsonify({
+                "status": "success",
+                "message": f"Model '{name}' created successfully",
+                "name": name
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": f"Model '{name}' already exists"
+            }), 400
+
+    except Exception as e:
+        app.logger.error(f"Error creating configuration: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-config-activate', methods=['POST'])
+def activate_ml_config():
+    """Activate a model configuration"""
+    try:
+        if not ML_MODEL_MANAGER_AVAILABLE:
+            return jsonify({
+                "status": "error",
+                "message": "ML Model Manager not available"
+            }), 503
+
+        data = request.get_json()
+
+        if not data or 'name' not in data:
+            return jsonify({
+                "status": "error",
+                "message": "Model name is required"
+            }), 400
+
+        name = data['name']
+        success = ml_model_manager.activate_model(name)
+
+        if success:
+            return jsonify({
+                "status": "success",
+                "message": f"Model '{name}' activated",
+                "active_model": name
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": f"Model '{name}' not found"
+            }), 404
+
+    except Exception as e:
+        app.logger.error(f"Error activating configuration: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-config-delete/<name>', methods=['DELETE'])
+def delete_ml_config(name):
+    """Delete a model configuration"""
+    try:
+        if not ML_MODEL_MANAGER_AVAILABLE:
+            return jsonify({
+                "status": "error",
+                "message": "ML Model Manager not available"
+            }), 503
+
+        success = ml_model_manager.delete_configuration(name)
+
+        if success:
+            return jsonify({
+                "status": "success",
+                "message": f"Model '{name}' deleted"
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": f"Model '{name}' not found or is active (cannot delete active model)"
+            }), 400
+
+    except Exception as e:
+        app.logger.error(f"Error deleting configuration: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ml-config-performance/<name>', methods=['GET'])
+def get_ml_config_performance(name):
+    """Get performance stats for a model"""
+    try:
+        if not ML_MODEL_MANAGER_AVAILABLE:
+            return jsonify({
+                "status": "error",
+                "message": "ML Model Manager not available"
+            }), 503
+
+        config = ml_model_manager.get_configuration(name)
+
+        if not config:
+            return jsonify({
+                "status": "error",
+                "message": f"Model '{name}' not found"
+            }), 404
+
+        return jsonify({
+            "status": "success",
+            "configuration": config
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error getting performance: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ============================================================================
+# ML SIGNALS ENDPOINTS (Advanced ML Trading System)
+# ============================================================================
+
+@app.route('/ml-signals')
+def ml_signals_page():
+    """Serve the ML Signals frontend page"""
+    return send_from_directory('../frontend', 'ml_signals.html')
+
+
+@app.route('/ml/models', methods=['GET'])
+def get_ml_models():
+    """Get list of available ML models with their status"""
+    try:
+        import glob
+        import json
+        from pathlib import Path
+
+        models = []
+
+        # Define available model configurations
+        model_configs = [
+            {
+                'id': 'quick_14d',
+                'name': 'Quick Training (14-day)',
+                'hold_days': 14,
+                'profit_target': 10.0,
+                'loss_limit': 5.0,
+                'symbols_count': 20,
+                'model_path': 'backend/data/ml_models/xgboost',
+                'results_file': 'backend/data/quick_training_results.json'
+            },
+            {
+                'id': 'options_5d',
+                'name': 'Options 5-Day',
+                'hold_days': 5,
+                'profit_target': 25.0,
+                'loss_limit': 15.0,
+                'symbols_count': 20,
+                'model_path': 'backend/data/ml_models/xgboost',
+                'results_file': 'backend/data/options_training_5d_results.json'
+            },
+            {
+                'id': 'options_7d',
+                'name': 'Options 7-Day',
+                'hold_days': 7,
+                'profit_target': 30.0,
+                'loss_limit': 20.0,
+                'symbols_count': 20,
+                'model_path': 'backend/data/ml_models/xgboost',
+                'results_file': 'backend/data/options_training_7d_results.json'
+            },
+            {
+                'id': 'full_14d',
+                'name': 'Full Training (14-day)',
+                'hold_days': 14,
+                'profit_target': 10.0,
+                'loss_limit': 5.0,
+                'symbols_count': 82,
+                'model_path': 'backend/data/ml_models/xgboost',
+                'results_file': 'backend/data/training_results_checkpoint.json'
+            }
+        ]
+
+        for config in model_configs:
+            model_info = {
+                'id': config['id'],
+                'name': config['name'],
+                'hold_days': config['hold_days'],
+                'profit_target': config['profit_target'],
+                'loss_limit': config['loss_limit'],
+                'symbols_count': config['symbols_count'],
+                'status': 'not_trained',
+                'performance': None
+            }
+
+            # Check if model is trained
+            if Path(config['model_path']).exists():
+                model_info['status'] = 'trained'
+
+                # Try to load performance metrics
+                if Path(config['results_file']).exists():
+                    try:
+                        with open(config['results_file'], 'r') as f:
+                            results = json.load(f)
+
+                            # Extract best model performance
+                            if 'results' in results:
+                                best_acc = 0
+                                best_gap = 0
+                                for model_name, metrics in results['results'].items():
+                                    if metrics.get('test_accuracy', 0) > best_acc:
+                                        best_acc = metrics['test_accuracy']
+                                        best_gap = metrics.get('gap', 0)
+
+                                model_info['performance'] = {
+                                    'test_accuracy': best_acc,
+                                    'gap': best_gap,
+                                    'last_trained': results.get('timestamp', 'Unknown')
+                                }
+                    except Exception as e:
+                        print(f"Error loading results for {config['id']}: {e}")
+
+            models.append(model_info)
+
+        return jsonify({
+            'success': True,
+            'models': models
+        })
+
+    except Exception as e:
+        print(f"Error getting ML models: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/ml/predict', methods=['POST'])
+def get_ml_prediction():
+    """Get ML prediction for a symbol"""
+    try:
+        data = request.json
+        model_id = data.get('model_id')
+        symbol = data.get('symbol')
+
+        if not model_id or not symbol:
+            return jsonify({'error': 'model_id and symbol required'}), 400
+
+        # Import ML components
+        import sys
+        sys.path.insert(0, 'backend')
+        from advanced_ml.training.training_pipeline import TrainingPipeline
+
+        # Initialize pipeline
+        pipeline = TrainingPipeline()
+
+        # Get current market data for the symbol
+        import yfinance as yf
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period='1y')
+
+        if len(hist) == 0:
+            return jsonify({'error': f'No data available for {symbol}'}), 404
+
+        current_price = hist['Close'].iloc[-1]
+
+        # Extract features for latest data point
+        # (This is simplified - in production, use the full feature extraction)
+        features = pipeline.feature_engineer.extract_features(hist, symbol)
+
+        if features is None or len(features) == 0:
+            return jsonify({'error': f'Could not extract features for {symbol}'}), 500
+
+        # Get the latest feature vector
+        latest_features = features.iloc[-1].to_dict()
+
+        # Make prediction using XGBoost model (best performing)
+        prediction = pipeline.xgb_model.predict(latest_features)
+
+        # Map prediction to action
+        label_map = {0: 'buy', 1: 'hold', 2: 'sell'}
+        predicted_label = prediction['prediction']
+
+        if isinstance(predicted_label, (int, float)):
+            action = label_map.get(int(predicted_label), 'hold')
+        else:
+            action = predicted_label
+
+        # Get confidence (if available)
+        confidence = prediction.get('confidence', 0.5)
+
+        return jsonify({
+            'success': True,
+            'symbol': symbol,
+            'prediction': action,
+            'confidence': float(confidence),
+            'current_price': float(current_price),
+            'model': model_id,
+            'timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/ml/train', methods=['POST'])
+def start_ml_training():
+    """Start ML model training"""
+    try:
+        data = request.json
+        training_type = data.get('training_type', 'quick')
+
+        import subprocess
+        import sys
+
+        # Map training type to script
+        script_map = {
+            'quick': 'run_quick_training.py',
+            'options_5d': 'run_options_training.py --hold-days 5',
+            'options_7d': 'run_options_training.py --hold-days 7',
+            'full': 'run_training_with_checkpoints.py'
+        }
+
+        script = script_map.get(training_type)
+        if not script:
+            return jsonify({'error': f'Unknown training type: {training_type}'}), 400
+
+        # Start training in background
+        cmd = f'{sys.executable} {script}'
+        subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        return jsonify({
+            'success': True,
+            'message': f'Training started: {training_type}',
+            'estimated_time': '2-3 hours' if 'quick' in training_type or 'options' in training_type else '8-11 hours'
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# TURBOMODE API ENDPOINTS
+# ============================================================================
+
+# Initialize TurboMode database
+try:
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    from backend.turbomode.database_schema import TurboModeDB
+    turbomode_db = TurboModeDB(db_path="backend/data/turbomode.db")
+    TURBOMODE_AVAILABLE = True
+except ImportError as e:
+    print(f"[TURBOMODE] Not available: {e}")
+    TURBOMODE_AVAILABLE = False
+
+# Initialize TurboMode Scheduler (separate from ML automation)
+try:
+    from backend.turbomode.turbomode_scheduler import (
+        init_turbomode_scheduler,
+        start_scheduler as start_turbomode,
+        stop_scheduler as stop_turbomode,
+        get_status as get_turbomode_status
+    )
+    TURBOMODE_SCHEDULER_AVAILABLE = True
+except ImportError as e:
+    print(f"[TURBOMODE SCHEDULER] Not available: {e}")
+    TURBOMODE_SCHEDULER_AVAILABLE = False
+
+
+@app.route('/turbomode/signals', methods=['GET'])
+def get_turbomode_signals():
+    """
+    Get active TurboMode signals with filters
+
+    Query params:
+        - market_cap: 'large_cap', 'mid_cap', or 'small_cap' (optional)
+        - signal_type: 'BUY' or 'SELL' (optional)
+        - limit: max number of results (default 20)
+    """
+    if not TURBOMODE_AVAILABLE:
+        return jsonify({'error': 'TurboMode not available'}), 503
+
+    try:
+        market_cap = request.args.get('market_cap')
+        signal_type = request.args.get('signal_type')
+        limit = int(request.args.get('limit', 20))
+
+        signals = turbomode_db.get_active_signals(
+            market_cap=market_cap,
+            signal_type=signal_type,
+            limit=limit
+        )
+
+        # Calculate age color and effective confidence for each signal
+        for signal in signals:
+            age_days = signal.get('age_days', 0)
+            confidence = signal.get('confidence', 0)
+
+            # Age color
+            if age_days <= 3:
+                signal['age_color'] = 'hot'  # Red/hot
+            elif age_days <= 7:
+                signal['age_color'] = 'warm'  # Orange/warm
+            elif age_days <= 10:
+                signal['age_color'] = 'cool'  # Yellow/cool
+            else:
+                signal['age_color'] = 'cold'  # Blue/cold
+
+            # Effective confidence (time-decayed)
+            signal['effective_confidence'] = turbomode_db.calculate_effective_confidence(
+                confidence, age_days
+            )
+
+        return jsonify({
+            'success': True,
+            'signals': signals,
+            'count': len(signals)
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/turbomode/sectors', methods=['GET'])
+def get_turbomode_sectors():
+    """
+    Get sector statistics for Sectors Overview page
+
+    Query params:
+        - date: YYYY-MM-DD (optional, defaults to latest)
+    """
+    if not TURBOMODE_AVAILABLE:
+        return jsonify({'error': 'TurboMode not available'}), 503
+
+    try:
+        date = request.args.get('date')  # None = latest
+
+        sector_stats = turbomode_db.get_sector_stats(date=date)
+
+        # Separate into bullish and bearish
+        bullish_sectors = [s for s in sector_stats if s['sentiment'] == 'BULLISH']
+        bearish_sectors = [s for s in sector_stats if s['sentiment'] == 'BEARISH']
+        neutral_sectors = [s for s in sector_stats if s['sentiment'] == 'NEUTRAL']
+
+        return jsonify({
+            'success': True,
+            'bullish': bullish_sectors,
+            'bearish': bearish_sectors,
+            'neutral': neutral_sectors,
+            'total_sectors': len(sector_stats)
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/turbomode/stats', methods=['GET'])
+def get_turbomode_stats():
+    """
+    Get overall TurboMode database statistics
+    """
+    if not TURBOMODE_AVAILABLE:
+        return jsonify({'error': 'TurboMode not available'}), 503
+
+    try:
+        stats = turbomode_db.get_stats()
+
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/turbomode/scan', methods=['POST'])
+def run_turbomode_scan():
+    """
+    Trigger overnight TurboMode scan manually
+
+    WARNING: This takes 20-30 minutes for full S&P 500 scan
+    """
+    if not TURBOMODE_AVAILABLE:
+        return jsonify({'error': 'TurboMode not available'}), 503
+
+    try:
+        import subprocess
+        import sys
+
+        # Start scanner in background
+        cmd = [sys.executable, 'backend/turbomode/overnight_scanner.py']
+        subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        return jsonify({
+            'success': True,
+            'message': 'TurboMode scan started',
+            'estimated_time': '20-30 minutes for full S&P 500 scan'
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/turbomode/scheduler/status', methods=['GET'])
+def get_turbomode_scheduler_status():
+    """Get TurboMode scheduler status"""
+    if not TURBOMODE_SCHEDULER_AVAILABLE:
+        return jsonify({'error': 'TurboMode scheduler not available'}), 503
+
+    try:
+        status = get_turbomode_status()
+        return jsonify({
+            'success': True,
+            'status': status
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/turbomode/scheduler/start', methods=['POST'])
+def start_turbomode_scheduler():
+    """Start TurboMode scheduler"""
+    if not TURBOMODE_SCHEDULER_AVAILABLE:
+        return jsonify({'error': 'TurboMode scheduler not available'}), 503
+
+    try:
+        data = request.json or {}
+        schedule_time = data.get('schedule_time', '23:00')
+
+        success = start_turbomode(schedule_time=schedule_time)
+
+        if success:
+            status = get_turbomode_status()
+            return jsonify({
+                'success': True,
+                'message': f'TurboMode scheduler started at {schedule_time}',
+                'status': status
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Scheduler already running or failed to start'
+            })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/turbomode/scheduler/stop', methods=['POST'])
+def stop_turbomode_scheduler():
+    """Stop TurboMode scheduler"""
+    if not TURBOMODE_SCHEDULER_AVAILABLE:
+        return jsonify({'error': 'TurboMode scheduler not available'}), 503
+
+    try:
+        success = stop_turbomode()
+
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'TurboMode scheduler stopped'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Scheduler not running or failed to stop'
+            })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == "__main__":
+    # Initialize ML Automation Service (separate from TurboMode)
+    if ML_AUTOMATION_AVAILABLE:
+        print("[ML AUTOMATION] Initializing built-in scheduler...")
+        init_automation_service()
+        print("[ML AUTOMATION] Ready")
+    else:
+        print("[ML AUTOMATION] Not available - install APScheduler")
+
+    # Initialize TurboMode Scheduler (runs at 11 PM nightly)
+    if TURBOMODE_SCHEDULER_AVAILABLE:
+        print("[TURBOMODE SCHEDULER] Initializing overnight scan scheduler...")
+        init_turbomode_scheduler()
+        status = get_turbomode_status()
+        if status['enabled']:
+            print(f"[TURBOMODE SCHEDULER] Ready - Next scan at {status['next_run']}")
+        else:
+            print("[TURBOMODE SCHEDULER] Disabled")
+    else:
+        print("[TURBOMODE SCHEDULER] Not available")
+
     # Use socketio.run instead of app.run for WebSocket support
     # Ticker emit worker will start automatically when first client connects
     print("Flask server starting on http://127.0.0.1:5000")

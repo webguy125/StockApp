@@ -1,0 +1,176 @@
+{
+  "intraday": [],
+  "daily": [],
+  "monthly": [],
+  "all_signals": [
+    {
+      "symbol": "HOOD",
+      "score": 0.546,
+      "confidence": 0.36,
+      "direction": "neutral",
+      "ml_prediction": "HOLD",
+      "ml_confidence": 0.34,
+      "ml_probabilities": {
+        "sell": 0.33,
+        "hold": 0.34,
+        "buy": 0.33
+      },
+      "analyzers": {
+        "price_action": {
+          "signal_strength": 0.69,
+          "direction": "bullish",
+          "confidence": 0.3799999999999999,
+          "metadata": {
+            "bullish_patterns": 0.0,
+            "bearish_patterns": 0.0,
+            "support_strength": 1.0,
+            "resistance_strength": 0.4,
+            "higher_highs": 0.0,
+            "higher_lows": 1.0
+          }
+        }
+      },
+      "price": 117.16000366210938,
+      "volatility": 6.345046715388168,
+      "timestamp": "2025-12-19T14:22:41.356250",
+      "rank": 1
+    },
+    {
+      "symbol": "SNDK",
+      "score": 0.47400000000000003,
+      "confidence": 0.24000000000000007,
+      "direction": "neutral",
+      "ml_prediction": "HOLD",
+      "ml_confidence": 0.34,
+      "ml_probabilities": {
+        "sell": 0.33,
+        "hold": 0.34,
+        "buy": 0.33
+      },
+      "analyzers": {
+        "price_action": {
+          "signal_strength": 0.5700000000000001,
+          "direction": "neutral",
+          "confidence": 0.14000000000000012,
+          "metadata": {
+            "bullish_patterns": 0.0,
+            "bearish_patterns": 0.0,
+            "support_strength": 0.6,
+            "resistance_strength": 0.8,
+            "higher_highs": 1.0,
+            "higher_lows": 0.0
+          }
+        }
+      },
+      "price": 219.4600067138672,
+      "volatility": 9.413625757922183,
+      "timestamp": "2025-12-19T14:22:39.698285",
+      "rank": 2
+    },
+    {
+      "symbol": "PSKY",
+      "score": 0.468,
+      "confidence": 0.23000000000000007,
+      "direction": "neutral",
+      "ml_prediction": "HOLD",
+      "ml_confidence": 0.34,
+      "ml_probabilities": {
+        "sell": 0.33,
+        "hold": 0.34,
+        "buy": 0.33
+      },
+      "analyzers": {
+        "price_action": {
+          "signal_strength": 0.56,
+          "direction": "neutral",
+          "confidence": 0.1200000000000001,
+          "metadata": {
+            "bullish_patterns": 0.0,
+            "bearish_patterns": 0.0,
+            "support_strength": 0.6,
+            "resistance_strength": 0.2,
+            "higher_highs": 0.0,
+            "higher_lows": 0.0
+          }
+        }
+      },
+      "price": 13.010000228881836,
+      "volatility": 6.082497797258749,
+      "timestamp": "2025-12-19T14:22:43.164360",
+      "rank": 3
+    },
+    {
+      "symbol": "WDC",
+      "score": 0.432,
+      "confidence": 0.17,
+      "direction": "neutral",
+      "ml_prediction": "HOLD",
+      "ml_confidence": 0.34,
+      "ml_probabilities": {
+        "sell": 0.33,
+        "hold": 0.34,
+        "buy": 0.33
+      },
+      "analyzers": {
+        "price_action": {
+          "signal_strength": 0.5,
+          "direction": "neutral",
+          "confidence": 0.0,
+          "metadata": {
+            "bullish_patterns": 0.0,
+            "bearish_patterns": 0.0,
+            "support_strength": 0.6,
+            "resistance_strength": 0.6,
+            "higher_highs": 0.0,
+            "higher_lows": 0.0
+          }
+        }
+      },
+      "price": 175.00999450683594,
+      "volatility": 6.184376536522498,
+      "timestamp": "2025-12-19T14:22:42.211151",
+      "rank": 4
+    },
+    {
+      "symbol": "GEV",
+      "score": 0.36,
+      "confidence": 0.29000000000000004,
+      "direction": "bearish",
+      "ml_prediction": "HOLD",
+      "ml_confidence": 0.34,
+      "ml_probabilities": {
+        "sell": 0.33,
+        "hold": 0.34,
+        "buy": 0.33
+      },
+      "analyzers": {
+        "price_action": {
+          "signal_strength": 0.38,
+          "direction": "bearish",
+          "confidence": 0.24,
+          "metadata": {
+            "bullish_patterns": 0.0,
+            "bearish_patterns": 0.0,
+            "support_strength": 0.2,
+            "resistance_strength": 1.0,
+            "higher_highs": 0.0,
+            "higher_lows": 0.0
+          }
+        }
+      },
+      "price": 639.4299926757812,
+      "volatility": 6.400566431172303,
+      "timestamp": "2025-12-19T14:22:40.558240",
+      "rank": 5
+    }
+  ],
+  "timestamp": "2025-12-19T14:22:43.181942",
+  "total_count": 5,
+  "scan_metadata": {
+    "total_scanned": 5,
+    "total_generated": 5,
+    "top_displayed": 5,
+    "min_confidence_threshold": 0.5,
+    "max_signals_limit": 100
+  }
+}

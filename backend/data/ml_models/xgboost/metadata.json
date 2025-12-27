@@ -1,0 +1,37 @@
+{
+  "feature_names": [],
+  "hyperparameters": {
+    "n_estimators": 300,
+    "max_depth": 8,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "colsample_bylevel": 0.8,
+    "gamma": 0.1,
+    "min_child_weight": 3,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "objective": "multi:softprob",
+    "num_class": 3,
+    "eval_metric": "mlogloss",
+    "random_state": 42,
+    "n_jobs": -1,
+    "tree_method": "hist"
+  },
+  "training_metrics": {
+    "train_accuracy": 0.9925277344824425,
+    "val_accuracy": 0.8443344334433444,
+    "cv_mean": 0.8416088384313705,
+    "cv_std": 0.00567104407868033,
+    "best_iteration": 0,
+    "n_samples": 27268,
+    "n_features": 179,
+    "n_estimators": 300,
+    "top_features": [],
+    "timestamp": "2025-12-27T02:52:05.222570"
+  },
+  "is_trained": true,
+  "use_gpu": false,
+  "model_version": "1.0.0",
+  "saved_at": "2025-12-27T02:52:05.671931"
+}

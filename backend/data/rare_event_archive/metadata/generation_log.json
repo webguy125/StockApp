@@ -1,0 +1,78 @@
+{
+  "started_at": "2025-12-22T20:03:53.627428",
+  "events_processed": [
+    {
+      "event_name": "2008_financial_crisis",
+      "sample_count": 0,
+      "status": "no_samples"
+    },
+    {
+      "event_name": "2020_covid_crash",
+      "sample_count": 0,
+      "status": "no_samples"
+    },
+    {
+      "event_name": "2022_inflation_bear",
+      "sample_count": 0,
+      "status": "no_samples"
+    },
+    {
+      "event_name": "2018_volmageddon",
+      "sample_count": 0,
+      "status": "no_samples"
+    },
+    {
+      "event_name": "2023_banking_crisis",
+      "sample_count": 0,
+      "status": "no_samples"
+    },
+    {
+      "event_name": "2015_china_devaluation",
+      "sample_count": 0,
+      "status": "no_samples"
+    },
+    {
+      "event_name": "2011_debt_ceiling",
+      "sample_count": 0,
+      "status": "no_samples"
+    }
+  ],
+  "errors": [
+    "2008_financial_crisis:AAPL:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2008_financial_crisis:AES:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2008_financial_crisis:AMT:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2008_financial_crisis:AMZN:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2008_financial_crisis:APD:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2020_covid_crash:AAPL:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2020_covid_crash:ABBV:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2020_covid_crash:AES:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2020_covid_crash:ALLY:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2020_covid_crash:AMT:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2022_inflation_bear:AAPL:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2022_inflation_bear:ABBV:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2022_inflation_bear:AES:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2022_inflation_bear:ALLY:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2022_inflation_bear:AMT:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2018_volmageddon:AAPL:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2018_volmageddon:ABBV:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2018_volmageddon:AES:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2018_volmageddon:ALLY:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2018_volmageddon:AMT:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2023_banking_crisis:AAPL:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2023_banking_crisis:ABBV:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2023_banking_crisis:AES:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2023_banking_crisis:ALLY:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2023_banking_crisis:AMT:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2015_china_devaluation:AAPL:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2015_china_devaluation:ABBV:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2015_china_devaluation:AES:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2015_china_devaluation:ALLY:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2015_china_devaluation:AMT:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2011_debt_ceiling:AAPL:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2011_debt_ceiling:AES:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2011_debt_ceiling:AMT:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2011_debt_ceiling:AMZN:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'",
+    "2011_debt_ceiling:APD:'HistoricalBacktest' object has no attribute 'generate_samples_from_dataframe'"
+  ],
+  "completed_at": "2025-12-22T20:07:08.601224"
+}

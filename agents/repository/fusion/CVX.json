@@ -1,6 +1,6 @@
 {
   "symbol": "CVX",
-  "timestamp": "2025-12-04T00:02:31.677121",
+  "timestamp": "2025-12-27T00:02:25.511452",
   "agent": "fusion_agent",
   "total_score": 46.15384615384615,
   "confidence": 0.7615384615384616,
@@ -11,7 +11,7 @@
     "💸"
   ],
   "emoji_string": "➖✅💸",
-  "shorthand": "CVX | ➖✅💸 | 46 | 0.76 | 2025-12-04",
+  "shorthand": "CVX | ➖✅💸 | 46 | 0.76 | 2025-12-27",
   "weighted_scores": {
     "indicators_agent": {
       "score": 50,

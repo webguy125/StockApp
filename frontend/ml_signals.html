@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Trading Signals - StockApp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        /* Model Selector */
+        .model-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .model-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .model-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .model-card.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+        }
+
+        .model-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .model-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        .model-badge.trained {
+            background: #4caf50;
+            color: white;
+        }
+
+        .model-badge.training {
+            background: #ff9800;
+            color: white;
+        }
+
+        .model-badge.not-trained {
+            background: #f44336;
+            color: white;
+        }
+
+        .model-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .model-details {
+            font-size: 0.9em;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .model-performance {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .perf-metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 0.85em;
+        }
+
+        .perf-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* Symbol Input */
+        .symbol-input-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .symbol-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .symbol-input input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1.1em;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+
+        .symbol-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Signals Display */
+        .signals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .signal-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .signal-card.buy {
+            border-left-color: #4caf50;
+        }
+
+        .signal-card.sell {
+            border-left-color: #f44336;
+        }
+
+        .signal-card.hold {
+            border-left-color: #ff9800;
+        }
+
+        .signal-symbol {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .signal-prediction {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .signal-prediction.buy {
+            color: #4caf50;
+        }
+
+        .signal-prediction.sell {
+            color: #f44336;
+        }
+
+        .signal-prediction.hold {
+            color: #ff9800;
+        }
+
+        .signal-confidence {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .confidence-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+
+        .signal-details {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        /* Training Controls */
+        .training-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .training-btn {
+            padding: 15px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .training-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .training-btn h3 {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .training-btn p {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .status-message.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Watchlist */
+        .watchlist {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .watchlist-symbol {
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .watchlist-symbol:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 ML Trading Signals</h1>
+            <p>AI-Powered Buy/Sell Signals for Options Trading</p>
+        </div>
+
+        <div class="content">
+            <!-- Status Messages -->
+            <div id="statusMessage" class="status-message"></div>
+
+            <!-- Model Selector Section -->
+            <div class="section">
+                <h2 class="section-title">📊 Select Trading Model</h2>
+                <div class="model-selector" id="modelSelector">
+                    <!-- Models will be dynamically loaded -->
+                </div>
+            </div>
+
+            <!-- Symbol Input Section -->
+            <div class="section">
+                <h2 class="section-title">🔍 Get Trading Signals</h2>
+
+                <div class="watchlist" id="watchlist">
+                    <div class="watchlist-symbol" onclick="getSignal('AAPL')">AAPL</div>
+                    <div class="watchlist-symbol" onclick="getSignal('MSFT')">MSFT</div>
+                    <div class="watchlist-symbol" onclick="getSignal('NVDA')">NVDA</div>
+                    <div class="watchlist-symbol" onclick="getSignal('TSLA')">TSLA</div>
+                    <div class="watchlist-symbol" onclick="getSignal('GOOGL')">GOOGL</div>
+                    <div class="watchlist-symbol" onclick="getSignal('META')">META</div>
+                    <div class="watchlist-symbol" onclick="getSignal('SPY')">SPY</div>
+                    <div class="watchlist-symbol" onclick="getSignal('QQQ')">QQQ</div>
+                </div>
+
+                <div class="symbol-input-section">
+                    <div class="symbol-input">
+                        <input type="text" id="symbolInput" placeholder="Enter symbol (e.g., AAPL)" onkeypress="handleKeyPress(event)">
+                    </div>
+                    <button class="btn btn-primary" onclick="getSignal()">Get Signal</button>
+                    <button class="btn btn-secondary" onclick="getMultipleSignals()">Scan Watchlist</button>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing market data and generating signals...</p>
+                </div>
+
+                <!-- Signals Display -->
+                <div class="signals-grid" id="signalsGrid">
+                    <!-- Signals will be displayed here -->
+                </div>
+            </div>
+
+            <!-- Training Controls Section -->
+            <div class="section">
+                <h2 class="section-title">⚙️ Model Training</h2>
+                <p style="margin-bottom: 20px; color: #666;">
+                    <strong>Note:</strong> Each hold period requires separate training. Training takes 2-3 hours per configuration.
+                </p>
+                <div class="training-controls">
+                    <div class="training-btn" onclick="startTraining('quick')">
+                        <h3>⚡ Quick Training</h3>
+                        <p>20 symbols, 14-day hold<br>~2-3 hours</p>
+                    </div>
+                    <div class="training-btn" onclick="startTraining('options_5d')">
+                        <h3>🎯 Options 5-Day</h3>
+                        <p>20 symbols, 5-day hold<br>~2-3 hours</p>
+                    </div>
+                    <div class="training-btn" onclick="startTraining('options_7d')">
+                        <h3>📈 Options 7-Day</h3>
+                        <p>20 symbols, 7-day hold<br>~2-3 hours</p>
+                    </div>
+                    <div class="training-btn" onclick="startTraining('full')">
+                        <h3>🏆 Full Training</h3>
+                        <p>82 symbols, 14-day hold<br>~8-11 hours</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedModel = null;
+        const API_BASE = 'http://127.0.0.1:5000';
+
+        // Load available models on page load
+        window.onload = function() {
+            loadModels();
+        };
+
+        // Load available models
+        async function loadModels() {
+            try {
+                const response = await fetch(`${API_BASE}/ml/models`);
+                const data = await response.json();
+
+                const selector = document.getElementById('modelSelector');
+                selector.innerHTML = '';
+
+                if (data.models && data.models.length > 0) {
+                    data.models.forEach(model => {
+                        const card = createModelCard(model);
+                        selector.appendChild(card);
+                    });
+
+                    // Auto-select first trained model
+                    const firstTrained = data.models.find(m => m.status === 'trained');
+                    if (firstTrained) {
+                        selectModel(firstTrained.id);
+                    }
+                } else {
+                    selector.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">No trained models available. Start training below.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading models:', error);
+                showStatus('Error loading models. Make sure Flask server is running.', 'error');
+            }
+        }
+
+        // Create model card element
+        function createModelCard(model) {
+            const card = document.createElement('div');
+            card.className = `model-card ${model.status === 'not_trained' ? 'disabled' : ''}`;
+            card.onclick = () => model.status !== 'not_trained' && selectModel(model.id);
+
+            const badgeClass = model.status === 'trained' ? 'trained' :
+                              model.status === 'training' ? 'training' : 'not-trained';
+            const badgeText = model.status === 'trained' ? 'Ready' :
+                            model.status === 'training' ? 'Training...' : 'Not Trained';
+
+            let performanceHTML = '';
+            if (model.performance) {
+                performanceHTML = `
+                    <div class="model-performance">
+                        <div class="perf-metric">
+                            <span>Test Accuracy:</span>
+                            <span class="perf-value">${(model.performance.test_accuracy * 100).toFixed(2)}%</span>
+                        </div>
+                        <div class="perf-metric">
+                            <span>Training Gap:</span>
+                            <span class="perf-value">${(model.performance.gap * 100).toFixed(2)}%</span>
+                        </div>
+                        <div class="perf-metric">
+                            <span>Last Trained:</span>
+                            <span class="perf-value">${model.performance.last_trained || 'N/A'}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="model-badge ${badgeClass}">${badgeText}</div>
+                <div class="model-name">${model.name}</div>
+                <div class="model-details">
+                    <div><strong>Hold Period:</strong> ${model.hold_days} days</div>
+                    <div><strong>Target:</strong> +${model.profit_target}% / -${model.loss_limit}%</div>
+                    <div><strong>Symbols:</strong> ${model.symbols_count}</div>
+                </div>
+                ${performanceHTML}
+            `;
+
+            return card;
+        }
+
+        // Select a model
+        function selectModel(modelId) {
+            selectedModel = modelId;
+
+            // Update UI
+            document.querySelectorAll('.model-card').forEach(card => {
+                card.classList.remove('active');
+            });
+
+            event.target.closest('.model-card').classList.add('active');
+
+            showStatus(`Selected: ${modelId}`, 'info');
+        }
+
+        // Get signal for a symbol
+        async function getSignal(symbol = null) {
+            if (!selectedModel) {
+                showStatus('Please select a model first', 'error');
+                return;
+            }
+
+            const symbolInput = symbol || document.getElementById('symbolInput').value.toUpperCase().trim();
+            if (!symbolInput) {
+                showStatus('Please enter a symbol', 'error');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('signalsGrid').innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/ml/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model_id: selectedModel,
+                        symbol: symbolInput
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    showStatus(data.error, 'error');
+                } else {
+                    displaySignal(data);
+                    showStatus(`Signal generated for ${symbolInput}`, 'success');
+                }
+            } catch (error) {
+                console.error('Error getting signal:', error);
+                showStatus('Error getting signal. Make sure Flask server is running.', 'error');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Get signals for multiple symbols
+        async function getMultipleSignals() {
+            const watchlist = ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'GOOGL', 'META', 'SPY', 'QQQ'];
+
+            document.getElementById('signalsGrid').innerHTML = '';
+            document.getElementById('loading').style.display = 'block';
+
+            for (const symbol of watchlist) {
+                await getSignal(symbol);
+            }
+
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Display signal
+        function displaySignal(signal) {
+            const grid = document.getElementById('signalsGrid');
+
+            const card = document.createElement('div');
+            const predictionClass = signal.prediction.toLowerCase();
+            card.className = `signal-card ${predictionClass}`;
+
+            const actionText = signal.prediction === 'buy' ? '📈 BUY CALLS' :
+                              signal.prediction === 'sell' ? '📉 BUY PUTS' :
+                              '⏸️ HOLD';
+
+            card.innerHTML = `
+                <div class="signal-symbol">${signal.symbol}</div>
+                <div class="signal-prediction ${predictionClass}">${actionText}</div>
+                <div class="signal-confidence">
+                    Confidence: ${(signal.confidence * 100).toFixed(1)}%
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${signal.confidence * 100}%"></div>
+                    </div>
+                </div>
+                <div class="signal-details">
+                    <div><strong>Model:</strong> ${signal.model}</div>
+                    <div><strong>Current Price:</strong> $${signal.current_price?.toFixed(2) || 'N/A'}</div>
+                    <div><strong>Generated:</strong> ${new Date(signal.timestamp).toLocaleString()}</div>
+                </div>
+            `;
+
+            grid.appendChild(card);
+        }
+
+        // Start training
+        async function startTraining(type) {
+            if (!confirm(`Start ${type} training? This will take 2-11 hours depending on configuration.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/ml/train`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ training_type: type })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showStatus(`Training started: ${data.message}`, 'success');
+                    // Reload models to show training status
+                    setTimeout(loadModels, 2000);
+                } else {
+                    showStatus(`Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error starting training:', error);
+                showStatus('Error starting training. Make sure Flask server is running.', 'error');
+            }
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type}`;
+            statusEl.style.display = 'block';
+
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle Enter key in symbol input
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                getSignal();
+            }
+        }
+    </script>
+</body>
+</html>

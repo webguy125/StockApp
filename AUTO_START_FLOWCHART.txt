@@ -1,0 +1,219 @@
+================================================================================
+AUTO-START FLOWCHART - What Happens When Flask Starts
+================================================================================
+
+YOU: Double-click start_flask.bat
+         │
+         ▼
+    Flask starts
+         │
+         ▼
+    Import ml_automation_service.py
+         │
+         ▼
+    Call init_automation_service()
+         │
+         ▼
+    Check: Does ml_automation_state.json exist?
+         │
+         ├─ NO (First Run)
+         │     │
+         │     ▼
+         │  Print: "First run detected - ENABLING automation at 18:00"
+         │     │
+         │     ▼
+         │  Create APScheduler background thread
+         │     │
+         │     ▼
+         │  Add job: run_daily_cycle() at 18:00 daily
+         │     │
+         │     ▼
+         │  Start scheduler
+         │     │
+         │     ▼
+         │  Save state: { "enabled": true, "schedule_time": "18:00" }
+         │     │
+         │     └─────────────────┐
+         │                       │
+         └─ YES (Previous Run)   │
+               │                 │
+               ▼                 │
+            Check: Was it enabled before?
+               │                 │
+               ├─ YES            │
+               │  │              │
+               │  ▼              │
+               │ Print: "Restoring automation from previous state"
+               │  │              │
+               │  ▼              │
+               │ Start scheduler with saved time
+               │  │              │
+               │  └──────────────┤
+               │                 │
+               └─ NO             │
+                  │              │
+                  ▼              │
+                Print: "Automation manually disabled - staying off"
+                  │              │
+                  └──────────────┤
+                                 │
+                                 ▼
+                        Flask fully started
+                                 │
+                                 ▼
+                   ┌─────────────────────────────┐
+                   │  AUTOMATION RUNNING!        │
+                   │  Status: ENABLED            │
+                   │  Schedule: Daily at 18:00   │
+                   │  Next Run: Today/Tomorrow   │
+                   └─────────────────────────────┘
+                                 │
+                                 │
+         ┌───────────────────────┴────────────────────────┐
+         │                                                 │
+         ▼                                                 ▼
+    WAIT FOR 6 PM                                  USER OPENS BROWSER
+         │                                                 │
+         │                                                 ▼
+         │                                    http://127.0.0.1:5000/ml-trading
+         │                                                 │
+         │                                                 ▼
+         │                                         Clicks: ⚙️ Status
+         │                                                 │
+         │                                                 ▼
+         │                                         Shows: ✅ AUTOMATION ENABLED
+         │                                                 Schedule: 18:00 (daily)
+         │                                                 Next Run: Today at 6 PM
+         │
+         ▼
+    CLOCK HITS 6:00 PM
+         │
+         ▼
+    APScheduler triggers run_daily_cycle()
+         │
+         ▼
+    ┌─────────────────────────────────────────┐
+    │ AUTOMATED ML CYCLE STARTS               │
+    └─────────────────────────────────────────┘
+         │
+         ├─ Step 1: Market Scan (1-2 min)
+         │     ├─ Scan 50 stocks from S&P 500
+         │     ├─ Scan 10+ crypto symbols
+         │     ├─ Run 4 analyzers on each
+         │     ├─ Combine with ML predictions
+         │     └─ Generate 30-50 signals
+         │
+         ├─ Step 2: Check Outcomes (30 sec)
+         │     ├─ Load open positions
+         │     ├─ Check current prices
+         │     ├─ Mark wins (≥+2%) vs losses
+         │     └─ Record to database
+         │
+         ├─ Step 3: Simulate New Trades (30 sec)
+         │     ├─ Filter to bullish signals
+         │     ├─ Take top 10 by score
+         │     └─ Record entry prices
+         │
+         └─ Step 4: Retrain Model (if ≥10 trades)
+               ├─ Load all trades from database
+               ├─ Train Random Forest
+               ├─ Save improved model
+               └─ Model gets smarter!
+         │
+         ▼
+    Update last_run timestamp in state file
+         │
+         ▼
+    Wait 24 hours → Repeat at 6 PM tomorrow
+         │
+         └──────────────────────────────────────┐
+                                                │
+                                                ▼
+                                    CYCLE REPEATS DAILY FOREVER
+                                    (or until you click Stop Auto)
+
+
+================================================================================
+KEY POINTS
+================================================================================
+
+✅ Automation STARTS AUTOMATICALLY on first Flask run
+✅ NO clicking "Start Auto" button needed
+✅ Default schedule: 6:00 PM (18:00) daily
+✅ Persists across Flask restarts
+✅ Runs inside Flask - no external scheduler
+✅ Works on ANY hosting platform
+
+BUTTONS ARE FOR MANUAL CONTROL ONLY:
+- ⚙️ Status       → Check if running (will show "ENABLED")
+- ▶️ Start Auto   → Change schedule time or restart if stopped
+- ⏸️ Stop Auto    → Disable daily automation (manual runs only)
+- 🚀 Run Full Cycle → Run immediately (don't wait for 6 PM)
+
+================================================================================
+STATE FILE EXAMPLES
+================================================================================
+
+FIRST RUN (Fresh Install):
+File: backend/data/ml_automation_state.json
+{
+  "enabled": true,
+  "schedule_time": "18:00",
+  "last_run": null,
+  "next_run": "2025-12-15T18:00:00"
+}
+
+AFTER FIRST CYCLE:
+{
+  "enabled": true,
+  "schedule_time": "18:00",
+  "last_run": "2025-12-15T18:00:32",
+  "next_run": "2025-12-16T18:00:00"
+}
+
+MANUALLY STOPPED:
+{
+  "enabled": false,
+  "schedule_time": "18:00",
+  "last_run": "2025-12-15T18:00:32",
+  "next_run": null
+}
+
+CUSTOM TIME (9 AM):
+{
+  "enabled": true,
+  "schedule_time": "09:00",
+  "last_run": "2025-12-15T09:00:15",
+  "next_run": "2025-12-16T09:00:00"
+}
+
+================================================================================
+CONSOLE OUTPUT ON FLASK START
+================================================================================
+
+$ start_flask.bat
+
+[ML AUTOMATION] Initializing built-in scheduler...
+[ML AUTOMATION] First run detected - ENABLING automation by default at 18:00 (6 PM)
+✅ ML Automation STARTED - Will run daily at 18:00
+Next run: 2025-12-15T18:00:00
+[ML AUTOMATION] Ready
+Flask server starting on http://127.0.0.1:5000
+Logging: QUIET MODE (errors only)
+
+← This confirms automation is running!
+
+================================================================================
+YOU DON'T NEED TO DO ANYTHING!
+================================================================================
+
+Just start Flask:
+  start_flask.bat
+
+System is now:
+  ✅ Running automatically
+  ✅ Will scan at 6 PM today
+  ✅ Will learn and improve
+  ✅ Requires NO clicking!
+
+That's it! 🚀

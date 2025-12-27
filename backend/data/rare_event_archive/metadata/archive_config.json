@@ -1,0 +1,77 @@
+{
+  "version": "1.1.0",
+  "description": "Rare Event Archive Configuration - curated historical market crises with regime separation",
+  "archive_mix_ratio": 0.07,
+  "event_weights": {
+    "2008_financial_crisis": 0.20,
+    "2020_covid_crash": 0.15,
+    "2020_covid_recovery": 0.15,
+    "2022_inflation_bear_market": 0.20,
+    "2018_volmageddon": 0.10,
+    "2023_banking_mini_crisis": 0.10,
+    "2015_china_devaluation": 0.05,
+    "2011_debt_ceiling": 0.05
+  },
+  "active_events": [
+    "2008_financial_crisis",
+    "2020_covid_crash",
+    "2020_covid_recovery",
+    "2022_inflation_bear_market",
+    "2018_volmageddon",
+    "2023_banking_mini_crisis",
+    "2015_china_devaluation",
+    "2011_debt_ceiling"
+  ],
+  "event_definitions": {
+    "2008_financial_crisis": {
+      "start_date": "2008-09-01",
+      "end_date": "2009-03-31",
+      "description": "Lehman Brothers collapse and global financial crisis",
+      "regime": "crash"
+    },
+    "2011_debt_ceiling": {
+      "start_date": "2011-07-01",
+      "end_date": "2011-08-31",
+      "description": "US debt ceiling crisis and S&P downgrade",
+      "regime": "high_volatility"
+    },
+    "2015_china_devaluation": {
+      "start_date": "2015-08-01",
+      "end_date": "2015-09-30",
+      "description": "China yuan devaluation and commodity collapse",
+      "regime": "high_volatility"
+    },
+    "2018_volmageddon": {
+      "start_date": "2018-02-01",
+      "end_date": "2018-02-28",
+      "description": "VIX spike and volatility ETF implosion",
+      "regime": "crash"
+    },
+    "2020_covid_crash": {
+      "start_date": "2020-02-20",
+      "end_date": "2020-03-23",
+      "description": "COVID-19 pandemic crash period",
+      "regime": "crash"
+    },
+    "2020_covid_recovery": {
+      "start_date": "2020-03-24",
+      "end_date": "2020-06-30",
+      "description": "COVID-19 V-shaped recovery period",
+      "regime": "recovery"
+    },
+    "2022_inflation_bear_market": {
+      "start_date": "2022-01-01",
+      "end_date": "2022-12-31",
+      "description": "Inflation surge and aggressive Fed rate hikes - full year bear market",
+      "regime": "high_volatility"
+    },
+    "2023_banking_mini_crisis": {
+      "start_date": "2023-03-01",
+      "end_date": "2023-04-30",
+      "description": "Silicon Valley Bank collapse and regional banking stress",
+      "regime": "high_volatility"
+    }
+  },
+  "last_updated": "2025-12-22",
+  "notes": "Archive mix ratio of 7% means 7% of training samples come from archive, 93% from rolling 5-year window. Version 1.1.0 adds regime labels and splits COVID into crash + recovery periods."
+}

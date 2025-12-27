@@ -1,6 +1,6 @@
 {
   "symbol": "DOGE-USD",
-  "timestamp": "2025-11-24T00:02:34.309229",
+  "timestamp": "2025-12-27T00:02:25.293450",
   "agent": "fusion_agent",
   "total_score": 6.307692307692307,
   "confidence": 0.363076923076923,
@@ -11,7 +11,7 @@
     "💸"
   ],
   "emoji_string": "📉❌💸",
-  "shorthand": "DOGE-USD | 📉❌💸 | 6 | 0.36 | 2025-11-24",
+  "shorthand": "DOGE-USD | 📉❌💸 | 6 | 0.36 | 2025-12-27",
   "weighted_scores": {
     "indicators_agent": {
       "score": 4,

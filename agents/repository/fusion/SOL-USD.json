@@ -1,6 +1,6 @@
 {
   "symbol": "SOL-USD",
-  "timestamp": "2025-11-24T00:02:34.348196",
+  "timestamp": "2025-12-23T00:02:45.011119",
   "agent": "fusion_agent",
   "total_score": 6.307692307692307,
   "confidence": 0.363076923076923,
@@ -11,7 +11,7 @@
     "💸"
   ],
   "emoji_string": "📉❌💸",
-  "shorthand": "SOL-USD | 📉❌💸 | 6 | 0.36 | 2025-11-24",
+  "shorthand": "SOL-USD | 📉❌💸 | 6 | 0.36 | 2025-12-23",
   "weighted_scores": {
     "indicators_agent": {
       "score": 4,

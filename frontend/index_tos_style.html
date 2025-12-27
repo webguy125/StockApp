@@ -5,9 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Plotly for charts -->
-  <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
-
   <!-- Socket.IO for real-time WebSocket -->
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
@@ -63,7 +60,10 @@
       <div class="tos-menu-item" data-menu="analysis" onclick="window.tosApp.menuBar.toggleMenu('analysis')">
         Analysis
         <div class="tos-dropdown">
-          <div class="tos-dropdown-item" onclick="window.location.href='/heatmap'">Signal Heat Maps</div>
+          <div class="tos-dropdown-item" onclick="window.location.href='/heatmap'">🤖 Agent Heat Maps</div>
+          <div class="tos-dropdown-item" onclick="window.location.href='/ml-trading'">🎯 ML Trading System</div>
+          <div class="tos-dropdown-item" onclick="window.location.href='/ml-settings'">⚙️ ML Configuration</div>
+          <div class="tos-dropdown-item" onclick="window.location.href='/turbomode'">⚡ TurboMode - S&P 500 Signals</div>
           <div class="tos-dropdown-separator"></div>
           <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('technicalStudies')">Technical Studies</div>
           <div class="tos-dropdown-item" onclick="window.tosApp.menuBar.handleMenuAction('drawingTools')">Drawing Tools</div>

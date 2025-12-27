@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TurboMode - S&P 500 ML Signals</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 900;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            font-size: 1em;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+        }
+
+        .card-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #1e3c72;
+        }
+
+        .card-desc {
+            font-size: 0.95em;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .stats-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ TurboMode</h1>
+            <div class="subtitle">S&P 500 ML Trading Signals</div>
+            <div class="description">
+                Overnight ML analysis of 500 stocks. Top 20 BUY and SELL signals
+                for each market cap category, ranked by AI confidence.
+            </div>
+        </header>
+
+        <div id="stats-panel" class="stats-panel" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" id="active-signals">-</div>
+                    <div class="stat-label">Active Signals</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="win-rate">-</div>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="targets-hit">-</div>
+                    <div class="stat-label">Targets Hit</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="avg-win">-</div>
+                    <div class="stat-label">Avg Win</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cards-grid">
+            <a href="turbomode/sectors.html" class="card">
+                <div class="card-icon">📊</div>
+                <div class="card-title">Sectors Overview</div>
+                <div class="card-desc">
+                    View bullish and bearish sectors with signal statistics
+                </div>
+            </a>
+
+            <a href="turbomode/large_cap.html" class="card">
+                <div class="card-icon">🏆</div>
+                <div class="card-title">Large Cap</div>
+                <div class="card-desc">
+                    Top 20 signals for stocks with >$200B market cap
+                </div>
+            </a>
+
+            <a href="turbomode/mid_cap.html" class="card">
+                <div class="card-icon">📈</div>
+                <div class="card-title">Mid Cap</div>
+                <div class="card-desc">
+                    Top 20 signals for stocks with $10B-$200B market cap
+                </div>
+            </a>
+
+            <a href="turbomode/small_cap.html" class="card">
+                <div class="card-icon">💎</div>
+                <div class="card-title">Small Cap</div>
+                <div class="card-desc">
+                    Top 20 signals for stocks with <$10B market cap
+                </div>
+            </a>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="/" class="back-link">← Back to Main Page</a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000';
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/turbomode/stats`);
+                const data = await response.json();
+
+                if (data.success && data.stats) {
+                    const stats = data.stats;
+
+                    document.getElementById('active-signals').textContent = stats.active_signals || 0;
+                    document.getElementById('win-rate').textContent = `${stats.win_rate?.toFixed(1) || 0}%`;
+                    document.getElementById('targets-hit').textContent = stats.targets_hit || 0;
+                    document.getElementById('avg-win').textContent = `+${stats.avg_win_pct?.toFixed(1) || 0}%`;
+
+                    document.getElementById('stats-panel').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Stats panel stays hidden if error
+            }
+        }
+
+        // Load stats on page load
+        loadStats();
+    </script>
+</body>
+</html>

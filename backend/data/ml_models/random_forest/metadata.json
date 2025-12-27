@@ -1,0 +1,28 @@
+{
+  "feature_names": [],
+  "hyperparameters": {
+    "n_estimators": 200,
+    "max_depth": null,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "max_features": "sqrt",
+    "bootstrap": true,
+    "class_weight": "balanced",
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "training_metrics": {
+    "train_accuracy": 0.9987164441836585,
+    "oob_accuracy": 0.0,
+    "cv_mean": 0.85943210679036,
+    "cv_std": 0.003899543111247466,
+    "n_samples": 27268,
+    "n_features": 179,
+    "n_trees": 200,
+    "top_features": [],
+    "timestamp": "2025-12-27T02:50:37.159498"
+  },
+  "is_trained": true,
+  "model_version": "1.0.0",
+  "saved_at": "2025-12-27T02:50:37.350858"
+}

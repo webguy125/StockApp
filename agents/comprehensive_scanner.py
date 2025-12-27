@@ -101,7 +101,7 @@ class ComprehensiveScanner:
             symbols = [s.replace('.', '-') for s in symbols]
 
             print(f"✅ Fetched {len(symbols)} S&P 500 symbols from Wikipedia")
-            return symbols[:100]  # Limit to top 100 for performance
+            return symbols  # Return ALL S&P 500 symbols (~500)
 
         except Exception as e:
             print(f"⚠️  Failed to fetch S&P 500 list: {e}")

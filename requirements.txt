@@ -7,6 +7,9 @@ pandas
 numpy
 scipy
 scikit-learn
+xgboost
+lightgbm
+joblib
 requests
 python-dateutil
 feedparser
@@ -21,4 +24,7 @@ yfinance
 polygon-api-client
 pycoingecko
 schedule
+APScheduler
 ta
+tqdm
+shap
