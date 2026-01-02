@@ -20,28 +20,37 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from collections import defaultdict
+import torch
 
-# Import S&P 500 symbols
-from turbomode.sp500_symbols import (
-    get_all_symbols,
-    get_sector_for_symbol,
-    get_cap_size_for_symbol
+# Import curated 80-stock symbol list from ML training system
+from advanced_ml.config.core_symbols import (
+    CORE_SYMBOLS,
+    SECTOR_CODES
 )
 
 # Import database
 from turbomode.database_schema import TurboModeDB
 
-# Import ML system
-from advanced_ml.training.training_pipeline import TrainingPipeline
-from advanced_ml.features.feature_engineer import FeatureEngineer
+# Import ML system (NEW 8-model GPU ensemble)
+from advanced_ml.features.gpu_feature_engineer import GPUFeatureEngineer
+from advanced_ml.models.xgboost_model import XGBoostModel
+from advanced_ml.models.xgboost_et_model import XGBoostETModel
+from advanced_ml.models.lightgbm_model import LightGBMModel
+from advanced_ml.models.catboost_model import CatBoostModel
+from advanced_ml.models.xgboost_hist_model import XGBoostHistModel
+from advanced_ml.models.xgboost_dart_model import XGBoostDartModel
+from advanced_ml.models.xgboost_gblinear_model import XGBoostGBLinearModel
+from advanced_ml.models.xgboost_approx_model import XGBoostApproxModel
+from advanced_ml.models.meta_learner import MetaLearner
 
 
 class OvernightScanner:
     """
-    Overnight S&P 500 scanner using ML meta-learner
+    Overnight scanner for 80 curated stocks using 8-model GPU ensemble
 
     Features:
-    - Scans all 500 S&P symbols
+    - Scans 80 curated stocks (balanced across sectors and market caps)
+    - Uses 8-model GPU ensemble (71.29% test accuracy on 10%/10% thresholds)
     - Excludes symbols with active signals
     - Generates BUY/SELL predictions with confidence
     - Saves top signals to database
@@ -49,63 +58,111 @@ class OvernightScanner:
     """
 
     def __init__(self, db_path: str = "backend/data/turbomode.db",
-                 ml_db_path: str = "backend/backend/data/advanced_ml_system.db"):
+                 model_path: str = "backend/data/turbomode_models"):
         """
         Initialize scanner
 
         Args:
             db_path: Path to TurboMode database
-            ml_db_path: Path to ML system database (for feature engineering)
+            model_path: Path to TurboMode models directory
         """
+        # Convert paths to absolute if they're relative
+        if not os.path.isabs(db_path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(os.path.dirname(script_dir))
+            db_path = os.path.join(project_root, db_path)
+
+        if not os.path.isabs(model_path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(os.path.dirname(script_dir))
+            model_path = os.path.join(project_root, model_path)
+
         self.db = TurboModeDB(db_path=db_path)
+        self.model_path = model_path
 
-        # Initialize ML pipeline
-        print("[INIT] Loading ML models...")
-        self.pipeline = TrainingPipeline(db_path=ml_db_path)
-
-        # Load trained models
+        # Initialize ML models (TurboMode-specific)
+        print(f"[INIT] Loading TurboMode ML models from {model_path}...")
         self._load_models()
 
-        # Initialize feature engineering (no events, baseline 179 features)
-        self.feature_engineer = FeatureEngineer(enable_events=False)
+        # Initialize feature engineering (GPU features - ALL 179 features, no selection)
+        # Models were trained on all 179 features, so we must extract all 179
+        self.feature_engineer = GPUFeatureEngineer(use_gpu=True, use_feature_selection=False)
 
-        print(f"[OK] Scanner initialized")
+        print(f"[OK] Scanner initialized with TurboMode models (179 features, GPU-accelerated)")
+
+    def _get_all_symbols(self) -> List[str]:
+        """Get list of all 80 curated symbols from CORE_SYMBOLS"""
+        all_symbols = []
+        for sector, caps in CORE_SYMBOLS.items():
+            for cap_size, symbols in caps.items():
+                all_symbols.extend(symbols)
+        return sorted(all_symbols)
+
+    def _get_sector_for_symbol(self, symbol: str) -> Optional[str]:
+        """Get sector for a symbol"""
+        for sector, caps in CORE_SYMBOLS.items():
+            for cap_size, symbols in caps.items():
+                if symbol in symbols:
+                    return sector
+        return None
+
+    def _get_cap_size_for_symbol(self, symbol: str) -> Optional[str]:
+        """Get market cap category for a symbol"""
+        for sector, caps in CORE_SYMBOLS.items():
+            for cap_size, symbols in caps.items():
+                if symbol in symbols:
+                    return cap_size
+        return None
 
     def _load_models(self):
-        """Load all trained ML models"""
-        # Load base models
-        if not self.pipeline.rf_model.load():
-            raise RuntimeError("Failed to load Random Forest model")
-        if not self.pipeline.xgb_model.load():
+        """Load all trained ML models from TurboMode directory (NEW 8-model GPU ensemble)"""
+        import os
+
+        # Initialize NEW 8-model GPU ensemble with TurboMode paths
+        # Note: All models use GPU via device='cuda' in their hyperparameters
+        self.xgb_model = XGBoostModel(model_path=os.path.join(self.model_path, "xgboost"), use_gpu=True)
+        self.xgb_et_model = XGBoostETModel(model_path=os.path.join(self.model_path, "xgboost_et"))
+        self.lgbm_model = LightGBMModel(model_path=os.path.join(self.model_path, "lightgbm"))
+        self.catboost_model = CatBoostModel(model_path=os.path.join(self.model_path, "catboost"))
+        self.xgb_hist_model = XGBoostHistModel(model_path=os.path.join(self.model_path, "xgboost_hist"))
+        self.xgb_dart_model = XGBoostDartModel(model_path=os.path.join(self.model_path, "xgboost_dart"))
+        self.xgb_gblinear_model = XGBoostGBLinearModel(model_path=os.path.join(self.model_path, "xgboost_gblinear"))
+        self.xgb_approx_model = XGBoostApproxModel(model_path=os.path.join(self.model_path, "xgboost_approx"))
+        self.meta_learner = MetaLearner(model_path=os.path.join(self.model_path, "meta_learner"))
+
+        # Load all 8 base models
+        if not self.xgb_model.load():
             raise RuntimeError("Failed to load XGBoost model")
-        if not self.pipeline.lgbm_model.load():
+        if not self.xgb_et_model.load():
+            raise RuntimeError("Failed to load XGBoost ET model")
+        if not self.lgbm_model.load():
             raise RuntimeError("Failed to load LightGBM model")
-        if not self.pipeline.et_model.load():
-            raise RuntimeError("Failed to load Extra Trees model")
-        if not self.pipeline.gb_model.load():
-            raise RuntimeError("Failed to load Gradient Boosting model")
-        if not self.pipeline.nn_model.load():
-            raise RuntimeError("Failed to load Neural Network model")
-        if not self.pipeline.lr_model.load():
-            raise RuntimeError("Failed to load Logistic Regression model")
-        if not self.pipeline.svm_model.load():
-            raise RuntimeError("Failed to load SVM model")
+        if not self.catboost_model.load():
+            raise RuntimeError("Failed to load CatBoost model")
+        if not self.xgb_hist_model.load():
+            raise RuntimeError("Failed to load XGBoost Hist model")
+        if not self.xgb_dart_model.load():
+            raise RuntimeError("Failed to load XGBoost DART model")
+        if not self.xgb_gblinear_model.load():
+            raise RuntimeError("Failed to load XGBoost GBLinear model")
+        if not self.xgb_approx_model.load():
+            raise RuntimeError("Failed to load XGBoost Approx model")
 
         # Load meta-learner
-        if not self.pipeline.meta_learner.load():
+        if not self.meta_learner.load():
             raise RuntimeError("Failed to load Meta-Learner model")
 
-        # Register base models with meta-learner
-        self.pipeline.meta_learner.register_base_model('random_forest', self.pipeline.rf_model)
-        self.pipeline.meta_learner.register_base_model('xgboost', self.pipeline.xgb_model)
-        self.pipeline.meta_learner.register_base_model('lightgbm', self.pipeline.lgbm_model)
-        self.pipeline.meta_learner.register_base_model('extratrees', self.pipeline.et_model)
-        self.pipeline.meta_learner.register_base_model('gradientboost', self.pipeline.gb_model)
-        self.pipeline.meta_learner.register_base_model('neural_network', self.pipeline.nn_model)
-        self.pipeline.meta_learner.register_base_model('logistic_regression', self.pipeline.lr_model)
-        self.pipeline.meta_learner.register_base_model('svm', self.pipeline.svm_model)
+        # Register base models with meta-learner (MUST match training order!)
+        self.meta_learner.register_base_model('xgboost', self.xgb_model)
+        self.meta_learner.register_base_model('xgboost_et', self.xgb_et_model)
+        self.meta_learner.register_base_model('lightgbm', self.lgbm_model)
+        self.meta_learner.register_base_model('catboost', self.catboost_model)
+        self.meta_learner.register_base_model('xgboost_hist', self.xgb_hist_model)
+        self.meta_learner.register_base_model('xgboost_dart', self.xgb_dart_model)
+        self.meta_learner.register_base_model('xgboost_gblinear', self.xgb_gblinear_model)
+        self.meta_learner.register_base_model('xgboost_approx', self.xgb_approx_model)
 
-        print(f"[OK] Loaded 8 base models + meta-learner")
+        print(f"[OK] Loaded 8 GPU-accelerated base models + meta-learner from {self.model_path}")
 
     def get_current_price(self, symbol: str) -> Optional[float]:
         """
@@ -133,38 +190,43 @@ class OvernightScanner:
 
     def extract_features(self, symbol: str) -> Optional[Dict[str, float]]:
         """
-        Extract 179 features for ML prediction
+        Extract 179 features for ML prediction (176 technical + 3 metadata)
 
         Args:
             symbol: Stock symbol
 
         Returns:
-            Feature dictionary, or None if failed
+            Feature dictionary with 179 features, or None if failed
         """
         try:
-            # Download historical data (need enough for indicators)
+            # Download historical data (need at least 500 rows for vectorized approach)
             ticker = yf.Ticker(symbol)
-            df = ticker.history(period="1y", interval="1d")
+            df = ticker.history(period="2y", interval="1d")
 
-            if df.empty or len(df) < 200:
+            if df.empty or len(df) < 500:
                 return None
 
             # Prepare data for feature engineering
             df = df.reset_index()
 
-            # Rename columns to lowercase (required by FeatureEngineer)
-            df.columns = [c.lower() for c in df.columns]
+            # GPU batch feature extraction uses the LAST window (most recent data)
+            # Extract features for index = len(df) - 1 (the most recent complete window)
+            start_indices = [len(df) - 1]
 
-            # Extract features using FeatureEngineer
-            # Returns 179 technical features (events disabled)
-            features = self.feature_engineer.extract_features(
-                df,
-                symbol=symbol
-            )
+            features_list = self.feature_engineer.extract_features_batch(df, start_indices, symbol)
 
-            if not features:
+            if not features_list or len(features_list) == 0:
                 return None
 
+            # Get the 176 technical features
+            features = features_list[0]
+
+            # Add 3 metadata features (sector_code, market_cap_tier, symbol_hash)
+            from advanced_ml.config.symbol_metadata import get_symbol_metadata
+            metadata = get_symbol_metadata(symbol)
+            features.update(metadata)
+
+            # Now we have 176 + 3 = 179 features total
             return features
 
         except Exception as e:
@@ -173,7 +235,7 @@ class OvernightScanner:
 
     def get_prediction(self, features: Dict[str, float]) -> Dict[str, Any]:
         """
-        Get ML prediction from meta-learner
+        Get ML prediction from meta-learner (8-model GPU ensemble)
 
         Args:
             features: Feature dictionary (179 features)
@@ -182,24 +244,23 @@ class OvernightScanner:
             Prediction dictionary with:
             - prediction: 'buy', 'hold', or 'sell'
             - buy_prob: float
-            - hold_prob: float
             - sell_prob: float
             - confidence: float
         """
-        # Get predictions from all base models
+        # Get predictions from all 8 base models
         base_predictions = {}
 
-        base_predictions['random_forest'] = self.pipeline.rf_model.predict(features)
-        base_predictions['xgboost'] = self.pipeline.xgb_model.predict(features)
-        base_predictions['lightgbm'] = self.pipeline.lgbm_model.predict(features)
-        base_predictions['extratrees'] = self.pipeline.et_model.predict(features)
-        base_predictions['gradientboost'] = self.pipeline.gb_model.predict(features)
-        base_predictions['neural_network'] = self.pipeline.nn_model.predict(features)
-        base_predictions['logistic_regression'] = self.pipeline.lr_model.predict(features)
-        base_predictions['svm'] = self.pipeline.svm_model.predict(features)
+        base_predictions['xgboost'] = self.xgb_model.predict(features)
+        base_predictions['xgboost_et'] = self.xgb_et_model.predict(features)
+        base_predictions['lightgbm'] = self.lgbm_model.predict(features)
+        base_predictions['catboost'] = self.catboost_model.predict(features)
+        base_predictions['xgboost_hist'] = self.xgb_hist_model.predict(features)
+        base_predictions['xgboost_dart'] = self.xgb_dart_model.predict(features)
+        base_predictions['xgboost_gblinear'] = self.xgb_gblinear_model.predict(features)
+        base_predictions['xgboost_approx'] = self.xgb_approx_model.predict(features)
 
         # Get meta-learner ensemble prediction
-        ensemble_pred = self.pipeline.meta_learner.predict(base_predictions)
+        ensemble_pred = self.meta_learner.predict(base_predictions)
 
         return ensemble_pred
 
@@ -226,17 +287,24 @@ class OvernightScanner:
         # Get prediction
         prediction = self.get_prediction(features)
 
-        # Filter for BUY or SELL with confidence >= 75%
-        MIN_CONFIDENCE = 0.75
+        # Symmetric confidence thresholds (testing if market truly has no bearish setups)
+        BUY_CONFIDENCE = 0.65   # ≥65% confidence for BUY signals (long positions)
+        SELL_CONFIDENCE = 0.65  # ≥65% confidence for SELL signals (short/puts - same as BUY for testing)
 
         signal_type = None
-        if prediction['prediction'] == 'buy' and prediction['confidence'] >= MIN_CONFIDENCE:
+        if prediction['prediction'] == 'buy' and prediction['confidence'] >= BUY_CONFIDENCE:
             signal_type = 'BUY'
-        elif prediction['prediction'] == 'sell' and prediction['confidence'] >= MIN_CONFIDENCE:
+        elif prediction['prediction'] == 'sell' and prediction['confidence'] >= SELL_CONFIDENCE:
             signal_type = 'SELL'
         else:
             # HOLD or low confidence - skip
             return None
+
+        # Calculate entry range (±2% tolerance for morning gaps)
+        # Signal price is based on close, but morning open can gap
+        # Accept entries within 2% of signal price
+        entry_min = current_price * 0.98  # -2% (acceptable gap down for BUY)
+        entry_max = current_price * 1.02  # +2% (acceptable gap up for BUY)
 
         # Calculate targets and stops
         if signal_type == 'BUY':
@@ -246,12 +314,12 @@ class OvernightScanner:
             target_price = current_price * 0.90  # -10%
             stop_price = current_price * 1.05    # +5%
 
-        # Get classifications
-        market_cap = get_cap_size_for_symbol(symbol)
-        sector = get_sector_for_symbol(symbol)
+        # Get classifications from 80-stock curated list
+        market_cap = self._get_cap_size_for_symbol(symbol)
+        sector = self._get_sector_for_symbol(symbol)
 
         if market_cap is None or sector is None:
-            # Symbol not in our S&P 500 list (shouldn't happen)
+            # Symbol not in our 80-stock curated list (shouldn't happen)
             return None
 
         return {
@@ -260,20 +328,21 @@ class OvernightScanner:
             'confidence': prediction['confidence'],
             'entry_date': datetime.now().strftime('%Y-%m-%d'),
             'entry_price': current_price,
+            'entry_min': entry_min,   # Minimum acceptable entry (2% below signal)
+            'entry_max': entry_max,   # Maximum acceptable entry (2% above signal)
             'target_price': target_price,
             'stop_price': stop_price,
             'market_cap': market_cap,
             'sector': sector,
 
-            # Additional info for logging
+            # Additional info for logging (binary classification: BUY/SELL only)
             'buy_prob': prediction['buy_prob'],
-            'hold_prob': prediction['hold_prob'],
             'sell_prob': prediction['sell_prob']
         }
 
     def scan_all(self, max_signals_per_type: int = 100) -> Dict[str, List[Dict[str, Any]]]:
         """
-        Scan all S&P 500 symbols
+        Scan all 80 curated stocks
 
         Args:
             max_signals_per_type: Maximum BUY and SELL signals to save (default 100)
@@ -282,7 +351,7 @@ class OvernightScanner:
             Dictionary with 'buy_signals' and 'sell_signals' lists
         """
         print("\n" + "=" * 70)
-        print("TURBOMODE OVERNIGHT SCANNER")
+        print("TURBOMODE OVERNIGHT SCANNER (80 Curated Stocks)")
         print("=" * 70)
         print(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
@@ -295,9 +364,9 @@ class OvernightScanner:
         active_symbols = set(self.db.get_active_symbols())
         print(f"  Excluding {len(active_symbols)} symbols with active signals")
 
-        # Get all S&P 500 symbols
-        print("\n[STEP 3] Loading S&P 500 symbol list...")
-        all_symbols = get_all_symbols()
+        # Get all 80 curated symbols
+        print("\n[STEP 3] Loading 80 curated stock list...")
+        all_symbols = self._get_all_symbols()
         print(f"  Total symbols: {len(all_symbols)}")
 
         # Filter out active symbols
@@ -306,7 +375,7 @@ class OvernightScanner:
 
         # Scan all symbols
         print(f"\n[STEP 4] Scanning {len(symbols_to_scan)} symbols...")
-        print("  This will take approximately 20-30 minutes...")
+        print("  This will take approximately 3-5 minutes (GPU-accelerated)...")
 
         buy_signals = []
         sell_signals = []
@@ -318,6 +387,12 @@ class OvernightScanner:
             if i % 50 == 0:
                 print(f"  Progress: {i}/{len(symbols_to_scan)} ({i/len(symbols_to_scan)*100:.1f}%) - "
                       f"BUY: {len(buy_signals)}, SELL: {len(sell_signals)}")
+
+                # Clear GPU memory every 50 symbols to prevent memory exhaustion
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    torch.cuda.synchronize()
+                    print(f"    [GPU] Cleared GPU cache at symbol {i}")
 
             signal = self.scan_symbol(symbol)
 

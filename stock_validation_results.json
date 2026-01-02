@@ -1,0 +1,704 @@
+{
+  "validation_date": "2025-12-31T19:17:48.526440",
+  "total_symbols": 80,
+  "healthy_count": 78,
+  "failed_count": 2,
+  "low_volume_count": 8,
+  "insufficient_data_count": 0,
+  "healthy_stocks": [
+    {
+      "symbol": "AAPL",
+      "price": 271.8599853515625,
+      "avg_volume": 43873284.53658537,
+      "days_data": 41,
+      "sector": "technology",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "ABBV",
+      "price": 228.49000549316406,
+      "avg_volume": 5642977.951219512,
+      "days_data": 41,
+      "sector": "healthcare",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "AES",
+      "price": 14.34000015258789,
+      "avg_volume": 7550177.780487805,
+      "days_data": 41,
+      "sector": "utilities",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "ALLY",
+      "price": 45.290000915527344,
+      "avg_volume": 2869274.3414634145,
+      "days_data": 41,
+      "sector": "financials",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "AMT",
+      "price": 175.57000732421875,
+      "avg_volume": 3154457.073170732,
+      "days_data": 41,
+      "sector": "real_estate",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "AMZN",
+      "price": 230.82000732421875,
+      "avg_volume": 41211295.682926826,
+      "days_data": 41,
+      "sector": "consumer_discretionary",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "APD",
+      "price": 247.02000427246094,
+      "avg_volume": 1687030.9268292682,
+      "days_data": 41,
+      "sector": "materials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "ASTE",
+      "price": 43.31999969482422,
+      "avg_volume": 195657.75609756098,
+      "days_data": 41,
+      "sector": "industrials",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "BA",
+      "price": 217.1199951171875,
+      "avg_volume": 8230252.975609756,
+      "days_data": 41,
+      "sector": "industrials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "BAC",
+      "price": 55.0,
+      "avg_volume": 36864591.951219514,
+      "days_data": 41,
+      "sector": "financials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "BMBL",
+      "price": 3.569999933242798,
+      "avg_volume": 3105656.2195121953,
+      "days_data": 41,
+      "sector": "communication_services",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "BOOT",
+      "price": 176.47000122070312,
+      "avg_volume": 496212.60975609755,
+      "days_data": 41,
+      "sector": "consumer_discretionary",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "CARS",
+      "price": 12.199999809265137,
+      "avg_volume": 857471.9268292683,
+      "days_data": 41,
+      "sector": "communication_services",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "CAT",
+      "price": 572.8699951171875,
+      "avg_volume": 2475300.951219512,
+      "days_data": 41,
+      "sector": "industrials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "CATY",
+      "price": 48.38999938964844,
+      "avg_volume": 435163.7804878049,
+      "days_data": 41,
+      "sector": "financials",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "CF",
+      "price": 77.33999633789062,
+      "avg_volume": 2443160.487804878,
+      "days_data": 41,
+      "sector": "materials",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "CHEF",
+      "price": 62.33000183105469,
+      "avg_volume": 392287.31707317074,
+      "days_data": 41,
+      "sector": "consumer_staples",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "COP",
+      "price": 93.61000061035156,
+      "avg_volume": 6946781.0,
+      "days_data": 41,
+      "sector": "energy",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "CRWD",
+      "price": 468.760009765625,
+      "avg_volume": 2235090.7073170734,
+      "days_data": 41,
+      "sector": "technology",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "CTRA",
+      "price": 26.31999969482422,
+      "avg_volume": 7681262.146341464,
+      "days_data": 41,
+      "sector": "energy",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "CVCO",
+      "price": 590.739990234375,
+      "avg_volume": 140924.1219512195,
+      "days_data": 41,
+      "sector": "industrials",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "CVX",
+      "price": 152.41000366210938,
+      "avg_volume": 8303409.780487805,
+      "days_data": 41,
+      "sector": "energy",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "DECK",
+      "price": 103.66999816894531,
+      "avg_volume": 3296776.073170732,
+      "days_data": 41,
+      "sector": "consumer_discretionary",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "DIS",
+      "price": 113.7699966430664,
+      "avg_volume": 11610305.731707318,
+      "days_data": 41,
+      "sector": "communication_services",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "DUK",
+      "price": 117.20999908447266,
+      "avg_volume": 3419082.5853658537,
+      "days_data": 41,
+      "sector": "utilities",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "DXCM",
+      "price": 66.37000274658203,
+      "avg_volume": 5987164.1707317075,
+      "days_data": 41,
+      "sector": "healthcare",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "EQIX",
+      "price": 766.1599731445312,
+      "avg_volume": 557210.8780487805,
+      "days_data": 41,
+      "sector": "real_estate",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "EXAS",
+      "price": 101.55999755859375,
+      "avg_volume": 6990213.243902439,
+      "days_data": 41,
+      "sector": "healthcare",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "FANG",
+      "price": 150.3300018310547,
+      "avg_volume": 1701917.024390244,
+      "days_data": 41,
+      "sector": "energy",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "GBCI",
+      "price": 44.04999923706055,
+      "avg_volume": 812260.3658536585,
+      "days_data": 41,
+      "sector": "financials",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "GE",
+      "price": 308.0299987792969,
+      "avg_volume": 4357765.390243903,
+      "days_data": 41,
+      "sector": "industrials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "GIS",
+      "price": 46.5,
+      "avg_volume": 6511615.8292682925,
+      "days_data": 41,
+      "sector": "consumer_staples",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "GOOGL",
+      "price": 313.0,
+      "avg_volume": 37390148.43902439,
+      "days_data": 41,
+      "sector": "technology",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "GS",
+      "price": 879.0,
+      "avg_volume": 2011913.8780487804,
+      "days_data": 41,
+      "sector": "financials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "HD",
+      "price": 344.1000061035156,
+      "avg_volume": 4525763.414634147,
+      "days_data": 41,
+      "sector": "consumer_discretionary",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "HON",
+      "price": 195.08999633789062,
+      "avg_volume": 3845080.048780488,
+      "days_data": 41,
+      "sector": "industrials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "IOSP",
+      "price": 76.54000091552734,
+      "avg_volume": 263703.6341463415,
+      "days_data": 41,
+      "sector": "materials",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "JNJ",
+      "price": 206.9499969482422,
+      "avg_volume": 8550744.878048781,
+      "days_data": 41,
+      "sector": "healthcare",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "JPM",
+      "price": 322.2200012207031,
+      "avg_volume": 8824973.268292682,
+      "days_data": 41,
+      "sector": "financials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "KO",
+      "price": 69.91000366210938,
+      "avg_volume": 15993957.56097561,
+      "days_data": 41,
+      "sector": "consumer_staples",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "KRYS",
+      "price": 246.5399932861328,
+      "avg_volume": 307637.1219512195,
+      "days_data": 41,
+      "sector": "healthcare",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "LIN",
+      "price": 426.3900146484375,
+      "avg_volume": 3000996.4146341463,
+      "days_data": 41,
+      "sector": "materials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "LLY",
+      "price": 1074.6800537109375,
+      "avg_volume": 3714417.2926829266,
+      "days_data": 41,
+      "sector": "healthcare",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "LULU",
+      "price": 207.80999755859375,
+      "avg_volume": 4521026.439024391,
+      "days_data": 41,
+      "sector": "consumer_discretionary",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "MCD",
+      "price": 305.6300048828125,
+      "avg_volume": 3294926.048780488,
+      "days_data": 41,
+      "sector": "consumer_discretionary",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "META",
+      "price": 660.0900268554688,
+      "avg_volume": 18328700.975609757,
+      "days_data": 41,
+      "sector": "technology",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "MGEE",
+      "price": 78.41999816894531,
+      "avg_volume": 128987.73170731707,
+      "days_data": 41,
+      "sector": "utilities",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "MSFT",
+      "price": 483.6199951171875,
+      "avg_volume": 23792933.731707316,
+      "days_data": 41,
+      "sector": "technology",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "MTCH",
+      "price": 32.290000915527344,
+      "avg_volume": 3614041.6341463416,
+      "days_data": 41,
+      "sector": "communication_services",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "MTDR",
+      "price": 42.439998626708984,
+      "avg_volume": 1517326.3414634147,
+      "days_data": 41,
+      "sector": "energy",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "NEE",
+      "price": 80.27999877929688,
+      "avg_volume": 9460740.170731707,
+      "days_data": 41,
+      "sector": "utilities",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "NEM",
+      "price": 99.8499984741211,
+      "avg_volume": 9019501.195121951,
+      "days_data": 41,
+      "sector": "materials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "NFLX",
+      "price": 93.76000213623047,
+      "avg_volume": 42622019.3902439,
+      "days_data": 41,
+      "sector": "communication_services",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "NRG",
+      "price": 159.24000549316406,
+      "avg_volume": 1886737.243902439,
+      "days_data": 41,
+      "sector": "utilities",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "NVDA",
+      "price": 186.5,
+      "avg_volume": 189979954.46341464,
+      "days_data": 41,
+      "sector": "technology",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "PEP",
+      "price": 143.52000427246094,
+      "avg_volume": 7537345.8292682925,
+      "days_data": 41,
+      "sector": "consumer_staples",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "PG",
+      "price": 143.30999755859375,
+      "avg_volume": 9972588.585365854,
+      "days_data": 41,
+      "sector": "consumer_staples",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "PLD",
+      "price": 127.66000366210938,
+      "avg_volume": 3414780.1463414636,
+      "days_data": 41,
+      "sector": "real_estate",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "PLTR",
+      "price": 177.75,
+      "avg_volume": 47653145.317073174,
+      "days_data": 41,
+      "sector": "technology",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "REXR",
+      "price": 38.720001220703125,
+      "avg_volume": 1974700.5609756098,
+      "days_data": 41,
+      "sector": "real_estate",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "SCHW",
+      "price": 99.91000366210938,
+      "avg_volume": 8508834.75609756,
+      "days_data": 41,
+      "sector": "financials",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "SHAK",
+      "price": 81.16999816894531,
+      "avg_volume": 1489685.6829268292,
+      "days_data": 41,
+      "sector": "consumer_discretionary",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "SHW",
+      "price": 324.0299987792969,
+      "avg_volume": 1773910.1219512196,
+      "days_data": 41,
+      "sector": "materials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "SLB",
+      "price": 38.380001068115234,
+      "avg_volume": 13538331.219512194,
+      "days_data": 41,
+      "sector": "energy",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "SMCI",
+      "price": 29.270000457763672,
+      "avg_volume": 24994231.19512195,
+      "days_data": 41,
+      "sector": "technology",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "SNOW",
+      "price": 219.36000061035156,
+      "avg_volume": 4851665.682926829,
+      "days_data": 41,
+      "sector": "technology",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "SO",
+      "price": 87.19999694824219,
+      "avg_volume": 6187872.780487805,
+      "days_data": 41,
+      "sector": "utilities",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "SPG",
+      "price": 185.11000061035156,
+      "avg_volume": 1365280.7073170731,
+      "days_data": 41,
+      "sector": "real_estate",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "STAG",
+      "price": 36.7599983215332,
+      "avg_volume": 1198385.512195122,
+      "days_data": 41,
+      "sector": "real_estate",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "TMDX",
+      "price": 121.6500015258789,
+      "avg_volume": 784021.2195121951,
+      "days_data": 41,
+      "sector": "healthcare",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "TRNO",
+      "price": 58.709999084472656,
+      "avg_volume": 660720.4390243902,
+      "days_data": 41,
+      "sector": "real_estate",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "TSLA",
+      "price": 449.7200012207031,
+      "avg_volume": 79587118.51219513,
+      "days_data": 41,
+      "sector": "consumer_discretionary",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "UBER",
+      "price": 81.70999908447266,
+      "avg_volume": 19885520.219512194,
+      "days_data": 41,
+      "sector": "industrials",
+      "market_cap": "mid_cap"
+    },
+    {
+      "symbol": "UNH",
+      "price": 330.1099853515625,
+      "avg_volume": 7084772.365853659,
+      "days_data": 41,
+      "sector": "healthcare",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "WFC",
+      "price": 93.19999694824219,
+      "avg_volume": 13635966.097560976,
+      "days_data": 41,
+      "sector": "financials",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "WMT",
+      "price": 111.41000366210938,
+      "avg_volume": 20306758.390243903,
+      "days_data": 41,
+      "sector": "consumer_staples",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "XOM",
+      "price": 120.33999633789062,
+      "avg_volume": 15209218.365853658,
+      "days_data": 41,
+      "sector": "energy",
+      "market_cap": "large_cap"
+    },
+    {
+      "symbol": "XPO",
+      "price": 135.91000366210938,
+      "avg_volume": 1351934.243902439,
+      "days_data": 41,
+      "sector": "industrials",
+      "market_cap": "mid_cap"
+    }
+  ],
+  "failed_stocks": [
+    {
+      "symbol": "CEIX",
+      "reason": "No data available (possibly delisted)",
+      "sector": "materials",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "INGLES",
+      "reason": "No data available (possibly delisted)",
+      "sector": "consumer_staples",
+      "market_cap": "small_cap"
+    }
+  ],
+  "low_volume_stocks": [
+    {
+      "symbol": "ASTE",
+      "avg_volume": 195657.75609756098,
+      "sector": "industrials",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "BOOT",
+      "avg_volume": 496212.60975609755,
+      "sector": "consumer_discretionary",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "CATY",
+      "avg_volume": 435163.7804878049,
+      "sector": "financials",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "CHEF",
+      "avg_volume": 392287.31707317074,
+      "sector": "consumer_staples",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "CVCO",
+      "avg_volume": 140924.1219512195,
+      "sector": "industrials",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "IOSP",
+      "avg_volume": 263703.6341463415,
+      "sector": "materials",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "KRYS",
+      "avg_volume": 307637.1219512195,
+      "sector": "healthcare",
+      "market_cap": "small_cap"
+    },
+    {
+      "symbol": "MGEE",
+      "avg_volume": 128987.73170731707,
+      "sector": "utilities",
+      "market_cap": "small_cap"
+    }
+  ],
+  "insufficient_data_stocks": [],
+  "validation_criteria": {
+    "min_volume": 500000,
+    "min_days_data": 30,
+    "lookback_days": 60
+  }
+}

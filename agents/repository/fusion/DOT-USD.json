@@ -1,6 +1,6 @@
 {
   "symbol": "DOT-USD",
-  "timestamp": "2025-12-27T00:02:25.361683",
+  "timestamp": "2025-12-30T00:02:43.723066",
   "agent": "fusion_agent",
   "total_score": 21.69230769230769,
   "confidence": 0.5169230769230768,
@@ -11,7 +11,7 @@
     "💰"
   ],
   "emoji_string": "📉❌💰",
-  "shorthand": "DOT-USD | 📉❌💰 | 21 | 0.52 | 2025-12-27",
+  "shorthand": "DOT-USD | 📉❌💰 | 21 | 0.52 | 2025-12-30",
   "weighted_scores": {
     "indicators_agent": {
       "score": 4,

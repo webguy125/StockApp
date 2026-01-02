@@ -1,0 +1,58 @@
+{
+  "base_model_names": [
+    "random_forest",
+    "xgboost",
+    "lightgbm",
+    "extratrees",
+    "gradientboost",
+    "neural_network",
+    "logistic_regression",
+    "svm"
+  ],
+  "training_metrics": {
+    "train_accuracy": 0.6994670580057156,
+    "n_samples": 168311,
+    "n_base_models": 8,
+    "n_meta_features": 24,
+    "model_importance": {
+      "random_forest": 3.8724777492762206,
+      "xgboost": 1.6453820688707599,
+      "lightgbm": 74.493935009486,
+      "extratrees": 4.275948593780879,
+      "gradientboost": 5.2170215582620685,
+      "neural_network": 1.00189292075433,
+      "logistic_regression": 5.95765646703629,
+      "svm": 3.535685632533457
+    },
+    "timestamp": "2025-12-30T16:51:10.665016"
+  },
+  "model_weights": {
+    "extratrees_buy_prob": 19.434825897216797,
+    "extratrees_hold_prob": 29.932987213134766,
+    "extratrees_sell_prob": 23.945392608642578,
+    "gradientboost_buy_prob": 16.100147247314453,
+    "gradientboost_hold_prob": 41.33870315551758,
+    "gradientboost_sell_prob": 32.00950622558594,
+    "lightgbm_buy_prob": 398.5618591308594,
+    "lightgbm_hold_prob": 496.7586364746094,
+    "lightgbm_sell_prob": 381.9140319824219,
+    "logistic_regression_buy_prob": 32.20466232299805,
+    "logistic_regression_hold_prob": 34.774776458740234,
+    "logistic_regression_sell_prob": 35.16746139526367,
+    "neural_network_buy_prob": 0.0,
+    "neural_network_hold_prob": 0.0,
+    "neural_network_sell_prob": 17.17793846130371,
+    "random_forest_buy_prob": 28.336301803588867,
+    "random_forest_hold_prob": 27.859560012817383,
+    "random_forest_sell_prob": 10.199641227722168,
+    "svm_buy_prob": 10.52918529510498,
+    "svm_hold_prob": 26.319503784179688,
+    "svm_sell_prob": 23.772350311279297,
+    "xgboost_buy_prob": 3.4937946796417236,
+    "xgboost_hold_prob": 16.332006454467773,
+    "xgboost_sell_prob": 8.385069847106934
+  },
+  "is_trained": true,
+  "model_version": "1.0.0",
+  "saved_at": "2025-12-30T16:51:10.678530"
+}

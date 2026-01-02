@@ -1,0 +1,52 @@
+================================================================================
+KNOWN ISSUE - Model Loading Error
+================================================================================
+
+ISSUE:
+Scanner fails to load Gradient Boosting model:
+"<class 'numpy.random._mt19937.MT19937'> is not a known BitGenerator module"
+
+CAUSE:
+Numpy version incompatibility between training and loading environments.
+Model was trained with one numpy version, scanner uses different version.
+
+IMPACT:
+- Scanner cannot run
+- Cannot verify BUY/SELL balance on frontend
+- Core fix IS working (models trained with correct labels)
+
+SOLUTIONS:
+
+Option 1: Skip Gradient Boosting (FASTEST - 2 minutes)
+----------------------------------------
+Edit: backend/turbomode/overnight_scanner.py
+Comment out Gradient Boosting model loading (line ~116)
+Scanner will work with 8 models instead of 9
+
+Option 2: Retrain Gradient Boosting Only (5 minutes)
+----------------------------------------
+Delete: backend/data/turbomode_models/gradientboost/
+Run: venv\Scripts\python.exe backend\turbomode\train_turbomode_models.py
+(Will skip already-trained models, only retrain missing one)
+
+Option 3: Use Pre-Restart Environment (RECOMMENDED)
+----------------------------------------
+Wait until after restart
+Models may load correctly in fresh Python session
+If still fails, use Option 1 or 2
+
+VERIFICATION AFTER FIX:
+1. Run: cd backend\turbomode && python overnight_scanner.py
+2. Should complete without errors
+3. Check: analyze_signals.py to verify BUY/SELL distribution
+
+STATUS:
+- Training data: FIXED ✓
+- Models trained: DONE ✓
+- Model loading: BLOCKED (this issue)
+- Frontend verification: PENDING
+
+NEXT SESSION PRIORITY:
+Fix this issue FIRST before running full production training.
+
+================================================================================

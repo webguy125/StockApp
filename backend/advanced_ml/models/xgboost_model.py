@@ -27,19 +27,19 @@ class XGBoostModel:
 
     Features:
     - Handles 300+ input features
-    - 3-class prediction: Buy (0), Hold (1), Sell (2)
+    - Binary classification: Buy (0), Sell (1)
     - GPU acceleration support (if available)
     - Feature importance tracking
     - Model persistence (save/load)
     """
 
-    def __init__(self, model_path: str = "backend/data/ml_models/xgboost", use_gpu: bool = False):
+    def __init__(self, model_path: str = "backend/data/ml_models/xgboost", use_gpu: bool = True):
         """
         Initialize XGBoost model
 
         Args:
             model_path: Directory to save/load model files
-            use_gpu: Whether to use GPU for training (requires CUDA)
+            use_gpu: Whether to use GPU for training (requires CUDA) - Default TRUE for RTX 3070
         """
         if not XGBOOST_AVAILABLE:
             raise ImportError("XGBoost not installed. Run: pip install xgboost")
@@ -51,24 +51,25 @@ class XGBoostModel:
         self.feature_names: List[str] = []
         self.is_trained = False
 
-        # Model hyperparameters (optimized for trading)
+        # Model hyperparameters (optimized for trading with anti-overfitting)
         self.hyperparameters = {
+            'device': 'cuda' if use_gpu else 'cpu',  # XGBoost 3.x GPU device
+            'tree_method': 'hist',          # XGBoost 3.x: always 'hist', GPU controlled by device
             'n_estimators': 300,            # Number of boosting rounds
-            'max_depth': 8,                 # Max tree depth
-            'learning_rate': 0.05,          # Learning rate (eta)
-            'subsample': 0.8,               # Row sampling
-            'colsample_bytree': 0.8,        # Column sampling
-            'colsample_bylevel': 0.8,       # Column sampling per level
-            'gamma': 0.1,                   # Min loss reduction
-            'min_child_weight': 3,          # Min sum of instance weight
-            'reg_alpha': 0.1,               # L1 regularization
-            'reg_lambda': 1.0,              # L2 regularization
-            'objective': 'multi:softprob',  # Multi-class classification
-            'num_class': 3,                 # Buy, Hold, Sell
-            'eval_metric': 'mlogloss',      # Multi-class log loss
+            'max_depth': 6,                 # Reduced: 8 → 6
+            'learning_rate': 0.03,          # Reduced: 0.05 → 0.03 (slower learning)
+            'subsample': 0.7,               # Reduced: 0.8 → 0.7 (more row sampling)
+            'colsample_bytree': 0.7,        # Reduced: 0.8 → 0.7
+            'colsample_bylevel': 0.7,       # Reduced: 0.8 → 0.7
+            'gamma': 0.3,                   # Increased: 0.1 → 0.3 (min loss reduction)
+            'min_child_weight': 5,          # Increased: 3 → 5 (min samples per leaf)
+            'reg_alpha': 0.3,               # Increased L1: 0.1 → 0.3
+            'reg_lambda': 2.0,              # Increased L2: 1.0 → 2.0
+            'objective': 'binary:logistic',  # Binary classification
+            'eval_metric': 'logloss',       # Binary log loss
             'random_state': 42,
             'n_jobs': -1,                   # Use all CPU cores
-            'tree_method': 'gpu_hist' if use_gpu else 'hist'  # GPU or CPU
+            'verbosity': 0                  # Suppress warnings
         }
 
         # Performance metrics
@@ -119,7 +120,7 @@ class XGBoostModel:
 
         Args:
             X: Feature matrix (n_samples, n_features)
-            y: Target labels (n_samples,) - 0=Buy, 1=Hold, 2=Sell
+            y: Target labels (n_samples,) - 0=Buy, 1=Sell
             validate: Whether to run cross-validation
             early_stopping_rounds: Stop if no improvement for N rounds
             sample_weight: Sample weights for regime-aware training (Module 5)
@@ -240,10 +241,9 @@ class XGBoostModel:
         """
         if not self.is_trained:
             return {
-                'prediction': 'hold',
-                'buy_prob': 0.33,
-                'hold_prob': 0.34,
-                'sell_prob': 0.33,
+                'prediction': 'buy',
+                'buy_prob': 0.50,
+                'sell_prob': 0.50,
                 'confidence': 0.0,
                 'error': 'Model not trained'
             }
@@ -254,12 +254,12 @@ class XGBoostModel:
         # Scale features
         X_scaled = self.scaler.transform(X)
 
-        # Get prediction and probabilities
+        # Get prediction and probabilities (binary classification)
         prediction_class = self.model.predict(X_scaled)[0]
         probabilities = self.model.predict_proba(X_scaled)[0]
 
-        # Map class to label
-        class_labels = ['buy', 'hold', 'sell']
+        # Map class to label (0=buy, 1=sell)
+        class_labels = ['buy', 'sell']
         prediction_label = class_labels[prediction_class]
 
         # Confidence = max probability
@@ -268,8 +268,7 @@ class XGBoostModel:
         return {
             'prediction': prediction_label,
             'buy_prob': float(probabilities[0]),
-            'hold_prob': float(probabilities[1]),
-            'sell_prob': float(probabilities[2]),
+            'sell_prob': float(probabilities[1]),
             'confidence': confidence,
             'model': 'xgboost'
         }
@@ -298,8 +297,8 @@ class XGBoostModel:
         predictions = self.model.predict(X_scaled)
         probabilities = self.model.predict_proba(X_scaled)
 
-        # Format results
-        class_labels = ['buy', 'hold', 'sell']
+        # Format results (binary classification)
+        class_labels = ['buy', 'sell']
         results = []
 
         for i in range(len(predictions)):
@@ -309,8 +308,7 @@ class XGBoostModel:
             results.append({
                 'prediction': class_labels[pred_class],
                 'buy_prob': float(probs[0]),
-                'hold_prob': float(probs[1]),
-                'sell_prob': float(probs[2]),
+                'sell_prob': float(probs[1]),
                 'confidence': float(np.max(probs)),
                 'model': 'xgboost'
             })
@@ -460,8 +458,8 @@ class XGBoostModel:
         # Calculate accuracy
         accuracy = np.mean(y_pred == y)
 
-        # Per-class accuracy
-        class_labels = ['buy', 'hold', 'sell']
+        # Per-class accuracy (binary classification)
+        class_labels = ['buy', 'sell']
         class_accuracies = {}
 
         for i, label in enumerate(class_labels):

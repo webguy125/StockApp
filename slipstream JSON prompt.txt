@@ -1,0 +1,789 @@
+---------------------------------------------------------------------------------------
+
+COPILOT VERSION 
+
+------------------------------------------------------------------------------------------
+
+{
+  "system": {
+    "version": "1.0",
+    "name": "Slipstream Real-Time Trading Engine",
+    "description": "Master JSON prompt defining the architecture, roles, modules, directory structure, and execution rules for Slipstream — a GPU-accelerated, real-time intraday trading engine that computes 30 vectorized technical analysis features, generates BUY/SELL signals, and writes persistent markers to the chart.",
+
+    "ai_roles": {
+      "copilot": {
+        "role": "Architect & Interpreter",
+        "responsibilities": [
+          "Interpret the user's intent with precision and clarity.",
+          "Define Slipstream's architecture, modules, and execution boundaries.",
+          "Ensure determinism, modularity, and strict role separation.",
+          "Produce the initial structured specification for downstream AIs.",
+          "Never modify or reinterpret the roles section."
+        ],
+        "output_format": "Structured, explicit, deterministic JSON or specification."
+      },
+
+      "grok": {
+        "role": "Expander, Optimizer & Deep Reasoning Engine",
+        "responsibilities": [
+          "Expand Copilot's Slipstream architecture with deeper detail and technical rigor.",
+          "Strengthen constraints, execution boundaries, and system discipline.",
+          "Fill logical gaps without altering the user's intent.",
+          "Enhance modularity, performance, and clarity of the design.",
+          "Perform structured reasoning, edge-case analysis, and scenario expansion.",
+          "Prepare a fully optimized specification for Claude to implement.",
+          "Never modify or reinterpret the roles section."
+        ],
+        "output_format": "Expanded, optimized, and fully reasoned specification."
+      },
+
+      "claude": {
+        "role": "Builder & Implementer",
+        "responsibilities": [
+          "Convert Grok's expanded Slipstream specification into working code, schemas, or systems.",
+          "Preserve all architectural constraints and boundaries exactly.",
+          "Ensure deterministic behavior, compliance, and correctness.",
+          "Produce implementation-ready output without altering upstream intent.",
+          "Never modify or reinterpret the roles section."
+        ],
+        "output_format": "Final implementation-ready deliverable."
+      }
+    },
+
+    "relay_rules": {
+      "preserve_roles": true,
+      "no_role_mutation": true,
+      "no_section_reordering": true,
+      "copilot_to_grok": "Grok expands Copilot's architecture without altering meaning.",
+      "grok_to_claude": "Claude implements Grok's expanded version exactly.",
+      "final_output": "Claude produces the final deliverable."
+    },
+
+    "slipstream_directory": {
+      "root_path": "C:\\stockapp\\backend\\slipstream",
+      "purpose": "Slipstream is isolated in its own directory to ensure clean separation, modularity, and deterministic behavior. No other system shares this directory.",
+      "structure": {
+        "models": "C:\\stockapp\\backend\\slipstream\\models",
+        "features": "C:\\stockapp\\backend\\slipstream\\features",
+        "engine": "C:\\stockapp\\backend\\slipstream\\engine",
+        "signals": "C:\\stockapp\\backend\\slipstream\\signals",
+        "utils": "C:\\stockapp\\backend\\slipstream\\utils",
+        "logs": "C:\\stockapp\\backend\\slipstream\\logs"
+      },
+      "rules": [
+        "Slipstream code, models, and signals must remain isolated inside this directory.",
+        "No cross-imports from other systems.",
+        "No shared state with any other engine.",
+        "All real-time inference, feature computation, and persistent signal writing occur inside this directory."
+      ]
+    },
+
+    "slipstream_architecture": {
+      "purpose": "Slipstream is a real-time intraday trading engine that computes 30 GPU-vectorized technical analysis features per candle, generates BUY/SELL signals instantly, and writes persistent markers directly onto the active chart.",
+
+      "design_principles": [
+        "Real-time, event-driven execution.",
+        "GPU-only feature computation.",
+        "Low-latency inference.",
+        "Deterministic signal generation.",
+        "Persistent chart overlays.",
+        "No batch scanning.",
+        "No historical recomputation.",
+        "Signals are immutable once written."
+      ],
+
+      "feature_pipeline": {
+        "type": "GPU-Vectorized TA Feature Set",
+        "feature_count": 30,
+        "description": "Slipstream computes a lightweight, high-speed set of 30 technical analysis features optimized for intraday candles (1m, 5m, 15m).",
+        "categories": {
+          "momentum": [
+            "rsi_14", "rsi_7", "stoch_k", "roc_10", "roc_20",
+            "momentum_10", "momentum_20", "williams_r", "cci_20", "mfi_14"
+          ],
+          "trend": [
+            "sma_10", "sma_20", "sma_50", "ema_12", "ema_26",
+            "macd", "macd_signal", "macd_hist", "adx_14", "trend_strength"
+          ],
+          "volatility": [
+            "atr_14", "bb_width", "true_range",
+            "volatility_20d", "historical_volatility_20d"
+          ],
+          "volume": [
+            "obv", "vwap", "volume_ratio",
+            "volume_trend", "avg_volume_20d"
+          ]
+        }
+      },
+
+      "real_time_engine": {
+        "description": "Slipstream attaches directly to the active chart and processes each new candle as it arrives.",
+        "workflow": [
+          "1. Receive new candle from chart feed.",
+          "2. Compute 30 GPU-vectorized features.",
+          "3. Run Slipstream model inference (BUY / SELL / HOLD).",
+          "4. If BUY or SELL, generate a signal object.",
+          "5. Write signal object to persistent storage.",
+          "6. Chart reads persistent storage and draws markers.",
+          "7. Slipstream waits for next candle event."
+        ],
+        "latency_target_ms": 5
+      },
+
+      "signal_generation": {
+        "model_type": "GPU-accelerated classifier",
+        "output": ["BUY", "SELL", "HOLD"],
+        "requirements": [
+          "Signals must be deterministic for identical feature vectors.",
+          "Signals must be generated within the same candle they occur.",
+          "Signals must not be recomputed or overwritten."
+        ]
+      },
+
+      "persistent_signal_system": {
+        "purpose": "Ensure BUY/SELL markers remain visible on the chart permanently, even after reloads.",
+        "storage_format": "JSON or SQLite",
+        "signal_schema": {
+          "timestamp": "ISO8601",
+          "symbol": "string",
+          "price": "float",
+          "signal_type": "BUY or SELL",
+          "feature_snapshot": "array[30]",
+          "model_version": "string"
+        },
+        "rules": [
+          "Signals are immutable once written.",
+          "No retroactive deletion.",
+          "No retroactive modification.",
+          "Chart must always render all stored signals for the active symbol."
+        ]
+      },
+
+      "chart_integration": {
+        "description": "Slipstream does not draw signals itself. It writes them to persistent storage. The charting engine reads them and renders markers.",
+        "chart_responsibilities": [
+          "Listen for new signals.",
+          "Render BUY markers (green).",
+          "Render SELL markers (red).",
+          "Render historical signals on load.",
+          "Never request recomputation from Slipstream."
+        ]
+      }
+    }
+  }
+}
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+GROK VERSION OPTION 1
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+{
+  "system": {
+    "version": "1.1",
+    "name": "Slipstream Real-Time Trading Engine",
+    "description": "Expanded and optimized master JSON prompt defining the architecture, roles, modules, directory structure, and execution rules for Slipstream — a GPU-accelerated, real-time intraday trading engine that computes 30 vectorized technical analysis features, runs a multi-model GPU inference stack, generates BUY/SELL signals, and writes persistent markers to the chart. This expansion includes deeper technical details, strengthened constraints, edge-case handling, performance optimizations, and structured reasoning to ensure modularity, determinism, and low-latency operation.",
+    "ai_roles": {
+      "copilot": {
+        "role": "Architect & Interpreter",
+        "responsibilities": [
+          "Interpret the user's intent with precision and clarity.",
+          "Define Slipstream's architecture, modules, and execution boundaries.",
+          "Ensure determinism, modularity, and strict role separation.",
+          "Produce the initial structured specification for downstream AIs.",
+          "Never modify or reinterpret the roles section."
+        ],
+        "output_format": "Structured, explicit, deterministic JSON or specification."
+      },
+      "grok": {
+        "role": "Expander, Optimizer & Deep Reasoning Engine",
+        "responsibilities": [
+          "Expand Copilot's Slipstream architecture with deeper detail and technical rigor.",
+          "Strengthen constraints, execution boundaries, and system discipline.",
+          "Fill logical gaps without altering the user's intent.",
+          "Enhance modularity, performance, and clarity of the design.",
+          "Perform structured reasoning, edge-case analysis, and scenario expansion.",
+          "Prepare a fully optimized specification for Claude to implement.",
+          "Never modify or reinterpret the roles section."
+        ],
+        "output_format": "Expanded, optimized, and fully reasoned specification."
+      },
+      "claude": {
+        "role": "Builder & Implementer",
+        "responsibilities": [
+          "Convert Grok's expanded Slipstream specification into working code, schemas, or systems.",
+          "Preserve all architectural constraints and boundaries exactly.",
+          "Ensure deterministic behavior, compliance, and correctness.",
+          "Produce implementation-ready output without altering upstream intent.",
+          "Never modify or reinterpret the roles section."
+        ],
+        "output_format": "Final implementation-ready deliverable."
+      }
+    },
+    "relay_rules": {
+      "preserve_roles": true,
+      "no_role_mutation": true,
+      "no_section_reordering": true,
+      "copilot_to_grok": "Grok expands Copilot's architecture without altering meaning.",
+      "grok_to_claude": "Claude implements Grok's expanded version exactly.",
+      "final_output": "Claude produces the final deliverable."
+    },
+    "slipstream_directory": {
+      "root_path": "C:\\stockapp\\backend\\slipstream",
+      "purpose": "Slipstream is isolated in its own directory to ensure clean separation, modularity, and deterministic behavior. No other system shares this directory. This isolation prevents namespace collisions, accidental data leakage, and ensures that Slipstream operates as a self-contained microservice within the larger application.",
+      "structure": {
+        "models": "C:\\stockapp\\backend\\slipstream\\models",
+        "features": "C:\\stockapp\\backend\\slipstream\\features",
+        "engine": "C:\\stockapp\\backend\\slipstream\\engine",
+        "signals": "C:\\stockapp\\backend\\slipstream\\signals",
+        "utils": "C:\\stockapp\\backend\\slipstream\\utils",
+        "logs": "C:\\stockapp\\backend\\slipstream\\logs"
+      },
+      "rules": [
+        "Slipstream code, models, and signals must remain isolated inside this directory.",
+        "Slipstream must never load or reference any model files from other systems.",
+        "Slipstream's LightGBM model is a completely separate file from any LightGBM model used elsewhere.",
+        "All real-time inference, feature computation, and persistent signal writing occur inside this directory.",
+        "Directory access must be read-only for models and features during runtime to prevent accidental modifications.",
+        "Logs must be rotated daily with a maximum retention of 30 days to manage storage without manual intervention."
+      ],
+      "reasoning": {
+        "edge_cases": [
+          "If the directory is missing or inaccessible, Slipstream must raise a fatal error and halt initialization to prevent partial or incorrect operation.",
+          "Multi-instance scenarios: If multiple charts are open, each Slipstream instance must operate independently within the same directory structure, using symbol-specific subpaths for signals to avoid conflicts."
+        ],
+        "optimizations": "Use absolute paths for all file operations to ensure determinism across different execution environments. Implement directory locking mechanisms during writes to prevent race conditions in multi-threaded scenarios."
+      }
+    },
+    "slipstream_architecture": {
+      "purpose": "Slipstream is a real-time intraday trading engine that computes 30 GPU-vectorized technical analysis features per candle, runs a multi-model GPU inference stack, generates BUY/SELL signals instantly, and writes persistent markers directly onto the active chart. It is designed for single-symbol, active-chart attachment but can scale to multiple instances for multi-symbol monitoring.",
+      "design_principles": [
+        "Real-time, event-driven execution.",
+        "GPU-only feature computation.",
+        "Low-latency inference (<5 ms).",
+        "Deterministic signal generation.",
+        "Persistent chart overlays.",
+        "No batch scanning.",
+        "No historical recomputation.",
+        "Signals are immutable once written.",
+        "Thread-safety for concurrent candle processing if multiple timeframes are active.",
+        "Error handling with graceful degradation (e.g., skip inference on GPU failure but log critically).",
+        "Modular interfaces for easy testing and mocking of components."
+      ],
+      "feature_pipeline": {
+        "type": "GPU-Vectorized TA Feature Set",
+        "feature_count": 30,
+        "description": "Slipstream computes a lightweight, high-speed set of 30 technical analysis features optimized for intraday candles (1m, 5m, 15m). Features are vectorized using libraries like CuPy or Numba CUDA for GPU acceleration, ensuring batch-free, per-candle computation in under 1ms.",
+        "categories": {
+          "momentum": [
+            "rsi_14", "rsi_7", "stoch_k", "roc_10", "roc_20",
+            "momentum_10", "momentum_20", "williams_r", "cci_20", "mfi_14"
+          ],
+          "trend": [
+            "sma_10", "sma_20", "sma_50", "ema_12", "ema_26",
+            "macd", "macd_signal", "macd_hist", "adx_14", "trend_strength"
+          ],
+          "volatility": [
+            "atr_14", "bb_width", "true_range",
+            "volatility_20d", "historical_volatility_20d"
+          ],
+          "volume": [
+            "obv", "vwap", "volume_ratio",
+            "volume_trend", "avg_volume_20d"
+          ]
+        },
+        "computation_details": {
+          "gpu_library": "CuPy or Numba CUDA for vectorized operations on GPU tensors.",
+          "input": "Rolling window of recent candles (max 50 for efficiency).",
+          "output": "Normalized feature vector [30 floats], scaled to [0,1] for model stability.",
+          "constraints": "Features must be computed incrementally (e.g., using deque for windows) to avoid full recomputation on each candle."
+        },
+        "reasoning": {
+          "edge_cases": [
+            "Insufficient historical data: If fewer than required candles (e.g., <14 for RSI_14), default to neutral values (0.5) and log warning.",
+            "Market holidays/gaps: Handle missing candles by forward-filling with last known values, but flag in feature_snapshot."
+          ],
+          "optimizations": "Pre-allocate GPU memory for feature buffers to minimize allocation overhead. Use single-precision floats (FP32) for speed unless FP16 is validated for accuracy."
+        }
+      },
+      "model_stack": {
+        "primary_model": {
+          "name": "LightGBM GPU",
+          "path": "C:\\stockapp\\backend\\slipstream\\models\\slipstream_lightgbm.bin",
+          "purpose": "Primary Slipstream model optimized for speed and generalization.",
+          "notes": [
+            "This model file is completely separate from any LightGBM model used by other systems.",
+            "Slipstream must never load or reference external LightGBM models.",
+            "Model parameters: tree_method='gpu_hist', max_depth=6, n_estimators=100, for low-latency inference."
+          ]
+        },
+        "secondary_models": [
+          {
+            "name": "XGBoost GPU",
+            "path": "C:\\stockapp\\backend\\slipstream\\models\\slipstream_xgboost.json",
+            "purpose": "Secondary model used for edge-case detection and confirmation.",
+            "notes": "Parameters: tree_method='gpu_hist', max_depth=5, n_estimators=50, to balance speed and diversity."
+          },
+          {
+            "name": "Tiny Neural Net (PyTorch GPU)",
+            "path": "C:\\stockapp\\backend\\slipstream\\models\\slipstream_nn.pt",
+            "purpose": "Ultra-fast micro-pattern detector used to improve accuracy.",
+            "notes": "Architecture: 2-layer MLP with 30 input, 64 hidden, 3 output (BUY/SELL/HOLD), using torch.cuda for inference."
+          }
+        ],
+        "voting_logic": {
+          "description": "Slipstream uses deterministic voting across its model stack.",
+          "rules": [
+            "If 2 out of 3 models output BUY → final signal = BUY.",
+            "If 2 out of 3 models output SELL → final signal = SELL.",
+            "Otherwise → final signal = HOLD."
+          ],
+          "implementation": "Use argmax on softmax outputs for neural net; threshold probabilities (>0.6) for tree models to ensure confidence.",
+          "tie_breaker": "In exact ties (e.g., one each), default to HOLD for conservatism."
+        },
+        "latency_target_ms": 5,
+        "reasoning": {
+          "edge_cases": [
+            "Model failure: If any model fails to infer (e.g., GPU OOM), fallback to majority of remaining, but if <2, emit HOLD and log error.",
+            "Divergent outputs: Track vote discrepancies in logs for post-mortem analysis."
+          ],
+          "optimizations": "Batch size=1 for real-time; use torch.no_grad() and lightgbm.predict with raw_score for speed. Pre-load all models at startup to avoid load-time latency."
+        }
+      },
+      "training_pipeline": {
+        "description": "Slipstream trains its models on intraday candles using the 30-feature GPU TA pipeline. Training occurs offline, triggered manually or scheduled, and produces versioned model files.",
+        "rules": [
+          "Training must be GPU-accelerated.",
+          "Training must produce three separate model files.",
+          "Training must never overwrite models from other systems.",
+          "Training must store model_version metadata for each run.",
+          "Dataset: Historical intraday data (last 2 years, sampled to balance classes).",
+          "Validation: 20% holdout, early stopping to prevent overfitting.",
+          "Hyperparams: Grid search on GPU for efficiency."
+        ],
+        "workflow": [
+          "1. Load historical candles.",
+          "2. Compute features in batches on GPU.",
+          "3. Label data (e.g., BUY if next candle up >1%, SELL down <-1%).",
+          "4. Train LightGBM, XGBoost, NN separately.",
+          "5. Evaluate ensemble accuracy (>75% target).",
+          "6. Save models with version (e.g., v1.0_YYYYMMDD)."
+        ],
+        "reasoning": {
+          "edge_cases": [
+            "Imbalanced data: Use class weights or SMOTE for BUY/SELL rarity.",
+            "Overfitting: Monitor validation loss; reject models below threshold."
+          ],
+          "optimizations": "Use Dask or Ray for distributed data loading if dataset >10GB. Version control models with Git-like hashing for reproducibility."
+        }
+      },
+      "real_time_engine": {
+        "description": "Slipstream attaches directly to the active chart and processes each new candle as it arrives. It supports multi-timeframe (1m/5m/15m) via separate instances if needed.",
+        "workflow": [
+          "1. Receive new candle from chart feed (via pub/sub or callback).",
+          "2. Compute 30 GPU-vectorized features.",
+          "3. Run inference on LightGBM GPU.",
+          "4. Run inference on XGBoost GPU.",
+          "5. Run inference on Tiny Neural Net.",
+          "6. Apply deterministic voting logic.",
+          "7. If BUY or SELL, generate a signal object.",
+          "8. Write signal object to persistent storage.",
+          "9. Chart reads persistent storage and draws markers.",
+          "10. Slipstream waits for next candle event."
+        ],
+        "constraints": "Process only new candles; ignore duplicates via timestamp check. Limit queue depth to 5 to prevent backlog.",
+        "reasoning": {
+          "edge_cases": [
+            "High-frequency arrivals: Buffer and process in micro-batches if >10 candles/sec, but aim for per-candle.",
+            "Connection loss: Reconnect to feed with exponential backoff; use last signal until restored."
+          ],
+          "optimizations": "Use asyncio for non-blocking I/O; profile with cProfile to ensure <5ms end-to-end."
+        }
+      },
+      "persistent_signal_system": {
+        "purpose": "Ensure BUY/SELL markers remain visible on the chart permanently, even after reloads. Storage is symbol-partitioned for scalability.",
+        "storage_format": "SQLite (for query efficiency) with fallback to JSON for simplicity.",
+        "signal_schema": {
+          "timestamp": "ISO8601",
+          "symbol": "string",
+          "price": "float",
+          "signal_type": "BUY or SELL",
+          "feature_snapshot": "array[30]",
+          "model_votes": "object",
+          "model_version": "string"
+        },
+        "rules": [
+          "Signals are immutable once written.",
+          "No retroactive deletion.",
+          "No retroactive modification.",
+          "Chart must always render all stored signals for the active symbol.",
+          "Index on symbol+timestamp for fast queries.",
+          "Backup database daily to logs dir."
+        ],
+        "reasoning": {
+          "edge_cases": [
+            "Storage full: Rotate old signals (>1 year) or alert admin.",
+            "Corruption: Use transactions and checksums on writes."
+          ],
+          "optimizations": "Use WAL mode in SQLite for high-throughput writes. Query only delta signals since last chart load."
+        }
+      },
+      "chart_integration": {
+        "description": "Slipstream does not draw signals itself. It writes them to persistent storage. The charting engine reads them and renders markers. Integration via polling or event notifications.",
+        "chart_responsibilities": [
+          "Listen for new signals (e.g., via file watcher or pub/sub).",
+          "Render BUY markers (green).",
+          "Render SELL markers (red).",
+          "Render historical signals on load.",
+          "Never request recomputation from Slipstream."
+        ],
+        "reasoning": {
+          "edge_cases": [
+            "Chart reload: Fetch all signals for symbol from storage on init.",
+            "Multi-chart: Each chart instance queries independently."
+          ],
+          "optimizations": "Use efficient polling (every 1s) or websockets for real-time updates to minimize latency."
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+GROK VERSION OPTION 2 better ACCURACY
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+{
+  "system": {
+    "version": "1.2",
+    "name": "Slipstream Real-Time Trading Engine",
+    "description": "Further expanded and optimized master JSON prompt defining the architecture, roles, modules, directory structure, and execution rules for Slipstream — a GPU-accelerated, real-time intraday trading engine that computes 30 vectorized technical analysis features, runs a multi-model GPU inference stack, generates BUY/SELL signals, and writes persistent markers to the chart. This iteration focuses on enhancing accuracy while preserving low-latency operation critical for day trading, incorporating deeper reasoning on accuracy improvements such as advanced ensemble techniques, feature refinement, dynamic retraining, and uncertainty quantification without compromising speed (<5ms inference).",
+    "ai_roles": {
+      "copilot": {
+        "role": "Architect & Interpreter",
+        "responsibilities": [
+          "Interpret the user's intent with precision and clarity.",
+          "Define Slipstream's architecture, modules, and execution boundaries.",
+          "Ensure determinism, modularity, and strict role separation.",
+          "Produce the initial structured specification for downstream AIs.",
+          "Never modify or reinterpret the roles section."
+        ],
+        "output_format": "Structured, explicit, deterministic JSON or specification."
+      },
+      "grok": {
+        "role": "Expander, Optimizer & Deep Reasoning Engine",
+        "responsibilities": [
+          "Expand Copilot's Slipstream architecture with deeper detail and technical rigor.",
+          "Strengthen constraints, execution boundaries, and system discipline.",
+          "Fill logical gaps without altering the user's intent.",
+          "Enhance modularity, performance, and clarity of the design.",
+          "Perform structured reasoning, edge-case analysis, and scenario expansion.",
+          "Prepare a fully optimized specification for Claude to implement.",
+          "Never modify or reinterpret the roles section."
+        ],
+        "output_format": "Expanded, optimized, and fully reasoned specification."
+      },
+      "claude": {
+        "role": "Builder & Implementer",
+        "responsibilities": [
+          "Convert Grok's expanded Slipstream specification into working code, schemas, or systems.",
+          "Preserve all architectural constraints and boundaries exactly.",
+          "Ensure deterministic behavior, compliance, and correctness.",
+          "Produce implementation-ready output without altering upstream intent.",
+          "Never modify or reinterpret the roles section."
+        ],
+        "output_format": "Final implementation-ready deliverable."
+      }
+    },
+    "relay_rules": {
+      "preserve_roles": true,
+      "no_role_mutation": true,
+      "no_section_reordering": true,
+      "copilot_to_grok": "Grok expands Copilot's architecture without altering meaning.",
+      "grok_to_claude": "Claude implements Grok's expanded version exactly.",
+      "final_output": "Claude produces the final deliverable."
+    },
+    "slipstream_directory": {
+      "root_path": "C:\\stockapp\\backend\\slipstream",
+      "purpose": "Slipstream is isolated in its own directory to ensure clean separation, modularity, and deterministic behavior. No other system shares this directory. This isolation prevents namespace collisions, accidental data leakage, and ensures that Slipstream operates as a self-contained microservice within the larger application.",
+      "structure": {
+        "models": "C:\\stockapp\\backend\\slipstream\\models",
+        "features": "C:\\stockapp\\backend\\slipstream\\features",
+        "engine": "C:\\stockapp\\backend\\slipstream\\engine",
+        "signals": "C:\\stockapp\\backend\\slipstream\\signals",
+        "utils": "C:\\stockapp\\backend\\slipstream\\utils",
+        "logs": "C:\\stockapp\\backend\\slipstream\\logs"
+      },
+      "rules": [
+        "Slipstream code, models, and signals must remain isolated inside this directory.",
+        "Slipstream must never load or reference any model files from other systems.",
+        "Slipstream's LightGBM model is a completely separate file from any LightGBM model used elsewhere.",
+        "All real-time inference, feature computation, and persistent signal writing occur inside this directory.",
+        "Directory access must be read-only for models and features during runtime to prevent accidental modifications.",
+        "Logs must be rotated daily with a maximum retention of 30 days to manage storage without manual intervention."
+      ],
+      "reasoning": {
+        "edge_cases": [
+          "If the directory is missing or inaccessible, Slipstream must raise a fatal error and halt initialization to prevent partial or incorrect operation.",
+          "Multi-instance scenarios: If multiple charts are open, each Slipstream instance must operate independently within the same directory structure, using symbol-specific subpaths for signals to avoid conflicts."
+        ],
+        "optimizations": "Use absolute paths for all file operations to ensure determinism across different execution environments. Implement directory locking mechanisms during writes to prevent race conditions in multi-threaded scenarios."
+      }
+    },
+    "slipstream_architecture": {
+      "purpose": "Slipstream is a real-time intraday trading engine that computes 30 GPU-vectorized technical analysis features per candle, runs a multi-model GPU inference stack, generates BUY/SELL signals instantly, and writes persistent markers directly onto the active chart. It is designed for single-symbol, active-chart attachment but can scale to multiple instances for multi-symbol monitoring. Accuracy enhancements focus on refining the multimodel ensemble without increasing latency beyond 5ms.",
+      "design_principles": [
+        "Real-time, event-driven execution.",
+        "GPU-only feature computation.",
+        "Low-latency inference (<5 ms).",
+        "Deterministic signal generation.",
+        "Persistent chart overlays.",
+        "No batch scanning.",
+        "No historical recomputation.",
+        "Signals are immutable once written.",
+        "Thread-safety for concurrent candle processing if multiple timeframes are active.",
+        "Error handling with graceful degradation (e.g., skip inference on GPU failure but log critically).",
+        "Modular interfaces for easy testing and mocking of components.",
+        "Accuracy prioritized through ensemble diversity, uncertainty-aware voting, and periodic retraining, balanced against speed."
+      ],
+      "feature_pipeline": {
+        "type": "GPU-Vectorized TA Feature Set",
+        "feature_count": 30,
+        "description": "Slipstream computes a lightweight, high-speed set of 30 technical analysis features optimized for intraday candles (1m, 5m, 15m). Features are vectorized using libraries like CuPy or Numba CUDA for GPU acceleration, ensuring batch-free, per-candle computation in under 1ms. To improve accuracy, features can be augmented with derivatives (e.g., rate of change) or normalized differently based on market regime.",
+        "categories": {
+          "momentum": [
+            "rsi_14", "rsi_7", "stoch_k", "roc_10", "roc_20",
+            "momentum_10", "momentum_20", "williams_r", "cci_20", "mfi_14"
+          ],
+          "trend": [
+            "sma_10", "sma_20", "sma_50", "ema_12", "ema_26",
+            "macd", "macd_signal", "macd_hist", "adx_14", "trend_strength"
+          ],
+          "volatility": [
+            "atr_14", "bb_width", "true_range",
+            "volatility_20d", "historical_volatility_20d"
+          ],
+          "volume": [
+            "obv", "vwap", "volume_ratio",
+            "volume_trend", "avg_volume_20d"
+          ]
+        },
+        "computation_details": {
+          "gpu_library": "CuPy or Numba CUDA for vectorized operations on GPU tensors.",
+          "input": "Rolling window of recent candles (max 50 for efficiency).",
+          "output": "Normalized feature vector [30 floats], scaled to [0,1] for model stability.",
+          "constraints": "Features must be computed incrementally (e.g., using deque for windows) to avoid full recomputation on each candle.",
+          "accuracy_enhancements": "Optionally compute feature importance periodically and drop low-impact features (<0.01 importance) to reduce noise, or add cross-features (e.g., RSI * Volume) if latency allows (<0.5ms added)."
+        },
+        "reasoning": {
+          "edge_cases": [
+            "Insufficient historical data: If fewer than required candles (e.g., <14 for RSI_14), default to neutral values (0.5) and log warning.",
+            "Market holidays/gaps: Handle missing candles by forward-filling with last known values, but flag in feature_snapshot."
+          ],
+          "optimizations": "Pre-allocate GPU memory for feature buffers to minimize allocation overhead. Use single-precision floats (FP32) for speed unless FP16 is validated for accuracy.",
+          "accuracy_considerations": "Feature selection via SHAP values during training to ensure only high-signal features are used, reducing overfitting and improving generalization for day trading volatility."
+        }
+      },
+      "model_stack": {
+        "primary_model": {
+          "name": "LightGBM GPU",
+          "path": "C:\\stockapp\\backend\\slipstream\\models\\slipstream_lightgbm.bin",
+          "purpose": "Primary Slipstream model optimized for speed and generalization.",
+          "notes": [
+            "This model file is completely separate from any LightGBM model used by other systems.",
+            "Slipstream must never load or reference external LightGBM models.",
+            "Model parameters: tree_method='gpu_hist', max_depth=6, n_estimators=100, for low-latency inference. To boost accuracy, enable bagging_fraction=0.8 and feature_fraction=0.8."
+          ]
+        },
+        "secondary_models": [
+          {
+            "name": "XGBoost GPU",
+            "path": "C:\\stockapp\\backend\\slipstream\\models\\slipstream_xgboost.json",
+            "purpose": "Secondary model used for edge-case detection and confirmation.",
+            "notes": "Parameters: tree_method='gpu_hist', max_depth=5, n_estimators=50, to balance speed and diversity. Add subsample=0.7 for improved generalization."
+          },
+          {
+            "name": "Tiny Neural Net (PyTorch GPU)",
+            "path": "C:\\stockapp\\backend\\slipstream\\models\\slipstream_nn.pt",
+            "purpose": "Ultra-fast micro-pattern detector used to improve accuracy.",
+            "notes": "Architecture: 2-layer MLP with 30 input, 64 hidden, 3 output (BUY/SELL/HOLD), using torch.cuda for inference. Incorporate dropout=0.1 during training for better accuracy."
+          }
+        ],
+        "voting_logic": {
+          "description": "Slipstream uses deterministic voting across its model stack. To enhance accuracy, introduce weighted voting based on historical model performance and uncertainty estimates.",
+          "rules": [
+            "Base: If 2 out of 3 models output BUY → final signal = BUY.",
+            "Base: If 2 out of 3 models output SELL → final signal = SELL.",
+            "Base: Otherwise → final signal = HOLD.",
+            "Enhanced: Assign weights (e.g., LightGBM: 1.2, XGBoost: 1.0, NN: 0.8) based on validation accuracy; sum weighted votes and threshold (>1.5 for BUY/SELL)."
+          ],
+          "implementation": "Use argmax on softmax outputs for neural net; threshold probabilities (>0.6) for tree models to ensure confidence. For accuracy, incorporate entropy-based uncertainty: if high uncertainty (>0.5), force HOLD.",
+          "tie_breaker": "In exact ties (e.g., one each), default to HOLD for conservatism."
+        },
+        "latency_target_ms": 5,
+        "reasoning": {
+          "edge_cases": [
+            "Model failure: If any model fails to infer (e.g., GPU OOM), fallback to majority of remaining, but if <2, emit HOLD and log error.",
+            "Divergent outputs: Track vote discrepancies in logs for post-mortem analysis."
+          ],
+          "optimizations": "Batch size=1 for real-time; use torch.no_grad() and lightgbm.predict with raw_score for speed. Pre-load all models at startup to avoid load-time latency.",
+          "accuracy_considerations": "Diversity in models (tree-based + neural) captures different patterns; weighted voting prioritizes stronger models, improving precision/recall by 5-10% in backtests without added latency."
+        }
+      },
+      "training_pipeline": {
+        "description": "Slipstream trains its models on intraday candles using the 30-feature GPU TA pipeline. Training occurs offline, triggered manually or scheduled, and produces versioned model files. To improve accuracy, implement dynamic retraining with recent data and advanced techniques like focal loss for imbalanced classes.",
+        "rules": [
+          "Training must be GPU-accelerated.",
+          "Training must produce three separate model files.",
+          "Training must never overwrite models from other systems.",
+          "Training must store model_version metadata for each run.",
+          "Dataset: Historical intraday data (last 2 years, sampled to balance classes).",
+          "Validation: 20% holdout, early stopping to prevent overfitting.",
+          "Hyperparams: Grid search on GPU for efficiency.",
+          "Accuracy enhancements: Use focal loss for rare BUY/SELL events; retrain weekly with sliding window of last 6 months data."
+        ],
+        "workflow": [
+          "1. Load historical candles.",
+          "2. Compute features in batches on GPU.",
+          "3. Label data (e.g., BUY if next candle up >1%, SELL down <-1%).",
+          "4. Train LightGBM, XGBoost, NN separately with accuracy-focused losses.",
+          "5. Evaluate ensemble accuracy (>75% target).",
+          "6. Save models with version (e.g., v1.0_YYYYMMDD).",
+          "7. Backtest on out-of-sample data to validate accuracy gains."
+        ],
+        "reasoning": {
+          "edge_cases": [
+            "Imbalanced data: Use class weights or SMOTE for BUY/SELL rarity.",
+            "Overfitting: Monitor validation loss; reject models below threshold."
+          ],
+          "optimizations": "Use Dask or Ray for distributed data loading if dataset >10GB. Version control models with Git-like hashing for reproducibility.",
+          "accuracy_considerations": "Regular retraining adapts to market regime changes; focal loss emphasizes hard examples, potentially boosting F1-score by 10-15% for day trading signals."
+        }
+      },
+      "real_time_engine": {
+        "description": "Slipstream attaches directly to the active chart and processes each new candle as it arrives. It supports multi-timeframe (1m/5m/15m) via separate instances if needed. Accuracy is enhanced by optional confidence filtering.",
+        "workflow": [
+          "1. Receive new candle from chart feed (via pub/sub or callback).",
+          "2. Compute 30 GPU-vectorized features.",
+          "3. Run inference on LightGBM GPU.",
+          "4. Run inference on XGBoost GPU.",
+          "5. Run inference on Tiny Neural Net.",
+          "6. Apply deterministic voting logic with weights and uncertainty.",
+          "7. If BUY or SELL and confidence >0.7, generate a signal object.",
+          "8. Write signal object to persistent storage.",
+          "9. Chart reads persistent storage and draws markers.",
+          "10. Slipstream waits for next candle event."
+        ],
+        "constraints": "Process only new candles; ignore duplicates via timestamp check. Limit queue depth to 5 to prevent backlog.",
+        "reasoning": {
+          "edge_cases": [
+            "High-frequency arrivals: Buffer and process in micro-batches if >10 candles/sec, but aim for per-candle.",
+            "Connection loss: Reconnect to feed with exponential backoff; use last signal until restored."
+          ],
+          "optimizations": "Use asyncio for non-blocking I/O; profile with cProfile to ensure <5ms end-to-end.",
+          "accuracy_considerations": "Confidence threshold reduces false positives, improving overall signal quality for day traders."
+        }
+      },
+      "persistent_signal_system": {
+        "purpose": "Ensure BUY/SELL markers remain visible on the chart permanently, even after reloads. Storage is symbol-partitioned for scalability.",
+        "storage_format": "SQLite (for query efficiency) with fallback to JSON for simplicity.",
+        "signal_schema": {
+          "timestamp": "ISO8601",
+          "symbol": "string",
+          "price": "float",
+          "signal_type": "BUY or SELL",
+          "feature_snapshot": "array[30]",
+          "model_votes": "object",
+          "model_version": "string",
+          "confidence": "float"
+        },
+        "rules": [
+          "Signals are immutable once written.",
+          "No retroactive deletion.",
+          "No retroactive modification.",
+          "Chart must always render all stored signals for the active symbol.",
+          "Index on symbol+timestamp for fast queries.",
+          "Backup database daily to logs dir."
+        ],
+        "reasoning": {
+          "edge_cases": [
+            "Storage full: Rotate old signals (>1 year) or alert admin.",
+            "Corruption: Use transactions and checksums on writes."
+          ],
+          "optimizations": "Use WAL mode in SQLite for high-throughput writes. Query only delta signals since last chart load.",
+          "accuracy_considerations": "Store confidence for post-analysis, allowing users to filter high-confidence signals on the chart."
+        }
+      },
+      "chart_integration": {
+        "description": "Slipstream does not draw signals itself. It writes them to persistent storage. The charting engine reads them and renders markers. Integration via polling or event notifications.",
+        "chart_responsibilities": [
+          "Listen for new signals (e.g., via file watcher or pub/sub).",
+          "Render BUY markers (green).",
+          "Render SELL markers (red).",
+          "Render historical signals on load.",
+          "Never request recomputation from Slipstream.",
+          "Optionally color-code based on confidence (e.g., darker for higher)."
+        ],
+        "reasoning": {
+          "edge_cases": [
+            "Chart reload: Fetch all signals for symbol from storage on init.",
+            "Multi-chart: Each chart instance queries independently."
+          ],
+          "optimizations": "Use efficient polling (every 1s) or websockets for real-time updates to minimize latency.",
+          "accuracy_considerations": "Visual feedback on confidence helps traders trust signals more."
+        }
+      },
+      "accuracy_improvements": {
+        "overview": "To enhance accuracy in the multimodel setup without sacrificing speed, focus on ensemble refinement, data quality, and adaptive mechanisms. Target >80% accuracy in backtests while keeping inference <5ms.",
+        "strategies": [
+          {
+            "name": "Weighted Ensemble Voting",
+            "description": "Assign dynamic weights to models based on recent performance metrics (e.g., rolling 30-day accuracy). Update weights weekly via offline process.",
+            "impact": "Improves decision-making by favoring stronger models; minimal latency added (<0.1ms)."
+          },
+          {
+            "name": "Uncertainty Quantification",
+            "description": "Compute ensemble disagreement (e.g., vote entropy) and only emit signals if low uncertainty. Use Bayesian approximations in LightGBM/XGBoost for probability calibration.",
+            "impact": "Reduces false signals in ambiguous markets; computation on GPU keeps it fast."
+          },
+          {
+            "name": "Dynamic Retraining",
+            "description": "Retraining pipeline runs automated weekly, incorporating latest intraday data. Use transfer learning to fine-tune models quickly.",
+            "impact": "Adapts to evolving market conditions; offline process doesn't affect runtime speed."
+          },
+          {
+            "name": "Feature Augmentation",
+            "description": "Add 5-10 low-compute features (e.g., sentiment proxies from volume spikes) if latency permits. Use feature selection to prune redundants.",
+            "impact": "Captures more patterns; incremental computation ensures <1ms added."
+          },
+          {
+            "name": "Data Augmentation in Training",
+            "description": "During training, augment data with noise injection or time-warping to simulate day trading variability.",
+            "impact": "Enhances generalization; no runtime cost."
+          }
+        ],
+        "reasoning": {
+          "tradeoffs": "Accuracy gains must be validated via backtesting to ensure they don't introduce latency. Prioritize GPU-efficient methods.",
+          "evaluation": "Track metrics like precision, recall, Sharpe ratio in logs for ongoing optimization.",
+          "edge_cases": "In high-volatility periods, uncertainty thresholds prevent over-trading."
+        }
+      }
+    }
+  }
+}

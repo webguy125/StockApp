@@ -23,39 +23,48 @@ class LightGBMModel:
     - Handles categorical features natively
     """
 
-    def __init__(self, model_path: str = "backend/data/ml_models/lightgbm"):
+    def __init__(self, model_path: str = "backend/data/ml_models/lightgbm", use_gpu: bool = False):
         """
         Initialize LightGBM model
 
         Args:
             model_path: Directory to save/load model files
+            use_gpu: Whether to use GPU acceleration (CUDA)
         """
         self.model_path = model_path
         self.model = None
         self.is_trained = False
+        self.use_gpu = use_gpu
 
-        # Hyperparameters optimized for trading
+        # Hyperparameters optimized for trading with anti-overfitting
         self.hyperparameters = {
             'objective': 'multiclass',
-            'num_class': 3,
+            'num_class': 2,  # Binary classification: buy vs sell
             'boosting_type': 'gbdt',
-            'num_leaves': 31,
-            'max_depth': -1,
-            'learning_rate': 0.05,
+            'num_leaves': 15,               # Reduced: 31 → 15 (prevent overfitting)
+            'max_depth': 6,                 # Limited: -1 → 6
+            'learning_rate': 0.03,          # Reduced: 0.05 → 0.03
             'n_estimators': 300,
             'subsample_for_bin': 200000,
-            'min_split_gain': 0.0,
-            'min_child_weight': 0.001,
-            'min_child_samples': 20,
-            'subsample': 0.8,
+            'min_split_gain': 0.1,          # Increased: 0.0 → 0.1
+            'min_child_weight': 0.01,       # Increased: 0.001 → 0.01
+            'min_child_samples': 30,        # Increased: 20 → 30
+            'subsample': 0.7,                # Reduced: 0.8 → 0.7
             'subsample_freq': 1,
-            'colsample_bytree': 0.8,
-            'reg_alpha': 0.1,
-            'reg_lambda': 0.1,
+            'colsample_bytree': 0.7,         # Reduced: 0.8 → 0.7
+            'reg_alpha': 0.5,                # Increased L1: 0.1 → 0.5
+            'reg_lambda': 2.0,               # Increased L2: 0.1 → 2.0
             'random_state': 42,
             'n_jobs': -1,
             'verbose': -1
         }
+
+        # Enable GPU if requested
+        if use_gpu:
+            self.hyperparameters['device'] = 'gpu'
+            self.hyperparameters['gpu_platform_id'] = 0
+            self.hyperparameters['gpu_device_id'] = 0
+            print("[LIGHTGBM] GPU acceleration enabled")
 
         self.feature_names = []
         self.training_metrics = {}
@@ -172,8 +181,7 @@ class LightGBMModel:
         return {
             'prediction': int(prediction),
             'buy_prob': float(probabilities[0]),
-            'hold_prob': float(probabilities[1]),
-            'sell_prob': float(probabilities[2]),
+            'sell_prob': float(probabilities[1]),
             'confidence': float(np.max(probabilities))
         }
 
@@ -203,8 +211,7 @@ class LightGBMModel:
             results.append({
                 'prediction': int(predictions[i]),
                 'buy_prob': float(probabilities[i][0]),
-                'hold_prob': float(probabilities[i][1]),
-                'sell_prob': float(probabilities[i][2]),
+                'sell_prob': float(probabilities[i][1]),
                 'confidence': float(np.max(probabilities[i]))
             })
 

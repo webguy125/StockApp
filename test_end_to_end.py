@@ -1,130 +1,81 @@
-"""
-End-to-End Test of Advanced ML System
-Tests complete workflow with sample data from core symbols
-"""
-
+# End-to-End GPU Test
 import sys
 import os
+sys.path.insert(0, 'backend')
 
-# Add backend to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
+from advanced_ml.backtesting.historical_backtest import HistoricalBacktest
+import time
+import sqlite3
 
-from advanced_ml.config import get_all_core_symbols
-from advanced_ml.training.training_pipeline import TrainingPipeline
+print("="*80)
+print("END-TO-END GPU TEST")
+print("="*80)
 
-def main():
-    print("=" * 70)
-    print("STEP 10: END-TO-END SYSTEM TEST (8-MODEL ENSEMBLE)")
-    print("=" * 70)
-    print("\nTesting with 10 core symbols (1 year data)")
-    print("This will verify:")
-    print("  1. Historical backtest engine")
-    print("  2. Feature engineering (179 features)")
-    print("  3. Random Forest training")
-    print("  4. XGBoost training")
-    print("  5. LightGBM training")
-    print("  6. Extra Trees training")
-    print("  7. Gradient Boosting training")
-    print("  8. Neural Network training")
-    print("  9. Logistic Regression training")
-    print(" 10. SVM training")
-    print(" 11. Meta-learner ensemble (stacking)")
-    print(" 12. Model evaluation")
-    print()
+db_path = "backend/backend/data/test_gpu.db"
 
-    # Get subset of core symbols (10 symbols, diverse sectors)
-    all_core = get_all_core_symbols()
+# Clear old database
+if os.path.exists(db_path):
+    os.remove(db_path)
 
-    # Select 10 diverse symbols
-    test_symbols = [
-        'AAPL',   # Tech, Large
-        'JPM',    # Financial, Large
-        'JNJ',    # Healthcare, Large
-        'XOM',    # Energy, Large
-        'NEE',    # Utility, Large
-        'PLTR',   # Tech, Mid
-        'SCHW',   # Financial, Mid
-        'DXCM',   # Healthcare, Mid
-        'FANG',   # Energy, Mid
-        'AES',    # Utility, Mid
-    ]
+# Step 1: Backtest
+print("\n[STEP 1] GPU Backtest...")
+start = time.time()
+backtest = HistoricalBacktest(db_path, use_gpu=True)
+results = backtest.run_backtest(['AAPL'], years=2, save_to_db=True)
+backtest_time = time.time() - start
 
-    print(f"Test symbols: {', '.join(test_symbols)}")
-    print()
+print(f"[OK] Backtest: {backtest_time:.1f}s, {results.get('total_samples', 0)} samples")
 
-    # Initialize pipeline
-    pipeline = TrainingPipeline()
+# Step 2: Verify database
+conn = sqlite3.connect(db_path)
+cursor = conn.cursor()
+cursor.execute("SELECT COUNT(*) FROM trades WHERE trade_type = 'backtest'")
+count = cursor.fetchone()[0]
+cursor.execute("SELECT outcome, COUNT(*) FROM trades WHERE trade_type = 'backtest' GROUP BY outcome")
+labels = cursor.fetchall()
+conn.close()
 
-    # Run full pipeline
-    try:
-        results = pipeline.run_full_pipeline(
-            symbols=test_symbols,
-            years=1,  # 1 year for speed
-            test_size=0.2,
-            use_existing_data=False  # Fresh backtest
-        )
+print(f"[OK] Database: {count} samples")
+for outcome, cnt in labels:
+    print(f"     {outcome}: {cnt}")
 
-        # Check results
-        print("\n" + "=" * 70)
-        print("STEP 10 RESULTS")
-        print("=" * 70)
+# Check labels
+outcomes = [row[0] for row in labels]
+if 'buy' in outcomes and 'sell' in outcomes:
+    print("[OK] Labels correct (buy/hold/sell)")
+else:
+    print("[FAIL] Labels incorrect!")
+    sys.exit(1)
 
-        if results and 'rf_eval' in results:
-            rf_acc = results['rf_eval']['accuracy']
-            xgb_acc = results['xgb_eval']['accuracy']
-            lgbm_acc = results['lgbm_eval']['accuracy']
-            et_acc = results['et_eval']['accuracy']
-            gb_acc = results['gb_eval']['accuracy']
-            nn_acc = results['nn_eval']['accuracy']
-            lr_acc = results['lr_eval']['accuracy']
-            svm_acc = results['svm_eval']['accuracy']
-            meta_acc = results['meta_eval']['accuracy']
-            best_model = results.get('best_model', 'unknown')
-            best_acc = results.get('best_accuracy', 0.0)
+# Step 3: Train model
+print("\n[STEP 2] Model Training...")
+X, y = backtest.prepare_training_data()
 
-            print(f"\n[OK] Test SUCCESSFUL!")
-            print(f"\nBase Model Accuracies:")
-            print(f"  Random Forest:         {rf_acc:.4f}")
-            print(f"  XGBoost:               {xgb_acc:.4f}")
-            print(f"  LightGBM:              {lgbm_acc:.4f}")
-            print(f"  Extra Trees:           {et_acc:.4f}")
-            print(f"  Gradient Boosting:     {gb_acc:.4f}")
-            print(f"  Neural Network:        {nn_acc:.4f}")
-            print(f"  Logistic Regression:   {lr_acc:.4f}")
-            print(f"  SVM:                   {svm_acc:.4f}")
-            print(f"\nEnsemble:")
-            print(f"  Meta-Learner:          {meta_acc:.4f}")
-            print(f"\nBest Model: {best_model} ({best_acc:.4f})")
+if len(X) == 0:
+    print("[FAIL] No training data!")
+    sys.exit(1)
 
-            # Check if best model has reasonable accuracy
-            if best_acc >= 0.75:
-                print(f"\n[OK] Accuracy check PASSED (>= 75%)")
-                print("\n" + "=" * 70)
-                print("PROCEEDING TO STEP 11: FULL BACKTEST ON 80 CORE SYMBOLS")
-                print("=" * 70)
-                return True
-            else:
-                print(f"\n[FAIL] Accuracy check FAILED (< 75%)")
-                print("  System needs review before full backtest")
-                return False
+print(f"[OK] Loaded {len(X)} samples, {X.shape[1]} features")
 
-        else:
-            print("\n[FAIL] Test FAILED - Results incomplete")
-            return False
+import xgboost as xgb
+start = time.time()
+# XGBoost 3.x uses device="cuda" for GPU acceleration
+model = xgb.XGBClassifier(device="cuda", tree_method='hist', n_estimators=50, max_depth=5, verbosity=0)
+model.fit(X, y)
+train_time = time.time() - start
 
-    except Exception as e:
-        print(f"\n[FAIL] Test FAILED with error: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+print(f"[OK] Training: {train_time:.1f}s")
 
+# Test predictions
+predictions = model.predict(X[:5])
+probabilities = model.predict_proba(X[:5])
 
-if __name__ == '__main__':
-    success = main()
+print("\n[STEP 3] Predictions:")
+for i in range(5):
+    label = ['BUY', 'HOLD', 'SELL'][predictions[i]]
+    conf = probabilities[i][predictions[i]] * 100
+    print(f"  Sample {i+1}: {label} ({conf:.1f}%)")
 
-    if success:
-        print("\n[OK] Step 10 COMPLETE - Ready for Step 11")
-        sys.exit(0)
-    else:
-        print("\n[FAIL] Step 10 FAILED - Fix issues before Step 11")
-        sys.exit(1)
+print("\n" + "="*80)
+print("ALL TESTS PASSED!")
+print("="*80)

@@ -2805,6 +2805,15 @@ except ImportError as e:
     print(f"[TURBOMODE SCHEDULER] Not available: {e}")
     TURBOMODE_SCHEDULER_AVAILABLE = False
 
+# Initialize Stock Ranking API Blueprint (adaptive top 10 stock selection)
+try:
+    from backend.turbomode.stock_ranking_api import ranking_bp, init_stock_ranking_scheduler
+    app.register_blueprint(ranking_bp)
+    STOCK_RANKING_AVAILABLE = True
+except ImportError as e:
+    print(f"[STOCK RANKING] Not available: {e}")
+    STOCK_RANKING_AVAILABLE = False
+
 
 @app.route('/turbomode/signals', methods=['GET'])
 def get_turbomode_signals():
@@ -3045,6 +3054,14 @@ if __name__ == "__main__":
             print("[TURBOMODE SCHEDULER] Disabled")
     else:
         print("[TURBOMODE SCHEDULER] Not available")
+
+    # Initialize Stock Ranking Scheduler (runs monthly on 1st at 2 AM)
+    if STOCK_RANKING_AVAILABLE:
+        print("[STOCK RANKING] Initializing monthly adaptive stock ranking scheduler...")
+        init_stock_ranking_scheduler()
+        print("[STOCK RANKING] Ready - Runs monthly on 1st at 2:00 AM")
+    else:
+        print("[STOCK RANKING] Not available")
 
     # Use socketio.run instead of app.run for WebSocket support
     # Ticker emit worker will start automatically when first client connects

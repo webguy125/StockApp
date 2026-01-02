@@ -26,6 +26,13 @@ class TurboModeDB:
         Args:
             db_path: Path to SQLite database file
         """
+        # Convert relative path to absolute path
+        if not os.path.isabs(db_path):
+            # Get the project root (2 levels up from this file's directory)
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(os.path.dirname(script_dir))
+            db_path = os.path.join(project_root, db_path)
+
         self.db_path = db_path
 
         # Ensure directory exists
@@ -163,6 +170,8 @@ class TurboModeDB:
                 - confidence: float (0.0 - 1.0)
                 - entry_date: str (YYYY-MM-DD)
                 - entry_price: float
+                - entry_min: float (optional, defaults to entry_price * 0.98)
+                - entry_max: float (optional, defaults to entry_price * 1.02)
                 - target_price: float
                 - stop_price: float
                 - market_cap: 'large_cap', 'mid_cap', or 'small_cap'
@@ -176,19 +185,25 @@ class TurboModeDB:
 
         now = datetime.now().isoformat()
 
+        # Default entry range to ±2% if not provided
+        entry_min = signal.get('entry_min', signal['entry_price'] * 0.98)
+        entry_max = signal.get('entry_max', signal['entry_price'] * 1.02)
+
         try:
             cursor.execute("""
                 INSERT INTO active_signals
-                (symbol, signal_type, confidence, entry_date, entry_price,
+                (symbol, signal_type, confidence, entry_date, entry_price, entry_min, entry_max,
                  target_price, stop_price, market_cap, sector, age_days,
                  status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 signal['symbol'],
                 signal['signal_type'],
                 signal['confidence'],
                 signal['entry_date'],
                 signal['entry_price'],
+                entry_min,
+                entry_max,
                 signal['target_price'],
                 signal['stop_price'],
                 signal['market_cap'],

@@ -1,0 +1,35 @@
+{
+  "feature_names": [],
+  "hyperparameters": {
+    "device": "cuda",
+    "tree_method": "approx",
+    "sketch_eps": 0.03,
+    "n_estimators": 350,
+    "max_depth": 7,
+    "learning_rate": 0.035,
+    "subsample": 0.75,
+    "colsample_bytree": 0.75,
+    "colsample_bylevel": 0.75,
+    "gamma": 0.2,
+    "min_child_weight": 4,
+    "reg_alpha": 0.2,
+    "reg_lambda": 1.6,
+    "objective": "binary:logistic",
+    "eval_metric": "logloss",
+    "random_state": 42,
+    "verbosity": 0
+  },
+  "training_metrics": {
+    "train_accuracy": 0.9712418300653595,
+    "val_accuracy": 0.7756653992395437,
+    "cv_mean": 0.7774501933685175,
+    "cv_std": 0.004033456782944643,
+    "n_samples": 10519,
+    "n_features": 179,
+    "top_features": [],
+    "timestamp": "2026-01-01T16:01:28.413525"
+  },
+  "is_trained": true,
+  "model_version": "1.0.0",
+  "saved_at": "2026-01-01T16:01:28.587187"
+}

@@ -4,14 +4,14 @@ Combines predictions from multiple base models using stacking
 
 Architecture:
 - Base Models: Random Forest, XGBoost (extensible to LSTM, CNN, Transformer)
-- Meta Model: Logistic Regression (learns optimal combination)
+- Meta Model: XGBoost GPU (learns optimal combination with non-linear patterns)
 - Input: Probabilities from all base models
 - Output: Final ensemble prediction with confidence
 """
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
+import xgboost as xgb
 from sklearn.ensemble import VotingClassifier
 import joblib
 import os
@@ -39,15 +39,17 @@ class MetaLearner:
     - Model persistence
     """
 
-    def __init__(self, model_path: str = "backend/data/ml_models/meta_learner"):
+    def __init__(self, model_path: str = "backend/data/ml_models/meta_learner", use_gpu: bool = True):
         """
         Initialize meta-learner
 
         Args:
             model_path: Directory to save/load model files
+            use_gpu: Whether to use GPU for meta-learner (default True)
         """
         self.model_path = model_path
-        self.meta_model: Optional[LogisticRegression] = None
+        self.use_gpu = use_gpu
+        self.meta_model: Optional[xgb.XGBClassifier] = None
         self.is_trained = False
 
         # Base models (will be loaded or trained separately)
@@ -84,8 +86,8 @@ class MetaLearner:
         Args:
             base_predictions: Dict mapping model name to prediction dict
                              {
-                                 'random_forest': {'buy_prob': 0.3, 'hold_prob': 0.5, 'sell_prob': 0.2},
-                                 'xgboost': {'buy_prob': 0.4, 'hold_prob': 0.4, 'sell_prob': 0.2}
+                                 'random_forest': {'buy_prob': 0.6, 'sell_prob': 0.4},
+                                 'xgboost': {'buy_prob': 0.7, 'sell_prob': 0.3}
                              }
 
         Returns:
@@ -98,9 +100,8 @@ class MetaLearner:
             pred = base_predictions[model_name]
             # Extract probabilities in consistent order
             meta_features.extend([
-                pred.get('buy_prob', 0.33),
-                pred.get('hold_prob', 0.34),
-                pred.get('sell_prob', 0.33)
+                pred.get('buy_prob', 0.50),
+                pred.get('sell_prob', 0.50)
             ])
 
         return np.array(meta_features).reshape(1, -1)
@@ -113,7 +114,7 @@ class MetaLearner:
         Args:
             X_base_predictions: List of base prediction dicts for each sample
                                Each item is a dict mapping model name to predictions
-            y_true: True labels (n_samples,) - 0=Buy, 1=Hold, 2=Sell
+            y_true: True labels (n_samples,) - 0=Buy, 1=Sell
 
         Returns:
             Training metrics dictionary
@@ -131,16 +132,22 @@ class MetaLearner:
         X_meta = np.array(X_meta)
 
         print(f"  Meta-features: {X_meta.shape[1]}")
+        print(f"  Using GPU: {self.use_gpu}")
 
-        # Initialize meta-model (Logistic Regression for stacking)
-        # Use less regularization for better stacking performance
-        self.meta_model = LogisticRegression(
-            C=100.0,  # Low regularization for optimal stacking
-            multi_class='multinomial',
-            solver='lbfgs',
-            max_iter=2000,  # More iterations for convergence
-            class_weight='balanced',  # Handle class imbalance
-            random_state=42
+        # Initialize meta-model (XGBoost GPU for non-linear stacking)
+        # Shallow trees to prevent overfitting on meta-features
+        self.meta_model = xgb.XGBClassifier(
+            device='cuda' if self.use_gpu else 'cpu',  # XGBoost 3.x GPU
+            tree_method='hist',             # XGBoost 3.x: always 'hist', GPU via device
+            n_estimators=100,
+            max_depth=3,  # Shallow trees for meta-learning
+            learning_rate=0.05,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            reg_alpha=0.1,
+            reg_lambda=1.0,
+            random_state=42,
+            verbosity=0
         )
 
         # Train meta-model
@@ -150,21 +157,25 @@ class MetaLearner:
         # Calculate metrics
         train_score = self.meta_model.score(X_meta, y_true)
 
-        # Analyze model weights (coefficients)
-        # For logistic regression, coefficients show importance of each meta-feature
-        if hasattr(self.meta_model, 'coef_'):
-            coef = self.meta_model.coef_
+        # Analyze model weights (feature importance from XGBoost)
+        # Get feature importance scores
+        try:
+            importance_dict = self.meta_model.get_booster().get_score(importance_type='gain')
             feature_names = []
             for model_name in sorted(self.base_models.keys()):
                 feature_names.extend([
                     f'{model_name}_buy_prob',
-                    f'{model_name}_hold_prob',
                     f'{model_name}_sell_prob'
                 ])
 
-            # Average absolute coefficient across classes
-            avg_coef = np.abs(coef).mean(axis=0)
-            self.model_weights = dict(zip(feature_names, avg_coef))
+            # Map feature indices to names
+            self.model_weights = {}
+            for i, name in enumerate(feature_names):
+                feature_key = f'f{i}'
+                if feature_key in importance_dict:
+                    self.model_weights[name] = float(importance_dict[feature_key])
+                else:
+                    self.model_weights[name] = 0.0
 
             # Aggregate by model
             model_importance = {}
@@ -177,6 +188,12 @@ class MetaLearner:
             total_importance = sum(model_importance.values())
             if total_importance > 0:
                 model_importance = {k: v / total_importance * 100 for k, v in model_importance.items()}
+            else:
+                # Fallback: equal importance
+                model_importance = {k: 100.0 / len(self.base_models) for k in self.base_models.keys()}
+        except Exception as e:
+            # Fallback: equal importance
+            model_importance = {k: 100.0 / len(self.base_models) for k in self.base_models.keys()}
 
         # Store metrics
         self.training_metrics = {
@@ -223,7 +240,7 @@ class MetaLearner:
         probabilities = self.meta_model.predict_proba(X_meta)[0]
 
         # Map class to label
-        class_labels = ['buy', 'hold', 'sell']
+        class_labels = ['buy', 'sell']
         prediction_label = class_labels[prediction_class]
 
         # Confidence = max probability
@@ -233,11 +250,69 @@ class MetaLearner:
         return {
             'prediction': prediction_label,
             'buy_prob': float(probabilities[0]),
-            'hold_prob': float(probabilities[1]),
-            'sell_prob': float(probabilities[2]),
+            'sell_prob': float(probabilities[1]),
             'confidence': confidence,
             'model': 'meta_learner',
             'base_predictions': base_predictions
+        }
+
+    def predict_with_confidence_masking(self, base_predictions: Dict[str, Dict[str, float]],
+                                       buy_threshold: float = 0.65,
+                                       sell_threshold: float = 0.75) -> Dict[str, Any]:
+        """
+        Make ensemble prediction with asymmetric confidence masking
+
+        ASYMMETRIC HOLD THRESHOLDS:
+        - BUY requires ≥65% confidence (more aggressive on entries)
+        - SELL requires ≥75% confidence (more conservative on exits)
+        - Below threshold → HOLD (wait for better opportunity)
+
+        This creates an effective 3-class output (BUY/SELL/HOLD) from
+        binary-trained models (BUY/SELL only).
+
+        Args:
+            base_predictions: Dict mapping model name to prediction dict
+            buy_threshold: Confidence threshold for BUY signals (default: 0.65)
+            sell_threshold: Confidence threshold for SELL signals (default: 0.75)
+
+        Returns:
+            Ensemble prediction with HOLD masking applied
+        """
+        # Get base binary prediction
+        base_result = self.predict(base_predictions)
+
+        prediction = base_result['prediction']
+        buy_prob = base_result['buy_prob']
+        sell_prob = base_result['sell_prob']
+        confidence = base_result['confidence']
+
+        # Apply asymmetric confidence thresholds
+        if prediction == 'buy':
+            if confidence >= buy_threshold:
+                final_prediction = 'buy'
+                reason = f'high_confidence_buy (≥{buy_threshold:.0%})'
+            else:
+                final_prediction = 'hold'
+                reason = f'low_confidence_buy (<{buy_threshold:.0%})'
+        else:  # prediction == 'sell'
+            if confidence >= sell_threshold:
+                final_prediction = 'sell'
+                reason = f'high_confidence_sell (≥{sell_threshold:.0%})'
+            else:
+                final_prediction = 'hold'
+                reason = f'low_confidence_sell (<{sell_threshold:.0%})'
+
+        return {
+            'prediction': final_prediction,
+            'buy_prob': buy_prob,
+            'sell_prob': sell_prob,
+            'confidence': confidence,
+            'model': 'meta_learner_with_hold_masking',
+            'base_prediction': prediction,  # Original BUY/SELL before masking
+            'masking_reason': reason,
+            'buy_threshold': buy_threshold,
+            'sell_threshold': sell_threshold,
+            'base_predictions': base_result.get('base_predictions', {})
         }
 
     def predict_batch(self, base_predictions_list: List[Dict[str, Dict[str, float]]]) -> List[Dict[str, Any]]:
@@ -266,7 +341,7 @@ class MetaLearner:
         probabilities = self.meta_model.predict_proba(X_meta)
 
         # Format results
-        class_labels = ['buy', 'hold', 'sell']
+        class_labels = ['buy', 'sell']
         results = []
 
         for i in range(len(predictions)):
@@ -276,8 +351,7 @@ class MetaLearner:
             results.append({
                 'prediction': class_labels[pred_class],
                 'buy_prob': float(probs[0]),
-                'hold_prob': float(probs[1]),
-                'sell_prob': float(probs[2]),
+                'sell_prob': float(probs[1]),
                 'confidence': float(np.max(probs)),
                 'model': 'meta_learner',
                 'base_predictions': base_predictions_list[i]
@@ -297,32 +371,28 @@ class MetaLearner:
         """
         if not base_predictions:
             return {
-                'prediction': 'hold',
-                'buy_prob': 0.33,
-                'hold_prob': 0.34,
-                'sell_prob': 0.33,
+                'prediction': 'buy',
+                'buy_prob': 0.50,
+                'sell_prob': 0.50,
                 'confidence': 0.0,
                 'model': 'meta_learner_untrained'
             }
 
         # Average probabilities
-        buy_probs = [p.get('buy_prob', 0.33) for p in base_predictions.values()]
-        hold_probs = [p.get('hold_prob', 0.34) for p in base_predictions.values()]
-        sell_probs = [p.get('sell_prob', 0.33) for p in base_predictions.values()]
+        buy_probs = [p.get('buy_prob', 0.50) for p in base_predictions.values()]
+        sell_probs = [p.get('sell_prob', 0.50) for p in base_predictions.values()]
 
         avg_buy = np.mean(buy_probs)
-        avg_hold = np.mean(hold_probs)
         avg_sell = np.mean(sell_probs)
 
         # Determine prediction
-        probs = np.array([avg_buy, avg_hold, avg_sell])
+        probs = np.array([avg_buy, avg_sell])
         pred_class = np.argmax(probs)
-        class_labels = ['buy', 'hold', 'sell']
+        class_labels = ['buy', 'sell']
 
         return {
             'prediction': class_labels[pred_class],
             'buy_prob': float(avg_buy),
-            'hold_prob': float(avg_hold),
             'sell_prob': float(avg_sell),
             'confidence': float(np.max(probs)),
             'model': 'meta_learner_simple_average',
@@ -432,22 +502,20 @@ if __name__ == '__main__':
         # Simulate RF prediction (slightly noisy)
         rf_buy = max(0, min(1, np.random.rand() * 0.5 + 0.2))
         rf_sell = max(0, min(1, np.random.rand() * 0.3 + 0.1))
-        rf_hold = 1 - rf_buy - rf_sell
+        # rf_hold = 1 - rf_buy - rf_sell  # Binary classification
 
         # Simulate XGB prediction (different noise pattern)
         xgb_buy = max(0, min(1, np.random.rand() * 0.6 + 0.1))
         xgb_sell = max(0, min(1, np.random.rand() * 0.2 + 0.15))
-        xgb_hold = 1 - xgb_buy - xgb_sell
+        # xgb_hold = 1 - xgb_buy - xgb_sell  # Binary classification
 
         rf_predictions.append({
             'buy_prob': rf_buy,
-            'hold_prob': rf_hold,
             'sell_prob': rf_sell
         })
 
         xgb_predictions.append({
             'buy_prob': xgb_buy,
-            'hold_prob': xgb_hold,
             'sell_prob': xgb_sell
         })
 
@@ -456,7 +524,7 @@ if __name__ == '__main__':
         avg_sell = (rf_sell + xgb_sell) / 2
         avg_hold = (rf_hold + xgb_hold) / 2
 
-        probs = np.array([avg_buy, avg_hold, avg_sell])
+        probs = np.array([avg_buy, avg_sell])
         label = np.argmax(probs)
         y_true.append(label)
 
@@ -489,7 +557,7 @@ if __name__ == '__main__':
 
     print(f"\nPrediction: {prediction['prediction']}")
     print(f"  Buy:  {prediction['buy_prob']:.3f}")
-    print(f"  Hold: {prediction['hold_prob']:.3f}")
+    # print(f"  Hold: {prediction['hold_prob']:.3f}")  # Binary classification
     print(f"  Sell: {prediction['sell_prob']:.3f}")
     print(f"  Confidence: {prediction['confidence']:.3f}")
 

@@ -1,0 +1,20 @@
+{
+  "feature_names": [],
+  "training_metrics": {
+    "train_accuracy": 0.6277129837027883,
+    "n_samples": 168311,
+    "n_features": 176,
+    "timestamp": "2025-12-30T16:43:54.337050",
+    "gpu_enabled": true
+  },
+  "feature_importance": {},
+  "is_trained": true,
+  "model_version": "1.0.0",
+  "input_size": 0,
+  "hidden_sizes": [
+    128,
+    64,
+    32
+  ],
+  "saved_at": "2025-12-30T16:43:54.353037"
+}

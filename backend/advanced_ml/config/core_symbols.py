@@ -49,8 +49,8 @@ CORE_SYMBOLS = {
             'META',   # Meta - Social Media
         ],
         'mid_cap': [
-            'PLTR',   # Palantir - Software/AI
-            'SNOW',   # Snowflake - Cloud Software
+            'ADSK',   # Autodesk - Design Software
+            'TEAM',   # Atlassian - Collaboration Software
             'CRWD',   # CrowdStrike - Cybersecurity
         ],
         'small_cap': [
@@ -133,7 +133,7 @@ CORE_SYMBOLS = {
         ],
         'small_cap': [
             'CARS',   # Cars.com - Automotive Classified
-            'BMBL',   # Bumble - Dating App
+            'SIRI',   # SiriusXM - Audio Entertainment
         ]
     },
 
@@ -172,7 +172,7 @@ CORE_SYMBOLS = {
         ],
         'small_cap': [
             'CHEF',   # The Chefs' Warehouse - Food Distribution
-            'INGLES', # Ingles Markets - Grocery (IMKTA)
+            'CASY',   # Casey's General Stores - Convenience Stores
         ]
     },
 
@@ -209,7 +209,7 @@ CORE_SYMBOLS = {
             'CF',     # CF Industries - Fertilizers
         ],
         'small_cap': [
-            'CEIX',   # CONSOL Energy - Coal
+            'MOS',    # Mosaic Company - Fertilizers/Agriculture
             'IOSP',   # Innospec - Specialty Chemicals
         ]
     },

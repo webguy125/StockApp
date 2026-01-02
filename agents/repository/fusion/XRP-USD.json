@@ -1,6 +1,6 @@
 {
   "symbol": "XRP-USD",
-  "timestamp": "2025-12-27T00:02:25.266444",
+  "timestamp": "2025-12-30T00:02:43.531560",
   "agent": "fusion_agent",
   "total_score": 6.307692307692307,
   "confidence": 0.363076923076923,
@@ -11,7 +11,7 @@
     "💸"
   ],
   "emoji_string": "📉❌💸",
-  "shorthand": "XRP-USD | 📉❌💸 | 6 | 0.36 | 2025-12-27",
+  "shorthand": "XRP-USD | 📉❌💸 | 6 | 0.36 | 2025-12-30",
   "weighted_scores": {
     "indicators_agent": {
       "score": 4,

@@ -1,0 +1,41 @@
+Hi Claude - please read the previous working session file for context only:
+
+  Previous file (READ ONLY): C:\StockApp\session_files\SESSION_NOTES_2025-12-31.md
+
+CRITICAL: All session updates MUST be APPENDED to today's file:
+  C:\StockApp\session_files\session_notes_2026-01-01.md
+
+DO NOT create new files like "_part2" or "_continuation".
+DO NOT overwrite. ALWAYS APPEND using the Edit tool.
+
+============================================
+CANONICAL SESSION FILE RULES (READ DAILY)
+============================================
+
+1. You must use exactly ONE session file per day.
+   Filename format: session_notes_YYYY-MM-DD.md
+   Directory: C:\StockApp\session_files
+
+2. If today's file does not exist, create it immediately.
+   Include a header:
+   SESSION STARTED AT: YYYY-MM-DD HH:MM
+
+3. All updates must be appended to the current working file for the day.
+   NEVER EVER create files like session_notes_2026-01-01_part2.md
+   NEVER EVER create files like session_notes_2026-01-01_continuation.md
+   ONE FILE PER DAY. APPEND ONLY. Use the Edit tool to append.
+
+4. Every update must include a timestamp:
+   [YYYY-MM-DD HH:MM] <update text>
+
+5. Never delete or rename old session files.
+   They form the permanent historical archive.
+
+6. Always save files to:
+   C:\StockApp\session_files
+
+============================================
+END OF RULES
+============================================
+
+SESSION START TIME: 2026-01-01 19:35

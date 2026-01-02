@@ -1,0 +1,609 @@
+{
+  "top_n": 100,
+  "total_features": 176,
+  "selected_indices": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8,
+    9,
+    10,
+    12,
+    13,
+    16,
+    21,
+    23,
+    24,
+    26,
+    27,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    60,
+    61,
+    63,
+    76,
+    79,
+    80,
+    81,
+    82,
+    83,
+    94,
+    95,
+    96,
+    97,
+    100,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    125,
+    126,
+    127,
+    128,
+    134,
+    135,
+    136,
+    137,
+    138,
+    139,
+    145,
+    146,
+    147,
+    152,
+    153,
+    154,
+    155,
+    156,
+    157,
+    158,
+    159,
+    160,
+    161,
+    162,
+    163,
+    164,
+    166,
+    174,
+    175
+  ],
+  "feature_info": [
+    {
+      "index": 46,
+      "name": "high_volatility_regime",
+      "importance": 1.0
+    },
+    {
+      "index": 51,
+      "name": "historical_volatility_60d",
+      "importance": 0.2880885601043701
+    },
+    {
+      "index": 50,
+      "name": "historical_vol_30",
+      "importance": 0.2792801856994629
+    },
+    {
+      "index": 55,
+      "name": "keltner_lower",
+      "importance": 0.15615449845790863
+    },
+    {
+      "index": 155,
+      "name": "volatility_60d",
+      "importance": 0.14743882417678833
+    },
+    {
+      "index": 153,
+      "name": "volatility_20d",
+      "importance": 0.1376546174287796
+    },
+    {
+      "index": 49,
+      "name": "historical_vol_20",
+      "importance": 0.13382688164710999
+    },
+    {
+      "index": 34,
+      "name": "ema_50",
+      "importance": 0.12320967018604279
+    },
+    {
+      "index": 105,
+      "name": "price_vs_sma_200",
+      "importance": 0.11777292191982269
+    },
+    {
+      "index": 135,
+      "name": "sma_100",
+      "importance": 0.11711109429597855
+    },
+    {
+      "index": 137,
+      "name": "sma_200",
+      "importance": 0.11605744808912277
+    },
+    {
+      "index": 9,
+      "name": "bb_middle",
+      "importance": 0.11301307380199432
+    },
+    {
+      "index": 138,
+      "name": "sma_5",
+      "importance": 0.11238914728164673
+    },
+    {
+      "index": 8,
+      "name": "bb_lower",
+      "importance": 0.11080615222454071
+    },
+    {
+      "index": 30,
+      "name": "ema_100",
+      "importance": 0.10903342068195343
+    },
+    {
+      "index": 56,
+      "name": "keltner_upper",
+      "importance": 0.10808516293764114
+    },
+    {
+      "index": 159,
+      "name": "volume_60d_avg",
+      "importance": 0.10463126003742218
+    },
+    {
+      "index": 60,
+      "name": "liquidity_score",
+      "importance": 0.10339043289422989
+    },
+    {
+      "index": 31,
+      "name": "ema_20",
+      "importance": 0.10178298503160477
+    },
+    {
+      "index": 157,
+      "name": "volume_20d_avg",
+      "importance": 0.10170946270227432
+    },
+    {
+      "index": 139,
+      "name": "sma_50",
+      "importance": 0.09985736012458801
+    },
+    {
+      "index": 134,
+      "name": "sma_10",
+      "importance": 0.09958779811859131
+    },
+    {
+      "index": 154,
+      "name": "volatility_5d",
+      "importance": 0.09957380592823029
+    },
+    {
+      "index": 147,
+      "name": "support_2",
+      "importance": 0.09929251670837402
+    },
+    {
+      "index": 33,
+      "name": "ema_5",
+      "importance": 0.09858078509569168
+    },
+    {
+      "index": 146,
+      "name": "support_1",
+      "importance": 0.09835419058799744
+    },
+    {
+      "index": 32,
+      "name": "ema_200",
+      "importance": 0.0971476212143898
+    },
+    {
+      "index": 175,
+      "name": "z_score_50",
+      "importance": 0.09578652679920197
+    },
+    {
+      "index": 29,
+      "name": "ema_10",
+      "importance": 0.09569991379976273
+    },
+    {
+      "index": 38,
+      "name": "fib_0_382",
+      "importance": 0.09393125772476196
+    },
+    {
+      "index": 164,
+      "name": "volume_trend",
+      "importance": 0.09174051880836487
+    },
+    {
+      "index": 13,
+      "name": "bb_width",
+      "importance": 0.09131018072366714
+    },
+    {
+      "index": 48,
+      "name": "historical_vol_10",
+      "importance": 0.0909624695777893
+    },
+    {
+      "index": 27,
+      "name": "donchian_upper",
+      "importance": 0.09077627956867218
+    },
+    {
+      "index": 103,
+      "name": "price_vs_sma_100",
+      "importance": 0.0906519815325737
+    },
+    {
+      "index": 26,
+      "name": "donchian_lower",
+      "importance": 0.08999336510896683
+    },
+    {
+      "index": 136,
+      "name": "sma_20",
+      "importance": 0.08934171497821808
+    },
+    {
+      "index": 12,
+      "name": "bb_upper",
+      "importance": 0.08882121741771698
+    },
+    {
+      "index": 117,
+      "name": "resistance_2",
+      "importance": 0.08614432066679001
+    },
+    {
+      "index": 156,
+      "name": "volatility_expansion",
+      "importance": 0.08410023152828217
+    },
+    {
+      "index": 97,
+      "name": "pivot_point",
+      "importance": 0.08350291103124619
+    },
+    {
+      "index": 123,
+      "name": "roc_20",
+      "importance": 0.08316489309072495
+    },
+    {
+      "index": 37,
+      "name": "fib_0_236",
+      "importance": 0.08298591524362564
+    },
+    {
+      "index": 127,
+      "name": "rsi_28",
+      "importance": 0.0821337029337883
+    },
+    {
+      "index": 107,
+      "name": "price_vs_sma_50",
+      "importance": 0.08174139261245728
+    },
+    {
+      "index": 39,
+      "name": "fib_0_500",
+      "importance": 0.08017314225435257
+    },
+    {
+      "index": 118,
+      "name": "return_10d",
+      "importance": 0.07768631726503372
+    },
+    {
+      "index": 76,
+      "name": "medium_volatility_regime",
+      "importance": 0.07666352391242981
+    },
+    {
+      "index": 116,
+      "name": "resistance_1",
+      "importance": 0.07629841566085815
+    },
+    {
+      "index": 104,
+      "name": "price_vs_sma_20",
+      "importance": 0.07597516477108002
+    },
+    {
+      "index": 83,
+      "name": "momentum_score",
+      "importance": 0.07354871928691864
+    },
+    {
+      "index": 80,
+      "name": "momentum_20",
+      "importance": 0.07169392704963684
+    },
+    {
+      "index": 126,
+      "name": "rsi_21",
+      "importance": 0.0712939128279686
+    },
+    {
+      "index": 96,
+      "name": "parabolic_sar",
+      "importance": 0.0711648091673851
+    },
+    {
+      "index": 158,
+      "name": "volume_5d_avg",
+      "importance": 0.07011952996253967
+    },
+    {
+      "index": 21,
+      "name": "composite_price_position",
+      "importance": 0.07010385394096375
+    },
+    {
+      "index": 94,
+      "name": "overbought_composite",
+      "importance": 0.0679846927523613
+    },
+    {
+      "index": 122,
+      "name": "roc_10",
+      "importance": 0.06792409718036652
+    },
+    {
+      "index": 125,
+      "name": "rsi_14",
+      "importance": 0.0678882896900177
+    },
+    {
+      "index": 79,
+      "name": "momentum_10",
+      "importance": 0.06758303195238113
+    },
+    {
+      "index": 121,
+      "name": "return_5d",
+      "importance": 0.06747011840343475
+    },
+    {
+      "index": 10,
+      "name": "bb_position",
+      "importance": 0.06709355115890503
+    },
+    {
+      "index": 102,
+      "name": "price_vs_sma_10",
+      "importance": 0.06492018699645996
+    },
+    {
+      "index": 95,
+      "name": "oversold_composite",
+      "importance": 0.06422155350446701
+    },
+    {
+      "index": 82,
+      "name": "momentum_quality",
+      "importance": 0.06409552693367004
+    },
+    {
+      "index": 120,
+      "name": "return_20d",
+      "importance": 0.06390547752380371
+    },
+    {
+      "index": 174,
+      "name": "z_score_20",
+      "importance": 0.06287181377410889
+    },
+    {
+      "index": 81,
+      "name": "momentum_acceleration",
+      "importance": 0.06216074898838997
+    },
+    {
+      "index": 61,
+      "name": "low_volatility_regime",
+      "importance": 0.062066756188869476
+    },
+    {
+      "index": 40,
+      "name": "fib_0_618",
+      "importance": 0.062058012932538986
+    },
+    {
+      "index": 152,
+      "name": "upper_shadow",
+      "importance": 0.061751045286655426
+    },
+    {
+      "index": 128,
+      "name": "rsi_7",
+      "importance": 0.06082262471318245
+    },
+    {
+      "index": 161,
+      "name": "volume_ratio_20",
+      "importance": 0.06036263331770897
+    },
+    {
+      "index": 106,
+      "name": "price_vs_sma_5",
+      "importance": 0.060169681906700134
+    },
+    {
+      "index": 160,
+      "name": "volume_confirmed_move",
+      "importance": 0.05956562981009483
+    },
+    {
+      "index": 100,
+      "name": "price_vs_pivot",
+      "importance": 0.05917438119649887
+    },
+    {
+      "index": 163,
+      "name": "volume_strength",
+      "importance": 0.05496751144528389
+    },
+    {
+      "index": 16,
+      "name": "body_size",
+      "importance": 0.05488601326942444
+    },
+    {
+      "index": 119,
+      "name": "return_1d",
+      "importance": 0.05378814414143562
+    },
+    {
+      "index": 124,
+      "name": "roc_5",
+      "importance": 0.053685273975133896
+    },
+    {
+      "index": 162,
+      "name": "volume_ratio_50",
+      "importance": 0.051191460341215134
+    },
+    {
+      "index": 63,
+      "name": "lower_shadow",
+      "importance": 0.050211552530527115
+    },
+    {
+      "index": 52,
+      "name": "is_bullish_candle",
+      "importance": 0.03643888607621193
+    },
+    {
+      "index": 166,
+      "name": "vwap",
+      "importance": 0.026892976835370064
+    },
+    {
+      "index": 145,
+      "name": "supertrend",
+      "importance": 0.024491723626852036
+    },
+    {
+      "index": 36,
+      "name": "ema_bullish_alignment",
+      "importance": 0.0
+    },
+    {
+      "index": 35,
+      "name": "ema_bearish_alignment",
+      "importance": 0.0
+    },
+    {
+      "index": 58,
+      "name": "kurtosis_20",
+      "importance": 0.0
+    },
+    {
+      "index": 57,
+      "name": "kurtosis_10",
+      "importance": 0.0
+    },
+    {
+      "index": 23,
+      "name": "consecutive_up_days",
+      "importance": 0.0
+    },
+    {
+      "index": 1,
+      "name": "adx_14",
+      "importance": 0.0
+    },
+    {
+      "index": 2,
+      "name": "atr_14",
+      "importance": 0.0
+    },
+    {
+      "index": 54,
+      "name": "is_trending",
+      "importance": 0.0
+    },
+    {
+      "index": 53,
+      "name": "is_ranging",
+      "importance": 0.0
+    },
+    {
+      "index": 24,
+      "name": "distance_to_swing_high",
+      "importance": 0.0
+    },
+    {
+      "index": 3,
+      "name": "atr_21",
+      "importance": 0.0
+    },
+    {
+      "index": 4,
+      "name": "atr_7",
+      "importance": 0.0
+    },
+    {
+      "index": 5,
+      "name": "atr_pct_14",
+      "importance": 0.0
+    },
+    {
+      "index": 47,
+      "name": "higher_high",
+      "importance": 0.0
+    },
+    {
+      "index": 6,
+      "name": "atr_pct_21",
+      "importance": 0.0
+    }
+  ],
+  "selection_date": "2025-12-30T21:40:14.773515"
+}

@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "action": "place-horizontal-line",
+    "color": "#ff9800",
+    "width": 2,
+    "style": "solid",
+    "extend": "both",
+    "id": "59883024-3f24-431a-9fa7-97b5c3c8b21d",
+    "price": 90333.5,
+    "lineColor": "#ff4444"
+  }
+]

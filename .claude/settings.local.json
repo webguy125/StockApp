@@ -1,10 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(tasklist)",
-      "Bash(findstr python)",
-      "Bash(./venv/Scripts/pip.exe install xgboost)",
-      "Bash(./venv/Scripts/python.exe -c \"import xgboost; import lightgbm; import sklearn; import torch; print(''ALL ML LIBRARIES INSTALLED!'')\")"
+      "Bash(python -u adaptive_stock_ranker.py)"
     ],
     "deny": [],
     "ask": []

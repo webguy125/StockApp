@@ -1,0 +1,294 @@
+"""
+XGBoost GPU GBLinear Model for Trading Signals
+Uses linear booster with GPU acceleration (improved over basic linear)
+Good for detecting linear relationships in features
+"""
+
+import numpy as np
+try:
+    import xgboost as xgb
+    XGBOOST_AVAILABLE = True
+except ImportError:
+    XGBOOST_AVAILABLE = False
+
+from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import StandardScaler
+import joblib
+import os
+from typing import Dict, Any, List, Optional
+from datetime import datetime
+import json
+
+
+class XGBoostGBLinearModel:
+    """XGBoost GBLinear GPU classifier - gradient boosted linear model"""
+
+    def __init__(self, model_path: str = "backend/data/ml_models/xgboost_gblinear"):
+        if not XGBOOST_AVAILABLE:
+            raise ImportError("XGBoost not installed")
+
+        self.model_path = model_path
+        self.model: Optional[xgb.XGBClassifier] = None
+        self.scaler: Optional[StandardScaler] = None
+        self.feature_names: List[str] = []
+        self.is_trained = False
+
+        # GBLinear-optimized hyperparameters (XGBoost 2.0+ compatible)
+        self.hyperparameters = {
+            'device': 'cuda',
+            'booster': 'gblinear',         # Linear booster
+            'updater': 'coord_descent',    # Coordinate descent (GPU via device='cuda')
+            'feature_selector': 'shuffle',  # Random feature selection
+            'top_k': 50,                   # Use top 50 features per round
+            'n_estimators': 500,           # More rounds for linear model
+            'learning_rate': 0.05,
+            'reg_alpha': 0.5,              # L1 regularization
+            'reg_lambda': 2.0,             # L2 regularization
+            'objective': 'binary:logistic',
+            'eval_metric': 'logloss',
+            'random_state': 42,
+            'verbosity': 0
+        }
+
+        self.training_metrics = {}
+        self.feature_importance = {}
+        os.makedirs(self.model_path, exist_ok=True)
+        self.load()
+
+    def prepare_features(self, features_dict: Dict[str, Any]) -> np.ndarray:
+        exclude_keys = ['feature_count', 'symbol', 'last_price', 'last_volume', 'timestamp', 'error']
+        feature_values = []
+        feature_names = []
+
+        for key, value in sorted(features_dict.items()):
+            if key not in exclude_keys:
+                if isinstance(value, (int, float)):
+                    if np.isnan(value) or np.isinf(value):
+                        value = 0.0
+                    feature_values.append(float(value))
+                    feature_names.append(key)
+
+        if not self.feature_names:
+            self.feature_names = feature_names
+
+        return np.array(feature_values).reshape(1, -1)
+
+    def train(self, X: np.ndarray, y: np.ndarray, validate: bool = True, sample_weight: np.ndarray = None) -> Dict[str, Any]:
+        print(f"\n[TRAIN] XGBoost GPU GBLinear Model")
+        print(f"  Samples: {X.shape[0]}")
+        print(f"  Features: {X.shape[1]}")
+        print(f"  Classes: {len(np.unique(y))}")
+        print(f"  Using GPU: True")
+        print(f"  Booster: gblinear")
+
+        self.scaler = StandardScaler()
+        X_scaled = self.scaler.fit_transform(X)
+
+        split_idx = int(0.8 * len(X))
+        X_train = X_scaled[:split_idx]
+        X_val = X_scaled[split_idx:]
+        y_train = y[:split_idx]
+        y_val = y[split_idx:]
+
+        sample_weight_train = None
+        if sample_weight is not None:
+            sample_weight_train = sample_weight[:split_idx]
+
+        self.model = xgb.XGBClassifier(**self.hyperparameters)
+
+        print("  Training on GPU with linear booster...")
+        self.model.fit(
+            X_train, y_train,
+            sample_weight=sample_weight_train,
+            eval_set=[(X_val, y_val)],
+            verbose=False
+        )
+
+        train_score = self.model.score(X_train, y_train)
+        val_score = self.model.score(X_val, y_val)
+
+        cv_scores = []
+        if validate and X.shape[0] >= 50:
+            print("  Cross-validating...")
+            cv_scores = cross_val_score(self.model, X_scaled, y, cv=5, n_jobs=-1)
+
+        # Linear models don't have traditional feature importance
+        # Use model coefficients as importance
+        try:
+            booster = self.model.get_booster()
+            weights = booster.get_score(importance_type='weight')
+            self.feature_importance = {}
+            for i, name in enumerate(self.feature_names):
+                feature_key = f'f{i}'
+                self.feature_importance[name] = float(weights.get(feature_key, 0.0))
+        except:
+            # If that fails, set all to 0
+            self.feature_importance = {name: 0.0 for name in self.feature_names}
+
+        top_features = sorted(self.feature_importance.items(), key=lambda x: x[1], reverse=True)[:20]
+
+        self.training_metrics = {
+            'train_accuracy': float(train_score),
+            'val_accuracy': float(val_score),
+            'cv_mean': float(np.mean(cv_scores)) if len(cv_scores) > 0 else 0.0,
+            'cv_std': float(np.std(cv_scores)) if len(cv_scores) > 0 else 0.0,
+            'n_samples': int(X.shape[0]),
+            'n_features': int(X.shape[1]),
+            'top_features': [(name, float(importance)) for name, importance in top_features],
+            'timestamp': datetime.now().isoformat()
+        }
+
+        self.is_trained = True
+
+        print(f"\n  Training Accuracy: {train_score:.4f}")
+        print(f"  Validation Accuracy: {val_score:.4f}")
+        if len(cv_scores) > 0:
+            print(f"  CV Accuracy: {np.mean(cv_scores):.4f} (+/- {np.std(cv_scores):.4f})")
+
+        print(f"\n  Top 5 Features:")
+        for name, importance in top_features[:5]:
+            print(f"    {name}: {importance:.4f}")
+
+        self.save()
+        return self.training_metrics
+
+    def predict(self, features_dict: Dict[str, Any]) -> Dict[str, Any]:
+        if not self.is_trained:
+            return {'prediction': 'buy', 'buy_prob': 0.50, 'sell_prob': 0.50, 'confidence': 0.0, 'model': 'xgboost_gblinear_untrained'}
+
+        X = self.prepare_features(features_dict)
+        X_scaled = self.scaler.transform(X)
+        prediction_class = self.model.predict(X_scaled)[0]
+        probabilities = self.model.predict_proba(X_scaled)[0]
+
+        class_labels = ['buy', 'sell']
+        prediction_label = class_labels[prediction_class]
+        confidence = float(np.max(probabilities))
+
+        return {
+            'prediction': prediction_label,
+            'buy_prob': float(probabilities[0]),
+            'sell_prob': float(probabilities[1]),
+            'confidence': confidence,
+            'model': 'xgboost_gblinear_gpu'
+        }
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        if not self.is_trained:
+            return np.full((X.shape[0], 2), 0.5)
+        X_scaled = self.scaler.transform(X)
+        return self.model.predict_proba(X_scaled)
+
+    def predict_batch(self, features_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Batch prediction for multiple samples"""
+        if not self.is_trained:
+            return [self.predict(features) for features in features_list]
+
+        # Prepare all features
+        X_list = [self.prepare_features(features) for features in features_list]
+        X = np.vstack(X_list)
+        X_scaled = self.scaler.transform(X)
+
+        # Predict
+        predictions = self.model.predict(X_scaled)
+        probabilities = self.model.predict_proba(X_scaled)
+
+        # Format results (binary classification)
+        class_labels = ['buy', 'sell']
+        results = []
+        for i in range(len(predictions)):
+            results.append({
+                'prediction': class_labels[predictions[i]],
+                'buy_prob': float(probabilities[i][0]),
+                'sell_prob': float(probabilities[i][1]),
+                'confidence': float(np.max(probabilities[i])),
+                'model': 'xgboost_gblinear_gpu'
+            })
+        return results
+
+    def evaluate(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
+        if not self.is_trained:
+            return {'error': 'Model not trained'}
+        X_scaled = self.scaler.transform(X)
+        y_pred = self.model.predict(X_scaled)
+        accuracy = float(np.mean(y_pred == y))
+
+        class_labels = ['buy', 'sell']
+        class_accuracies = {}
+        for i, label in enumerate(class_labels):
+            mask = (y == i)
+            if np.sum(mask) > 0:
+                class_acc = float(np.mean(y_pred[mask] == i))
+                class_accuracies[f'{label}_accuracy'] = class_acc
+
+        return {
+            'accuracy': accuracy,
+            **class_accuracies,
+            'model': 'xgboost_gblinear_gpu'
+        }
+
+    def save(self) -> bool:
+        if not self.is_trained:
+            return False
+        try:
+            model_file = os.path.join(self.model_path, "model.json")
+            scaler_file = os.path.join(self.model_path, "scaler.pkl")
+            metadata_file = os.path.join(self.model_path, "metadata.json")
+
+            self.model.save_model(model_file)
+            joblib.dump(self.scaler, scaler_file)
+
+            metadata = {
+                'feature_names': self.feature_names,
+                'hyperparameters': self.hyperparameters,
+                'training_metrics': self.training_metrics,
+                'is_trained': self.is_trained,
+                'model_version': '1.0.0',
+                'saved_at': datetime.now().isoformat()
+            }
+
+            with open(metadata_file, 'w') as f:
+                json.dump(metadata, f, indent=2)
+
+            importance_file = os.path.join(self.model_path, "feature_importance.json")
+            with open(importance_file, 'w') as f:
+                json.dump(self.feature_importance, f, indent=2)
+
+            print(f"[OK] Model saved to {self.model_path}")
+            return True
+        except Exception as e:
+            print(f"[ERROR] Failed to save model: {e}")
+            return False
+
+    def load(self) -> bool:
+        try:
+            model_file = os.path.join(self.model_path, "model.json")
+            scaler_file = os.path.join(self.model_path, "scaler.pkl")
+            metadata_file = os.path.join(self.model_path, "metadata.json")
+
+            if not all(os.path.exists(f) for f in [model_file, scaler_file, metadata_file]):
+                return False
+
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+
+            self.feature_names = metadata['feature_names']
+            self.hyperparameters = metadata['hyperparameters']
+            self.training_metrics = metadata['training_metrics']
+            self.is_trained = metadata['is_trained']
+
+            self.model = xgb.XGBClassifier(**self.hyperparameters)
+            self.model.load_model(model_file)
+            self.scaler = joblib.load(scaler_file)
+
+            importance_file = os.path.join(self.model_path, "feature_importance.json")
+            if os.path.exists(importance_file):
+                with open(importance_file, 'r') as f:
+                    self.feature_importance = json.load(f)
+
+            print(f"[OK] Model loaded from {self.model_path}")
+            print(f"  Trained on {self.training_metrics.get('n_samples', 0)} samples")
+            print(f"  Accuracy: {self.training_metrics.get('train_accuracy', 0):.4f}")
+            return True
+        except Exception as e:
+            return False
