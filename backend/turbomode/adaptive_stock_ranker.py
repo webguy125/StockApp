@@ -10,6 +10,11 @@ import numpy as np
 from datetime import datetime, timedelta
 import json
 import os
+import sys
+
+# Import canonical symbol normalizer (strict mode)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'master_market_data'))
+from symbol_normalizer import validate_and_normalize, is_canonical
 
 
 class AdaptiveStockRanker:
@@ -24,13 +29,24 @@ class AdaptiveStockRanker:
     - Automated monthly rotation
     """
 
-    def __init__(self, db_path="backend/data/advanced_ml_system.db"):
+    def __init__(self, db_path=None):
+        # Use absolute path to avoid path resolution issues when called from Flask
+        if db_path is None:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            db_path = os.path.join(base_dir, "data", "turbomode.db")
+
         self.db_path = db_path
-        self.rankings_file = "backend/data/stock_rankings.json"
-        self.history_file = "backend/data/ranking_history.json"
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.rankings_file = os.path.join(base_dir, "data", "stock_rankings.json")
+        self.history_file = os.path.join(base_dir, "data", "ranking_history.json")
 
     def calculate_rolling_performance(self, df, symbol, window_days):
         """Calculate win rate over a rolling window"""
+        # Enforce canonical symbol format (strict mode)
+        if not is_canonical(symbol):
+            raise ValueError(f"Non-canonical symbol rejected in TurboMode: '{symbol}'. Use canonical format (e.g., BRK-B, BTC-USD)")
+
         symbol_df = df[df['symbol'] == symbol].copy()
 
         if len(symbol_df) == 0:

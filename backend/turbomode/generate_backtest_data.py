@@ -1,9 +1,10 @@
 """
 Regenerate Training Data with Corrected Labels
 This script:
-1. Clears old training data from advanced_ml_system.db
+1. Clears old training data from turbomode.db
 2. Regenerates training data using fixed historical_backtest.py
 3. Verifies label distribution is correct
+TurboMode autonomous database - NO DEPENDENCY ON SLIPSTREAM
 """
 
 import sys
@@ -17,17 +18,18 @@ if backend_path not in sys.path:
     sys.path.insert(0, backend_path)
 
 import sqlite3
-from advanced_ml.backtesting.historical_backtest import HistoricalBacktest
-from advanced_ml.config.core_symbols import get_all_core_symbols  # 77 curated stocks
+from turbomode.turbomode_backtest import TurboModeBacktest
+from turbomode.core_symbols import get_all_core_symbols  # 43 curated stocks
 from turbomode.checkpoint_manager import CheckpointManager
+from turbomode.schema_guardrail import run_guardrail
 
 # ==================== START TIMER ====================
 START_TIME = time.time()
 START_TIMESTAMP = datetime.now()
 
-# Get absolute path to database
+# Get absolute path to database (TurboMode autonomous database)
 # backend_path is C:\StockApp\backend
-db_path = os.path.join(backend_path, "data", "advanced_ml_system.db")
+db_path = os.path.join(backend_path, "data", "turbomode.db")
 
 print("=" * 80)
 print("REGENERATE TRAINING DATA - FIXED LABEL MAPPING")
@@ -35,6 +37,17 @@ print("=" * 80)
 print(f"START TIME: {START_TIMESTAMP.strftime('%Y-%m-%d %I:%M:%S %p')}")
 print(f"Database: {db_path}")
 print(f"File exists: {os.path.exists(db_path)}")
+
+# Step 0: SCHEMA GUARDRAIL - Complete workflow (validate → clean → restore → validate)
+try:
+    guardrail_result = run_guardrail(db_path, auto_clean=True, auto_restore=True)
+    if guardrail_result['final_status'] != 'CLEAN':
+        print(f"[ABORT] Guardrail failed to clean schema: {guardrail_result['final_status']}")
+        sys.exit(1)
+except Exception as e:
+    print(f"[ERROR] Guardrail failed: {e}")
+    print("[ABORT] Cannot proceed - unable to ensure clean schema")
+    sys.exit(1)
 
 # Step 1: Clear old training data
 print("\n" + "=" * 80)
@@ -53,7 +66,6 @@ if os.path.exists(db_path):
 
         if old_count > 0:
             # Get current curated symbol list
-            from advanced_ml.config.core_symbols import get_all_core_symbols
             curated_symbols = set(get_all_core_symbols())
 
             print(f"\n[INFO] Found {old_count} existing backtest trades")
@@ -110,17 +122,17 @@ print("\n" + "=" * 80)
 print("STEP 2: GENERATE NEW TRAINING DATA")
 print("=" * 80)
 
-backtest = HistoricalBacktest(db_path, use_gpu=True)  # 🚀 GPU acceleration enabled!
+backtest = TurboModeBacktest(turbomode_db_path=db_path)
 
-# OPTIMIZED: Use 77 curated stocks for 90% accuracy
-# This is the WINNING FORMULA that achieved 90% accuracy
+# Use 43 curated stocks (40 stocks + 3 crypto)
 symbols = get_all_core_symbols()
 
 print(f"\n[CURATED] Using {len(symbols)} carefully selected stocks")
 print("[INFO] Stratified by sector + market cap for optimal signal quality")
-print("[INFO] GPU-accelerated vectorized processing: ~2-3 hours (7 years of data)")
-print("[INFO] Expected output: ~120,000-140,000 high-quality training samples")
-print("[WHY] 7-year lookback captures multiple market cycles for robust models")
+print("[INFO] Expected processing time: ~40-80 minutes (10 years of data)")
+print("[INFO] Expected output: ~150,000-180,000 high-quality training samples")
+print("[WHY] 10-year lookback captures multiple market cycles for robust models")
+print("[LABEL LOGIC] Canonical: +5% = BUY, -5% = SELL, else = HOLD (5-day holding period)")
 
 # Initialize checkpoint manager
 checkpoint = CheckpointManager()
@@ -136,17 +148,20 @@ else:
     # Run backtest to generate training data
     print(f"\nGenerating training data...")
     print(f"  Symbols: {len(symbols_to_process)} (of {len(symbols)} total)")
-    print(f"  Years of history: 7")
-    print(f"  Hold period: 14 days")
-    print(f"  Win threshold: +10%")
-    print(f"  Loss threshold: -5%")
+    print(f"  Years of history: 10")
+    print(f"  Hold period: 5 days")
+    print(f"  Buy threshold: +5%")
+    print(f"  Sell threshold: -5%")
 
     # Process each symbol with checkpointing
     for i, symbol in enumerate(symbols_to_process, 1):
         print(f"\n[{i}/{len(symbols_to_process)}] Processing {symbol}...")
         try:
-            # Run backtest for single symbol
-            result = backtest.run_backtest([symbol], years=7, save_to_db=True)
+            # Generate backtest samples for single symbol (10 years = ~3650 days)
+            result = backtest.generate_backtest_samples(
+                symbol=symbol,
+                lookback_days=3650
+            )
             samples = result.get('total_samples', 0)
 
             # Mark symbol as complete
@@ -205,11 +220,11 @@ print("VALIDATION")
 print("=" * 80)
 
 if total == 0:
-    print("❌ ERROR: No training data generated!")
+    print("[ERROR] No training data generated!")
     sys.exit(1)
 
 if buy_count == 0 and sell_count == 0:
-    print("❌ ERROR: No BUY or SELL labels found!")
+    print("[ERROR] No BUY or SELL labels found!")
     sys.exit(1)
 
 # Check for reasonable distribution
