@@ -1,0 +1,164 @@
+{
+  "version": "1.0",
+  "description": "TurboMode Phase 2 - Unified Scheduler Configuration",
+  "global_settings": {
+    "timezone": "America/New_York",
+    "max_concurrent_jobs": 1,
+    "missed_job_grace_time": 3600,
+    "job_defaults": {
+      "coalesce": true,
+      "max_instances": 1,
+      "misfire_grace_time": 300
+    }
+  },
+  "global_rules": {
+    "1": "All scheduled jobs must be implemented as Python functions inside the Flask app.",
+    "2": "Each job must also have a corresponding Flask endpoint for manual triggering.",
+    "3": "Only the Master Market Data ingestion job may call external data sources.",
+    "4": "All other jobs must read exclusively from the Master Market Data DB.",
+    "5": "TurboMode.db is write-only for model outputs, predictions, drift logs, SHAP logs, and metadata.",
+    "6": "All jobs must log start, finish, and error states.",
+    "7": "All jobs must be idempotent and safe to re-run.",
+    "8": "APScheduler must be configured with a BackgroundScheduler and persistent job store if available.",
+    "9": "Jobs must run in the exact order defined by their dependencies."
+  },
+  "scheduled_tasks": [
+    {
+      "task_id": 1,
+      "name": "Master Market Data Ingestion",
+      "function_name": "run_ingestion",
+      "endpoint": "/scheduler/run_ingestion",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "hour": 22,
+        "minute": 45,
+        "day_of_week": "mon-sun"
+      },
+      "responsibilities": [
+        "Fetch daily OHLCV, fundamentals, splits, dividends, and metadata.",
+        "Write updates to Master Market Data DB.",
+        "Do not write to TurboMode.db.",
+        "Log ingestion results."
+      ],
+      "dependencies": [],
+      "timeout_minutes": 30,
+      "retry_on_failure": true,
+      "max_retries": 3
+    },
+    {
+      "task_id": 2,
+      "name": "TurboMode Training Orchestrator",
+      "function_name": "run_orchestrator",
+      "endpoint": "/scheduler/run_orchestrator",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "hour": 23,
+        "minute": 0,
+        "day_of_week": "mon-sun"
+      },
+      "responsibilities": [
+        "Load symbols from Master Market Data DB.",
+        "Generate features and training samples.",
+        "Train models and save them to TurboMode.db.",
+        "Compute SHAP values and save logs.",
+        "Update model metadata and versioning."
+      ],
+      "dependencies": [1],
+      "timeout_minutes": 120,
+      "retry_on_failure": false,
+      "max_retries": 0
+    },
+    {
+      "task_id": 3,
+      "name": "Overnight Scanner",
+      "function_name": "run_overnight_scanner",
+      "endpoint": "/scheduler/run_overnight_scanner",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "hour": 23,
+        "minute": 30,
+        "day_of_week": "mon-sun"
+      },
+      "responsibilities": [
+        "Load the latest trained model from TurboMode.db.",
+        "Generate predictions for the next trading day.",
+        "Save signals and prediction metadata to TurboMode.db."
+      ],
+      "dependencies": [2],
+      "timeout_minutes": 60,
+      "retry_on_failure": true,
+      "max_retries": 2
+    },
+    {
+      "task_id": 4,
+      "name": "Backtest Data Generator",
+      "function_name": "run_backtest_generator",
+      "endpoint": "/scheduler/run_backtest_generator",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "hour": 0,
+        "minute": 0,
+        "day_of_week": "mon-sun"
+      },
+      "responsibilities": [
+        "Use Master Market Data DB to generate updated backtest datasets.",
+        "Save backtest results and metadata to TurboMode.db.",
+        "Ensure backtests reflect the latest ingestion."
+      ],
+      "dependencies": [1],
+      "timeout_minutes": 90,
+      "retry_on_failure": false,
+      "max_retries": 0
+    },
+    {
+      "task_id": 5,
+      "name": "Drift Monitoring System",
+      "function_name": "run_drift_monitor",
+      "endpoint": "/scheduler/run_drift_monitor",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "hour": 0,
+        "minute": 30,
+        "day_of_week": "mon-sun"
+      },
+      "responsibilities": [
+        "Compare today's feature distributions to historical baselines.",
+        "Detect regime shifts and log drift events.",
+        "Write drift logs to TurboMode.db.",
+        "Trigger retraining flags if drift exceeds thresholds."
+      ],
+      "dependencies": [2, 4],
+      "timeout_minutes": 45,
+      "retry_on_failure": true,
+      "max_retries": 2
+    },
+    {
+      "task_id": 6,
+      "name": "Weekly Maintenance",
+      "function_name": "run_weekly_maintenance",
+      "endpoint": "/scheduler/run_weekly_maintenance",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "hour": 2,
+        "minute": 0,
+        "day_of_week": "sun"
+      },
+      "responsibilities": [
+        "VACUUM Master Market Data DB.",
+        "VACUUM TurboMode.db.",
+        "Clean temp directories.",
+        "Archive logs older than 30 days."
+      ],
+      "dependencies": [],
+      "timeout_minutes": 30,
+      "retry_on_failure": false,
+      "max_retries": 0
+    }
+  ]
+}

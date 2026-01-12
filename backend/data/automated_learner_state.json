@@ -1035,6 +1035,894 @@
       },
       "position_size": 1.0,
       "status": "open"
+    },
+    {
+      "symbol": "BA",
+      "entry_price": 217.1199951171875,
+      "entry_date": "2026-01-02T08:04:11.479988",
+      "entry_signal": {
+        "symbol": "BA",
+        "score": 0.618387838945267,
+        "confidence": 0.5065731991210558,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.5425855929684464,
+            "direction": "bearish",
+            "confidence": 0.5425855929684464,
+            "metadata": {
+              "rsi": 86.27756778905339,
+              "period": 14,
+              "price": 217.1199951171875
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 5.26207553306179,
+              "signal": 4.1490689344454434,
+              "histogram": 1.1130065986163462,
+              "crossover": "none",
+              "price": 217.1199951171875
+            }
+          },
+          "volume": {
+            "signal_strength": 0.8,
+            "direction": "bullish",
+            "confidence": 0.6,
+            "metadata": {
+              "volume_ratio": 0.7349681960778356,
+              "avg_volume": 7569035.0,
+              "current_volume": 5563000.0,
+              "vwap": 207.10169056424988,
+              "price": 217.1199951171875,
+              "price_vs_vwap_pct": 4.837384246184899
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 208.94000091552735,
+              "sma_slow": 202.68540100097655,
+              "price": 217.1199951171875,
+              "dist_from_fast_pct": 3.9149967291171075,
+              "dist_from_slow_pct": 7.121674301614549,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 217.1199951171875,
+        "volatility": 1.824862220713674,
+        "timestamp": "2026-01-02T08:02:32.128833",
+        "rank": 1
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "CRM",
+      "entry_price": 264.9100036621094,
+      "entry_date": "2026-01-02T08:04:11.480140",
+      "entry_signal": {
+        "symbol": "CRM",
+        "score": 0.612,
+        "confidence": 0.49425902460781257,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.5,
+            "direction": "neutral",
+            "confidence": 0.44407219686250077,
+            "metadata": {
+              "rsi": 52.23711212549997,
+              "period": 14,
+              "price": 264.9100036621094
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 5.716563752274624,
+              "signal": 5.3545559719451985,
+              "histogram": 0.36200778032942527,
+              "crossover": "none",
+              "price": 264.9100036621094
+            }
+          },
+          "volume": {
+            "signal_strength": 0.8,
+            "direction": "bullish",
+            "confidence": 0.6,
+            "metadata": {
+              "volume_ratio": 0.40320273151623337,
+              "avg_volume": 8352870.0,
+              "current_volume": 3367900.0,
+              "vwap": 256.20413549724753,
+              "price": 264.9100036621094,
+              "price_vs_vwap_pct": 3.3980201560623793
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 259.66897735595705,
+              "sma_slow": 249.83538055419922,
+              "price": 264.9100036621094,
+              "dist_from_fast_pct": 2.0183490378859794,
+              "dist_from_slow_pct": 6.033822381149843,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 264.9100036621094,
+        "volatility": 1.8162645461777587,
+        "timestamp": "2026-01-02T08:02:32.989508",
+        "rank": 2
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "BA",
+      "entry_price": 227.77000427246094,
+      "entry_date": "2026-01-03T08:03:54.257538",
+      "entry_signal": {
+        "symbol": "BA",
+        "score": 0.6658534834153833,
+        "confidence": 0.5092320050842271,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.6590232227692222,
+            "direction": "bearish",
+            "confidence": 0.6590232227692222,
+            "metadata": {
+              "rsi": 89.77069668307666,
+              "period": 14,
+              "price": 227.77000427246094
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 6.020747144293551,
+              "signal": 4.525837178870203,
+              "histogram": 1.4949099654233482,
+              "crossover": "none",
+              "price": 227.77000427246094
+            }
+          },
+          "volume": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.5048328179045937,
+            "metadata": {
+              "volume_ratio": 1.514498453713781,
+              "avg_volume": 7424240.0,
+              "current_volume": 11244000.0,
+              "vwap": 208.84300888750064,
+              "price": 227.77000427246094,
+              "price_vs_vwap_pct": 9.062786198007647
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 210.20150146484374,
+              "sma_slow": 202.89560119628905,
+              "price": 227.77000427246094,
+              "dist_from_fast_pct": 8.357934022919208,
+              "dist_from_slow_pct": 12.259705449260789,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 227.77000427246094,
+        "volatility": 2.01299464747541,
+        "timestamp": "2026-01-03T08:02:14.373725",
+        "rank": 1
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "TMO",
+      "entry_price": 592.510009765625,
+      "entry_date": "2026-01-03T08:03:54.258299",
+      "entry_signal": {
+        "symbol": "TMO",
+        "score": 0.612,
+        "confidence": 0.46859083894303044,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.5,
+            "direction": "neutral",
+            "confidence": 0.2387267115442434,
+            "metadata": {
+              "rsi": 60.450931538230265,
+              "period": 14,
+              "price": 592.510009765625
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 3.6542143913069367,
+              "signal": 2.3276058109679045,
+              "histogram": 1.3266085803390322,
+              "crossover": "none",
+              "price": 592.510009765625
+            }
+          },
+          "volume": {
+            "signal_strength": 0.8,
+            "direction": "bullish",
+            "confidence": 0.6,
+            "metadata": {
+              "volume_ratio": 1.3628394979746332,
+              "avg_volume": 1505900.0,
+              "current_volume": 2052300.0,
+              "vwap": 571.8557885685533,
+              "price": 592.510009765625,
+              "price_vs_vwap_pct": 3.6117884281232047
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 574.8050659179687,
+              "sma_slow": 574.7005712890625,
+              "price": 592.510009765625,
+              "dist_from_fast_pct": 3.080164893707286,
+              "dist_from_slow_pct": 3.0989073904373607,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 592.510009765625,
+        "volatility": 1.5752990891039347,
+        "timestamp": "2026-01-03T08:02:22.473715",
+        "rank": 2
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "XOM",
+      "entry_price": 122.6500015258789,
+      "entry_date": "2026-01-03T08:03:54.258299",
+      "entry_signal": {
+        "symbol": "XOM",
+        "score": 0.612,
+        "confidence": 0.4717813866894176,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.5,
+            "direction": "neutral",
+            "confidence": 0.2642510935153407,
+            "metadata": {
+              "rsi": 59.42995625938637,
+              "period": 14,
+              "price": 122.6500015258789
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 1.264799985963279,
+              "signal": 0.8944774311137761,
+              "histogram": 0.37032255484950294,
+              "crossover": "none",
+              "price": 122.6500015258789
+            }
+          },
+          "volume": {
+            "signal_strength": 0.8,
+            "direction": "bullish",
+            "confidence": 0.6,
+            "metadata": {
+              "volume_ratio": 0.900407136143315,
+              "avg_volume": 15740435.0,
+              "current_volume": 14172800.0,
+              "vwap": 118.19079440899854,
+              "price": 122.6500015258789,
+              "price_vs_vwap_pct": 3.7728886916939612
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 118.46500053405762,
+              "sma_slow": 116.82804122924804,
+              "price": 122.6500015258789,
+              "dist_from_fast_pct": 3.532689801168855,
+              "dist_from_slow_pct": 4.983358648636941,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 122.6500015258789,
+        "volatility": 1.5601896127787518,
+        "timestamp": "2026-01-03T08:02:24.341459",
+        "rank": 3
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "JPM",
+      "entry_price": 325.4800109863281,
+      "entry_date": "2026-01-03T08:03:54.258503",
+      "entry_signal": {
+        "symbol": "JPM",
+        "score": 0.6083562144997299,
+        "confidence": 0.4661327510099843,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.5,
+            "direction": "neutral",
+            "confidence": 0.21906200807987408,
+            "metadata": {
+              "rsi": 61.237519676805036,
+              "period": 14,
+              "price": 325.4800109863281
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 4.295861012997705,
+              "signal": 3.9662597781470055,
+              "histogram": 0.32960123485069914,
+              "crossover": "none",
+              "price": 325.4800109863281
+            }
+          },
+          "volume": {
+            "signal_strength": 0.7757080966648663,
+            "direction": "bullish",
+            "confidence": 0.6,
+            "metadata": {
+              "volume_ratio": 0.8208032252177113,
+              "avg_volume": 9807710.0,
+              "current_volume": 8050200.0,
+              "vwap": 316.7470386707146,
+              "price": 325.4800109863281,
+              "price_vs_vwap_pct": 2.7570809666486626
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 318.7300003051758,
+              "sma_slow": 311.46580017089843,
+              "price": 325.4800109863281,
+              "dist_from_fast_pct": 2.117783288265733,
+              "dist_from_slow_pct": 4.499438078832483,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 325.4800109863281,
+        "volatility": 1.3981545783940252,
+        "timestamp": "2026-01-03T08:02:29.061189",
+        "rank": 4
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "CMCSA",
+      "entry_price": 29.540000915527344,
+      "entry_date": "2026-01-03T08:03:54.258503",
+      "entry_signal": {
+        "symbol": "CMCSA",
+        "score": 0.6073692107632223,
+        "confidence": 0.44987286389062286,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.5,
+            "direction": "neutral",
+            "confidence": 0.08898291112498313,
+            "metadata": {
+              "rsi": 66.44068355500067,
+              "period": 14,
+              "price": 29.540000915527344
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 0.5726814103529279,
+              "signal": 0.4889506197559056,
+              "histogram": 0.08373079059702226,
+              "crossover": "none",
+              "price": 29.540000915527344
+            }
+          },
+          "volume": {
+            "signal_strength": 0.7691280717548151,
+            "direction": "bullish",
+            "confidence": 0.6,
+            "metadata": {
+              "volume_ratio": 0.628641492425178,
+              "avg_volume": 38625990.0,
+              "current_volume": 24281900.0,
+              "vwap": 28.765831635479323,
+              "price": 29.540000915527344,
+              "price_vs_vwap_pct": 2.691280717548151
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 28.79049997329712,
+              "sma_slow": 28.080000038146974,
+              "price": 29.540000915527344,
+              "dist_from_fast_pct": 2.603292554576607,
+              "dist_from_slow_pct": 5.199433316940683,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 29.540000915527344,
+        "volatility": 2.403521165813362,
+        "timestamp": "2026-01-03T08:02:06.399633",
+        "rank": 5
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "BA",
+      "entry_price": 227.77000427246094,
+      "entry_date": "2026-01-05T08:04:05.141834",
+      "entry_signal": {
+        "symbol": "BA",
+        "score": 0.6658534834153833,
+        "confidence": 0.5092320050842271,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.6590232227692222,
+            "direction": "bearish",
+            "confidence": 0.6590232227692222,
+            "metadata": {
+              "rsi": 89.77069668307666,
+              "period": 14,
+              "price": 227.77000427246094
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 6.018314454066996,
+              "signal": 4.522262968205019,
+              "histogram": 1.496051485861977,
+              "crossover": "none",
+              "price": 227.77000427246094
+            }
+          },
+          "volume": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.5048328179045937,
+            "metadata": {
+              "volume_ratio": 1.514498453713781,
+              "avg_volume": 7424240.0,
+              "current_volume": 11244000.0,
+              "vwap": 208.84300888750064,
+              "price": 227.77000427246094,
+              "price_vs_vwap_pct": 9.062786198007647
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 210.20150146484374,
+              "sma_slow": 202.89560119628905,
+              "price": 227.77000427246094,
+              "dist_from_fast_pct": 8.357934022919208,
+              "dist_from_slow_pct": 12.259705449260789,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 227.77000427246094,
+        "volatility": 2.01299464747541,
+        "timestamp": "2026-01-05T08:02:19.961112",
+        "rank": 1
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "TMO",
+      "entry_price": 592.510009765625,
+      "entry_date": "2026-01-05T08:04:05.141834",
+      "entry_signal": {
+        "symbol": "TMO",
+        "score": 0.612,
+        "confidence": 0.46859083894303044,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.5,
+            "direction": "neutral",
+            "confidence": 0.2387267115442434,
+            "metadata": {
+              "rsi": 60.450931538230265,
+              "period": 14,
+              "price": 592.510009765625
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 3.6631860757416916,
+              "signal": 2.3407873865919413,
+              "histogram": 1.3223986891497503,
+              "crossover": "none",
+              "price": 592.510009765625
+            }
+          },
+          "volume": {
+            "signal_strength": 0.8,
+            "direction": "bullish",
+            "confidence": 0.6,
+            "metadata": {
+              "volume_ratio": 1.3628394979746332,
+              "avg_volume": 1505900.0,
+              "current_volume": 2052300.0,
+              "vwap": 571.8557885685533,
+              "price": 592.510009765625,
+              "price_vs_vwap_pct": 3.6117884281232047
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 574.8050659179687,
+              "sma_slow": 574.7005712890625,
+              "price": 592.510009765625,
+              "dist_from_fast_pct": 3.080164893707286,
+              "dist_from_slow_pct": 3.0989073904373607,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 592.510009765625,
+        "volatility": 1.5752990891039347,
+        "timestamp": "2026-01-05T08:02:28.500340",
+        "rank": 2
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "XOM",
+      "entry_price": 122.6500015258789,
+      "entry_date": "2026-01-05T08:04:05.141834",
+      "entry_signal": {
+        "symbol": "XOM",
+        "score": 0.612,
+        "confidence": 0.4717813866894176,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.5,
+            "direction": "neutral",
+            "confidence": 0.2642510935153407,
+            "metadata": {
+              "rsi": 59.42995625938637,
+              "period": 14,
+              "price": 122.6500015258789
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 1.263684183440077,
+              "signal": 0.8928380471778097,
+              "histogram": 0.37084613626226726,
+              "crossover": "none",
+              "price": 122.6500015258789
+            }
+          },
+          "volume": {
+            "signal_strength": 0.8,
+            "direction": "bullish",
+            "confidence": 0.6,
+            "metadata": {
+              "volume_ratio": 0.900407136143315,
+              "avg_volume": 15740435.0,
+              "current_volume": 14172800.0,
+              "vwap": 118.19079440899854,
+              "price": 122.6500015258789,
+              "price_vs_vwap_pct": 3.7728886916939612
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 118.46500053405762,
+              "sma_slow": 116.82804122924804,
+              "price": 122.6500015258789,
+              "dist_from_fast_pct": 3.532689801168855,
+              "dist_from_slow_pct": 4.983358648636941,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 122.6500015258789,
+        "volatility": 1.5601896127787518,
+        "timestamp": "2026-01-05T08:02:30.387216",
+        "rank": 3
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "JPM",
+      "entry_price": 325.4800109863281,
+      "entry_date": "2026-01-05T08:04:05.141834",
+      "entry_signal": {
+        "symbol": "JPM",
+        "score": 0.6083562144997299,
+        "confidence": 0.4661327510099843,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.5,
+            "direction": "neutral",
+            "confidence": 0.21906200807987408,
+            "metadata": {
+              "rsi": 61.237519676805036,
+              "period": 14,
+              "price": 325.4800109863281
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 4.298516811096022,
+              "signal": 3.9701617882690066,
+              "histogram": 0.3283550228270151,
+              "crossover": "none",
+              "price": 325.4800109863281
+            }
+          },
+          "volume": {
+            "signal_strength": 0.7757080966648663,
+            "direction": "bullish",
+            "confidence": 0.6,
+            "metadata": {
+              "volume_ratio": 0.8208032252177113,
+              "avg_volume": 9807710.0,
+              "current_volume": 8050200.0,
+              "vwap": 316.7470386707146,
+              "price": 325.4800109863281,
+              "price_vs_vwap_pct": 2.7570809666486626
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 318.7300003051758,
+              "sma_slow": 311.46580017089843,
+              "price": 325.4800109863281,
+              "dist_from_fast_pct": 2.117783288265733,
+              "dist_from_slow_pct": 4.499438078832483,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 325.4800109863281,
+        "volatility": 1.3981545783940252,
+        "timestamp": "2026-01-05T08:02:35.616801",
+        "rank": 4
+      },
+      "position_size": 1.0,
+      "status": "open"
+    },
+    {
+      "symbol": "CMCSA",
+      "entry_price": 29.540000915527344,
+      "entry_date": "2026-01-05T08:04:05.141834",
+      "entry_signal": {
+        "symbol": "CMCSA",
+        "score": 0.6073692107632223,
+        "confidence": 0.44987286389062286,
+        "direction": "bullish",
+        "ml_prediction": "HOLD",
+        "ml_confidence": 0.34,
+        "ml_probabilities": {
+          "sell": 0.33,
+          "hold": 0.34,
+          "buy": 0.33
+        },
+        "analyzers": {
+          "rsi": {
+            "signal_strength": 0.5,
+            "direction": "neutral",
+            "confidence": 0.08898291112498313,
+            "metadata": {
+              "rsi": 66.44068355500067,
+              "period": 14,
+              "price": 29.540000915527344
+            }
+          },
+          "macd": {
+            "signal_strength": 0.9,
+            "direction": "bullish",
+            "confidence": 0.7,
+            "metadata": {
+              "macd": 0.5725197374802278,
+              "signal": 0.4887130831803176,
+              "histogram": 0.08380665429991019,
+              "crossover": "none",
+              "price": 29.540000915527344
+            }
+          },
+          "volume": {
+            "signal_strength": 0.7691280717548151,
+            "direction": "bullish",
+            "confidence": 0.6,
+            "metadata": {
+              "volume_ratio": 0.628641492425178,
+              "avg_volume": 38625990.0,
+              "current_volume": 24281900.0,
+              "vwap": 28.765831635479323,
+              "price": 29.540000915527344,
+              "price_vs_vwap_pct": 2.691280717548151
+            }
+          },
+          "trend": {
+            "signal_strength": 1.0,
+            "direction": "bullish",
+            "confidence": 0.85,
+            "metadata": {
+              "sma_fast": 28.79049997329712,
+              "sma_slow": 28.080000038146974,
+              "price": 29.540000915527344,
+              "dist_from_fast_pct": 2.603292554576607,
+              "dist_from_slow_pct": 5.199433316940683,
+              "trend": "uptrend"
+            }
+          }
+        },
+        "price": 29.540000915527344,
+        "volatility": 2.403521165813362,
+        "timestamp": "2026-01-05T08:02:11.379007",
+        "rank": 5
+      },
+      "position_size": 1.0,
+      "status": "open"
     }
   ]
 }

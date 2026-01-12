@@ -1,6 +1,6 @@
 {
   "symbol": "ADA-USD",
-  "timestamp": "2025-12-30T00:02:43.499978",
+  "timestamp": "2026-01-12T00:02:31.983961",
   "agent": "fusion_agent",
   "total_score": 6.307692307692307,
   "confidence": 0.363076923076923,
@@ -11,7 +11,7 @@
     "💸"
   ],
   "emoji_string": "📉❌💸",
-  "shorthand": "ADA-USD | 📉❌💸 | 6 | 0.36 | 2025-12-30",
+  "shorthand": "ADA-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
   "weighted_scores": {
     "indicators_agent": {
       "score": 4,

@@ -1,0 +1,659 @@
+{
+  "project": "Schwab API Integration for StockApp",
+  "version": "1.0.0",
+  "status": "Planning - Awaiting Schwab Account Creation",
+  "last_updated": "2026-01-03",
+
+  "overview": {
+    "purpose": "Replace Yahoo Finance (yfinance) with Schwab API for professional-grade market data",
+    "benefits": [
+      "Real-time options data with accurate bid/ask spreads",
+      "WebSocket streaming for live updates",
+      "Higher rate limits (no 0.3s sleep delays needed)",
+      "Level 2 order book data for depth analysis",
+      "Official API - more reliable than yfinance",
+      "Better Greeks calculations (server-side)",
+      "Historical IV data for regime analysis"
+    ],
+    "migration_strategy": "Parallel implementation - keep yfinance working while adding Schwab",
+    "estimated_implementation_time": "4-6 hours total"
+  },
+
+  "prerequisites": {
+    "schwab_account": {
+      "account_type": "Individual Brokerage Account (can be unfunded)",
+      "reason": "API access requires valid Schwab account",
+      "registration_url": "https://www.schwab.com/",
+      "notes": [
+        "Account can remain empty (no funding required for API access)",
+        "Need to enable API access in account settings",
+        "Will receive API Key and App Secret after approval"
+      ]
+    },
+    "api_registration": {
+      "developer_portal": "https://developer.schwab.com/",
+      "steps": [
+        "1. Log into developer portal with Schwab credentials",
+        "2. Create new app in 'My Apps' section",
+        "3. Choose 'Individual Trader' app type",
+        "4. Set callback URL: http://localhost:8182/callback",
+        "5. Save API Key and App Secret (store securely)"
+      ],
+      "approval_time": "Usually instant, may take up to 24 hours"
+    },
+    "oauth_setup": {
+      "authentication_method": "OAuth 2.0",
+      "token_lifespan": "30 minutes (auto-refresh supported)",
+      "initial_setup": "One-time browser authentication, then automated",
+      "storage": "Token stored in backend/data/schwab_token.json"
+    }
+  },
+
+  "python_dependencies": {
+    "new_packages": [
+      {
+        "package": "schwab-py",
+        "version": ">=1.5.0",
+        "description": "Official Schwab API wrapper library",
+        "installation": "pip install schwab-py",
+        "documentation": "https://schwab-py.readthedocs.io/"
+      },
+      {
+        "package": "httpx",
+        "version": ">=0.24.0",
+        "description": "Required for schwab-py async operations",
+        "installation": "pip install httpx"
+      },
+      {
+        "package": "websockets",
+        "version": ">=11.0",
+        "description": "For real-time streaming data",
+        "installation": "pip install websockets"
+      }
+    ],
+    "keep_existing": [
+      "yfinance - maintain as fallback during parallel implementation phase"
+    ]
+  },
+
+  "file_structure": {
+    "new_files": [
+      {
+        "path": "backend/data/schwab_client.py",
+        "purpose": "Centralized Schwab API client initialization",
+        "size_estimate": "~150 lines"
+      },
+      {
+        "path": "backend/data/schwab_config.json",
+        "purpose": "API credentials and configuration (GITIGNORED)",
+        "size_estimate": "~20 lines",
+        "security": "Add to .gitignore - contains secrets"
+      },
+      {
+        "path": "backend/data/schwab_token.json",
+        "purpose": "OAuth token storage (auto-generated, GITIGNORED)",
+        "size_estimate": "Auto-managed by schwab-py",
+        "security": "Add to .gitignore - contains auth token"
+      },
+      {
+        "path": "backend/data/schwab_data_adapter.py",
+        "purpose": "Translate Schwab API responses to our data format",
+        "size_estimate": "~300 lines"
+      },
+      {
+        "path": "backend/data/schwab_streaming.py",
+        "purpose": "WebSocket streaming client for real-time data",
+        "size_estimate": "~200 lines",
+        "priority": "Phase 2 (optional for initial implementation)"
+      }
+    ],
+    "modified_files": [
+      {
+        "path": "backend/turbomode/quarterly_stock_curation.py",
+        "changes": "Replace yfinance calls with Schwab client",
+        "lines_affected": "~20-30 lines",
+        "functions_modified": [
+          "evaluate_symbol_quality()",
+          "get_stock_data()",
+          "get_options_data()"
+        ]
+      },
+      {
+        "path": "backend/turbomode/options_api.py",
+        "changes": "Replace yfinance options chain fetching",
+        "lines_affected": "~50-75 lines",
+        "functions_modified": [
+          "analyze_options_for_symbol()",
+          "fetch_options_chain()",
+          "calculate_greeks()"
+        ]
+      },
+      {
+        "path": "backend/api_server.py",
+        "changes": "Update /data/<symbol> endpoint to use Schwab",
+        "lines_affected": "~10-15 lines",
+        "endpoints_affected": [
+          "/data/<symbol>",
+          "/indicators",
+          "/volume"
+        ]
+      },
+      {
+        "path": "requirements.txt",
+        "changes": "Add schwab-py, httpx, websockets",
+        "lines_affected": "3 new lines"
+      },
+      {
+        "path": ".gitignore",
+        "changes": "Add Schwab credential files",
+        "lines_affected": "2 new lines",
+        "entries": [
+          "backend/data/schwab_config.json",
+          "backend/data/schwab_token.json"
+        ]
+      }
+    ]
+  },
+
+  "api_endpoints_mapping": {
+    "description": "How Schwab API maps to our current yfinance usage",
+    "endpoints": [
+      {
+        "our_function": "get_stock_history(symbol, period='3mo')",
+        "yfinance_call": "yf.Ticker(symbol).history(period='3mo')",
+        "schwab_equivalent": "client.get_price_history(symbol, period_type='month', period=3)",
+        "schwab_method": "PriceHistory",
+        "rate_limit": "120 calls/minute (vs yfinance ~10/min)",
+        "data_quality": "Official exchange data, more reliable"
+      },
+      {
+        "our_function": "get_options_chain(symbol, expiry)",
+        "yfinance_call": "yf.Ticker(symbol).option_chain(expiry)",
+        "schwab_equivalent": "client.get_option_chain(symbol, contract_type='ALL', strike_count=50)",
+        "schwab_method": "OptionChain",
+        "rate_limit": "120 calls/minute",
+        "data_quality": "Real-time spreads, accurate OI, live Greeks"
+      },
+      {
+        "our_function": "get_quote(symbol)",
+        "yfinance_call": "yf.Ticker(symbol).info",
+        "schwab_equivalent": "client.get_quote(symbol)",
+        "schwab_method": "Quote",
+        "rate_limit": "120 calls/minute",
+        "data_quality": "Real-time quote (15-min delay for non-professional)"
+      },
+      {
+        "our_function": "get_fundamentals(symbol)",
+        "yfinance_call": "yf.Ticker(symbol).info (market_cap, sector, etc.)",
+        "schwab_equivalent": "client.get_instrument(symbol, projection='fundamental')",
+        "schwab_method": "Instruments",
+        "rate_limit": "120 calls/minute",
+        "data_quality": "Exchange-provided fundamentals"
+      }
+    ]
+  },
+
+  "implementation_phases": {
+    "phase_1": {
+      "name": "Setup and Authentication",
+      "duration": "30-60 minutes",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Create Schwab account and enable API access",
+          "owner": "User",
+          "estimated_time": "15-20 min"
+        },
+        {
+          "step": 2,
+          "action": "Register app on developer portal, get API Key/Secret",
+          "owner": "User",
+          "estimated_time": "10-15 min"
+        },
+        {
+          "step": 3,
+          "action": "Install schwab-py library",
+          "command": "pip install schwab-py httpx websockets",
+          "estimated_time": "1 min"
+        },
+        {
+          "step": 4,
+          "action": "Create schwab_config.json with credentials",
+          "owner": "Claude",
+          "estimated_time": "2 min"
+        },
+        {
+          "step": 5,
+          "action": "Run OAuth flow to get initial token",
+          "command": "python backend/data/schwab_auth_setup.py",
+          "notes": "Opens browser for one-time login",
+          "estimated_time": "5 min"
+        },
+        {
+          "step": 6,
+          "action": "Test connection with simple API call",
+          "validation": "Fetch SPY quote successfully",
+          "estimated_time": "5 min"
+        }
+      ]
+    },
+    "phase_2": {
+      "name": "Core Data Adapter Implementation",
+      "duration": "2-3 hours",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Create schwab_client.py with connection management",
+          "deliverable": "Singleton client with auto-refresh",
+          "estimated_time": "30 min"
+        },
+        {
+          "step": 2,
+          "action": "Create schwab_data_adapter.py",
+          "deliverable": "Functions that return same format as yfinance",
+          "estimated_time": "60 min"
+        },
+        {
+          "step": 3,
+          "action": "Add error handling and retry logic",
+          "deliverable": "Graceful degradation to yfinance on failure",
+          "estimated_time": "30 min"
+        },
+        {
+          "step": 4,
+          "action": "Test all adapter functions",
+          "validation": "Compare Schwab vs yfinance results for 10 symbols",
+          "estimated_time": "30 min"
+        }
+      ]
+    },
+    "phase_3": {
+      "name": "Integration into Existing Code",
+      "duration": "1-2 hours",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Update quarterly_stock_curation.py",
+          "changes": "Replace yfinance imports with schwab_data_adapter",
+          "estimated_time": "20 min"
+        },
+        {
+          "step": 2,
+          "action": "Update options_api.py",
+          "changes": "Use Schwab for options chain fetching",
+          "estimated_time": "30 min"
+        },
+        {
+          "step": 3,
+          "action": "Update api_server.py",
+          "changes": "Switch /data/<symbol> endpoint to Schwab",
+          "estimated_time": "15 min"
+        },
+        {
+          "step": 4,
+          "action": "Run full integration test",
+          "validation": "Curation script + TurboOptions analysis on 5 symbols",
+          "estimated_time": "30 min"
+        }
+      ]
+    },
+    "phase_4": {
+      "name": "WebSocket Streaming (Optional)",
+      "duration": "2-3 hours",
+      "priority": "Low - can be added later",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Create schwab_streaming.py",
+          "deliverable": "WebSocket client for real-time quotes",
+          "estimated_time": "60 min"
+        },
+        {
+          "step": 2,
+          "action": "Add streaming to TurboOptions scoring",
+          "deliverable": "Live spread updates during analysis",
+          "estimated_time": "45 min"
+        },
+        {
+          "step": 3,
+          "action": "Create dashboard with live updates",
+          "deliverable": "Real-time options scoring display",
+          "estimated_time": "60 min"
+        }
+      ]
+    }
+  },
+
+  "code_templates": {
+    "schwab_config_json": {
+      "path": "backend/data/schwab_config.json",
+      "template": {
+        "api_key": "YOUR_API_KEY_HERE",
+        "app_secret": "YOUR_APP_SECRET_HERE",
+        "callback_url": "http://localhost:8182/callback",
+        "token_path": "backend/data/schwab_token.json",
+        "account_hash": "YOUR_ACCOUNT_HASH_HERE"
+      },
+      "notes": [
+        "api_key: From Schwab Developer Portal",
+        "app_secret: From Schwab Developer Portal",
+        "callback_url: Must match what you set in developer portal",
+        "account_hash: Retrieved after first authentication"
+      ]
+    },
+    "schwab_client_py": {
+      "path": "backend/data/schwab_client.py",
+      "key_functions": [
+        "get_schwab_client() -> Client",
+        "refresh_token_if_needed() -> None",
+        "handle_rate_limit() -> decorator"
+      ],
+      "pseudocode": "See detailed implementation in SCHWAB_CLIENT_TEMPLATE.py"
+    },
+    "schwab_data_adapter_py": {
+      "path": "backend/data/schwab_data_adapter.py",
+      "key_functions": [
+        "get_stock_history(symbol, period='3mo', interval='1d') -> pd.DataFrame",
+        "get_options_chain(symbol, expiry=None) -> dict",
+        "get_fundamentals(symbol) -> dict",
+        "get_quote(symbol) -> dict",
+        "calculate_atm_spread(symbol) -> float"
+      ],
+      "return_format": "Identical to yfinance format for drop-in replacement",
+      "pseudocode": "See detailed implementation in SCHWAB_ADAPTER_TEMPLATE.py"
+    }
+  },
+
+  "data_quality_improvements": {
+    "options_spreads": {
+      "yfinance_issue": "Delayed, often stale or missing bid/ask",
+      "schwab_solution": "Real-time bid/ask from exchange",
+      "impact_on_turbomode": "Accurate $0.25 spread filtering",
+      "example": {
+        "symbol": "AAPL",
+        "yfinance_spread": "$0.15 (but 15-min delayed)",
+        "schwab_spread": "$0.12 (real-time)",
+        "difference": "More accurate for curation decisions"
+      }
+    },
+    "open_interest": {
+      "yfinance_issue": "Updated once daily, sometimes missing",
+      "schwab_solution": "Live OI data, updated continuously",
+      "impact_on_turbomode": "Better liquidity assessment"
+    },
+    "greeks": {
+      "yfinance_issue": "Not provided - we calculate manually",
+      "schwab_solution": "Exchange-calculated Greeks included in response",
+      "impact_on_turboptions": "More accurate delta/gamma/theta for scoring"
+    },
+    "volume": {
+      "yfinance_issue": "Sometimes lags by 5-15 minutes",
+      "schwab_solution": "Real-time volume updates",
+      "impact_on_turbomode": "Better volume-based filtering"
+    }
+  },
+
+  "rate_limiting": {
+    "schwab_limits": {
+      "api_calls_per_minute": 120,
+      "api_calls_per_day": "No documented daily limit",
+      "websocket_connections": 5,
+      "concurrent_requests": 10
+    },
+    "yfinance_limits": {
+      "api_calls_per_minute": "~10-20 (undocumented, varies)",
+      "api_calls_per_day": "~2000 (frequently hit)",
+      "notes": "Yahoo frequently changes limits, causing random failures"
+    },
+    "impact_on_curation": {
+      "current_speed": "80 symbols in ~5-10 min (with 0.3s delays)",
+      "with_schwab": "80 symbols in ~1-2 min (120/min rate limit)",
+      "speedup_factor": "5-10x faster",
+      "benefit": "Quarterly curation completes in minutes, not hours"
+    }
+  },
+
+  "error_handling_strategy": {
+    "fallback_hierarchy": [
+      "1. Try Schwab API (primary)",
+      "2. If Schwab fails, try yfinance (fallback)",
+      "3. If both fail, use cached data if available",
+      "4. If no cached data, log error and skip symbol"
+    ],
+    "schwab_specific_errors": [
+      {
+        "error": "Token expired",
+        "solution": "Auto-refresh token using refresh_token",
+        "retry": "Immediate retry after refresh"
+      },
+      {
+        "error": "Rate limit exceeded (429)",
+        "solution": "Sleep for 60 seconds, then retry",
+        "prevention": "Track call count, throttle to 100/min"
+      },
+      {
+        "error": "Market closed",
+        "solution": "Use last available data, set is_delayed flag",
+        "notes": "Schwab returns most recent data even when market closed"
+      },
+      {
+        "error": "Invalid symbol",
+        "solution": "Log warning, mark symbol as invalid",
+        "notes": "Some OTC/foreign symbols not available via Schwab"
+      }
+    ],
+    "logging": {
+      "log_file": "backend/data/schwab_api.log",
+      "log_level": "INFO",
+      "log_format": "timestamp | level | symbol | endpoint | status | latency_ms"
+    }
+  },
+
+  "testing_plan": {
+    "unit_tests": [
+      {
+        "test": "test_schwab_authentication",
+        "validates": "OAuth flow completes, token saved",
+        "mock_data": "Use Schwab sandbox if available"
+      },
+      {
+        "test": "test_get_stock_history",
+        "validates": "Returns same format as yfinance",
+        "symbols": ["AAPL", "TSLA", "SPY"]
+      },
+      {
+        "test": "test_get_options_chain",
+        "validates": "Options data matches expected structure",
+        "symbols": ["AAPL", "NVDA"]
+      },
+      {
+        "test": "test_rate_limiting",
+        "validates": "Doesn't exceed 120 calls/min",
+        "method": "Make 150 rapid calls, verify throttling"
+      },
+      {
+        "test": "test_fallback_to_yfinance",
+        "validates": "Gracefully falls back on Schwab failure",
+        "method": "Mock Schwab error, verify yfinance used"
+      }
+    ],
+    "integration_tests": [
+      {
+        "test": "test_full_curation_run",
+        "validates": "Quarterly curation completes with Schwab data",
+        "duration": "~2-3 minutes for 80 symbols"
+      },
+      {
+        "test": "test_turboptions_analysis",
+        "validates": "Options analysis works with Schwab",
+        "symbols": ["AAPL", "NVDA", "TSLA", "CAT", "F"]
+      }
+    ]
+  },
+
+  "security_considerations": {
+    "credential_storage": {
+      "method": "JSON file (NOT in git)",
+      "encryption": "Token auto-encrypted by schwab-py library",
+      "access_control": "File permissions: 600 (owner read/write only)",
+      "gitignore_entries": [
+        "backend/data/schwab_config.json",
+        "backend/data/schwab_token.json",
+        "backend/data/schwab_api.log"
+      ]
+    },
+    "token_refresh": {
+      "mechanism": "schwab-py auto-refresh using refresh_token",
+      "expiration": "Access token: 30 min, Refresh token: 7 days",
+      "reauth_frequency": "Every 7 days (manual browser login)",
+      "automation": "Can extend to 90 days with special app approval"
+    },
+    "api_key_protection": {
+      "never_commit": "Add schwab_config.json to .gitignore FIRST",
+      "env_variables": "Alternative: use environment variables instead of JSON",
+      "rotation": "Rotate API key every 90 days (Schwab best practice)"
+    }
+  },
+
+  "rollback_plan": {
+    "if_schwab_fails": [
+      "1. Comment out Schwab imports in modified files",
+      "2. Uncomment yfinance imports (keep parallel during testing)",
+      "3. No data loss - yfinance still works as before",
+      "4. Estimated rollback time: 5 minutes"
+    ],
+    "git_strategy": {
+      "branch_name": "feature/schwab-api-integration",
+      "commit_frequency": "After each phase completes",
+      "merge_to_main": "Only after full integration testing passes"
+    }
+  },
+
+  "future_enhancements": {
+    "real_time_scoring": {
+      "description": "Update TurboOptions scores as spreads change during trading day",
+      "implementation": "WebSocket streaming + background scoring loop",
+      "priority": "Medium",
+      "estimated_effort": "4-6 hours"
+    },
+    "level_2_data": {
+      "description": "Show full order book depth for options",
+      "use_case": "Verify actual liquidity at bid/ask levels",
+      "priority": "Low",
+      "estimated_effort": "2-3 hours"
+    },
+    "historical_iv_database": {
+      "description": "Build database of historical IV for regime analysis",
+      "use_case": "Better volatility predictions for TurboOptions",
+      "priority": "Medium",
+      "estimated_effort": "6-8 hours"
+    },
+    "alerts_system": {
+      "description": "Real-time alerts when spreads tighten on target symbols",
+      "use_case": "Catch optimal entry points",
+      "priority": "Low",
+      "estimated_effort": "3-4 hours"
+    }
+  },
+
+  "documentation": {
+    "external_resources": [
+      {
+        "name": "Schwab Developer Portal",
+        "url": "https://developer.schwab.com/",
+        "purpose": "API documentation, app registration"
+      },
+      {
+        "name": "schwab-py Documentation",
+        "url": "https://schwab-py.readthedocs.io/",
+        "purpose": "Python library usage guide"
+      },
+      {
+        "name": "Schwab API Reference",
+        "url": "https://developer.schwab.com/products/trader-api--individual/details/specifications/Market%20Data%20Production",
+        "purpose": "Detailed endpoint specifications"
+      }
+    ],
+    "internal_documentation": [
+      {
+        "file": "SCHWAB_INTEGRATION_README.md",
+        "purpose": "Step-by-step setup guide for future developers",
+        "create_when": "After Phase 3 completes"
+      },
+      {
+        "file": "SCHWAB_API_EXAMPLES.py",
+        "purpose": "Code examples for common operations",
+        "create_when": "After Phase 2 completes"
+      }
+    ]
+  },
+
+  "next_steps": {
+    "user_actions": [
+      "1. Create Schwab brokerage account at schwab.com",
+      "2. Enable API access in account settings",
+      "3. Register app on developer.schwab.com",
+      "4. Save API Key and App Secret securely",
+      "5. Notify Claude when account is ready"
+    ],
+    "claude_actions_after_account_ready": [
+      "1. Install schwab-py library",
+      "2. Create schwab_config.json with provided credentials",
+      "3. Run OAuth setup to get initial token",
+      "4. Implement schwab_client.py and schwab_data_adapter.py",
+      "5. Test with 5-10 symbols before full integration",
+      "6. Integrate into quarterly curation script",
+      "7. Integrate into TurboOptions scoring",
+      "8. Run full end-to-end test",
+      "9. Monitor for 24 hours before considering yfinance removal"
+    ]
+  },
+
+  "success_criteria": {
+    "phase_1_success": [
+      "OAuth authentication completes successfully",
+      "Can fetch SPY quote via Schwab API",
+      "Token auto-refreshes when expired"
+    ],
+    "phase_2_success": [
+      "schwab_data_adapter returns identical format to yfinance",
+      "All 5 core functions work for 10 test symbols",
+      "Error handling gracefully falls back to yfinance"
+    ],
+    "phase_3_success": [
+      "Quarterly curation completes with Schwab data",
+      "TurboOptions analysis works for all 80 core symbols",
+      "No regressions in existing functionality",
+      "Speed improvement: 80 symbols in <2 minutes"
+    ],
+    "full_integration_success": [
+      "Zero yfinance calls during normal operation",
+      "Schwab uptime >99% over 7 days",
+      "ATM spread accuracy verified against live broker quotes",
+      "User confirms better data quality in production"
+    ]
+  },
+
+  "cost_analysis": {
+    "schwab_api": {
+      "account_cost": "$0 (can be unfunded)",
+      "api_cost": "$0 (free for individual traders)",
+      "data_cost": "$0 (real-time included for account holders)",
+      "total_monthly_cost": "$0"
+    },
+    "yfinance": {
+      "cost": "$0",
+      "hidden_costs": [
+        "Developer time debugging random failures",
+        "Inaccurate data leading to bad curation decisions",
+        "Rate limiting slowing down operations"
+      ]
+    },
+    "roi": {
+      "time_savings": "5-10x faster curation (5-10 min -> 1-2 min)",
+      "data_quality": "Professional-grade vs free/unstable",
+      "reliability": "99.9% uptime vs frequent yfinance breakages",
+      "future_features": "Enables real-time streaming, not possible with yfinance"
+    }
+  }
+}

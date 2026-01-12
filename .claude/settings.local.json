@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -u adaptive_stock_ranker.py)"
+      "Bash(python -u adaptive_stock_ranker.py)",
+      "Bash(python \"C:\\StockApp\\backend\\turbomode\\update_turbomode_schema.py\")",
+      "Bash(python \"C:\\StockApp\\master_market_data\\market_data_api.py\")",
+      "Bash(python scheduler_logger.py)",
+      "Bash(python master_market_data/ingest_market_data.py)",
+      "Bash(git add session_files/ backend/turbomode/training_sample_generator.py backend/turbomode/automated_retrainer.py backend/turbomode/turbomode_training_loader.py backend/turbomode/turbomode_vectorized_feature_engine.py backend/turbomode/feature_list.py backend/turbomode/core_symbols.py backend/turbomode/paths.py)",
+      "Bash(git commit -m \"feat: Add supporting infrastructure and documentation\n\n- Add session notes (Jan 2-12, 2026) documenting all changes\n- Add training sample generator for outcome-based retraining\n- Add automated retrainer for monthly model updates\n- Add turbomode training loader for data pipeline\n- Add vectorized feature engine (179 features)\n- Add feature list and core symbols configuration\n- Add paths module for consistent file references\n- Document complete TurboMode architecture and schedule\")",
+      "Bash(git add -A)",
+      "Bash(git commit -m \"chore: Clean up old code and add utility scripts\n\n- Remove deprecated backend/advanced_ml directory (moved to backend/turbomode)\n- Remove deprecated backend/ml directory (old pivot/RSI models)\n- Remove old model files (turbomode_models_old_3class)\n- Add utility scripts for database inspection and testing\n- Add documentation files (architecture, implementation progress)\n- Add master_market_data integration (separate data pipeline)\n- Update API server and frontend configurations\n- Clean up catboost training artifacts\")"
     ],
     "deny": [],
     "ask": []

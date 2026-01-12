@@ -16,15 +16,15 @@ backend_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 if backend_path not in sys.path:
     sys.path.insert(0, backend_path)
 
-from advanced_ml.models.xgboost_model import XGBoostModel
-from advanced_ml.models.xgboost_et_model import XGBoostETModel
-from advanced_ml.models.lightgbm_model import LightGBMModel
-from advanced_ml.models.catboost_model import CatBoostModel
-from advanced_ml.models.xgboost_hist_model import XGBoostHistModel
-from advanced_ml.models.xgboost_dart_model import XGBoostDartModel
-from advanced_ml.models.xgboost_gblinear_model import XGBoostGBLinearModel
-from advanced_ml.models.xgboost_approx_model import XGBoostApproxModel
-from advanced_ml.models.meta_learner import MetaLearner
+from backend.turbomode.models.xgboost_model import XGBoostModel
+from backend.turbomode.models.xgboost_et_model import XGBoostETModel
+from backend.turbomode.models.lightgbm_model import LightGBMModel
+from backend.turbomode.models.catboost_model import CatBoostModel
+from backend.turbomode.models.xgboost_hist_model import XGBoostHistModel
+from backend.turbomode.models.xgboost_dart_model import XGBoostDARTModel
+from backend.turbomode.models.xgboost_gblinear_model import XGBoostGBLinearModel
+from backend.turbomode.models.xgboost_approx_model import XGBoostApproxModel
+from backend.turbomode.models.meta_learner import MetaLearner
 from datetime import datetime
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -43,7 +43,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 
 # Define paths
 TURBOMODE_MODEL_PATH = os.path.join(PROJECT_ROOT, "backend", "data", "turbomode_models")
-DB_PATH = os.path.join(PROJECT_ROOT, "backend", "data", "advanced_ml_system.db")
+DB_PATH = os.path.join(PROJECT_ROOT, "backend", "data", "turbomode.db")
 RANKINGS_FILE = os.path.join(PROJECT_ROOT, "backend", "data", "stock_rankings.json")
 
 # Load top 10 stocks from rankings
@@ -132,7 +132,7 @@ et_model = XGBoostETModel(model_path=os.path.join(TURBOMODE_MODEL_PATH, "xgboost
 lgbm_model = LightGBMModel(model_path=os.path.join(TURBOMODE_MODEL_PATH, "lightgbm"), use_gpu=True)
 gb_model = CatBoostModel(model_path=os.path.join(TURBOMODE_MODEL_PATH, "catboost"))
 hist_model = XGBoostHistModel(model_path=os.path.join(TURBOMODE_MODEL_PATH, "xgboost_hist"))
-dart_model = XGBoostDartModel(model_path=os.path.join(TURBOMODE_MODEL_PATH, "xgboost_dart"))
+dart_model = XGBoostDARTModel(model_path=os.path.join(TURBOMODE_MODEL_PATH, "xgboost_dart"))
 gblinear_model = XGBoostGBLinearModel(model_path=os.path.join(TURBOMODE_MODEL_PATH, "xgboost_gblinear"))
 approx_model = XGBoostApproxModel(model_path=os.path.join(TURBOMODE_MODEL_PATH, "xgboost_approx"))
 

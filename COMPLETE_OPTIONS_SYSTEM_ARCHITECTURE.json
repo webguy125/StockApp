@@ -1,0 +1,1037 @@
+{
+  "project_name": "Complete TurboMode Options Trading System",
+  "version": "3.0 - Comprehensive",
+  "created": "2026-01-03",
+  "last_updated": "2026-01-03 10:00 AM",
+
+  "executive_summary": {
+    "description": "End-to-end options trading system with ML-driven strike selection, real-time analysis, historical logging, and continuous model improvement",
+    "current_status": "Phase 1 Complete (UI Integration), Phase 2 Ready (Logging), Phase 3 Planned (Hybrid ML)",
+    "key_features": [
+      "Interactive symbol tooltips showing brief option recommendations",
+      "Full options analysis page with Greeks, profit targets, and options chain",
+      "Real-time options logging for every prediction",
+      "14-day outcome tracking for validation",
+      "Hybrid ML scoring (rules-based + machine learning)",
+      "Symbol search for any tradable stock",
+      "Continuous model improvement via monthly retraining"
+    ]
+  },
+
+  "system_architecture": {
+    "frontend": {
+      "pages": [
+        {
+          "name": "TurboMode Main Page",
+          "path": "frontend/turbomode.html",
+          "features": ["Options Trading card with link to options page"],
+          "status": "✅ Complete"
+        },
+        {
+          "name": "Top 10 Stocks",
+          "path": "frontend/turbomode/top_10_stocks.html",
+          "features": [
+            "Clickable stock symbols",
+            "Hover tooltips showing: Option Type, Strike, Delta, ML Score",
+            "Click navigates to full options page",
+            "Tooltip caching to prevent redundant API calls",
+            "300ms debounced hover to reduce API load"
+          ],
+          "status": "✅ Complete (Jan 3, 2026)"
+        },
+        {
+          "name": "All Predictions",
+          "path": "frontend/turbomode/all_predictions.html",
+          "features": [
+            "Clickable symbols in table",
+            "Same hover tooltip functionality as Top 10",
+            "Consistent UX across pages"
+          ],
+          "status": "✅ Complete (Jan 3, 2026)"
+        },
+        {
+          "name": "Options Analysis Page",
+          "path": "frontend/turbomode/options.html",
+          "features": [
+            "Stock info header (price, ML signal, confidence, expected move)",
+            "Recommended Trade card (highlighted)",
+            "Greeks section (Delta, Gamma, Theta, Vega, Rho)",
+            "Profit targets (entry, take profit +10%, stop loss -5%, breakeven)",
+            "Position sizing ($333 per position, max 30 positions)",
+            "Full options chain table (top 20 by ML score)",
+            "Beautiful gradient UI with responsive design"
+          ],
+          "status": "✅ Complete",
+          "planned_enhancements": [
+            "Symbol search input box",
+            "Hybrid ML score breakdown display",
+            "Historical performance stats"
+          ]
+        }
+      ]
+    },
+
+    "backend": {
+      "api_endpoints": [
+        {
+          "route": "/api/options/<symbol>",
+          "method": "GET",
+          "description": "Full options analysis with Greeks, recommendations, profit targets",
+          "response_time": "~2 seconds",
+          "features": [
+            "Calculates all Greeks using py_vollib",
+            "Scores all options in chain (0-100)",
+            "Returns top 20 options sorted by score",
+            "Includes position sizing and profit targets"
+          ],
+          "status": "✅ Complete",
+          "planned_changes": [
+            "Add hybrid ML scoring (0.4*rules + 0.6*ml_model)",
+            "Add prediction logging",
+            "Return ml_score_breakdown"
+          ]
+        },
+        {
+          "route": "/api/options/brief/<symbol>",
+          "method": "GET",
+          "description": "Lightweight endpoint for tooltips",
+          "response_time": "<1 second",
+          "returns": {
+            "option_type": "CALL or PUT",
+            "strike": "Recommended strike price",
+            "delta": "Delta value",
+            "ml_score": "0-100 score"
+          },
+          "status": "✅ Complete (Jan 3, 2026)"
+        },
+        {
+          "route": "/api/options/health",
+          "method": "GET",
+          "description": "Health check for options API",
+          "status": "✅ Complete"
+        }
+      ],
+
+      "core_files": [
+        {
+          "file": "backend/turbomode/options_api.py",
+          "lines": 560,
+          "description": "Main options analysis engine",
+          "classes": [
+            {
+              "name": "OptionsAnalyzer",
+              "methods": [
+                "get_ml_prediction() - Get TurboMode stock prediction",
+                "calculate_historical_volatility() - 30-day HV",
+                "calculate_expected_move() - 14-day expected price movement",
+                "calculate_greeks() - Black-Scholes Greeks",
+                "calculate_ml_score() - 4-component scoring (0-100)",
+                "analyze_options_chain() - Main analysis function"
+              ]
+            }
+          ],
+          "status": "✅ Complete",
+          "planned_changes": [
+            "Add logging to analyze_options_chain()",
+            "Add hybrid ML prediction",
+            "Load trained XGBoost model at startup"
+          ]
+        },
+        {
+          "file": "backend/turbomode/database_schema.py",
+          "description": "TurboMode database with active_signals table",
+          "status": "✅ Existing",
+          "planned_changes": [
+            "Add options_predictions_log table",
+            "Add options_outcomes table"
+          ]
+        },
+        {
+          "file": "backend/api_server.py",
+          "description": "Flask server with options_bp registered",
+          "lines": 2837,
+          "status": "✅ Complete",
+          "registered_blueprints": [
+            "options_bp - /api/options/*"
+          ]
+        }
+      ]
+    },
+
+    "data_storage": {
+      "databases": [
+        {
+          "name": "turbomode.db",
+          "location": "backend/data/turbomode.db",
+          "tables": [
+            "active_signals (12,909 rows - stock predictions)",
+            "signals_history",
+            "sector_stats"
+          ],
+          "status": "✅ Existing"
+        },
+        {
+          "name": "options_predictions.db",
+          "location": "backend/data/options_logs/options_predictions.db",
+          "tables": [
+            "predictions (will store all options recommendations)",
+            "outcomes (will store 14-day tracking results)"
+          ],
+          "status": "⏳ TO BE CREATED"
+        }
+      ],
+
+      "model_files": [
+        {
+          "path": "backend/data/turbomode_models/",
+          "models": [
+            "catboost/catboost_model.cbm",
+            "lightgbm/model",
+            "xgboost/model.json (hist variant)",
+            "meta_learner/model"
+          ],
+          "purpose": "Stock prediction models (73.43% accuracy)",
+          "status": "✅ Existing"
+        },
+        {
+          "path": "backend/data/options_models/",
+          "models": [
+            "v1.0_simulated/xgboost_options_model.json",
+            "v2.0_real/xgboost_options_model.json",
+            "current/ (symlink to latest)"
+          ],
+          "purpose": "Options success prediction models",
+          "status": "⏳ TO BE CREATED"
+        }
+      ]
+    }
+  },
+
+  "features_completed": {
+    "phase_1_ui_integration": {
+      "completed_date": "2026-01-03",
+      "features": [
+        {
+          "feature": "Clickable Stock Symbols",
+          "description": "All stock symbols in Top 10 and All Predictions pages are clickable",
+          "behavior": "Click navigates to /turbomode/options.html?symbol=<SYMBOL>",
+          "styling": "Symbol changes color on hover, cursor becomes pointer",
+          "files_modified": [
+            "frontend/turbomode/top_10_stocks.html (lines 197-272, 500, 648-711)",
+            "frontend/turbomode/all_predictions.html (lines 207-280, 643, 721-784)"
+          ]
+        },
+        {
+          "feature": "Hover Tooltips",
+          "description": "Hovering over symbols shows brief option recommendation",
+          "tooltip_content": [
+            "Option Type (CALL/PUT)",
+            "Strike Price",
+            "Delta",
+            "ML Score (0-100)"
+          ],
+          "technical_details": {
+            "positioning": "Below symbol (Top 10), above cell (All Predictions)",
+            "styling": "Black background, white text, arrow pointer",
+            "animation": "Fade in/out (0.3s)",
+            "debouncing": "300ms delay before API call",
+            "caching": "Frontend caches responses per symbol for session"
+          },
+          "api_endpoint": "/api/options/brief/<symbol>",
+          "files_modified": [
+            "frontend/turbomode/top_10_stocks.html (CSS + JS)",
+            "frontend/turbomode/all_predictions.html (CSS + JS)",
+            "backend/turbomode/options_api.py (added brief endpoint)"
+          ]
+        },
+        {
+          "feature": "Options Analysis Page",
+          "description": "Full options analysis with Greeks, scoring, and recommendations",
+          "components": [
+            "Stock Info Header",
+            "Recommended Trade Card (green gradient)",
+            "Greeks Display (5 metrics)",
+            "Profit Targets (Take Profit, Stop Loss, Breakeven)",
+            "Position Sizing (contracts, premium, max loss)",
+            "Full Options Chain Table (top 20)"
+          ],
+          "url_format": "/turbomode/options.html?symbol=AAPL",
+          "works_with": "Any stock symbol",
+          "files": [
+            "frontend/turbomode/options.html (600+ lines)",
+            "backend/turbomode/options_api.py (560 lines)"
+          ]
+        }
+      ],
+      "status": "✅ COMPLETE"
+    }
+  },
+
+  "features_in_progress": {
+    "phase_2_logging_infrastructure": {
+      "priority": "HIGHEST - Start today",
+      "estimated_time": "2-3 hours",
+      "purpose": "Build proprietary options performance database for ML training",
+
+      "components": {
+        "database_table": {
+          "name": "options_predictions_log",
+          "location": "backend/data/options_logs/options_predictions.db",
+          "schema": {
+            "prediction_id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+            "created_at": "DATETIME DEFAULT CURRENT_TIMESTAMP",
+            "
+": "TEXT NOT NULL",
+
+            "stock_data": {
+              "stock_price_entry": "REAL",
+              "ml_signal": "TEXT (BUY/SELL/HOLD)",
+              "ml_confidence": "REAL",
+              "ml_target_price": "REAL",
+              "historical_vol_30d": "REAL"
+            },
+
+            "option_details": {
+              "option_type": "TEXT (CALL/PUT)",
+              "strike": "REAL",
+              "expiration_date": "DATE",
+              "dte": "INTEGER (days to expiration)",
+              "entry_premium": "REAL",
+              "entry_bid": "REAL",
+              "entry_ask": "REAL"
+            },
+
+            "greeks": {
+              "entry_delta": "REAL",
+              "entry_gamma": "REAL",
+              "entry_theta": "REAL",
+              "entry_vega": "REAL",
+              "entry_rho": "REAL",
+              "entry_iv": "REAL (implied volatility)"
+            },
+
+            "liquidity": {
+              "entry_open_interest": "INTEGER",
+              "entry_volume": "INTEGER"
+            },
+
+            "scoring": {
+              "rules_score": "INTEGER (0-100)",
+              "ml_score": "REAL (0-1, from future ML model)",
+              "hybrid_score": "REAL (0-100)"
+            },
+
+            "tracking": {
+              "tracking_complete": "BOOLEAN DEFAULT FALSE",
+              "outcome_checked_at": "DATETIME NULL",
+              "max_premium_14d": "REAL NULL",
+              "max_premium_date": "DATETIME NULL",
+              "final_premium_14d": "REAL NULL",
+              "hit_10pct_target": "BOOLEAN NULL",
+              "days_to_target": "INTEGER NULL",
+              "max_profit_pct": "REAL NULL"
+            }
+          },
+          "indexes": [
+            "CREATE INDEX idx_symbol ON options_predictions_log(symbol)",
+            "CREATE INDEX idx_created_at ON options_predictions_log(created_at)",
+            "CREATE INDEX idx_tracking ON options_predictions_log(tracking_complete)"
+          ]
+        },
+
+        "logging_integration": {
+          "file": "backend/turbomode/options_api.py",
+          "function": "analyze_options_chain()",
+          "modification": "After generating recommendation, log to database",
+          "pseudocode": [
+            "# At end of analyze_options_chain() function:",
+            "log_prediction_to_database(",
+            "    symbol=symbol,",
+            "    stock_data={...},",
+            "    option_details={...},",
+            "    greeks={...},",
+            "    scores={...}",
+            ")"
+          ]
+        },
+
+        "tracking_script": {
+          "file": "backend/turbomode/track_options_outcomes.py",
+          "purpose": "Run daily to track outcomes of logged predictions",
+          "schedule": "4:30 PM ET weekdays (after market close)",
+          "logic": [
+            "1. Query all predictions where tracking_complete = FALSE",
+            "2. For each prediction:",
+            "   a. Calculate days_since_entry",
+            "   b. If days_since_entry <= 14:",
+            "      - Fetch current option price (or estimate with Black-Scholes)",
+            "      - If current_premium > max_premium_14d: update max",
+            "      - If (current_premium / entry_premium) >= 1.10: set hit_10pct_target = TRUE, days_to_target",
+            "   c. If days_since_entry == 14:",
+            "      - Set tracking_complete = TRUE",
+            "      - Record final_premium_14d",
+            "      - Calculate max_profit_pct = (max_premium_14d / entry_premium - 1) * 100",
+            "3. Commit all updates to database"
+          ],
+          "error_handling": [
+            "If option price unavailable: use Black-Scholes simulation",
+            "If stock delisted: mark tracking_complete = TRUE, hit_target = FALSE",
+            "Log all errors to daily_tracking_log.txt"
+          ],
+          "cron_setup": "30 16 * * 1-5  # 4:30 PM Mon-Fri"
+        },
+
+        "simple_dashboard": {
+          "file": "frontend/turbomode/options_performance.html",
+          "purpose": "View logged predictions and their outcomes",
+          "features": [
+            "Total predictions logged",
+            "Predictions with completed tracking (14 days passed)",
+            "Hit rate (% that achieved +10%)",
+            "Average profit % for winners",
+            "Average days to target",
+            "Performance by symbol, sector, option type",
+            "Recent predictions table"
+          ],
+          "api_endpoint": "/api/options/performance",
+          "status": "⏳ TO BE BUILT"
+        }
+      },
+
+      "deliverables": [
+        "✅ options_predictions.db created with schema",
+        "✅ Logging integrated into options_api.py",
+        "✅ track_options_outcomes.py script functional",
+        "✅ Cron job scheduled for daily tracking",
+        "✅ Performance dashboard accessible"
+      ],
+
+      "timeline": {
+        "jan_3_2026": "Build and deploy logging infrastructure",
+        "jan_17_2026": "First 14-day outcomes available",
+        "feb_3_2026": "30 days of data (~300 predictions)",
+        "apr_3_2026": "90 days of data (~900 predictions) - ready for ML training"
+      },
+
+      "status": "⏳ READY TO START"
+    }
+  },
+
+  "features_planned": {
+    "phase_3_hybrid_ml_scoring": {
+      "priority": "HIGH - Start week 2",
+      "estimated_time": "12-18 hours",
+      "depends_on": "Logging infrastructure (for validation)",
+
+      "approach": {
+        "immediate_deployment": {
+          "name": "Deploy v1.0 with Simulated Backtesting",
+          "data_source": "TurboMode signals from July-Dec 2025 (~2000-3000 signals)",
+          "labeling_method": "Black-Scholes simulation of 14-day outcomes",
+          "timeline": "Week 2 (Jan 10-17, 2026)",
+          "expected_accuracy": "70-75% options hit +10% target"
+        },
+
+        "continuous_improvement": {
+          "name": "Monthly Retraining with Real Data",
+          "schedule": "1st of each month",
+          "data_evolution": [
+            "Feb 1: Retrain with simulated + 1 month real data",
+            "Mar 1: Retrain with simulated + 2 months real",
+            "Apr 1: Retrain with 100% real data (3 months)",
+            "Jul 1: Mature model with 6 months real data"
+          ],
+          "accuracy_improvement": "70% → 75% → 80% over time"
+        }
+      },
+
+      "ml_architecture": {
+        "algorithm": "XGBoost (GPU-accelerated)",
+        "target_variable": "option_success (binary: 1 if hit +10% within 14 days)",
+        "features": [
+          "Greeks (delta, gamma, theta, vega, rho)",
+          "Option characteristics (strike, moneyness, DTE, premium, IV, bid-ask spread)",
+          "Liquidity (OI, volume, OI/volume ratio)",
+          "Stock ML prediction (signal, confidence, expected move, target price)",
+          "Market context (HV, HV/IV ratio, sector, market cap)",
+          "Rules-based scores (delta_score, liquidity_score, iv_score, alignment_score)",
+          "Time features (day of week, month, DTE binned)"
+        ],
+        "total_features": "~50",
+        "hyperparameters": {
+          "tree_method": "hist",
+          "device": "cuda",
+          "max_depth": 6,
+          "learning_rate": 0.01,
+          "n_estimators": 1000,
+          "early_stopping_rounds": 50
+        }
+      },
+
+      "hybrid_scoring_formula": {
+        "equation": "Hybrid Score = (0.4 × Rules Score) + (0.6 × ML Model Prediction × 100)",
+        "rules_score_range": "0-100 (current 4-component scoring)",
+        "ml_prediction_range": "0-1 (probability of hitting +10%)",
+        "ml_scaled": "0-100 (multiply by 100 for display)",
+        "hybrid_range": "0-100 (final score)",
+        "example": {
+          "rules_score": 78,
+          "ml_probability": 0.85,
+          "ml_scaled": 85,
+          "hybrid_calculation": "(0.4 × 78) + (0.6 × 85) = 31.2 + 51.0 = 82.2",
+          "hybrid_final": 82
+        }
+      },
+
+      "implementation_files": [
+        {
+          "file": "backend/turbomode/options_data_collector.py",
+          "purpose": "Collect simulated training data from historical TurboMode signals",
+          "inputs": "TurboMode signals (July-Dec 2025)",
+          "outputs": "labeled_options_training_data.parquet",
+          "runtime": "2-4 hours"
+        },
+        {
+          "file": "backend/turbomode/options_feature_engineer.py",
+          "purpose": "Extract and transform features for ML model",
+          "inputs": "labeled_options_training_data.parquet",
+          "outputs": "training_features.parquet",
+          "runtime": "30 minutes"
+        },
+        {
+          "file": "backend/turbomode/train_options_ml_model.py",
+          "purpose": "Train XGBoost model on features",
+          "inputs": "training_features.parquet",
+          "outputs": "xgboost_options_model.json, metadata.json, feature_importance.png",
+          "runtime": "1-2 hours",
+          "validation": "Time-based train/val/test split, walk-forward validation"
+        },
+        {
+          "file": "backend/turbomode/options_backtester.py",
+          "purpose": "Validate hybrid scoring vs rules-only",
+          "outputs": "backtest_results.json",
+          "runtime": "30 minutes"
+        }
+      ],
+
+      "api_changes": {
+        "file": "backend/turbomode/options_api.py",
+        "modifications": [
+          {
+            "change": "Load XGBoost model at module init",
+            "code": "import xgboost as xgb\nOPTIONS_ML_MODEL = xgb.Booster()\nOPTIONS_ML_MODEL.load_model('backend/data/options_models/current/model.json')"
+          },
+          {
+            "change": "Add predict_option_success() method",
+            "signature": "def predict_option_success(features_dict) -> float",
+            "returns": "Probability 0-1 that option will hit +10%"
+          },
+          {
+            "change": "Modify calculate_ml_score() to use hybrid formula",
+            "before": "return rules_score (0-100)",
+            "after": "ml_prob = predict_option_success(features)\nml_scaled = ml_prob * 100\nhybrid = 0.4 * rules_score + 0.6 * ml_scaled\nreturn hybrid"
+          },
+          {
+            "change": "Add scoring breakdown to response",
+            "new_fields": {
+              "ml_score_breakdown": {
+                "rules_score": 78,
+                "ml_probability": 0.85,
+                "ml_scaled": 85,
+                "hybrid_score": 82
+              }
+            }
+          }
+        ]
+      },
+
+      "frontend_changes": {
+        "file": "frontend/turbomode/options.html",
+        "modifications": [
+          {
+            "change": "Display hybrid ML score instead of rules-only",
+            "location": "Recommended Trade card",
+            "display": "ML Score: 82/100"
+          },
+          {
+            "change": "Add score breakdown section",
+            "html": "<div class='score-breakdown'>\n  <div>Rules-Based: 78/100</div>\n  <div>ML Model: 85/100</div>\n  <div>Hybrid: 82/100</div>\n  <div>Confidence: 85%</div>\n</div>"
+          }
+        ]
+      },
+
+      "status": "⏳ PLANNED (starts week 2)"
+    },
+
+    "phase_4_symbol_search": {
+      "priority": "MEDIUM - Week 3",
+      "estimated_time": "2-3 hours",
+      "purpose": "Enable options analysis for ANY tradable symbol, not just the 80 in database",
+
+      "features": {
+        "search_ui": {
+          "location": "frontend/turbomode/options.html",
+          "placement": "Top of page, before stock info header",
+          "components": [
+            "Search input box with autocomplete",
+            "Popular symbols dropdown",
+            "Recent searches (localStorage)",
+            "Submit button"
+          ],
+          "behavior": "On submit, reload page with ?symbol=<INPUT>"
+        },
+
+        "on_the_fly_prediction": {
+          "trigger": "Symbol not in active_signals database",
+          "approach": "Generate ML prediction in real-time",
+          "steps": [
+            "1. Fetch OHLCV data for symbol (180 days)",
+            "2. Calculate 179 technical features using gpu_feature_engineer.py",
+            "3. Fetch fundamental data (12 features)",
+            "4. Run through TurboMode meta_learner model",
+            "5. Generate BUY/SELL/HOLD prediction with confidence",
+            "6. Use prediction for options analysis"
+          ],
+          "caching": "Cache prediction for 1 hour",
+          "runtime": "5-10 seconds for new symbol"
+        }
+      },
+
+      "implementation": [
+        {
+          "file": "frontend/turbomode/options.html",
+          "change": "Add search input UI component"
+        },
+        {
+          "file": "backend/turbomode/options_api.py",
+          "change": "If get_ml_prediction() returns None, call generate_onthefly_prediction()"
+        },
+        {
+          "file": "backend/turbomode/onthefly_predictor.py (NEW)",
+          "purpose": "Generate ML predictions for symbols not in database",
+          "uses": "gpu_feature_engineer.py, meta_learner model"
+        }
+      ],
+
+      "status": "⏳ PLANNED"
+    }
+  },
+
+  "technical_specifications": {
+    "ml_scoring_components": {
+      "rules_based_scoring": {
+        "total_points": 100,
+        "components": [
+          {
+            "name": "Delta Score",
+            "max_points": 40,
+            "description": "Prefer delta in 0.60-0.80 range for directional exposure",
+            "formula": "40 points if 0.60 <= delta <= 0.80, scaled down outside range"
+          },
+          {
+            "name": "Liquidity Score",
+            "max_points": 20,
+            "description": "Reward high open interest and volume",
+            "formula": "Based on OI and volume thresholds (>1000 OI + >100 vol = 20 pts)"
+          },
+          {
+            "name": "IV Score",
+            "max_points": 15,
+            "description": "Prefer lower implied volatility (better value)",
+            "formula": "15 points if IV < 0.25, scaled down for higher IV"
+          },
+          {
+            "name": "Alignment Score",
+            "max_points": 25,
+            "description": "Strike proximity to ML predicted target price",
+            "formula": "25 points if strike within 2% of target, scaled for deviation"
+          }
+        ]
+      },
+
+      "ml_model_prediction": {
+        "algorithm": "XGBoost Classifier",
+        "output": "Probability (0-1) that option will hit +10% within 14 days",
+        "scaled_output": "Multiply by 100 for 0-100 range",
+        "confidence_threshold": "Only recommend if ML probability >= 0.65",
+        "interpretation": [
+          "0.90+ = Very High Confidence",
+          "0.75-0.89 = High Confidence",
+          "0.65-0.74 = Medium Confidence",
+          "0.50-0.64 = Low Confidence (not recommended)",
+          "<0.50 = Very Low (not recommended)"
+        ]
+      },
+
+      "hybrid_combination": {
+        "formula": "Hybrid = (Rules × 0.4) + (ML × 0.6)",
+        "rationale": "60% weight on ML allows model to dominate, 40% rules provide safety net",
+        "adjustable": "Can tune weights based on validation performance",
+        "example_scenarios": [
+          {
+            "scenario": "Rules and ML agree (both high)",
+            "rules": 85,
+            "ml": 90,
+            "hybrid": "(85×0.4) + (90×0.6) = 34 + 54 = 88 (Very strong signal)"
+          },
+          {
+            "scenario": "ML high, rules low",
+            "rules": 60,
+            "ml": 88,
+            "hybrid": "(60×0.4) + (88×0.6) = 24 + 52.8 = 76.8 (Trust ML)"
+          },
+          {
+            "scenario": "Rules high, ML low",
+            "rules": 85,
+            "ml": 55,
+            "hybrid": "(85×0.4) + (55×0.6) = 34 + 33 = 67 (Caution - mixed signals)"
+          },
+          {
+            "scenario": "Both low",
+            "rules": 50,
+            "ml": 45,
+            "hybrid": "(50×0.4) + (45×0.6) = 20 + 27 = 47 (Skip this option)"
+          }
+        ]
+      }
+    },
+
+    "greeks_calculation": {
+      "library": "py_vollib (Black-Scholes)",
+      "model": "Black-Scholes-Merton for European-style options",
+      "inputs": [
+        "S = Current stock price",
+        "K = Strike price",
+        "T = Time to expiration (years)",
+        "r = Risk-free rate (0.04 = 4%)",
+        "sigma = Implied volatility"
+      ],
+      "outputs": {
+        "delta": "Rate of change of option price vs stock price (-1 to +1)",
+        "gamma": "Rate of change of delta (curvature)",
+        "theta": "Time decay per day (usually negative)",
+        "vega": "Sensitivity to 1% change in IV",
+        "rho": "Sensitivity to 1% change in interest rates"
+      },
+      "note": "Approximation for American-style options (most equity options), but close enough for analysis"
+    },
+
+    "profit_targets": {
+      "strategy_parameters": {
+        "hold_period": "14 days",
+        "profit_target": "+10% on option premium",
+        "stop_loss": "-5% on option premium",
+        "position_size": "$333 per position (30 max positions from $10k portfolio)",
+        "dte_range": "30-45 days (monthly options)"
+      },
+
+      "calculations": {
+        "entry_price": "(bid + ask) / 2  # Mid-price",
+        "take_profit_price": "entry_price × 1.10",
+        "stop_loss_price": "entry_price × 0.95",
+        "contracts_to_buy": "floor($333 / (entry_price × 100))",
+        "total_premium": "contracts × entry_price × 100",
+        "max_loss": "total_premium (limited to premium paid)",
+        "take_profit_pnl": "contracts × (take_profit_price - entry_price) × 100",
+        "stop_loss_pnl": "contracts × (stop_loss_price - entry_price) × 100",
+        "risk_reward_ratio": "abs(take_profit_pnl / stop_loss_pnl)",
+        "breakeven_stock_price_call": "strike + entry_price",
+        "breakeven_stock_price_put": "strike - entry_price"
+      }
+    },
+
+    "data_flow": {
+      "user_request": [
+        "1. User clicks symbol or visits /turbomode/options.html?symbol=NVDA",
+        "2. Frontend calls /api/options/NVDA",
+        "3. Backend: OptionsAnalyzer.analyze_options_chain('NVDA')",
+        "4. Fetch TurboMode ML prediction from database",
+        "5. Fetch options chain from yfinance",
+        "6. Calculate Greeks for all strikes",
+        "7. Score all options (rules-based or hybrid)",
+        "8. Sort by score, take top 20",
+        "9. Calculate profit targets and position sizing",
+        "10. Log prediction to options_predictions_log",
+        "11. Return JSON response to frontend",
+        "12. Frontend renders beautiful UI"
+      ],
+
+      "daily_tracking": [
+        "1. Cron job runs track_options_outcomes.py at 4:30 PM ET",
+        "2. Query predictions where tracking_complete = FALSE",
+        "3. For each prediction:",
+        "   - Fetch current option price (or estimate)",
+        "   - Update max_premium_14d if higher",
+        "   - Check if hit +10% target",
+        "   - If 14 days passed, mark complete",
+        "4. Save results to database",
+        "5. Generate daily summary report"
+      ],
+
+      "monthly_retraining": [
+        "1. Extract all completed predictions from last 6 months",
+        "2. Extract features for each prediction",
+        "3. Label: hit_10pct_target (1 or 0)",
+        "4. Train XGBoost model",
+        "5. Validate on holdout set",
+        "6. If performance > current model:",
+        "   - Save new model as v{version+1}",
+        "   - Update 'current' symlink",
+        "   - Restart Flask server to load new model",
+        "7. Generate retraining report with metrics"
+      ]
+    }
+  },
+
+  "file_structure_complete": {
+    "frontend": {
+      "frontend/turbomode.html": "Main TurboMode page with Options card",
+      "frontend/turbomode/top_10_stocks.html": "✅ Clickable symbols + tooltips",
+      "frontend/turbomode/all_predictions.html": "✅ Clickable symbols + tooltips",
+      "frontend/turbomode/options.html": "✅ Full options analysis page",
+      "frontend/turbomode/options_performance.html": "⏳ Performance dashboard (to be built)"
+    },
+
+    "backend_api": {
+      "backend/api_server.py": "✅ Flask server with options_bp registered",
+      "backend/turbomode/options_api.py": "✅ Main options analysis engine (560 lines)",
+      "backend/turbomode/database_schema.py": "⏳ Will add options tables"
+    },
+
+    "backend_scripts": {
+      "backend/turbomode/track_options_outcomes.py": "⏳ Daily tracking script (to be built)",
+      "backend/turbomode/options_data_collector.py": "⏳ Simulated backtesting (to be built)",
+      "backend/turbomode/options_feature_engineer.py": "⏳ ML feature extraction (to be built)",
+      "backend/turbomode/train_options_ml_model.py": "⏳ ML training pipeline (to be built)",
+      "backend/turbomode/options_backtester.py": "⏳ Validation (to be built)",
+      "backend/turbomode/onthefly_predictor.py": "⏳ Real-time predictions for any symbol (to be built)"
+    },
+
+    "data_storage": {
+      "backend/data/turbomode.db": "✅ Existing stock predictions database",
+      "backend/data/options_logs/options_predictions.db": "⏳ Options logging database (to be created)",
+      "backend/data/options_models/v1.0_simulated/": "⏳ First ML model (to be trained)",
+      "backend/data/options_models/current/": "⏳ Symlink to latest model",
+      "backend/data/options_training/": "⏳ Training data parquet files",
+      "backend/data/options_backtests/": "⏳ Backtest results JSON files"
+    },
+
+    "documentation": {
+      "HYBRID_OPTIONS_ML_ARCHITECTURE.json": "✅ Original plan",
+      "REVISED_HYBRID_ARCHITECTURE.json": "✅ Three-track strategy",
+      "COMPLETE_OPTIONS_SYSTEM_ARCHITECTURE.json": "✅ THIS FILE - Comprehensive spec",
+      "session_files/session_notes_2026-01-03.md": "✅ Daily session log"
+    }
+  },
+
+  "implementation_roadmap": {
+    "week_1_jan_3_10": {
+      "focus": "Logging Infrastructure",
+      "tasks": [
+        "✅ Complete UI integration (symbols clickable, tooltips working)",
+        "⏳ Create options_predictions.db database",
+        "⏳ Add logging to options_api.py",
+        "⏳ Build track_options_outcomes.py script",
+        "⏳ Set up cron job for daily tracking",
+        "⏳ Deploy to production - START LOGGING",
+        "⏳ Verify first predictions are logged correctly"
+      ],
+      "deliverable": "Logging system operational, accumulating data"
+    },
+
+    "week_2_jan_10_17": {
+      "focus": "Hybrid ML Model v1.0 (Simulated)",
+      "tasks": [
+        "Build options_data_collector.py",
+        "Collect 6 months simulated training data (July-Dec 2025)",
+        "Build options_feature_engineer.py",
+        "Extract ~50 features per option",
+        "Build train_options_ml_model.py",
+        "Train XGBoost model, validate performance",
+        "Integrate hybrid scoring into options_api.py",
+        "Update frontend to display score breakdown",
+        "Deploy hybrid ML v1.0 to production"
+      ],
+      "deliverable": "Hybrid ML model live with 70-75% estimated accuracy",
+      "milestone": "First 14-day outcomes available from logging (validate current algorithm!)"
+    },
+
+    "week_3_jan_17_24": {
+      "focus": "Validation & Symbol Search",
+      "tasks": [
+        "Compare hybrid ML predictions vs actual logged outcomes",
+        "Tune hybrid weights if needed (0.4/0.6 vs 0.3/0.7)",
+        "Build symbol search UI component",
+        "Build onthefly_predictor.py for any symbol",
+        "Add autocomplete and recent searches",
+        "Build options_performance.html dashboard",
+        "Monitor live performance daily"
+      ],
+      "deliverable": "Symbol search working, performance dashboard live",
+      "milestone": "30 days of logged data available"
+    },
+
+    "month_2_feb": {
+      "focus": "First Real Data Retraining",
+      "tasks": [
+        "Feb 1: Retrain model v1.1 with simulated + 1 month real data",
+        "Validate performance improvement",
+        "Deploy v1.1 to production",
+        "Continue monitoring and logging"
+      ],
+      "deliverable": "Model v1.1 with real data integration",
+      "expected_improvement": "72-77% accuracy"
+    },
+
+    "month_4_apr": {
+      "focus": "Pure Real Data Model",
+      "tasks": [
+        "Apr 1: Retrain model v2.0 with 100% real data (3 months)",
+        "Validate significant improvement",
+        "Deploy v2.0 to production",
+        "Write case study on performance improvement"
+      ],
+      "deliverable": "Model v2.0 - mature model with real data",
+      "expected_improvement": "75-80% accuracy",
+      "milestone": "90 days of real training data"
+    },
+
+    "month_7_jul": {
+      "focus": "Seasonal Coverage",
+      "tasks": [
+        "Jul 1: Retrain model v3.0 with 6 months real data",
+        "Seasonal coverage (winter, spring, summer markets)",
+        "Final validation and tuning",
+        "Deploy v3.0 to production"
+      ],
+      "deliverable": "Model v3.0 - fully mature with seasonal coverage",
+      "expected_improvement": "78-82% accuracy",
+      "milestone": "6 months of real training data - system fully mature"
+    }
+  },
+
+  "success_metrics": {
+    "phase_1_ui": {
+      "metric": "User engagement with options features",
+      "targets": [
+        "Tooltip hover rate > 20% of symbol views",
+        "Click-through rate to options page > 10%",
+        "Options page load time < 2 seconds"
+      ],
+      "status": "✅ Deployed, ready to measure"
+    },
+
+    "phase_2_logging": {
+      "metric": "Data collection completeness",
+      "targets": [
+        "100% of options requests logged",
+        ">95% of predictions have 14-day outcomes tracked",
+        "Daily tracking script runs without errors"
+      ],
+      "status": "⏳ To be measured starting this week"
+    },
+
+    "phase_3_ml_model": {
+      "metric": "Options success rate",
+      "targets": [
+        "Baseline (rules-only): ~60-65% hit +10%",
+        "v1.0 (simulated): >70% hit +10%",
+        "v2.0 (real data): >75% hit +10%",
+        "v3.0 (mature): >80% hit +10%"
+      ],
+      "secondary_metrics": [
+        "Average profit % for winners",
+        "Average loss % for losers",
+        "Risk/reward ratio",
+        "Days to target (average)",
+        "Performance by sector, market cap, volatility regime"
+      ],
+      "status": "⏳ Will measure starting week 2"
+    },
+
+    "phase_4_symbol_search": {
+      "metric": "Symbol coverage and latency",
+      "targets": [
+        "On-the-fly prediction latency < 10 seconds",
+        "Cache hit rate > 80%",
+        "Support for any tradable US equity option"
+      ],
+      "status": "⏳ Will measure starting week 3"
+    }
+  },
+
+  "risk_management": {
+    "data_quality": {
+      "risk": "yfinance options data may be incomplete or inaccurate",
+      "mitigation": [
+        "Use Black-Scholes simulation as fallback",
+        "Validate simulated prices against known outcomes",
+        "Build our own dataset via logging for future models"
+      ]
+    },
+
+    "model_overfitting": {
+      "risk": "ML model memorizes training data, doesn't generalize",
+      "mitigation": [
+        "Time-based train/val/test split (no lookahead bias)",
+        "Walk-forward validation",
+        "Early stopping on validation set",
+        "Monitor test set performance closely"
+      ]
+    },
+
+    "production_issues": {
+      "risk": "ML model fails in production or performs poorly on live data",
+      "mitigation": [
+        "Keep rules-based component (40%) as safety net",
+        "Log all predictions for monitoring",
+        "Alert if live performance drops below threshold",
+        "Ability to quickly revert to rules-only mode",
+        "Monthly retraining with latest data"
+      ]
+    },
+
+    "market_regime_changes": {
+      "risk": "Model trained in bull market fails in bear market",
+      "mitigation": [
+        "Include 6 months of data (different market conditions)",
+        "Feature engineering includes volatility regime indicators",
+        "Monthly retraining adapts to new conditions",
+        "Monitor performance by market regime"
+      ]
+    }
+  },
+
+  "competitive_advantages": {
+    "advantages": [
+      "Proprietary options performance database (unique dataset)",
+      "Hybrid scoring combines interpretability + ML power",
+      "Integration with proven TurboMode stock predictions (73.43% accuracy)",
+      "GPU-accelerated feature engineering",
+      "Real-time analysis for any symbol",
+      "Continuous improvement via monthly retraining",
+      "14-day validated outcomes (not theoretical)",
+      "Beautiful, professional UI with full transparency"
+    ]
+  },
+
+  "next_immediate_actions": [
+    "1. Create options_predictions.db database with schema",
+    "2. Modify options_api.py to log every prediction",
+    "3. Build track_options_outcomes.py script",
+    "4. Set up cron job for daily tracking at 4:30 PM ET",
+    "5. Test logging with 3-5 symbols",
+    "6. Deploy to production and START LOGGING TODAY",
+    "7. Verify first predictions logged correctly",
+    "8. Monitor for 14 days to get first outcomes"
+  ],
+
+  "documentation_links": {
+    "options_trading_strategy": "OPTIONS_TRADING_SETTINGS.md",
+    "original_architecture": "OPTIONS_PAGE_ARCHITECTURE.json",
+    "hybrid_ml_plan": "HYBRID_OPTIONS_ML_ARCHITECTURE.json",
+    "three_track_strategy": "REVISED_HYBRID_ARCHITECTURE.json",
+    "this_document": "COMPLETE_OPTIONS_SYSTEM_ARCHITECTURE.json",
+    "session_notes": "session_files/session_notes_2026-01-03.md"
+  }
+}

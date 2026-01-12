@@ -13,5 +13,65 @@
       "KRYS",
       "EXAS"
     ]
+  },
+  {
+    "timestamp": "2026-01-02T19:36:02.954440",
+    "top_10_symbols": [
+      "SMCI",
+      "TMDX",
+      "TSLA",
+      "MTDR",
+      "CRWD",
+      "TEAM",
+      "BOOT",
+      "NVDA",
+      "KRYS",
+      "EXAS"
+    ]
+  },
+  {
+    "timestamp": "2026-01-03T08:12:11.760542",
+    "top_10_symbols": [
+      "SMCI",
+      "TMDX",
+      "TSLA",
+      "MTDR",
+      "CRWD",
+      "TEAM",
+      "BOOT",
+      "NVDA",
+      "KRYS",
+      "SHAK"
+    ]
+  },
+  {
+    "timestamp": "2026-01-04T22:42:56.996895",
+    "top_10_symbols": [
+      "SMCI",
+      "TMDX",
+      "TSLA",
+      "MTDR",
+      "CRWD",
+      "TEAM",
+      "BOOT",
+      "NVDA",
+      "KRYS",
+      "SHAK"
+    ]
+  },
+  {
+    "timestamp": "2026-01-12T01:00:40.947265",
+    "top_10_symbols": [
+      "AAPL",
+      "META",
+      "NEM",
+      "NFLX",
+      "GS",
+      "GOOGL",
+      "NVDA",
+      "DE",
+      "SLB",
+      "CRM"
+    ]
   }
 ]

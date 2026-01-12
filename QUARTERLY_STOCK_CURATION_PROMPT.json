@@ -1,0 +1,467 @@
+{
+  "task": "Quarterly Stock Curation for TurboMode - 80 Core Symbols",
+  "version": "1.0",
+  "last_updated": "2026-01-03",
+
+  "overview": {
+    "purpose": "Automatically evaluate and update TurboMode's curated stock list every quarter",
+    "target_count": 80,
+    "current_count": 77,
+    "execution_frequency": "Quarterly (Jan 1, Apr 1, Jul 1, Oct 1)",
+    "output_file": "backend/advanced_ml/config/core_symbols.py",
+    "backup_strategy": "Create timestamped backup before any changes"
+  },
+
+  "selection_criteria": {
+    "mandatory_requirements": [
+      {
+        "criterion": "High Liquidity",
+        "threshold": "Average daily volume > 500,000 shares",
+        "lookback_period": "90 days",
+        "data_source": "yfinance - ticker.history(period='3mo')"
+      },
+      {
+        "criterion": "Established Company",
+        "threshold": "Listed on exchange > 1 year",
+        "data_source": "yfinance - ticker.info['firstTradeDateEpochUtc']"
+      },
+      {
+        "criterion": "Minimum Market Cap",
+        "threshold": "$2 billion USD minimum",
+        "data_source": "yfinance - ticker.info['marketCap']"
+      },
+      {
+        "criterion": "Options Availability",
+        "threshold": "Must have liquid options (OI > 100 on ATM strikes)",
+        "rationale": "Required for TurboOptions system integration",
+        "data_source": "yfinance - ticker.options, ticker.option_chain()"
+      },
+      {
+        "criterion": "US Exchange Listed",
+        "threshold": "Listed on NYSE, NASDAQ, or AMEX",
+        "data_source": "yfinance - ticker.info['exchange']"
+      }
+    ],
+
+    "quality_scores": [
+      {
+        "factor": "Volume Consistency",
+        "weight": 0.20,
+        "calculation": "Std dev of daily volume over 90 days (lower is better)",
+        "rationale": "Consistent liquidity is more reliable than sporadic spikes"
+      },
+      {
+        "factor": "Sector Representativeness",
+        "weight": 0.15,
+        "calculation": "Beta vs sector ETF (closer to 1.0 is better)",
+        "rationale": "Stock should move with its sector for pattern learning"
+      },
+      {
+        "factor": "Options Liquidity Score",
+        "weight": 0.25,
+        "calculation": "(Avg OI of top 5 ATM strikes) + (Number of expiration dates available)",
+        "rationale": "Better options = better TurboOptions performance"
+      },
+      {
+        "factor": "Price Stability",
+        "weight": 0.10,
+        "calculation": "Inverse of 90-day ATR% (too volatile = unpredictable)",
+        "rationale": "Moderate volatility preferred over extreme swings"
+      },
+      {
+        "factor": "Institutional Ownership",
+        "weight": 0.15,
+        "calculation": "Percentage held by institutions (60-90% ideal)",
+        "rationale": "Institutional interest = better liquidity and patterns",
+        "data_source": "yfinance - ticker.info['heldPercentInstitutions']"
+      },
+      {
+        "factor": "Earnings Consistency",
+        "weight": 0.15,
+        "calculation": "Number of consecutive profitable quarters / 8",
+        "rationale": "Stable companies have more predictable price action",
+        "data_source": "yfinance - ticker.quarterly_earnings"
+      }
+    ]
+  },
+
+  "sector_distribution": {
+    "description": "Maintain balanced representation across all 11 GICS sectors",
+    "sectors": [
+      {
+        "sector": "Technology",
+        "target_count": 9,
+        "large_cap": 5,
+        "mid_cap": 3,
+        "small_cap": 1,
+        "sector_code": 45,
+        "benchmark_etf": "XLK"
+      },
+      {
+        "sector": "Financials",
+        "target_count": 8,
+        "large_cap": 4,
+        "mid_cap": 2,
+        "small_cap": 2,
+        "sector_code": 40,
+        "benchmark_etf": "XLF"
+      },
+      {
+        "sector": "Healthcare",
+        "target_count": 8,
+        "large_cap": 4,
+        "mid_cap": 2,
+        "small_cap": 2,
+        "sector_code": 35,
+        "benchmark_etf": "XLV"
+      },
+      {
+        "sector": "Consumer Discretionary",
+        "target_count": 8,
+        "large_cap": 4,
+        "mid_cap": 2,
+        "small_cap": 2,
+        "sector_code": 25,
+        "benchmark_etf": "XLY"
+      },
+      {
+        "sector": "Communication Services",
+        "target_count": 7,
+        "large_cap": 4,
+        "mid_cap": 1,
+        "small_cap": 2,
+        "sector_code": 50,
+        "benchmark_etf": "XLC"
+      },
+      {
+        "sector": "Industrials",
+        "target_count": 8,
+        "large_cap": 4,
+        "mid_cap": 2,
+        "small_cap": 2,
+        "sector_code": 20,
+        "benchmark_etf": "XLI"
+      },
+      {
+        "sector": "Consumer Staples",
+        "target_count": 7,
+        "large_cap": 4,
+        "mid_cap": 1,
+        "small_cap": 2,
+        "sector_code": 30,
+        "benchmark_etf": "XLP"
+      },
+      {
+        "sector": "Energy",
+        "target_count": 7,
+        "large_cap": 4,
+        "mid_cap": 1,
+        "small_cap": 2,
+        "sector_code": 10,
+        "benchmark_etf": "XLE"
+      },
+      {
+        "sector": "Materials",
+        "target_count": 7,
+        "large_cap": 4,
+        "mid_cap": 1,
+        "small_cap": 2,
+        "sector_code": 15,
+        "benchmark_etf": "XLB"
+      },
+      {
+        "sector": "Real Estate",
+        "target_count": 7,
+        "large_cap": 4,
+        "mid_cap": 1,
+        "small_cap": 2,
+        "sector_code": 60,
+        "benchmark_etf": "XLRE"
+      },
+      {
+        "sector": "Utilities",
+        "target_count": 4,
+        "large_cap": 2,
+        "mid_cap": 1,
+        "small_cap": 1,
+        "sector_code": 55,
+        "benchmark_etf": "XLU",
+        "note": "Reduced from 6 to 4 (utilities are less volatile/tradeable)"
+      }
+    ],
+    "total_target": 80,
+    "notes": [
+      "Each sector must maintain at least 4 symbols for statistical significance",
+      "Market cap balance ensures exposure to different risk/return profiles",
+      "Large cap weighting (45 stocks) provides stability",
+      "Mid/small cap (35 stocks) provides growth/volatility opportunities"
+    ]
+  },
+
+  "market_cap_categories": {
+    "large_cap": {
+      "definition": "Market cap > $50 billion",
+      "target_count": 45,
+      "rationale": "Blue chips provide stable, liquid trading opportunities"
+    },
+    "mid_cap": {
+      "definition": "Market cap $10B - $50B",
+      "target_count": 18,
+      "rationale": "Growth companies with institutional backing"
+    },
+    "small_cap": {
+      "definition": "Market cap $2B - $10B",
+      "target_count": 17,
+      "rationale": "Higher volatility creates more trading opportunities"
+    }
+  },
+
+  "script_workflow": {
+    "steps": [
+      {
+        "step": 1,
+        "action": "Load Current List",
+        "description": "Import current 77 symbols from core_symbols.py",
+        "output": "current_symbols dict with sector/market_cap metadata"
+      },
+      {
+        "step": 2,
+        "action": "Fetch Market Data",
+        "description": "Download 90-day history and fundamentals for all current symbols",
+        "libraries": ["yfinance", "pandas"],
+        "rate_limiting": "Sleep 0.5s between API calls to avoid rate limits"
+      },
+      {
+        "step": 3,
+        "action": "Evaluate Current Symbols",
+        "description": "Calculate quality scores for each current symbol",
+        "output": "DataFrame with columns: [symbol, sector, market_cap, volume_90d, options_liquidity, quality_score, pass_criteria]",
+        "failure_handling": "Flag symbols that no longer meet mandatory criteria"
+      },
+      {
+        "step": 4,
+        "action": "Find Replacement Candidates",
+        "description": "For each flagged/low-scoring symbol, search for better alternatives in same sector/market_cap",
+        "candidate_sources": [
+          "S&P 500 constituents (large cap)",
+          "S&P MidCap 400 constituents (mid cap)",
+          "S&P SmallCap 600 constituents (small cap)",
+          "High-volume stocks from screener APIs"
+        ],
+        "search_strategy": "Screen by sector first, then by market cap, then by quality score"
+      },
+      {
+        "step": 5,
+        "action": "Compare Candidates",
+        "description": "Rank candidates by quality score within each sector/market_cap bucket",
+        "replacement_threshold": "New candidate must score >10% higher than current symbol",
+        "stability_bias": "Prefer keeping current symbols unless significant improvement found"
+      },
+      {
+        "step": 6,
+        "action": "Generate Change Report",
+        "description": "Create detailed report of proposed changes",
+        "output_format": "Markdown table with columns: [Symbol, Action, Sector, Market Cap, Old Score, New Score, Reason]"
+      },
+      {
+        "step": 7,
+        "action": "Backup Current File",
+        "description": "Create timestamped backup before making changes",
+        "backup_path": "backend/advanced_ml/config/backups/core_symbols_YYYY-MM-DD.py"
+      },
+      {
+        "step": 8,
+        "action": "Update core_symbols.py",
+        "description": "Regenerate Python file with new symbol list",
+        "preserve": [
+          "File header/docstring",
+          "SECTOR_CODES dict",
+          "MARKET_CAP constants",
+          "All helper functions"
+        ],
+        "update_only": "CORE_SYMBOLS dict"
+      },
+      {
+        "step": 9,
+        "action": "Validate Changes",
+        "description": "Import updated file and verify structure",
+        "validations": [
+          "Total symbol count = 80",
+          "All sectors present",
+          "Market cap distribution matches targets",
+          "No duplicate symbols",
+          "All symbols have valid metadata"
+        ]
+      },
+      {
+        "step": 10,
+        "action": "Log Results",
+        "description": "Save execution log with timestamp and changes made",
+        "log_path": "backend/data/curation_logs/curation_YYYY-MM-DD.json"
+      }
+    ]
+  },
+
+  "change_approval_rules": {
+    "no_changes_threshold": "If < 3 symbols need replacement, keep list as-is",
+    "max_changes_per_quarter": 10,
+    "rationale": "Excessive churn degrades ML model performance - stability is valuable",
+    "auto_approve_scenarios": [
+      "Symbol delisted/acquired (must replace)",
+      "Symbol drops below $2B market cap for 2 consecutive quarters",
+      "Average volume drops below 250K for 90 days",
+      "Options delisted or OI drops to 0"
+    ],
+    "human_review_scenarios": [
+      "Replacing > 5 symbols in single quarter",
+      "Removing any symbol from top 20 by quality score",
+      "Major sector rebalancing (> 2 symbols changing sectors)"
+    ]
+  },
+
+  "special_cases": {
+    "protected_symbols": [
+      {
+        "symbols": ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META"],
+        "reason": "Mega-cap tech leaders - always include regardless of score",
+        "note": "These drive market sentiment and must be tracked"
+      },
+      {
+        "symbols": ["JPM", "BAC", "GS"],
+        "reason": "Systemically important financial institutions",
+        "note": "Banking sector bellwethers"
+      },
+      {
+        "symbols": ["XOM", "CVX"],
+        "reason": "Energy sector anchors",
+        "note": "Oil majors required for energy exposure"
+      }
+    ],
+    "acquisition_handling": {
+      "scenario": "Symbol acquired/delisted mid-quarter",
+      "action": "Immediate replacement required",
+      "selection": "Next highest-scoring candidate in same sector/market_cap",
+      "notification": "Log warning and trigger out-of-cycle update"
+    },
+    "stock_split_handling": {
+      "scenario": "Symbol undergoes stock split",
+      "action": "No action required - splits don't affect fundamentals",
+      "note": "yfinance automatically adjusts historical data"
+    }
+  },
+
+  "output_specifications": {
+    "core_symbols_py": {
+      "path": "backend/advanced_ml/config/core_symbols.py",
+      "format": "Python module with CORE_SYMBOLS dict",
+      "structure": {
+        "header": "Docstring with selection criteria and last updated date",
+        "SECTOR_CODES": "Dict mapping sector names to GICS codes",
+        "MARKET_CAP_*": "Constants defining market cap thresholds",
+        "CORE_SYMBOLS": "Nested dict: {sector: {market_cap: [symbols]}}",
+        "functions": "get_all_core_symbols(), get_symbols_by_sector(), etc."
+      }
+    },
+    "change_report_md": {
+      "path": "backend/data/curation_logs/changes_YYYY-MM-DD.md",
+      "sections": [
+        "Executive Summary (# changes, # additions, # removals)",
+        "Detailed Change Log (table format)",
+        "Quality Score Improvements",
+        "Sector Distribution Before/After",
+        "Market Cap Distribution Before/After",
+        "Symbols Flagged for Review (near threshold)"
+      ]
+    },
+    "execution_log_json": {
+      "path": "backend/data/curation_logs/curation_YYYY-MM-DD.json",
+      "contents": {
+        "execution_date": "ISO timestamp",
+        "symbols_evaluated": 77,
+        "symbols_changed": 3,
+        "additions": ["SYMBOL1", "SYMBOL2"],
+        "removals": ["SYMBOL3"],
+        "quality_scores": {"AAPL": 95.2, "...": "..."},
+        "errors": ["List any API failures or data issues"],
+        "execution_time_seconds": 180
+      }
+    }
+  },
+
+  "scheduling": {
+    "recommended_schedule": "Quarterly on 1st of month at 2:00 AM (after market data settled)",
+    "quarters": [
+      "Q1: January 1",
+      "Q2: April 1",
+      "Q3: July 1",
+      "Q4: October 1"
+    ],
+    "automation": {
+      "method": "Windows Task Scheduler",
+      "program": "C:\\StockApp\\venv\\Scripts\\python.exe",
+      "arguments": "C:\\StockApp\\backend\\turbomode\\quarterly_stock_curation.py",
+      "start_in": "C:\\StockApp\\backend\\turbomode",
+      "trigger": "Quarterly - 1st of Jan/Apr/Jul/Oct at 2:00 AM"
+    }
+  },
+
+  "dependencies": {
+    "python_libraries": [
+      "yfinance>=0.2.0",
+      "pandas>=2.0.0",
+      "numpy>=1.24.0"
+    ],
+    "external_data": [
+      "Yahoo Finance API (primary)",
+      "S&P index constituents (optional for candidate discovery)"
+    ],
+    "system_requirements": [
+      "Internet connection (API access)",
+      "~30 minutes execution time (rate limiting)",
+      "Backup directory created before first run"
+    ]
+  },
+
+  "error_handling": {
+    "api_failures": {
+      "scenario": "yfinance API timeout or rate limit",
+      "action": "Retry up to 3 times with exponential backoff (1s, 5s, 15s)",
+      "fallback": "Skip symbol and log warning - don't fail entire script"
+    },
+    "data_quality_issues": {
+      "scenario": "Symbol returns incomplete data (missing volume, market cap, etc.)",
+      "action": "Use previous quarter's cached data if available",
+      "fallback": "Assign neutral quality score and flag for manual review"
+    },
+    "file_write_errors": {
+      "scenario": "Cannot write to core_symbols.py (permissions, file lock, etc.)",
+      "action": "Abort update, keep backup, send error notification",
+      "notification": "Log error to backend/data/curation_logs/errors.log"
+    }
+  },
+
+  "testing_protocol": {
+    "dry_run_mode": {
+      "flag": "--dry-run",
+      "behavior": "Execute all steps but don't modify core_symbols.py",
+      "output": "Generate change report and log files only"
+    },
+    "validation_checks": [
+      "All 80 symbols pass mandatory criteria",
+      "Quality scores are monotonically decreasing within each sector/market_cap bucket",
+      "No symbols appear in multiple sectors (except documented overlaps)",
+      "All sectors have >= 4 symbols",
+      "Market cap totals: 45 large + 18 mid + 17 small = 80"
+    ]
+  },
+
+  "next_steps_after_creation": [
+    "1. Create backend/turbomode/quarterly_stock_curation.py implementing this spec",
+    "2. Create backend/advanced_ml/config/backups/ directory",
+    "3. Create backend/data/curation_logs/ directory",
+    "4. Test script with --dry-run flag on current 77-symbol list",
+    "5. Run script to expand from 77 to 80 symbols (first execution)",
+    "6. Schedule quarterly execution in Windows Task Scheduler",
+    "7. Document process in QUARTERLY_CURATION_README.md"
+  ]
+}

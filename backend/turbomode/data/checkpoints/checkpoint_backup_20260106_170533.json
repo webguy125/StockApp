@@ -1,0 +1,61 @@
+{
+  "version": "1.0.0",
+  "created_at": "2026-01-06T17:05:33.074949",
+  "last_update": "2026-01-06T17:05:33.093947",
+  "current_phase": "backtest",
+  "backtest": {
+    "completed_symbols": [],
+    "failed_symbols": [
+      "AAPL",
+      "ABBV",
+      "ADBE",
+      "AMD",
+      "AMT",
+      "AMZN",
+      "AVGO",
+      "BAC",
+      "BRK-B",
+      "CAT",
+      "COST",
+      "CRM",
+      "CVX",
+      "DE",
+      "DIS",
+      "DUK",
+      "GOOGL",
+      "GS",
+      "HD",
+      "HON",
+      "JNJ",
+      "JPM",
+      "KO",
+      "LIN",
+      "MCD",
+      "META",
+      "MRK",
+      "MS",
+      "MSFT",
+      "NEE",
+      "NEM",
+      "NFLX",
+      "NVDA",
+      "PG",
+      "PLD",
+      "SLB",
+      "TSLA",
+      "UNH",
+      "UPS",
+      "XOM"
+    ],
+    "total_samples": 0,
+    "in_progress": true
+  },
+  "training": {
+    "base_models_trained": [],
+    "meta_learner_trained": false
+  },
+  "evaluation": {
+    "completed": false,
+    "results": {}
+  }
+}

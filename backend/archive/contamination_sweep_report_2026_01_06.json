@@ -1,0 +1,449 @@
+{
+  "timestamp": "2026-01-06T00:00:00",
+  "scan_date": "2026-01-06",
+  "summary": {
+    "total_files_scanned": 51,
+    "total_contaminated": 9,
+    "critical_issues": 3,
+    "non_critical_issues": 6,
+    "database_status": "CLEAN - 169,400 samples confirmed",
+    "advancedml_imports_found": 8,
+    "deprecated_loaders_found": 3,
+    "test_files_contaminated": 4
+  },
+  "database_verification": {
+    "turbomode_db_path": "C:\\StockApp\\backend\\data\\turbomode.db",
+    "total_samples": 169400,
+    "samples_with_features": 169400,
+    "outcome_distribution": {
+      "buy": 17230,
+      "hold": 139060,
+      "sell": 13110
+    },
+    "tables_found": [
+      "active_signals",
+      "config_audit_log",
+      "feature_store",
+      "model_metadata",
+      "price_data",
+      "sector_stats",
+      "signal_history",
+      "sqlite_sequence",
+      "trades",
+      "training_runs"
+    ],
+    "schema_status": "CANONICAL - All tables match TurboMode schema",
+    "contamination_status": "CLEAN - No AdvancedML tables detected"
+  },
+  "files_scanned": [
+    "backend/turbomode/sp500_symbols.py",
+    "backend/turbomode/fetch_sp500_symbols.py",
+    "backend/turbomode/checkpoint_manager.py",
+    "backend/turbomode/create_feature_mapping.py",
+    "backend/turbomode/migrate_add_entry_range.py",
+    "backend/turbomode/database_schema.py",
+    "backend/turbomode/stock_ranking_api.py",
+    "backend/turbomode/create_options_db.py",
+    "backend/turbomode/track_options_outcomes.py",
+    "backend/turbomode/options_data_collector.py",
+    "backend/turbomode/options_feature_engineer.py",
+    "backend/turbomode/train_options_ml_model.py",
+    "backend/turbomode/onthefly_predictor.py",
+    "backend/turbomode/candidate_screener.py",
+    "backend/turbomode/ibkr_data_adapter.py",
+    "backend/turbomode/hybrid_data_fetcher.py",
+    "backend/turbomode/test_spread_threshold.py",
+    "backend/turbomode/delisted_blacklist.py",
+    "backend/turbomode/quarterly_stock_curation.py",
+    "backend/turbomode/options_api.py",
+    "backend/turbomode/top10_scanner.py",
+    "backend/turbomode/rerank_top10_by_confidence.py",
+    "backend/turbomode/predictions_api.py",
+    "backend/turbomode/create_turbomode_training_tables.py",
+    "backend/turbomode/retrain_meta_learner_only.py",
+    "backend/turbomode/select_best_features.py",
+    "backend/turbomode/train_specialized_meta_learner.py",
+    "backend/turbomode/weekly_backtest.py",
+    "backend/turbomode/migrate_signal_history.py",
+    "backend/turbomode/automated_retrainer.py",
+    "backend/turbomode/turbomode_scheduler.py",
+    "backend/turbomode/update_turbomode_schema.py",
+    "backend/turbomode/drift_monitor.py",
+    "backend/turbomode/overnight_scanner.py",
+    "backend/turbomode/training_orchestrator.py",
+    "backend/turbomode/backtest_generator.py",
+    "backend/turbomode/training_sample_generator.py",
+    "backend/turbomode/outcome_tracker.py",
+    "backend/turbomode/inspect_training_logic.py",
+    "backend/turbomode/adaptive_stock_ranker.py",
+    "backend/turbomode/core_symbols.py",
+    "backend/turbomode/schema_guardrail.py",
+    "backend/turbomode/generate_backtest_data.py",
+    "backend/turbomode/turbomode_backtest.py",
+    "backend/turbomode/inspect_training_data.py",
+    "backend/turbomode/check_features_status.py",
+    "backend/turbomode/turbomode_feature_extractor.py",
+    "backend/turbomode/feature_list.py",
+    "backend/turbomode/turbomode_vectorized_feature_engine.py",
+    "backend/turbomode/extract_features.py",
+    "backend/turbomode/turbomode_training_loader.py",
+    "backend/turbomode/train_turbomode_models.py"
+  ],
+  "contaminated_files": [
+    {
+      "file_path": "C:\\StockApp\\backend\\turbomode\\overnight_scanner.py",
+      "contamination_type": "AdvancedML Import - GPUFeatureEngineer",
+      "severity": "ACCEPTABLE",
+      "lines_of_concern": [41, 99],
+      "details": "Imports GPUFeatureEngineer from advanced_ml.features.gpu_feature_engineer",
+      "recommended_fix": "NONE - This is a computational utility, not a data contamination source",
+      "affects_169400_count": false,
+      "rationale": "GPUFeatureEngineer is a pure mathematical library for calculating technical indicators (SMA, RSI, MACD). It has NO database dependencies and does NOT touch training data. It's equivalent to using numpy or pandas - a computational tool only."
+    },
+    {
+      "file_path": "C:\\StockApp\\backend\\turbomode\\training_orchestrator.py",
+      "contamination_type": "AdvancedML Import - GPUFeatureEngineer + core_symbols",
+      "severity": "ACCEPTABLE",
+      "lines_of_concern": [40, 54, 89],
+      "details": "Imports GPUFeatureEngineer and get_all_core_symbols from advanced_ml",
+      "recommended_fix": "NONE - Computational utilities only, no data contamination",
+      "affects_169400_count": false,
+      "rationale": "These are utility imports: GPUFeatureEngineer calculates features, core_symbols provides symbol metadata. Neither touches training data or database schema."
+    },
+    {
+      "file_path": "C:\\StockApp\\backend\\turbomode\\turbomode_feature_extractor.py",
+      "contamination_type": "AdvancedML Import - GPUFeatureEngineer",
+      "severity": "ACCEPTABLE",
+      "lines_of_concern": [35, 72, 77],
+      "details": "Imports GPUFeatureEngineer for feature calculation",
+      "recommended_fix": "NONE - Pure computational utility",
+      "affects_169400_count": false,
+      "rationale": "Documented as 'computational utility only - NOT AdvancedML contamination' in the file itself. Used solely for technical indicator calculation."
+    },
+    {
+      "file_path": "C:\\StockApp\\backend\\turbomode\\train_turbomode_models.py",
+      "contamination_type": "AdvancedML Import - Model Classes",
+      "severity": "ACCEPTABLE",
+      "lines_of_concern": [42, 43, 44, 45, 46, 47, 48, 49, 50],
+      "details": "Imports XGBoost/LightGBM/CatBoost model wrappers from advanced_ml.models",
+      "recommended_fix": "NONE - Pure ML libraries with no database dependencies",
+      "affects_169400_count": false,
+      "rationale": "These are wrappers around xgboost/lightgbm/catboost Python packages. They have ZERO database dependencies. Data loading is done by TurboModeTrainingDataLoader (line 38), which is 100% pure TurboMode."
+    },
+    {
+      "file_path": "C:\\StockApp\\backend\\turbomode\\predictions_api.py",
+      "contamination_type": "AdvancedML Import - core_symbols",
+      "severity": "ACCEPTABLE",
+      "lines_of_concern": [17],
+      "details": "Imports get_all_core_symbols and get_symbol_metadata",
+      "recommended_fix": "NONE - Metadata utility only",
+      "affects_169400_count": false,
+      "rationale": "This is a utility function that provides symbol metadata (sector, market cap). No data contamination."
+    },
+    {
+      "file_path": "C:\\StockApp\\backend\\turbomode\\quarterly_stock_curation.py",
+      "contamination_type": "AdvancedML Import - core_symbols",
+      "severity": "ACCEPTABLE",
+      "lines_of_concern": [40],
+      "details": "Imports CORE_SYMBOLS, SECTOR_CODES, get_all_core_symbols, get_symbol_metadata",
+      "recommended_fix": "NONE - Metadata constants only",
+      "affects_169400_count": false,
+      "rationale": "These are static metadata constants defining sector codes and symbol classifications. No data contamination."
+    },
+    {
+      "file_path": "C:\\StockApp\\backend\\turbomode\\retrain_meta_learner_only.py",
+      "contamination_type": "DEPRECATED LOADER - HistoricalBacktest",
+      "severity": "CRITICAL",
+      "lines_of_concern": [28, 48, 53],
+      "details": "Uses HistoricalBacktest.prepare_training_data() - DEPRECATED LOADER that may load from wrong database/tables",
+      "recommended_fix": "REPLACE with TurboModeTrainingDataLoader:\n\nOLD CODE (lines 47-53):\ndb_path = os.path.join(PROJECT_ROOT, 'backend', 'data', 'turbomode.db')\nbacktest = HistoricalBacktest(db_path)\nX, y = backtest.prepare_training_data()\n\nNEW CODE:\nfrom backend.turbomode.turbomode_training_loader import TurboModeTrainingDataLoader\ndb_path = os.path.join(PROJECT_ROOT, 'backend', 'data', 'turbomode.db')\ndata_loader = TurboModeTrainingDataLoader(db_path=db_path)\nX, y = data_loader.load_training_data(include_hold=True)",
+      "affects_169400_count": true,
+      "rationale": "HistoricalBacktest may be loading from advanced_ml_system.db or using AdvancedML tables. This could contaminate the meta-learner with wrong data. MUST use TurboModeTrainingDataLoader to ensure 169,400 samples from turbomode.db."
+    },
+    {
+      "file_path": "C:\\StockApp\\backend\\turbomode\\weekly_backtest.py",
+      "contamination_type": "DEPRECATED LOADER - HistoricalBacktest",
+      "severity": "CRITICAL",
+      "lines_of_concern": [25, 82],
+      "details": "Uses HistoricalBacktest for backtesting - may load from wrong database",
+      "recommended_fix": "REPLACE with TurboModeBacktest (which exists at backend/turbomode/turbomode_backtest.py):\n\nOLD CODE (line 82):\nbacktest = HistoricalBacktest(db_path, use_gpu=True)\n\nNEW CODE:\nfrom turbomode.turbomode_backtest import TurboModeBacktest\nbacktest = TurboModeBacktest(turbomode_db_path=db_path)",
+      "affects_169400_count": true,
+      "rationale": "HistoricalBacktest is an AdvancedML component that may be loading from the wrong database. TurboModeBacktest is the pure TurboMode replacement."
+    },
+    {
+      "file_path": "C:\\StockApp\\backend\\turbomode\\select_best_features.py",
+      "contamination_type": "DEPRECATED LOADER - HistoricalBacktest",
+      "severity": "CRITICAL",
+      "lines_of_concern": [18],
+      "details": "Imports HistoricalBacktest but may not be actively used",
+      "recommended_fix": "VERIFY if HistoricalBacktest is actually called in this file. If yes, replace with TurboModeTrainingDataLoader. If not, remove the import.",
+      "affects_169400_count": true,
+      "rationale": "Any use of HistoricalBacktest risks loading data from the wrong source."
+    }
+  ],
+  "advancedml_imports": [
+    {
+      "file": "backend/turbomode/predictions_api.py",
+      "line": 17,
+      "import_statement": "from backend.advanced_ml.config.core_symbols import get_all_core_symbols, get_symbol_metadata",
+      "category": "Metadata Utility",
+      "severity": "ACCEPTABLE",
+      "reason": "Pure metadata - no data contamination"
+    },
+    {
+      "file": "backend/turbomode/quarterly_stock_curation.py",
+      "line": 40,
+      "import_statement": "from backend.advanced_ml.config.core_symbols import CORE_SYMBOLS, SECTOR_CODES, get_all_core_symbols, get_symbol_metadata",
+      "category": "Metadata Utility",
+      "severity": "ACCEPTABLE",
+      "reason": "Static constants - no data contamination"
+    },
+    {
+      "file": "backend/turbomode/turbomode_feature_extractor.py",
+      "line": 35,
+      "import_statement": "from backend.advanced_ml.features.gpu_feature_engineer import GPUFeatureEngineer",
+      "category": "Computational Utility",
+      "severity": "ACCEPTABLE",
+      "reason": "Pure math library for technical indicators - no database dependencies"
+    },
+    {
+      "file": "backend/turbomode/train_turbomode_models.py",
+      "lines": [42, 43, 44, 45, 46, 47, 48, 49, 50],
+      "import_statement": "from backend.advanced_ml.models.* import XGBoostModel, XGBoostETModel, LightGBMModel, CatBoostModel, etc.",
+      "category": "ML Model Wrappers",
+      "severity": "ACCEPTABLE",
+      "reason": "Pure ML libraries - no database dependencies. Data loading done by TurboModeTrainingDataLoader."
+    },
+    {
+      "file": "backend/turbomode/overnight_scanner.py",
+      "line": 41,
+      "import_statement": "from advanced_ml.features.gpu_feature_engineer import GPUFeatureEngineer",
+      "category": "Computational Utility",
+      "severity": "ACCEPTABLE",
+      "reason": "Pure math library - no data contamination"
+    },
+    {
+      "file": "backend/turbomode/training_orchestrator.py",
+      "lines": [40, 54],
+      "import_statement": "from advanced_ml.features.gpu_feature_engineer import GPUFeatureEngineer AND from advanced_ml.config.core_symbols import get_all_core_symbols",
+      "category": "Computational Utility + Metadata",
+      "severity": "ACCEPTABLE",
+      "reason": "Utilities only - no data contamination"
+    },
+    {
+      "file": "backend/turbomode/retrain_meta_learner_only.py",
+      "line": 28,
+      "import_statement": "from advanced_ml.backtesting.historical_backtest import HistoricalBacktest",
+      "category": "DEPRECATED DATA LOADER",
+      "severity": "CRITICAL",
+      "reason": "May load from wrong database/tables - MUST be replaced with TurboModeTrainingDataLoader"
+    },
+    {
+      "file": "backend/turbomode/weekly_backtest.py",
+      "line": 25,
+      "import_statement": "from advanced_ml.backtesting.historical_backtest import HistoricalBacktest",
+      "category": "DEPRECATED DATA LOADER",
+      "severity": "CRITICAL",
+      "reason": "May load from wrong database - MUST be replaced with TurboModeBacktest"
+    }
+  ],
+  "sql_queries_with_filters": {
+    "status": "CLEAN",
+    "details": "NO problematic SQL queries found in TurboMode files. All queries use 'WHERE trade_type = \"backtest\"' without symbol filters or is_core restrictions.",
+    "verification": "Checked turbomode_training_loader.py - uses clean queries with no symbol restrictions"
+  },
+  "deprecated_loaders": [
+    {
+      "file": "backend/turbomode/retrain_meta_learner_only.py",
+      "loader_type": "HistoricalBacktest.prepare_training_data()",
+      "line": 53,
+      "severity": "CRITICAL",
+      "replacement": "TurboModeTrainingDataLoader.load_training_data(include_hold=True)",
+      "reason": "DEPRECATED - May load from advanced_ml_system.db instead of turbomode.db"
+    },
+    {
+      "file": "backend/turbomode/weekly_backtest.py",
+      "loader_type": "HistoricalBacktest",
+      "line": 82,
+      "severity": "CRITICAL",
+      "replacement": "TurboModeBacktest",
+      "reason": "DEPRECATED - May load from wrong database"
+    },
+    {
+      "file": "backend/turbomode/select_best_features.py",
+      "loader_type": "HistoricalBacktest (import only)",
+      "line": 18,
+      "severity": "MEDIUM",
+      "replacement": "Verify usage and replace if needed",
+      "reason": "Import detected - needs verification if actually used"
+    }
+  ],
+  "legacy_tables": {
+    "status": "CLEAN",
+    "details": "NO legacy AdvancedML tables found in turbomode.db. All 10 tables match the canonical TurboMode schema.",
+    "canonical_tables": [
+      "active_signals",
+      "config_audit_log",
+      "feature_store",
+      "model_metadata",
+      "price_data",
+      "sector_stats",
+      "signal_history",
+      "trades",
+      "training_runs",
+      "sqlite_sequence (auto-generated)"
+    ],
+    "forbidden_tables_not_found": [
+      "backtests",
+      "predictions",
+      "feature_importance",
+      "model_performance",
+      "symbol_metadata"
+    ]
+  },
+  "test_files_contamination": {
+    "status": "CONTAMINATED",
+    "severity": "NON-CRITICAL",
+    "details": "4 test files in backend/turbomode/test_files/ reference advanced_ml_system.db and use AdvancedML imports",
+    "affected_files": [
+      {
+        "file": "backend/turbomode/test_files/test_db_connection.py",
+        "issues": [
+          "Line 19: db_path points to advanced_ml_system.db instead of turbomode.db",
+          "Line 15: Imports AdvancedMLDatabase",
+          "Line 16: Imports HistoricalBacktest",
+          "Line 31: Uses HistoricalBacktest.prepare_training_data()"
+        ],
+        "recommended_fix": "UPDATE db_path to turbomode.db and replace AdvancedML imports with TurboMode equivalents"
+      },
+      {
+        "file": "backend/turbomode/test_files/check_features.py",
+        "issues": [
+          "Line 14: db_path points to advanced_ml_system.db instead of turbomode.db"
+        ],
+        "recommended_fix": "UPDATE db_path to turbomode.db"
+      },
+      {
+        "file": "backend/turbomode/test_files/check_trades_features.py",
+        "issues": [
+          "Line 14: db_path points to advanced_ml_system.db instead of turbomode.db"
+        ],
+        "recommended_fix": "UPDATE db_path to turbomode.db"
+      },
+      {
+        "file": "backend/turbomode/test_files/analyze_hold_impact.py",
+        "issues": [
+          "Line 18: db_path points to advanced_ml_system.db instead of turbomode.db"
+        ],
+        "recommended_fix": "UPDATE db_path to turbomode.db"
+      }
+    ],
+    "affects_169400_count": false,
+    "reason": "These are test utilities, not production code. They don't affect the 169,400 sample count but should be updated for consistency."
+  },
+  "reverse_contamination": {
+    "status": "CLEAN",
+    "details": "NO reverse contamination detected. AdvancedML does NOT import from TurboMode.",
+    "verification": "Grep search across all advanced_ml/ files found zero imports from turbomode"
+  },
+  "critical_issues_detail": [
+    {
+      "issue_id": "CRIT-001",
+      "file": "backend/turbomode/retrain_meta_learner_only.py",
+      "severity": "CRITICAL",
+      "description": "Uses HistoricalBacktest.prepare_training_data() which may load from advanced_ml_system.db",
+      "impact": "Meta-learner could be trained on wrong data (875 samples instead of 169,400)",
+      "recommended_fix": "Replace HistoricalBacktest with TurboModeTrainingDataLoader",
+      "code_fix": "Lines 47-53: Replace 'backtest = HistoricalBacktest(db_path)' and 'X, y = backtest.prepare_training_data()' with TurboModeTrainingDataLoader"
+    },
+    {
+      "issue_id": "CRIT-002",
+      "file": "backend/turbomode/weekly_backtest.py",
+      "severity": "CRITICAL",
+      "description": "Uses HistoricalBacktest for automated weekly backtesting",
+      "impact": "Weekly backtest may generate samples in wrong database or use wrong data source",
+      "recommended_fix": "Replace HistoricalBacktest with TurboModeBacktest",
+      "code_fix": "Line 82: Replace 'HistoricalBacktest(db_path, use_gpu=True)' with 'TurboModeBacktest(turbomode_db_path=db_path)'"
+    },
+    {
+      "issue_id": "CRIT-003",
+      "file": "backend/turbomode/select_best_features.py",
+      "severity": "MEDIUM-HIGH",
+      "description": "Imports HistoricalBacktest (usage unclear)",
+      "impact": "Feature selection may be based on wrong data source",
+      "recommended_fix": "Verify if HistoricalBacktest is used. If yes, replace with TurboModeTrainingDataLoader. If no, remove import.",
+      "code_fix": "Check file for actual usage of HistoricalBacktest and update accordingly"
+    }
+  ],
+  "production_readiness": {
+    "status": "NEEDS ATTENTION",
+    "core_training_pipeline": "CLEAN - train_turbomode_models.py uses TurboModeTrainingDataLoader",
+    "feature_extraction": "CLEAN - turbomode_feature_extractor.py uses pure computational utilities",
+    "data_loading": "CLEAN - turbomode_training_loader.py is 100% pure TurboMode",
+    "overnight_scanner": "CLEAN - Uses computational utilities only, loads from turbomode.db",
+    "meta_learner_retraining": "CONTAMINATED - retrain_meta_learner_only.py uses deprecated HistoricalBacktest",
+    "weekly_backtest": "CONTAMINATED - weekly_backtest.py uses deprecated HistoricalBacktest",
+    "recommendation": "Fix 3 critical issues in deprecated loaders before production deployment"
+  },
+  "recommended_actions": [
+    {
+      "priority": 1,
+      "action": "CRITICAL: Update retrain_meta_learner_only.py",
+      "description": "Replace HistoricalBacktest with TurboModeTrainingDataLoader to ensure meta-learner trains on correct 169,400 samples",
+      "file": "backend/turbomode/retrain_meta_learner_only.py",
+      "estimated_effort": "5 minutes"
+    },
+    {
+      "priority": 2,
+      "action": "CRITICAL: Update weekly_backtest.py",
+      "description": "Replace HistoricalBacktest with TurboModeBacktest to ensure weekly automation uses correct database",
+      "file": "backend/turbomode/weekly_backtest.py",
+      "estimated_effort": "5 minutes"
+    },
+    {
+      "priority": 3,
+      "action": "MEDIUM: Verify select_best_features.py",
+      "description": "Check if HistoricalBacktest is actually used. If yes, replace. If no, remove import.",
+      "file": "backend/turbomode/select_best_features.py",
+      "estimated_effort": "3 minutes"
+    },
+    {
+      "priority": 4,
+      "action": "LOW: Update test files",
+      "description": "Update 4 test files in test_files/ to point to turbomode.db instead of advanced_ml_system.db",
+      "files": [
+        "backend/turbomode/test_files/test_db_connection.py",
+        "backend/turbomode/test_files/check_features.py",
+        "backend/turbomode/test_files/check_trades_features.py",
+        "backend/turbomode/test_files/analyze_hold_impact.py"
+      ],
+      "estimated_effort": "10 minutes"
+    },
+    {
+      "priority": 5,
+      "action": "OPTIONAL: Document acceptable AdvancedML imports",
+      "description": "Add comments to files using GPUFeatureEngineer and model wrappers clarifying they are computational utilities, not data sources",
+      "estimated_effort": "5 minutes"
+    }
+  ],
+  "validation": {
+    "turbomode_db_sample_count_verified": true,
+    "expected_sample_count": 169400,
+    "actual_sample_count": 169400,
+    "samples_with_features": 169400,
+    "feature_coverage": "100%",
+    "schema_validation": "PASSED - All canonical tables present",
+    "contamination_in_production_pipeline": "NONE - Core training pipeline is clean",
+    "contamination_in_automation": "FOUND - Weekly backtest and meta-learner retraining need updates"
+  },
+  "conclusion": {
+    "overall_status": "MOSTLY CLEAN WITH 3 CRITICAL FIXES NEEDED",
+    "database_status": "PERFECT - 169,400 samples confirmed, all with features, canonical schema",
+    "core_pipeline_status": "CLEAN - train_turbomode_models.py uses pure TurboMode data loading",
+    "automation_status": "NEEDS FIXES - 2 automation scripts use deprecated HistoricalBacktest",
+    "acceptable_imports": "GPUFeatureEngineer and ML model wrappers are computational utilities with ZERO data contamination",
+    "critical_path_forward": "Fix 3 deprecated loader usages (15 minutes total), then TurboMode will be 100% contamination-free",
+    "affects_current_models": false,
+    "reason_current_models_safe": "The main training script (train_turbomode_models.py) uses TurboModeTrainingDataLoader exclusively. Current production models were trained on correct 169,400 samples from turbomode.db. The contamination only affects secondary scripts (meta-learner retraining and weekly automation)."
+  }
+}

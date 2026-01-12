@@ -1,0 +1,118 @@
+{
+  "checkpoint_timestamp": "2026-01-04T23:40:00",
+  "scan_start_time": "2026-01-04T13:17:22",
+  "checkpoint_reason": "Manual checkpoint - scan taking too long (6+ hours)",
+  "progress": {
+    "total_sectors": 11,
+    "completed_sectors": 6.5,
+    "current_sector": "consumer_staples",
+    "current_market_cap": "mid_cap",
+    "sectors_completed": [
+      "technology",
+      "financials",
+      "healthcare",
+      "consumer_discretionary",
+      "communication_services",
+      "industrials"
+    ],
+    "sectors_remaining": [
+      "energy",
+      "materials",
+      "real_estate",
+      "utilities"
+    ],
+    "total_candidates_found": 52
+  },
+  "candidates_found": [
+    {
+      "comment": "Technology - 12 candidates (10 large, 2 mid, 0 small)",
+      "sector": "technology",
+      "large_cap_count": 10,
+      "mid_cap_count": 2,
+      "small_cap_count": 0
+    },
+    {
+      "comment": "Financials - 12 candidates (6 large, 3 mid, 3 small)",
+      "sector": "financials",
+      "large_cap_count": 6,
+      "mid_cap_count": 3,
+      "small_cap_count": 3
+    },
+    {
+      "comment": "Healthcare - 10 candidates (10 large, 0 mid, 0 small)",
+      "sector": "healthcare",
+      "large_cap_count": 10,
+      "mid_cap_count": 0,
+      "small_cap_count": 0
+    },
+    {
+      "comment": "Consumer Discretionary - 6 candidates (4 large, 2 mid, 0 small)",
+      "sector": "consumer_discretionary",
+      "large_cap_count": 4,
+      "mid_cap_count": 2,
+      "small_cap_count": 0
+    },
+    {
+      "comment": "Communication Services - 4 candidates (2 large, 2 mid, 0 small)",
+      "sector": "communication_services",
+      "large_cap_count": 2,
+      "mid_cap_count": 2,
+      "small_cap_count": 0
+    },
+    {
+      "comment": "Industrials - 6 candidates (3 large, 3 mid, 0 small)",
+      "sector": "industrials",
+      "large_cap_count": 3,
+      "mid_cap_count": 3,
+      "small_cap_count": 0
+    },
+    {
+      "comment": "Consumer Staples - 2+ candidates (2 large, scanning mid now)",
+      "sector": "consumer_staples",
+      "large_cap_count": 2,
+      "mid_cap_count": "scanning",
+      "small_cap_count": "not_started"
+    }
+  ],
+  "market_cap_summary": {
+    "large_cap": 37,
+    "mid_cap": 12,
+    "small_cap": 3,
+    "total": 52
+  },
+  "configuration": {
+    "spread_threshold_pct": 0.70,
+    "rate_limiting": false,
+    "blacklist_integrated": false,
+    "delisted_stocks_count": 70,
+    "target_total": 80,
+    "target_large_cap": 30,
+    "target_mid_cap": 50,
+    "target_small_cap": 0
+  },
+  "resume_instructions": {
+    "note": "To resume this scan, the script needs to be modified to:",
+    "steps": [
+      "1. Read this checkpoint file at startup",
+      "2. Skip sectors marked as completed",
+      "3. Resume from current_sector and current_market_cap",
+      "4. Load existing candidates_found and append new ones",
+      "5. After completing all sectors, perform final top-80 selection"
+    ],
+    "recommended_actions": [
+      "Integrate delisted_blacklist.py to avoid yfinance timeouts (~350 sec savings)",
+      "Consider scanning only large caps to reduce time by 66%",
+      "Use checkpoint system for future quarterly curations"
+    ]
+  },
+  "scan_metadata": {
+    "total_universe": 1071,
+    "candidates_per_search": "398 large, 299 mid, 347 small",
+    "total_searches": 33,
+    "searches_completed": 19,
+    "searches_remaining": 14,
+    "estimated_completion_pct": 58,
+    "elapsed_time_hours": 6.4,
+    "estimated_total_time_hours": "8-10"
+  }
+}

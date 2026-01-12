@@ -15,11 +15,14 @@ backend_path = Path(__file__).resolve().parent.parent
 if str(backend_path) not in sys.path:
     sys.path.insert(0, str(backend_path))
 
-from advanced_ml.features.gpu_feature_engineer import GPUFeatureEngineer
+# DEPRECATED: GPU Feature engineer removed - this script is outdated
+# from advanced_ml.features.gpu_feature_engineer import GPUFeatureEngineer
 
 print("\n" + "="*70)
-print("CREATING FEATURE NAME MAPPING")
+print("DEPRECATED: This script is outdated (GPU support removed)")
 print("="*70)
+import sys
+sys.exit(1)
 
 # Initialize GPU feature engineer (with feature selection disabled)
 print("\n[1/3] Initializing GPU Feature Engineer...")

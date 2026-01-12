@@ -1,6 +1,6 @@
 {
   "symbol": "META",
-  "timestamp": "2025-12-31T00:02:40.743781",
+  "timestamp": "2026-01-12T00:02:32.222818",
   "agent": "fusion_agent",
   "total_score": 20.69230769230769,
   "confidence": 0.5069230769230769,
@@ -11,7 +11,7 @@
     "💸"
   ],
   "emoji_string": "📉❌💸",
-  "shorthand": "META | 📉❌💸 | 20 | 0.51 | 2025-12-31",
+  "shorthand": "META | 📉❌💸 | 20 | 0.51 | 2026-01-12",
   "weighted_scores": {
     "indicators_agent": {
       "score": 18,

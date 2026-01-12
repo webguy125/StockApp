@@ -1,0 +1,599 @@
+{
+  "project": "IBKR API Integration for StockApp",
+  "version": "1.0.0",
+  "status": "Planning - User has existing IBKR account",
+  "last_updated": "2026-01-03",
+
+  "overview": {
+    "purpose": "Replace Yahoo Finance with IBKR TWS API for professional-grade market data",
+    "benefits": [
+      "50 requests/second (25x faster than Schwab)",
+      "Real-time options data with accurate spreads",
+      "Level 2 market data available",
+      "Free with unfunded account",
+      "Professional Greeks calculations",
+      "Historical IV data included",
+      "WebSocket streaming built-in",
+      "Global market access"
+    ],
+    "migration_strategy": "Parallel implementation - keep yfinance as fallback",
+    "estimated_implementation_time": "4-6 hours total"
+  },
+
+  "prerequisites": {
+    "ibkr_account": {
+      "status": "User already has unfunded account",
+      "account_types": [
+        "Individual",
+        "Cash account (can remain unfunded)",
+        "Paper trading account (also works)"
+      ],
+      "verification": "Check account status at https://www.interactivebrokers.com/portal"
+    },
+    "tws_installation": {
+      "required": "TWS (Trader Workstation) or IB Gateway",
+      "download_url": "https://www.interactivebrokers.com/en/trading/tws.php",
+      "recommended": "IB Gateway (lighter weight, headless)",
+      "ib_gateway_url": "https://www.interactivebrokers.com/en/trading/ibgateway-stable.php",
+      "versions": {
+        "tws": "Full GUI application, ~500MB",
+        "ib_gateway": "Headless gateway, ~200MB, better for automation"
+      },
+      "installation_time": "5-10 minutes"
+    },
+    "api_configuration": {
+      "tws_settings": [
+        "File → Global Configuration → API → Settings",
+        "Enable ActiveX and Socket Clients: ✓",
+        "Socket port: 7497 (paper) or 7496 (live)",
+        "Trusted IP addresses: 127.0.0.1",
+        "Read-Only API: ✓ (for safety)"
+      ],
+      "auto_restart": "Recommended: Enable auto-restart on connection loss"
+    },
+    "market_data_subscriptions": {
+      "required_for_real_time": true,
+      "us_stocks_snapshot": "$0 (free with account)",
+      "us_options_snapshot": "$0 (free with account)",
+      "real_time_data": "$10-15/month (optional, delayed data is free)",
+      "note": "15-min delayed data is free and sufficient for curation"
+    }
+  },
+
+  "python_dependencies": {
+    "new_packages": [
+      {
+        "package": "ib_insync",
+        "version": ">=0.9.86",
+        "description": "Pythonic wrapper for IBKR TWS API",
+        "installation": "pip install ib_insync",
+        "documentation": "https://ib-insync.readthedocs.io/",
+        "why_this_library": "Much easier than official ibapi, async-native, well-maintained"
+      },
+      {
+        "package": "nest_asyncio",
+        "version": ">=1.5.0",
+        "description": "Allows nested async event loops",
+        "installation": "pip install nest_asyncio",
+        "required_for": "Running ib_insync in Jupyter/Flask"
+      }
+    ],
+    "alternative_library": {
+      "package": "ibapi",
+      "description": "Official IBKR Python API (harder to use)",
+      "recommendation": "Use ib_insync instead - same functionality, better API"
+    }
+  },
+
+  "file_structure": {
+    "new_files": [
+      {
+        "path": "backend/data/ibkr_client.py",
+        "purpose": "Centralized IBKR connection management",
+        "size_estimate": "~200 lines"
+      },
+      {
+        "path": "backend/data/ibkr_config.json",
+        "purpose": "IBKR connection settings (NOT sensitive - no credentials needed)",
+        "size_estimate": "~15 lines",
+        "security": "Safe to commit (contains host/port only)"
+      },
+      {
+        "path": "backend/data/ibkr_data_adapter.py",
+        "purpose": "Translate IBKR responses to our data format",
+        "size_estimate": "~400 lines"
+      },
+      {
+        "path": "backend/data/ibkr_streaming.py",
+        "purpose": "Real-time streaming market data",
+        "size_estimate": "~250 lines",
+        "priority": "Phase 2 (optional for initial implementation)"
+      }
+    ],
+    "modified_files": [
+      {
+        "path": "backend/turbomode/quarterly_stock_curation.py",
+        "changes": "Replace yfinance with IBKR client",
+        "lines_affected": "~20-30 lines"
+      },
+      {
+        "path": "backend/turbomode/options_api.py",
+        "changes": "Use IBKR for options chains",
+        "lines_affected": "~50-75 lines"
+      },
+      {
+        "path": "requirements.txt",
+        "changes": "Add ib_insync, nest_asyncio",
+        "lines_affected": "2 new lines"
+      }
+    ]
+  },
+
+  "connection_architecture": {
+    "flow": [
+      "StockApp (Python) → ib_insync library → TWS/IB Gateway (running locally) → IBKR servers",
+      "TWS/Gateway acts as proxy between your app and IBKR"
+    ],
+    "why_local_gateway_required": [
+      "IBKR doesn't offer direct REST API",
+      "TWS/Gateway handles authentication, data streaming, order routing",
+      "Gateway must be running for API to work"
+    ],
+    "startup_sequence": [
+      "1. Start TWS or IB Gateway (manual or auto-start)",
+      "2. StockApp connects to localhost:7497 (or 7496 for live)",
+      "3. API sends requests through Gateway to IBKR",
+      "4. Real-time streaming automatically maintained"
+    ],
+    "authentication": {
+      "method": "Login to TWS/Gateway with IBKR credentials",
+      "api_connection": "No additional auth needed - local socket connection",
+      "security": "Only accepts connections from 127.0.0.1 by default"
+    }
+  },
+
+  "rate_limiting": {
+    "official_limits": {
+      "market_data_requests": "50 per second (3000/min)",
+      "historical_data_requests": "60 per 10 minutes (6/min sustained)",
+      "order_placement": "50 per second (but we're read-only)",
+      "concurrent_subscriptions": "100 simultaneous live quotes"
+    },
+    "comparison": {
+      "yfinance": "~10-20 requests/min (varies)",
+      "schwab": "120 requests/min",
+      "ibkr": "3000 requests/min (market data)",
+      "speedup_vs_yfinance": "150-300x faster",
+      "speedup_vs_schwab": "25x faster"
+    },
+    "curation_performance": {
+      "current_yfinance": "80 symbols in ~5-10 min",
+      "with_ibkr": "80 symbols in ~2-3 seconds",
+      "quarterly_scan": "900 candidates in ~30 seconds (vs 4.5 min per replacement)",
+      "full_curation": "Minutes instead of hours"
+    },
+    "historical_data_caveat": {
+      "issue": "Historical data limited to 6 requests/min",
+      "workaround": "Request longer periods per call (get 1 year at once)",
+      "impact": "Minimal - curation uses current snapshots mostly"
+    }
+  },
+
+  "data_endpoints": {
+    "real_time_quotes": {
+      "method": "ib.reqMktData(contract, '', False, False)",
+      "rate_limit": "50/second",
+      "data_fields": [
+        "bid, ask, last, close, volume",
+        "bidSize, askSize",
+        "high, low, open",
+        "marketCap (for stocks)"
+      ],
+      "latency": "Real-time (< 100ms) or 15-min delayed (free)"
+    },
+    "options_chains": {
+      "method": "ib.reqSecDefOptParams() + ib.qualifyContracts()",
+      "rate_limit": "50/second",
+      "data_returned": [
+        "All strikes and expirations",
+        "Bid/ask with sizes",
+        "Implied volatility",
+        "Greeks (delta, gamma, theta, vega)",
+        "Open interest, volume"
+      ],
+      "advantage": "Full chain in 1-2 API calls (vs yfinance's multiple calls)"
+    },
+    "historical_data": {
+      "method": "ib.reqHistoricalData()",
+      "rate_limit": "6/minute",
+      "bar_sizes": ["1 min", "5 mins", "15 mins", "1 hour", "1 day"],
+      "max_duration": "1 year per request",
+      "workaround": "Request full year in one call instead of daily"
+    },
+    "fundamentals": {
+      "method": "ib.reqFundamentalData()",
+      "rate_limit": "50/second",
+      "data_available": [
+        "Market cap, shares outstanding",
+        "Sector, industry",
+        "Financial statements",
+        "Earnings, dividends"
+      ]
+    },
+    "level_2_data": {
+      "method": "ib.reqMktDepth()",
+      "rate_limit": "3 simultaneous requests",
+      "data_returned": "Full order book (10 price levels)",
+      "use_case": "Verify actual liquidity at bid/ask"
+    }
+  },
+
+  "implementation_phases": {
+    "phase_1": {
+      "name": "TWS/Gateway Setup and Connection",
+      "duration": "30-45 minutes",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Download and install IB Gateway",
+          "url": "https://www.interactivebrokers.com/en/trading/ibgateway-stable.php",
+          "notes": "Choose 'latest' or 'stable' version",
+          "estimated_time": "10 min"
+        },
+        {
+          "step": 2,
+          "action": "Configure API settings in IB Gateway",
+          "settings": [
+            "Enable API connections",
+            "Set port 7497 (paper) or 7496 (live)",
+            "Add 127.0.0.1 to trusted IPs",
+            "Enable Read-Only API mode"
+          ],
+          "estimated_time": "5 min"
+        },
+        {
+          "step": 3,
+          "action": "Start IB Gateway and login with IBKR credentials",
+          "notes": "Use paper trading account first",
+          "estimated_time": "5 min"
+        },
+        {
+          "step": 4,
+          "action": "Install ib_insync library",
+          "command": "pip install ib_insync nest_asyncio",
+          "estimated_time": "1 min"
+        },
+        {
+          "step": 5,
+          "action": "Test basic connection",
+          "command": "python backend/data/test_ibkr_connection.py",
+          "validation": "Successfully connect and fetch SPY quote",
+          "estimated_time": "10 min"
+        }
+      ]
+    },
+    "phase_2": {
+      "name": "Data Adapter Implementation",
+      "duration": "2-3 hours",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Create ibkr_client.py with connection pooling",
+          "deliverable": "Singleton client that auto-reconnects",
+          "estimated_time": "45 min"
+        },
+        {
+          "step": 2,
+          "action": "Create ibkr_data_adapter.py",
+          "deliverable": "Functions matching yfinance API",
+          "estimated_time": "90 min"
+        },
+        {
+          "step": 3,
+          "action": "Add error handling and retry logic",
+          "deliverable": "Graceful fallback to yfinance on IBKR failure",
+          "estimated_time": "30 min"
+        },
+        {
+          "step": 4,
+          "action": "Test adapter with 20 symbols",
+          "validation": "Compare IBKR vs yfinance results",
+          "estimated_time": "30 min"
+        }
+      ]
+    },
+    "phase_3": {
+      "name": "Integration into Curation Script",
+      "duration": "1-2 hours",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Update quarterly_stock_curation.py",
+          "changes": "Import ibkr_data_adapter instead of yfinance",
+          "estimated_time": "20 min"
+        },
+        {
+          "step": 2,
+          "action": "Update options_api.py",
+          "changes": "Use IBKR for options chains",
+          "estimated_time": "40 min"
+        },
+        {
+          "step": 3,
+          "action": "Optimize for batch requests",
+          "changes": "Request multiple symbols simultaneously",
+          "estimated_time": "30 min"
+        },
+        {
+          "step": 4,
+          "action": "Run full curation test",
+          "validation": "80 symbols evaluated in <10 seconds",
+          "estimated_time": "20 min"
+        }
+      ]
+    },
+    "phase_4": {
+      "name": "Real-Time Streaming (Optional)",
+      "duration": "2-3 hours",
+      "priority": "Medium - adds live updates to TurboOptions",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Create ibkr_streaming.py",
+          "deliverable": "Live quote subscriptions",
+          "estimated_time": "60 min"
+        },
+        {
+          "step": 2,
+          "action": "Integrate into TurboOptions scoring",
+          "deliverable": "Scores update as spreads change",
+          "estimated_time": "60 min"
+        },
+        {
+          "step": 3,
+          "action": "Create live dashboard",
+          "deliverable": "Real-time options scoring UI",
+          "estimated_time": "60 min"
+        }
+      ]
+    }
+  },
+
+  "code_templates": {
+    "ibkr_config_json": {
+      "path": "backend/data/ibkr_config.json",
+      "template": {
+        "host": "127.0.0.1",
+        "port": 7497,
+        "client_id": 1,
+        "read_only": true,
+        "timeout": 30,
+        "account_type": "paper",
+        "notes": "port 7497 = paper trading, 7496 = live account"
+      },
+      "security": "Safe to commit - contains no credentials"
+    },
+    "test_connection": {
+      "path": "backend/data/test_ibkr_connection.py",
+      "purpose": "Verify IB Gateway is running and accessible",
+      "example_code": "from ib_insync import *\n\nib = IB()\nib.connect('127.0.0.1', 7497, clientId=1)\n\ncontract = Stock('SPY', 'SMART', 'USD')\nticker = ib.reqMktData(contract)\nib.sleep(2)\n\nprint(f'SPY bid: {ticker.bid}, ask: {ticker.ask}')\nib.disconnect()"
+    },
+    "ibkr_client_py": {
+      "path": "backend/data/ibkr_client.py",
+      "key_features": [
+        "Singleton pattern for connection reuse",
+        "Auto-reconnect on disconnect",
+        "Connection health monitoring",
+        "Request rate limiting (stay under 50/sec)"
+      ]
+    },
+    "ibkr_data_adapter_py": {
+      "path": "backend/data/ibkr_data_adapter.py",
+      "key_functions": [
+        "get_stock_history(symbol, period, interval) -> pd.DataFrame",
+        "get_options_chain(symbol, expiry) -> dict",
+        "get_quote(symbol) -> dict",
+        "get_fundamentals(symbol) -> dict",
+        "calculate_atm_spread(symbol) -> float",
+        "batch_get_quotes(symbols: list) -> dict"
+      ],
+      "return_format": "Identical to yfinance for drop-in replacement"
+    }
+  },
+
+  "advantages_over_schwab": {
+    "speed": {
+      "market_data_requests": "50/sec vs 2/sec (25x faster)",
+      "curation_time": "Seconds vs minutes",
+      "parallel_requests": "100 concurrent subscriptions vs 10"
+    },
+    "data_quality": {
+      "options_greeks": "Server-calculated (more accurate)",
+      "level_2_data": "Available (Schwab limited)",
+      "historical_iv": "Built-in (Schwab requires calculation)",
+      "global_markets": "Access worldwide (Schwab US-only)"
+    },
+    "cost": {
+      "api_access": "$0 (vs Schwab $0)",
+      "real_time_data": "$10-15/mo optional (vs Schwab free with account)",
+      "delayed_data": "$0 (same as Schwab)"
+    },
+    "reliability": {
+      "uptime": "99.9%+ (industry standard)",
+      "api_stability": "20+ year track record",
+      "institutional_grade": "Used by hedge funds, prop traders"
+    }
+  },
+
+  "disadvantages_vs_schwab": {
+    "setup_complexity": {
+      "issue": "Requires TWS/Gateway running locally",
+      "schwab": "Direct REST API (easier)",
+      "mitigation": "Auto-start IB Gateway on boot"
+    },
+    "oauth_simplicity": {
+      "issue": "Login required in TWS/Gateway GUI",
+      "schwab": "OAuth flow is more modern",
+      "mitigation": "Stay logged in 24/7 (recommended)"
+    },
+    "historical_data_rate_limit": {
+      "issue": "Only 6 historical requests/min",
+      "schwab": "120/min for all endpoints",
+      "mitigation": "Request longer periods per call"
+    }
+  },
+
+  "auto_start_ib_gateway": {
+    "windows_task_scheduler": {
+      "task_name": "Start IB Gateway",
+      "trigger": "At system startup",
+      "action": "Start program",
+      "program": "C:\\Jts\\ibgateway\\XXX\\ibgateway.exe",
+      "arguments": "",
+      "notes": "Replace XXX with your installed version number"
+    },
+    "stay_logged_in": {
+      "method": "Save credentials in IB Gateway",
+      "security": "Use Read-Only API mode for safety",
+      "alternative": "ib_insync auto-login (advanced)"
+    }
+  },
+
+  "error_handling": {
+    "common_errors": [
+      {
+        "error": "ConnectionRefusedError",
+        "cause": "IB Gateway not running",
+        "solution": "Start IB Gateway, wait 30 seconds, retry",
+        "prevention": "Auto-start Gateway on system boot"
+      },
+      {
+        "error": "Connection lost",
+        "cause": "IB Gateway crashed or logged out",
+        "solution": "Auto-reconnect logic in ibkr_client.py",
+        "prevention": "Enable Gateway auto-restart setting"
+      },
+      {
+        "error": "Market data not subscribed",
+        "cause": "No market data subscription for symbol",
+        "solution": "Request delayed data (free) or subscribe",
+        "prevention": "Check subscription status before request"
+      },
+      {
+        "error": "Pacing violation",
+        "cause": "Exceeded 50 requests/sec",
+        "solution": "Implement rate limiter (built into adapter)",
+        "prevention": "Use batch requests when possible"
+      }
+    ],
+    "fallback_strategy": [
+      "1. Try IBKR (primary)",
+      "2. If IBKR unavailable, try yfinance (fallback)",
+      "3. If both fail, use cached data",
+      "4. Log error and notify user"
+    ]
+  },
+
+  "data_quality_comparison": {
+    "options_spreads": {
+      "yfinance": "Delayed, often stale (15-60 min old)",
+      "schwab": "Real-time for account holders",
+      "ibkr": "Real-time (15-min delayed on free tier)",
+      "verdict": "IBKR and Schwab tied (both excellent)"
+    },
+    "greeks": {
+      "yfinance": "Not provided (we calculate manually)",
+      "schwab": "Server-calculated",
+      "ibkr": "Server-calculated, professional-grade",
+      "verdict": "IBKR best (institutional algorithms)"
+    },
+    "historical_iv": {
+      "yfinance": "Not available",
+      "schwab": "Limited",
+      "ibkr": "Full history available",
+      "verdict": "IBKR wins"
+    },
+    "level_2_data": {
+      "yfinance": "Not available",
+      "schwab": "Limited",
+      "ibkr": "Full 10-level order book",
+      "verdict": "IBKR wins"
+    }
+  },
+
+  "recommended_workflow": {
+    "daily_operations": [
+      "1. IB Gateway auto-starts on system boot",
+      "2. StockApp connects on first API request",
+      "3. Connection maintained 24/7",
+      "4. Data requests processed instantly (50/sec)",
+      "5. Auto-reconnect if Gateway restarts"
+    ],
+    "quarterly_curation": [
+      "1. Evaluate 80 current symbols in ~3 seconds",
+      "2. Scan 900 candidates in ~30 seconds per replacement",
+      "3. Full curation completes in ~10-15 minutes",
+      "4. Generate report with updated symbols",
+      "5. No manual intervention needed"
+    ],
+    "turboptions_scoring": [
+      "1. Subscribe to live quotes for 80 symbols",
+      "2. Receive real-time updates as spreads change",
+      "3. Update scores continuously",
+      "4. Alert when optimal entry conditions met"
+    ]
+  },
+
+  "migration_timeline": {
+    "day_1": "Install IB Gateway, test connection (30 min)",
+    "day_2": "Implement ibkr_client.py and adapter (3 hours)",
+    "day_3": "Integrate into curation script, test (2 hours)",
+    "day_4": "Run parallel (IBKR + yfinance) for validation (1 day)",
+    "day_5": "Switch to IBKR primary, yfinance fallback",
+    "total_effort": "6-8 hours of coding + 1 day validation"
+  },
+
+  "success_criteria": {
+    "connection_stability": "99%+ uptime over 7 days",
+    "data_accuracy": "Spreads match live broker quotes within $0.01",
+    "speed_improvement": "80 symbols evaluated in <10 seconds",
+    "curation_time": "Full curation in <20 minutes",
+    "zero_manual_intervention": "Runs quarterly without human input"
+  },
+
+  "next_steps": {
+    "immediate": [
+      "1. Verify IBKR account is active (check login works)",
+      "2. Download IB Gateway from IBKR website",
+      "3. Install and configure API settings",
+      "4. Test manual login to Gateway",
+      "5. Notify Claude when ready for implementation"
+    ],
+    "after_setup": [
+      "1. Install ib_insync library",
+      "2. Create connection test script",
+      "3. Implement data adapter",
+      "4. Integrate into curation",
+      "5. Run full end-to-end test"
+    ]
+  },
+
+  "cost_analysis": {
+    "ibkr_api": {
+      "account_cost": "$0 (can be unfunded)",
+      "api_cost": "$0 (free with account)",
+      "delayed_data_cost": "$0 (15-min delayed included)",
+      "real_time_data_cost": "$10-15/month (optional)",
+      "total_monthly_cost_free_tier": "$0",
+      "total_monthly_cost_real_time": "$10-15"
+    },
+    "comparison": {
+      "yfinance": "$0 (but slow, unreliable)",
+      "schwab": "$0 (but 25x slower than IBKR)",
+      "polygon_io": "$99/month",
+      "ibkr_delayed": "$0 (25x faster than Schwab, same quality)",
+      "winner": "IBKR free tier (best speed-to-cost ratio)"
+    },
+    "recommendation": "Start with free 15-min delayed, upgrade to real-time later if needed"
+  }
+}

@@ -32,7 +32,7 @@ try:
     )
     ML_AUTOMATION_AVAILABLE = True
 except ImportError as e:
-    print(f"[ML AUTOMATION] Not available: {e}")
+    print(f"[TURBO AUTOMATION] Not available: {e}")
     ML_AUTOMATION_AVAILABLE = False
 
 # Initialize ML Model Manager (multi-model configuration system)
@@ -41,7 +41,7 @@ try:
     ml_model_manager = MLModelManager()
     ML_MODEL_MANAGER_AVAILABLE = True
 except ImportError as e:
-    print(f"[ML MODEL MANAGER] Not available: {e}")
+    print(f"[TURBO MODEL MANAGER] Not available: {e}")
     ML_MODEL_MANAGER_AVAILABLE = False
 
 # Load environment variables from .env file
@@ -1563,7 +1563,7 @@ def ml_pivot_reliability():
         }), 200
 
     except Exception as e:
-        print(f"[ML ERROR] Pivot reliability prediction failed: {e}")
+        print(f"[TURBO ERROR] Pivot reliability prediction failed: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
@@ -1942,7 +1942,7 @@ def run_ml_scan():
             except Exception as e:
                 # Mark job as failed
                 job_manager.fail_job(job_id, str(e))
-                print(f"[ML SCAN ERROR] {e}")
+                print(f"[TURBO SCAN ERROR] {e}")
 
         # Start background thread
         scan_thread = threading.Thread(target=run_scan_background, daemon=True)
@@ -2682,13 +2682,16 @@ def get_ml_prediction():
         if not model_id or not symbol:
             return jsonify({'error': 'model_id and symbol required'}), 400
 
+        # DEPRECATED: Old ML pipeline removed - use TurboMode API instead
+        return jsonify({'error': 'This endpoint is deprecated. Use /turbomode/predict instead.'}), 410
+
         # Import ML components
-        import sys
-        sys.path.insert(0, 'backend')
-        from advanced_ml.training.training_pipeline import TrainingPipeline
+        # import sys
+        # sys.path.insert(0, 'backend')
+        # from advanced_ml.training.training_pipeline import TrainingPipeline
 
         # Initialize pipeline
-        pipeline = TrainingPipeline()
+        # pipeline = TrainingPipeline()
 
         # Get current market data for the symbol
         import yfinance as yf
@@ -2813,6 +2816,28 @@ try:
 except ImportError as e:
     print(f"[STOCK RANKING] Not available: {e}")
     STOCK_RANKING_AVAILABLE = False
+
+# Initialize Predictions API Blueprint (all model predictions with confidence levels)
+try:
+    from backend.turbomode.predictions_api import predictions_bp
+    app.register_blueprint(predictions_bp)
+    print("[PREDICTIONS API] Registered - /turbomode/predictions/*")
+    PREDICTIONS_API_AVAILABLE = True
+except ImportError as e:
+    print(f"[PREDICTIONS API] Not available: {e}")
+    PREDICTIONS_API_AVAILABLE = False
+
+# Initialize Options API Blueprint (options analysis with Greeks and ML strike selection)
+try:
+    from backend.turbomode.options_api import options_bp
+    app.register_blueprint(options_bp)
+    print("[OPTIONS API] Registered - /api/options/*")
+    OPTIONS_API_AVAILABLE = True
+except Exception as e:
+    print(f"[OPTIONS API] Not available: {e}")
+    import traceback
+    traceback.print_exc()
+    OPTIONS_API_AVAILABLE = False
 
 
 @app.route('/turbomode/signals', methods=['GET'])
@@ -3035,15 +3060,15 @@ def stop_turbomode_scheduler():
 
 
 if __name__ == "__main__":
-    # Initialize ML Automation Service (separate from TurboMode)
-    if ML_AUTOMATION_AVAILABLE:
-        print("[ML AUTOMATION] Initializing built-in scheduler...")
-        init_automation_service()
-        print("[ML AUTOMATION] Ready")
-    else:
-        print("[ML AUTOMATION] Not available - install APScheduler")
+    # ML Automation Service DISABLED - Using TurboMode instead
+    # if ML_AUTOMATION_AVAILABLE:
+    #     print("[TURBO AUTOMATION] Initializing built-in scheduler...")
+    #     init_automation_service()
+    #     print("[TURBO AUTOMATION] Ready")
+    # else:
+    #     print("[TURBO AUTOMATION] Not available - install APScheduler")
 
-    # Initialize TurboMode Scheduler (runs at 11 PM nightly)
+    # Initialize TurboMode Scheduler (runs at 11 PM nightly on 82 curated stocks)
     if TURBOMODE_SCHEDULER_AVAILABLE:
         print("[TURBOMODE SCHEDULER] Initializing overnight scan scheduler...")
         init_turbomode_scheduler()
@@ -3062,6 +3087,13 @@ if __name__ == "__main__":
         print("[STOCK RANKING] Ready - Runs monthly on 1st at 2:00 AM")
     else:
         print("[STOCK RANKING] Not available")
+
+    # Initialize Unified Scheduler (all 6 scheduled tasks - config-driven)
+    try:
+        from backend.unified_scheduler_api import init_unified_scheduler_api
+        app = init_unified_scheduler_api(app)
+    except Exception as e:
+        print(f"[UNIFIED SCHEDULER] Failed to initialize: {e}")
 
     # Use socketio.run instead of app.run for WebSocket support
     # Ticker emit worker will start automatically when first client connects

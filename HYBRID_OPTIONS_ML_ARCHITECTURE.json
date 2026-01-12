@@ -1,0 +1,716 @@
+{
+  "project_name": "Hybrid Options ML Scoring System",
+  "version": "1.0",
+  "created": "2026-01-03",
+  "overview": {
+    "description": "Complete hybrid approach combining rules-based scoring (40%) with true ML predictions (60%) for optimal options strike selection",
+    "goals": [
+      "Improve options selection accuracy beyond current rules-based approach",
+      "Leverage 12,909 existing TurboMode signals for training data",
+      "Backtest historical options performance over 6+ months",
+      "Deploy production-ready hybrid scoring system",
+      "Enable real-time options analysis for any tradable symbol"
+    ],
+    "key_metrics": {
+      "target_accuracy": "75%+ of options hitting +10% profit target within 14 days",
+      "training_data_size": "12,909 historical signals across 80 stocks",
+      "backtesting_period": "6 months (July 2025 - December 2025)",
+      "model_architecture": "XGBoost (same as TurboMode stock models)"
+    }
+  },
+
+  "current_state": {
+    "phase_1_complete": {
+      "description": "Rules-based 'Intelligent Scoring' (0-100)",
+      "components": [
+        "Delta Score (40 points): Prefer 0.60-0.80 delta range",
+        "Liquidity Score (20 points): Open interest + volume metrics",
+        "IV Score (15 points): Lower implied volatility preferred",
+        "Alignment Score (25 points): Proximity to ML predicted target price"
+      ],
+      "strengths": [
+        "Fast computation (<2 seconds per symbol)",
+        "Interpretable scoring breakdown",
+        "Works without historical options data",
+        "Integrates TurboMode stock predictions"
+      ],
+      "weaknesses": [
+        "Fixed weights (40/20/15/25) may not be optimal",
+        "No learning from past outcomes",
+        "Cannot adapt to changing market conditions",
+        "Doesn't capture complex interactions between Greeks"
+      ]
+    },
+
+    "available_resources": {
+      "turbomode_signals": {
+        "count": 12909,
+        "stocks": 80,
+        "features": [
+          "signal_type (BUY/SELL)",
+          "confidence (0-1)",
+          "entry_price",
+          "target_price",
+          "stop_price",
+          "entry_date",
+          "179 technical features",
+          "12 fundamental features"
+        ]
+      },
+      "ml_infrastructure": {
+        "gpu_acceleration": "CUDA-enabled feature engineering",
+        "trained_models": [
+          "catboost_model.cbm",
+          "lightgbm model",
+          "xgboost variants (hist, dart, et, gblinear, approx)",
+          "meta_learner ensemble"
+        ],
+        "accuracy": "73.43% (stock prediction)",
+        "framework": "XGBoost, CatBoost, LightGBM"
+      },
+      "options_api": {
+        "endpoints": [
+          "/api/options/<symbol> - Full analysis",
+          "/api/options/brief/<symbol> - Tooltip data"
+        ],
+        "data_sources": "yfinance options chains",
+        "greeks_library": "py_vollib (Black-Scholes)"
+      }
+    }
+  },
+
+  "hybrid_architecture": {
+    "scoring_formula": {
+      "description": "Final ML Score = (Rules-Based Score × 0.40) + (ML Model Prediction × 0.60)",
+      "rationale": "Combine interpretable rules with learned patterns from historical outcomes",
+      "benefits": [
+        "60% weight on ML allows model to dominate when confident",
+        "40% rules-based provides safety net and interpretability",
+        "Can adjust weights based on validation performance",
+        "Graceful degradation if ML model fails"
+      ]
+    },
+
+    "ml_model_architecture": {
+      "algorithm": "XGBoost (GPU-accelerated)",
+      "target_variable": "option_success (binary: 1 if hit +10% within 14 days, 0 otherwise)",
+      "features": [
+        {
+          "category": "Option Greeks",
+          "features": [
+            "delta",
+            "gamma",
+            "theta",
+            "vega",
+            "rho"
+          ]
+        },
+        {
+          "category": "Option Characteristics",
+          "features": [
+            "strike_price",
+            "current_price",
+            "moneyness (strike/current)",
+            "days_to_expiration",
+            "implied_volatility",
+            "option_premium",
+            "bid_ask_spread",
+            "bid_ask_spread_pct"
+          ]
+        },
+        {
+          "category": "Liquidity Metrics",
+          "features": [
+            "open_interest",
+            "volume",
+            "oi_volume_ratio",
+            "log_open_interest",
+            "log_volume"
+          ]
+        },
+        {
+          "category": "Stock ML Prediction",
+          "features": [
+            "ml_signal (BUY/SELL encoded)",
+            "ml_confidence",
+            "expected_move_pct",
+            "target_price",
+            "distance_to_target_pct"
+          ]
+        },
+        {
+          "category": "Market Context",
+          "features": [
+            "historical_volatility_30d",
+            "hv_iv_ratio",
+            "sector (one-hot encoded)",
+            "market_cap_category (one-hot encoded)"
+          ]
+        },
+        {
+          "category": "Rules-Based Components",
+          "features": [
+            "delta_score",
+            "liquidity_score",
+            "iv_score",
+            "alignment_score",
+            "rules_total_score"
+          ]
+        },
+        {
+          "category": "Time Features",
+          "features": [
+            "day_of_week",
+            "month",
+            "days_until_expiration_binned"
+          ]
+        }
+      ],
+      "total_features_estimate": "~50 features",
+      "hyperparameters": {
+        "tree_method": "hist",
+        "device": "cuda",
+        "max_depth": 6,
+        "learning_rate": 0.01,
+        "n_estimators": 1000,
+        "early_stopping_rounds": 50,
+        "eval_metric": "auc"
+      }
+    }
+  },
+
+  "implementation_phases": {
+    "phase_1": {
+      "name": "Data Collection & Labeling",
+      "status": "NOT STARTED",
+      "estimated_time": "3-5 hours",
+      "tasks": [
+        {
+          "task": "Extract TurboMode signals from database",
+          "details": "Query all 12,909 signals with entry_date, signal_type, confidence, entry_price, target_price",
+          "output": "signals_for_options_training.csv"
+        },
+        {
+          "task": "Fetch historical options chains",
+          "details": "For each signal, fetch options chain at entry_date using yfinance",
+          "challenges": [
+            "yfinance may not have complete historical options data",
+            "Rate limiting (need delays between requests)",
+            "Data gaps for older dates or less liquid stocks"
+          ],
+          "mitigation": "Start with most recent 6 months, expand if data quality is good",
+          "output": "historical_options_chains.parquet"
+        },
+        {
+          "task": "Calculate Greeks for historical options",
+          "details": "Use Black-Scholes with historical price, IV, DTE",
+          "output": "options_with_greeks.parquet"
+        },
+        {
+          "task": "Label outcomes (target variable)",
+          "details": "For each option, check if it reached +10% within 14 days",
+          "method": "Fetch daily option prices for 14 days post-entry, check max price",
+          "challenges": "Historical option price data may be sparse",
+          "alternative": "Simulate option price using stock movement + Greeks (approximation)",
+          "output": "labeled_options_training_data.parquet"
+        }
+      ],
+      "deliverables": [
+        "labeled_options_training_data.parquet (features + target)",
+        "data_collection_report.json (coverage statistics, data quality metrics)"
+      ]
+    },
+
+    "phase_2": {
+      "name": "Feature Engineering",
+      "status": "NOT STARTED",
+      "estimated_time": "2-3 hours",
+      "tasks": [
+        {
+          "task": "Create derived features",
+          "features": [
+            "moneyness = strike / current_price",
+            "hv_iv_ratio = historical_vol / implied_vol",
+            "distance_to_target_pct = (target - current) / current",
+            "bid_ask_spread_pct = (ask - bid) / mid",
+            "oi_volume_ratio = open_interest / volume",
+            "log transformations for skewed features"
+          ]
+        },
+        {
+          "task": "Encode categorical features",
+          "features": [
+            "sector (one-hot encoding)",
+            "market_cap_category (ordinal or one-hot)",
+            "signal_type (binary: BUY=1, SELL=0)"
+          ]
+        },
+        {
+          "task": "Calculate rules-based scores",
+          "features": [
+            "delta_score (0-40)",
+            "liquidity_score (0-20)",
+            "iv_score (0-15)",
+            "alignment_score (0-25)",
+            "rules_total_score (0-100)"
+          ]
+        },
+        {
+          "task": "Handle missing values",
+          "strategy": "Median imputation for numerical, mode for categorical, drop if >30% missing"
+        },
+        {
+          "task": "Feature scaling",
+          "strategy": "XGBoost doesn't require scaling, but standardize for consistency"
+        }
+      ],
+      "deliverables": [
+        "training_features.parquet (final feature matrix)",
+        "feature_engineering_pipeline.py (reproducible preprocessing)"
+      ]
+    },
+
+    "phase_3": {
+      "name": "Model Training & Validation",
+      "status": "NOT STARTED",
+      "estimated_time": "2-4 hours",
+      "tasks": [
+        {
+          "task": "Train/validation/test split",
+          "strategy": "Time-based split (not random) to prevent lookahead bias",
+          "splits": {
+            "train": "First 60% of data (oldest)",
+            "validation": "Next 20%",
+            "test": "Most recent 20%"
+          }
+        },
+        {
+          "task": "Train XGBoost model",
+          "code_file": "backend/turbomode/train_options_ml_model.py",
+          "features": "All ~50 engineered features",
+          "target": "option_success (binary)",
+          "cross_validation": "5-fold time-series CV on training set",
+          "early_stopping": "Monitor validation AUC, stop after 50 rounds no improvement"
+        },
+        {
+          "task": "Hyperparameter tuning",
+          "method": "Grid search or Bayesian optimization",
+          "parameters": [
+            "max_depth: [4, 6, 8]",
+            "learning_rate: [0.01, 0.05, 0.1]",
+            "min_child_weight: [1, 3, 5]",
+            "subsample: [0.8, 0.9, 1.0]",
+            "colsample_bytree: [0.8, 0.9, 1.0]"
+          ]
+        },
+        {
+          "task": "Feature importance analysis",
+          "outputs": [
+            "SHAP values for top 20 features",
+            "Gain/Cover/Frequency importance plots",
+            "Feature interaction analysis"
+          ]
+        },
+        {
+          "task": "Model evaluation",
+          "metrics": [
+            "AUC-ROC (primary metric)",
+            "Precision/Recall at 0.65 threshold",
+            "Calibration curve (predicted prob vs actual)",
+            "Confusion matrix",
+            "Stratified by signal_type (BUY vs SELL)"
+          ],
+          "success_criteria": "AUC > 0.70, Precision@0.65 > 0.75"
+        }
+      ],
+      "deliverables": [
+        "xgboost_options_model.json (trained model)",
+        "model_evaluation_report.json (all metrics)",
+        "feature_importance.png (visualization)",
+        "shap_analysis.html (interactive SHAP plots)"
+      ]
+    },
+
+    "phase_4": {
+      "name": "Backtesting & Validation",
+      "status": "NOT STARTED",
+      "estimated_time": "2-3 hours",
+      "tasks": [
+        {
+          "task": "Hybrid score backtesting",
+          "method": "For each test set option, calculate hybrid score = 0.4*rules + 0.6*ml_pred",
+          "analysis": [
+            "Top 20% hybrid scores: What % hit +10%?",
+            "Compare vs rules-only approach",
+            "Compare vs ML-only approach",
+            "Analyze false positives and false negatives"
+          ]
+        },
+        {
+          "task": "Walk-forward validation",
+          "description": "Simulate real-world deployment by retraining monthly",
+          "method": "Train on months 1-4, test on month 5, retrain on months 2-5, test on month 6, etc.",
+          "output": "Monthly performance metrics"
+        },
+        {
+          "task": "Sensitivity analysis",
+          "tests": [
+            "Vary hybrid weights (0.3/0.7, 0.5/0.5, 0.4/0.6) - which is optimal?",
+            "Impact of confidence threshold (0.60, 0.65, 0.70)",
+            "Performance by sector, market cap, volatility regime"
+          ]
+        },
+        {
+          "task": "Edge case testing",
+          "scenarios": [
+            "Very low liquidity options (OI < 100)",
+            "Far OTM options (delta < 0.3)",
+            "High IV environments (IV > 0.8)",
+            "Stocks without ML signals (HOLD prediction)"
+          ]
+        }
+      ],
+      "deliverables": [
+        "backtest_results.json (comprehensive performance report)",
+        "hybrid_vs_rules_comparison.csv (side-by-side metrics)",
+        "optimal_weights.json (recommended hybrid weights)"
+      ]
+    },
+
+    "phase_5": {
+      "name": "Production Integration",
+      "status": "NOT STARTED",
+      "estimated_time": "1-2 hours",
+      "tasks": [
+        {
+          "task": "Update options_api.py",
+          "changes": [
+            "Load trained XGBoost model at startup",
+            "Create predict_option_success() function",
+            "Modify calculate_ml_score() to use hybrid formula",
+            "Add ml_model_prediction field to response",
+            "Keep rules_score for transparency"
+          ],
+          "file": "backend/turbomode/options_api.py"
+        },
+        {
+          "task": "Update options.html frontend",
+          "changes": [
+            "Display hybrid ML score (0-100)",
+            "Show breakdown: 'Rules: 78/100, ML: 85/100, Hybrid: 82/100'",
+            "Add confidence indicator (ML model probability)",
+            "Update tooltips to show hybrid score"
+          ],
+          "file": "frontend/turbomode/options.html"
+        },
+        {
+          "task": "Model versioning",
+          "structure": {
+            "path": "backend/data/options_models/",
+            "files": [
+              "xgboost_options_v1.0.json (model)",
+              "feature_names.json (exact feature order)",
+              "preprocessing_params.json (scaling, encoding)",
+              "metadata.json (training date, metrics, version)"
+            ]
+          }
+        },
+        {
+          "task": "Add model monitoring",
+          "logging": [
+            "Log all predictions to options_predictions.csv",
+            "Track actual outcomes when available",
+            "Alert if model confidence drops below threshold",
+            "Monthly retraining trigger"
+          ]
+        }
+      ],
+      "deliverables": [
+        "Deployed hybrid scoring system",
+        "Updated frontend with ML breakdown",
+        "Monitoring dashboard (optional)",
+        "Deployment documentation"
+      ]
+    },
+
+    "phase_6": {
+      "name": "Symbol Search & Real-Time Analysis",
+      "status": "NOT STARTED",
+      "estimated_time": "1-2 hours",
+      "tasks": [
+        {
+          "task": "Add symbol search to options.html",
+          "features": [
+            "Search input box at top of page",
+            "Autocomplete with popular symbols",
+            "Submit → reload page with new symbol",
+            "Recent searches stored in localStorage"
+          ]
+        },
+        {
+          "task": "Handle symbols without ML signals",
+          "approach": "Generate on-the-fly prediction using TurboMode meta-learner",
+          "steps": [
+            "Fetch OHLCV data for symbol",
+            "Calculate 179 technical + 12 fundamental features",
+            "Run through meta_learner model",
+            "Generate BUY/SELL/HOLD prediction",
+            "Use prediction for options analysis"
+          ],
+          "note": "This enables ANY tradable symbol, not just the 80 in database"
+        },
+        {
+          "task": "Caching for performance",
+          "strategy": [
+            "Cache on-the-fly predictions for 1 hour",
+            "Cache options chains for 15 minutes",
+            "Cache Greeks calculations"
+          ]
+        }
+      ],
+      "deliverables": [
+        "Symbol search UI component",
+        "On-the-fly ML prediction engine",
+        "Expanded coverage to all tradable symbols"
+      ]
+    }
+  },
+
+  "technical_architecture": {
+    "file_structure": {
+      "backend/turbomode/": [
+        "options_api.py (Flask blueprint, existing + hybrid scoring)",
+        "train_options_ml_model.py (NEW - training pipeline)",
+        "options_feature_engineer.py (NEW - feature extraction)",
+        "options_data_collector.py (NEW - historical data fetching)",
+        "options_backtester.py (NEW - validation & backtesting)"
+      ],
+      "backend/data/options_models/": [
+        "xgboost_options_v1.0.json (trained model)",
+        "feature_names.json",
+        "preprocessing_params.json",
+        "metadata.json"
+      ],
+      "backend/data/options_training/": [
+        "signals_for_options_training.csv",
+        "historical_options_chains.parquet",
+        "labeled_options_training_data.parquet",
+        "training_features.parquet"
+      ],
+      "backend/data/options_backtests/": [
+        "backtest_results.json",
+        "hybrid_vs_rules_comparison.csv",
+        "monthly_performance.csv"
+      ],
+      "frontend/turbomode/": [
+        "options.html (existing + hybrid score display + symbol search)"
+      ]
+    },
+
+    "api_changes": {
+      "/api/options/<symbol>": {
+        "response_additions": {
+          "recommended_option": {
+            "ml_score_hybrid": 82,
+            "ml_score_rules": 78,
+            "ml_score_ml_model": 85,
+            "ml_model_probability": 0.78,
+            "scoring_breakdown": {
+              "delta_score": 35,
+              "liquidity_score": 18,
+              "iv_score": 12,
+              "alignment_score": 23,
+              "rules_total": 78,
+              "ml_model_raw": 0.85,
+              "ml_model_scaled": 85,
+              "hybrid_final": 82
+            }
+          }
+        }
+      },
+      "/api/options/brief/<symbol>": {
+        "response_additions": {
+          "ml_score": "Now uses hybrid score (0.4*rules + 0.6*ml)"
+        }
+      }
+    },
+
+    "database_additions": {
+      "table": "options_predictions_log",
+      "schema": {
+        "id": "INTEGER PRIMARY KEY",
+        "timestamp": "DATETIME",
+        "symbol": "TEXT",
+        "option_type": "TEXT (CALL/PUT)",
+        "strike": "REAL",
+        "expiration": "DATE",
+        "dte": "INTEGER",
+        "hybrid_score": "REAL",
+        "rules_score": "REAL",
+        "ml_score": "REAL",
+        "ml_probability": "REAL",
+        "entry_premium": "REAL",
+        "actual_outcome": "TEXT (NULL until resolved)",
+        "outcome_date": "DATETIME (NULL until resolved)",
+        "final_premium": "REAL (NULL until resolved)",
+        "profit_pct": "REAL (NULL until resolved)",
+        "hit_target": "BOOLEAN (NULL until resolved)"
+      },
+      "purpose": "Track all predictions for model monitoring and retraining"
+    }
+  },
+
+  "data_collection_strategy": {
+    "historical_options_data_sources": {
+      "primary": "yfinance (free, but limited historical options data)",
+      "challenges": [
+        "May only have recent options chains (3-6 months)",
+        "Data gaps for less liquid stocks",
+        "No guaranteed historical option prices"
+      ],
+      "alternatives_if_needed": [
+        "CBOE historical data (paid)",
+        "Interactive Brokers API (requires account)",
+        "Simulate option prices using Black-Scholes + actual stock movement"
+      ]
+    },
+
+    "data_collection_script": {
+      "file": "backend/turbomode/options_data_collector.py",
+      "approach": "Conservative batch processing with error handling",
+      "pseudocode": [
+        "1. Load all TurboMode signals from database",
+        "2. Filter to last 6 months (July 2025 - Dec 2025)",
+        "3. For each signal:",
+        "   a. Fetch options chain at entry_date",
+        "   b. Find 30-45 DTE expiration",
+        "   c. Calculate Greeks for all strikes",
+        "   d. Calculate rules-based scores",
+        "   e. Track recommended option strike",
+        "   f. Try to fetch 14-day price history for that option",
+        "   g. If price data unavailable, simulate using stock movement",
+        "   h. Label: 1 if hit +10%, 0 otherwise",
+        "   i. Save to parquet incrementally (every 50 symbols)",
+        "4. Generate data quality report"
+      ],
+      "estimated_runtime": "2-4 hours (with rate limiting)",
+      "error_handling": [
+        "Skip symbols with no options data",
+        "Use simulation if historical option prices missing",
+        "Log all errors to data_collection_errors.log"
+      ]
+    }
+  },
+
+  "validation_framework": {
+    "key_questions": [
+      "Does hybrid scoring beat rules-only?",
+      "Does hybrid scoring beat ML-only?",
+      "What is optimal rules/ML weight ratio?",
+      "Does model generalize across sectors?",
+      "Does model work in different volatility regimes?",
+      "Can we trust model on symbols without historical signals?"
+    ],
+
+    "success_metrics": {
+      "primary": "% of recommended options hitting +10% within 14 days",
+      "targets": {
+        "rules_only_baseline": "~60% (estimate based on TurboMode 73% stock accuracy)",
+        "hybrid_target": ">75%",
+        "stretch_goal": ">80%"
+      },
+      "secondary_metrics": [
+        "Average profit % for winning trades",
+        "Average loss % for losing trades",
+        "Risk/reward ratio",
+        "Sharpe ratio (if we simulate portfolio)"
+      ]
+    }
+  },
+
+  "risk_mitigation": {
+    "data_quality_risks": {
+      "risk": "Insufficient historical options data from yfinance",
+      "mitigation": [
+        "Start with most recent 6 months (best data quality)",
+        "Use Black-Scholes simulation if actual prices unavailable",
+        "Validate simulated prices against known outcomes",
+        "Accept 70%+ data coverage as sufficient for initial model"
+      ]
+    },
+    "model_overfitting_risks": {
+      "risk": "Model memorizes patterns that don't generalize",
+      "mitigation": [
+        "Time-based train/test split (no lookahead bias)",
+        "Walk-forward validation",
+        "Early stopping on validation set",
+        "Monitor test set performance closely",
+        "Start with conservative hyperparameters (max_depth=6)"
+      ]
+    },
+    "production_risks": {
+      "risk": "Model performs poorly on live data",
+      "mitigation": [
+        "Keep rules-based component (40%) as safety net",
+        "Log all predictions for monitoring",
+        "Set up alerts if live performance drops",
+        "Monthly retraining with latest data",
+        "Ability to quickly revert to rules-only mode"
+      ]
+    }
+  },
+
+  "timeline": {
+    "total_estimated_time": "12-18 hours",
+    "phases": {
+      "phase_1_data_collection": "3-5 hours",
+      "phase_2_feature_engineering": "2-3 hours",
+      "phase_3_model_training": "2-4 hours",
+      "phase_4_backtesting": "2-3 hours",
+      "phase_5_production_integration": "1-2 hours",
+      "phase_6_symbol_search": "1-2 hours"
+    },
+    "can_parallelize": [
+      "Phase 1 and Phase 2 can overlap (start engineering while collection runs)",
+      "Phase 6 can be done independently anytime"
+    ],
+    "recommended_schedule": [
+      "Day 1: Complete Phase 1 (data collection)",
+      "Day 2: Complete Phase 2 & 3 (engineering + training)",
+      "Day 3: Complete Phase 4 & 5 (backtesting + deployment)",
+      "Day 4: Phase 6 (symbol search) + final testing"
+    ]
+  },
+
+  "deliverables_checklist": [
+    "✅ Phase 1 Complete: labeled_options_training_data.parquet",
+    "✅ Phase 2 Complete: training_features.parquet",
+    "✅ Phase 3 Complete: xgboost_options_model.json with AUC > 0.70",
+    "✅ Phase 4 Complete: backtest_results.json showing >75% hit rate",
+    "✅ Phase 5 Complete: Deployed hybrid scoring in production",
+    "✅ Phase 6 Complete: Symbol search working for any stock",
+    "✅ Documentation: Complete architecture docs and training notebook"
+  ],
+
+  "future_enhancements": {
+    "short_term": [
+      "A/B test different hybrid weight ratios (0.3/0.7 vs 0.4/0.6)",
+      "Add confidence intervals around predictions",
+      "Implement automatic weekly retraining",
+      "Create performance dashboard for monitoring"
+    ],
+    "long_term": [
+      "Multi-task learning (predict both price movement AND option success)",
+      "Deep learning model (LSTM for time-series patterns)",
+      "Portfolio optimization (select top N options to maximize Sharpe ratio)",
+      "Options spreads analysis (not just single-leg calls/puts)"
+    ]
+  },
+
+  "notes": {
+    "naming": "Rename 'ML Score' to 'Hybrid Score' or 'TurboScore' throughout UI",
+    "transparency": "Always show score breakdown (rules/ML/hybrid) for user trust",
+    "fallback": "If ML model fails, gracefully fall back to rules-only mode",
+    "testing": "Test thoroughly with edge cases before going live"
+  }
+}

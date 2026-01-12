@@ -1,0 +1,331 @@
+{
+  "project_name": "Hybrid Options ML - Revised With Real Data Strategy",
+  "version": "2.0",
+  "updated": "2026-01-03",
+
+  "key_insight": "Build our own historical dataset starting NOW, use simulated backtesting for immediate model, then retrain with real data as it accumulates",
+
+  "three_track_strategy": {
+    "track_1_immediate": {
+      "name": "Deploy Phase 1 with Simulated Backtesting (Week 1)",
+      "purpose": "Get hybrid ML model live ASAP using simulated historical data",
+      "approach": "Black-Scholes simulation on past TurboMode signals",
+      "timeline": "3-5 days to deploy",
+      "accuracy": "Estimated 75-85% correlation with real outcomes",
+      "status": "Can start immediately"
+    },
+
+    "track_2_data_collection": {
+      "name": "Begin Live Options Logging (Starting TODAY)",
+      "purpose": "Build proprietary historical options dataset",
+      "approach": "Log every options analysis + track outcomes for 14 days",
+      "timeline": "Starts today, ongoing forever",
+      "accuracy": "100% real data",
+      "status": "Deploy logging infrastructure ASAP"
+    },
+
+    "track_3_retraining": {
+      "name": "Monthly Model Retraining with Real Data",
+      "purpose": "Improve model accuracy as real data accumulates",
+      "approach": "Retrain hybrid model using real logged outcomes",
+      "timeline": "First retrain after 30 days, then monthly",
+      "accuracy": "Will improve over time as dataset grows",
+      "status": "Starts after 30 days of logging"
+    }
+  },
+
+  "phase_1a_immediate_deployment": {
+    "name": "Deploy Hybrid ML with Simulated Backtesting",
+    "estimated_time": "12-18 hours (as originally planned)",
+    "data_source": "TurboMode signals from July-Dec 2025 (6 months)",
+    "labeling_method": "Black-Scholes simulation",
+
+    "steps": [
+      {
+        "step": 1,
+        "name": "Extract TurboMode signals",
+        "query": "SELECT * FROM active_signals WHERE entry_date >= '2025-07-01' AND entry_date <= '2025-12-31'",
+        "expected_count": "~2000-3000 signals (6 months of daily scanning)"
+      },
+      {
+        "step": 2,
+        "name": "For each signal, fetch options chain at entry_date",
+        "data_needed": [
+          "Stock price at entry_date",
+          "Options strikes available",
+          "Implied volatility",
+          "Days to expiration"
+        ],
+        "source": "yfinance historical data"
+      },
+      {
+        "step": 3,
+        "name": "Calculate recommended option using current algorithm",
+        "output": "Strike, premium (Black-Scholes), Greeks"
+      },
+      {
+        "step": 4,
+        "name": "Simulate 14-day outcome",
+        "method": "Re-price option daily using Black-Scholes with actual stock movement",
+        "label": "1 if max_premium >= entry_premium * 1.10, else 0"
+      },
+      {
+        "step": 5,
+        "name": "Extract ~50 features per option",
+        "features": "Greeks, stock ML prediction, liquidity, rules-based scores, etc."
+      },
+      {
+        "step": 6,
+        "name": "Train XGBoost model",
+        "target": "option_success (binary)",
+        "validation": "Time-based split (train on July-Oct, validate on Nov, test on Dec)"
+      },
+      {
+        "step": 7,
+        "name": "Deploy hybrid scoring",
+        "formula": "0.4 * rules_score + 0.6 * ml_prediction"
+      }
+    ],
+
+    "deliverable": "Hybrid ML model v1.0 (simulated training data)",
+    "expected_performance": "70-75% options hit +10% target (estimated)",
+    "timeline": "Deploy by Jan 10, 2026"
+  },
+
+  "phase_1b_logging_infrastructure": {
+    "name": "Deploy Live Options Tracking System",
+    "priority": "HIGHEST - Start today!",
+    "estimated_time": "2-3 hours to build",
+
+    "logging_system": {
+      "trigger": "Every time /api/options/<symbol> is called",
+      "database_table": "options_predictions_log",
+      "schema": {
+        "prediction_id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "created_at": "DATETIME DEFAULT CURRENT_TIMESTAMP",
+        "symbol": "TEXT NOT NULL",
+        "stock_price_entry": "REAL",
+        "ml_signal": "TEXT (BUY/SELL/HOLD)",
+        "ml_confidence": "REAL",
+        "ml_target_price": "REAL",
+
+        "option_type": "TEXT (CALL/PUT)",
+        "strike": "REAL",
+        "expiration_date": "DATE",
+        "dte": "INTEGER",
+        "entry_premium": "REAL",
+        "entry_bid": "REAL",
+        "entry_ask": "REAL",
+        "entry_delta": "REAL",
+        "entry_gamma": "REAL",
+        "entry_theta": "REAL",
+        "entry_vega": "REAL",
+        "entry_rho": "REAL",
+        "entry_iv": "REAL",
+        "entry_open_interest": "INTEGER",
+        "entry_volume": "INTEGER",
+
+        "rules_score": "INTEGER",
+        "ml_score": "REAL",
+        "hybrid_score": "REAL",
+
+        "tracking_complete": "BOOLEAN DEFAULT FALSE",
+        "outcome_checked_at": "DATETIME NULL",
+        "max_premium_14d": "REAL NULL",
+        "max_premium_date": "DATETIME NULL",
+        "final_premium_14d": "REAL NULL",
+        "hit_10pct_target": "BOOLEAN NULL",
+        "days_to_target": "INTEGER NULL",
+        "max_profit_pct": "REAL NULL"
+      }
+    },
+
+    "daily_tracking_script": {
+      "file": "backend/turbomode/track_options_outcomes.py",
+      "schedule": "Run daily at 4:30 PM ET (after market close)",
+      "logic": [
+        "1. Find all predictions where tracking_complete = FALSE",
+        "2. For each prediction:",
+        "   a. Calculate days since prediction",
+        "   b. If days <= 14:",
+        "      - Fetch current option premium (or estimate with Black-Scholes)",
+        "      - Update max_premium_14d if current > max",
+        "      - Check if hit +10% target",
+        "   c. If days == 14:",
+        "      - Mark tracking_complete = TRUE",
+        "      - Record final_premium_14d",
+        "      - Calculate max_profit_pct",
+        "      - Set hit_10pct_target = TRUE/FALSE",
+        "3. Save results"
+      ],
+      "example_cron": "30 16 * * 1-5  # 4:30 PM weekdays"
+    },
+
+    "immediate_value": [
+      "After 14 days: We can see if our current algorithm works!",
+      "After 30 days: We have real training data for first model improvement",
+      "After 90 days: We have robust dataset for confident retraining",
+      "After 6 months: We have seasonal coverage (different market conditions)"
+    ]
+  },
+
+  "contract_timeframe_strategy": {
+    "problem": "Options contracts expire - how do we handle this in training?",
+
+    "solution": {
+      "standardize_on_monthly_options": {
+        "description": "Always analyze 30-45 DTE contracts (monthly expiration cycle)",
+        "rationale": [
+          "Most liquid options",
+          "Consistent DTE range for model training",
+          "Aligns with 14-day profit target (still has 16-31 days left)"
+        ]
+      },
+
+      "training_window_strategy": {
+        "description": "Use signals from 60-90 days ago (contracts already expired)",
+        "example": {
+          "today": "2026-01-03",
+          "training_signals": "Oct 5 - Nov 5, 2025",
+          "contract_expirations": "Nov 15 - Dec 15, 2025",
+          "status": "All expired - outcomes 100% known",
+          "advantage": "No need to wait for tracking - can simulate or use logged data"
+        }
+      },
+
+      "rolling_retraining": {
+        "frequency": "Monthly (1st of each month)",
+        "data_used": "All completed predictions from last 6 months",
+        "example_timeline": [
+          "Feb 1, 2026: Train on Aug-Jan predictions",
+          "Mar 1, 2026: Train on Sep-Feb predictions",
+          "Apr 1, 2026: Train on Oct-Mar predictions"
+        ],
+        "advantage": "Model always trained on recent market conditions"
+      }
+    }
+  },
+
+  "data_quality_evolution": {
+    "month_1_jan_2026": {
+      "simulated_data": "6 months (Jul-Dec 2025) - ~2000 signals",
+      "real_logged_data": "0 predictions (just started logging)",
+      "model_version": "v1.0 - Simulated training",
+      "expected_accuracy": "70-75% (estimated)"
+    },
+
+    "month_2_feb_2026": {
+      "simulated_data": "6 months (Jul-Dec 2025) - ~2000 signals",
+      "real_logged_data": "~300 predictions (30 days × 10/day)",
+      "model_version": "v1.1 - Mostly simulated + some real",
+      "expected_accuracy": "72-77% (slight improvement)"
+    },
+
+    "month_4_apr_2026": {
+      "simulated_data": "No longer used (replaced by real data)",
+      "real_logged_data": "~900 predictions (90 days × 10/day)",
+      "model_version": "v2.0 - Pure real data",
+      "expected_accuracy": "75-80% (significant improvement)"
+    },
+
+    "month_7_jul_2026": {
+      "simulated_data": "No longer used",
+      "real_logged_data": "~1800 predictions (180 days × 10/day)",
+      "model_version": "v3.0 - Robust real data, seasonal coverage",
+      "expected_accuracy": "78-82% (mature model)"
+    }
+  },
+
+  "implementation_priority": {
+    "week_1": [
+      "✅ Build options_predictions_log table",
+      "✅ Add logging to /api/options/<symbol> endpoint",
+      "✅ Create track_options_outcomes.py script",
+      "✅ Set up daily cron job",
+      "✅ Deploy to production - START LOGGING TODAY"
+    ],
+
+    "week_2": [
+      "Build options_data_collector.py (simulated backtesting)",
+      "Collect 6 months of simulated training data",
+      "Train initial hybrid ML model v1.0",
+      "Deploy hybrid scoring to production"
+    ],
+
+    "week_3": [
+      "Monitor live predictions",
+      "Validate model performance on live data",
+      "Tune hybrid weights if needed (0.4/0.6 vs 0.3/0.7)"
+    ],
+
+    "week_4_and_beyond": [
+      "First real data available (14 days after start)",
+      "Begin validation: Do predictions match outcomes?",
+      "Monthly retraining with real data",
+      "Continuous improvement"
+    ]
+  },
+
+  "revised_file_structure": {
+    "backend/turbomode/": [
+      "options_api.py (existing - add logging)",
+      "track_options_outcomes.py (NEW - daily tracking script)",
+      "options_data_collector.py (NEW - simulated backtesting for v1.0)",
+      "train_options_ml_model.py (NEW - training pipeline)",
+      "options_feature_engineer.py (NEW - feature extraction)"
+    ],
+
+    "backend/data/options_logs/": [
+      "options_predictions.db (SQLite database with predictions table)",
+      "daily_tracking_log.txt (tracking script output)"
+    ],
+
+    "backend/data/options_models/": [
+      "v1.0_simulated/ (initial model trained on simulated data)",
+      "v2.0_real/ (first retrain with real data)",
+      "v3.0_real/ (second retrain)",
+      "current/ (symlink to latest version)"
+    ]
+  },
+
+  "key_advantages": {
+    "immediate_deployment": "Don't wait 90 days - deploy hybrid ML in week 2",
+    "real_data_accumulation": "Build proprietary dataset starting today",
+    "continuous_improvement": "Model gets better every month as real data grows",
+    "validation": "We'll know if our algorithm works within 14 days!",
+    "competitive_advantage": "Proprietary options performance database"
+  },
+
+  "example_usage_timeline": {
+    "jan_3_2026": "Deploy logging infrastructure - start tracking",
+    "jan_17_2026": "First 14-day outcomes available - validate current algorithm!",
+    "jan_31_2026": "Have 300+ real predictions with outcomes",
+    "feb_7_2026": "Deploy hybrid ML v1.0 (simulated training)",
+    "mar_1_2026": "Retrain model v1.1 with mix of simulated + 1 month real data",
+    "apr_1_2026": "Retrain model v2.0 with 100% real data (3 months logged)",
+    "jul_1_2026": "Retrain model v3.0 with 6 months real data - mature model"
+  },
+
+  "success_metrics_tracking": {
+    "dashboard": "Create simple dashboard showing:",
+    "metrics": [
+      "Total predictions logged",
+      "Predictions with outcomes (14 days passed)",
+      "Hit rate (% that achieved +10%)",
+      "Average profit % for winners",
+      "Average loss % for losers",
+      "Best performing sectors/symbols",
+      "Model version performance comparison"
+    ],
+    "update_frequency": "Daily at 5 PM ET (after tracking script runs)"
+  },
+
+  "immediate_next_steps": [
+    "1. Create options_predictions_log database table",
+    "2. Modify options_api.py to log every prediction",
+    "3. Build track_options_outcomes.py script",
+    "4. Test logging system with 3-5 symbols",
+    "5. Deploy to production ASAP",
+    "6. Then start Phase 1A (simulated backtesting) in parallel"
+  ]
+}

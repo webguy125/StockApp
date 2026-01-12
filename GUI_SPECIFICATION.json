@@ -1,0 +1,590 @@
+{
+  "role": "system",
+  "purpose": "Generate a complete, production-ready PowerShell/WPF GUI for TurboMode Phase 2 Unified Scheduler. This GUI provides comprehensive monitoring, control, and management capabilities for all scheduled tasks via Flask REST API endpoints.",
+  "version": "1.0",
+  "date": "2026-01-06",
+  "target_platform": "Windows 10/11 with PowerShell 5.1+ and .NET Framework 4.7+",
+
+  "architecture": {
+    "technology_stack": {
+      "primary": "PowerShell 7+ with Windows Presentation Foundation (WPF)",
+      "ui_framework": "WPF XAML with Material Design principles",
+      "api_communication": "REST API via Invoke-RestMethod to Flask endpoints",
+      "authentication": "Bearer token or Basic Auth to Flask",
+      "data_binding": "MVVM pattern with observable collections",
+      "charts": "LiveCharts.Wpf or OxyPlot for metrics visualization"
+    },
+    "file_structure": {
+      "gui_directory": "C:/StockApp/gui/",
+      "main_script": "TurboModeGUI.ps1",
+      "config_file": "gui_config.json",
+      "theme_files": "themes/light.xaml, themes/dark.xaml",
+      "localization_files": "i18n/en-US.json, i18n/es-ES.json, i18n/fr-FR.json"
+    }
+  },
+
+  "core_requirements": {
+    "flask_integration": {
+      "base_url": "http://localhost:5000",
+      "endpoints_used": [
+        "GET /scheduler/status - Get scheduler and job status",
+        "POST /scheduler/start - Start scheduler",
+        "POST /scheduler/stop - Stop scheduler",
+        "POST /scheduler/run_ingestion - Trigger Task 1",
+        "POST /scheduler/run_orchestrator - Trigger Task 2",
+        "POST /scheduler/run_overnight_scanner - Trigger Task 3",
+        "POST /scheduler/run_backtest_generator - Trigger Task 4",
+        "POST /scheduler/run_drift_monitor - Trigger Task 5",
+        "POST /scheduler/run_weekly_maintenance - Trigger Task 6",
+        "POST /scheduler/run_task/<id> - Generic task trigger",
+        "GET /scheduler/logs/<task_id> - Fetch task logs (to be added to Flask)",
+        "GET /scheduler/metrics - System metrics (to be added to Flask)",
+        "POST /scheduler/config - Update config (to be added to Flask)",
+        "GET /auth/login - User authentication (to be added to Flask)",
+        "GET /audit/logs - Audit log retrieval (to be added to Flask)"
+      ],
+      "authentication": {
+        "method": "Basic Auth or JWT Bearer token",
+        "storage": "Encrypted credential cache in user profile",
+        "timeout": "Session expires after 24 hours"
+      },
+      "error_handling": {
+        "connection_failed": "Display 'Flask server not reachable' with retry button",
+        "timeout": "Show timeout error with option to increase timeout",
+        "http_errors": "Parse Flask JSON error responses and display user-friendly messages",
+        "network_errors": "Detect offline state and show notification"
+      }
+    },
+
+    "logging_system": {
+      "log_viewing": {
+        "per_task_logs": "Fetch logs from Flask endpoint per task ID",
+        "real_time_tailing": "Poll Flask endpoint every 2 seconds for active tasks",
+        "pagination": "Display 1000 lines per page with prev/next buttons",
+        "search_filter": "Regex or keyword search within loaded logs",
+        "date_range_filter": "Filter logs by start/end datetime",
+        "log_level_filter": "Filter by INFO, WARNING, ERROR, DEBUG"
+      },
+      "log_export": {
+        "formats": ["TXT (plain text)", "CSV (structured)", "JSON (machine-readable)", "HTML (formatted)"],
+        "save_dialog": "Windows SaveFileDialog with format selection",
+        "auto_cleanup": "Delete temp GUI logs on exit unless Save Log clicked",
+        "export_location": "Default to C:/StockApp/gui/exports/"
+      },
+      "log_rotation": {
+        "display_note": "Show 'Logs rotated at 10MB per file' info tooltip",
+        "archive_access": "Button to browse archived logs (ZIP files)"
+      }
+    },
+
+    "task_management": {
+      "manual_triggers": {
+        "task_buttons": "6 buttons for each task with icons and descriptions",
+        "confirmation_dialog": "Ask 'Are you sure?' before triggering long tasks",
+        "progress_indicator": "Show spinner while task is running",
+        "completion_notification": "Toast notification when task completes/fails"
+      },
+      "schedule_control": {
+        "pause_resume": "Global pause/resume button for scheduler",
+        "enable_disable_task": "Checkboxes to enable/disable individual tasks",
+        "schedule_editor": "UI to modify cron schedule (hour, minute, days)",
+        "save_config": "POST updated config to Flask endpoint"
+      },
+      "dependency_visualization": {
+        "task_graph": "Display task dependencies as flowchart (Task 1 → Task 2 → Task 3)",
+        "status_colors": "Green=completed, Yellow=running, Red=failed, Gray=pending"
+      }
+    }
+  },
+
+  "ui_components": {
+    "main_window": {
+      "title": "TurboMode Phase 2 - Scheduler Control Center",
+      "size": "1280x800 pixels (resizable)",
+      "min_size": "1024x600 pixels",
+      "theme_toggle": "Button in top-right to switch between light/dark mode",
+      "layout": {
+        "top_menu_bar": {
+          "items": [
+            "File > Exit",
+            "View > Dashboard | Tasks | Logs | Metrics | Settings",
+            "Tools > Backup Config | Restore Config | Export Logs",
+            "Help > Documentation | About | Check for Updates"
+          ]
+        },
+        "left_sidebar": {
+          "width": "250px",
+          "sections": [
+            "Quick Actions (Start/Stop Scheduler, Trigger Task 1-6)",
+            "Recent Alerts (Last 5 errors or warnings)",
+            "System Status (CPU, Memory, Disk usage)"
+          ]
+        },
+        "main_content_area": {
+          "tabs": [
+            "Dashboard",
+            "Task Manager",
+            "Log Viewer",
+            "Metrics & Charts",
+            "Configuration Editor",
+            "Audit Log"
+          ]
+        },
+        "bottom_status_bar": {
+          "left": "Connection status: Connected to Flask at localhost:5000",
+          "center": "Last sync: 2026-01-06 09:45:32",
+          "right": "User: admin | Session: Active"
+        }
+      }
+    },
+
+    "dashboard_tab": {
+      "purpose": "Overview of entire system at a glance",
+      "widgets": [
+        {
+          "name": "Scheduler Status Card",
+          "displays": "Running/Stopped, Active Jobs: 6, Next Run: Task 1 at 22:45",
+          "actions": ["Start Scheduler", "Stop Scheduler"]
+        },
+        {
+          "name": "Task Execution Timeline",
+          "displays": "Gantt chart of last 24 hours showing when each task ran",
+          "interactivity": "Click on task bar to view logs"
+        },
+        {
+          "name": "Recent Failures",
+          "displays": "List of last 10 failed tasks with timestamps and error summaries",
+          "actions": ["View Log", "Retry Task"]
+        },
+        {
+          "name": "Key Metrics",
+          "displays": "Cards showing: Total Runs Today, Success Rate, Avg Duration, Symbols Ingested",
+          "refresh": "Auto-refresh every 30 seconds"
+        },
+        {
+          "name": "Job Queue",
+          "displays": "List of upcoming scheduled tasks with countdown timers",
+          "actions": ["Cancel Scheduled Task"]
+        },
+        {
+          "name": "System Health",
+          "displays": "Flask API: Online, Master DB: 205K rows, TurboMode DB: 15MB, Logs: 42 files",
+          "alerts": "Show red warning if DB size exceeds threshold"
+        }
+      ]
+    },
+
+    "task_manager_tab": {
+      "purpose": "Detailed control of all 6 tasks",
+      "layout": {
+        "task_list": {
+          "display": "DataGrid with columns: ID, Name, Status, Last Run, Next Run, Duration, Actions",
+          "row_colors": "Green=success, Red=failed, Yellow=running, Gray=disabled",
+          "selection": "Single-click to select, double-click to view details"
+        },
+        "task_details_panel": {
+          "shows_when_selected": [
+            "Task Name and Description",
+            "Schedule (cron expression with human-readable translation)",
+            "Dependencies (list of task IDs)",
+            "Timeout: 30 minutes",
+            "Retry: Enabled, Max 3 attempts",
+            "Last 5 Run Results (timestamp, duration, status, error if any)"
+          ],
+          "actions": [
+            "Run Now (manual trigger)",
+            "Enable/Disable Task",
+            "Edit Schedule (opens schedule editor dialog)",
+            "View Full Logs"
+          ]
+        }
+      }
+    },
+
+    "log_viewer_tab": {
+      "purpose": "View and search logs for any task",
+      "layout": {
+        "task_selector": {
+          "type": "ComboBox dropdown",
+          "options": ["Task 1: Ingestion", "Task 2: Training", "Task 3: Scanner", "Task 4: Backtest", "Task 5: Drift", "Task 6: Maintenance", "All Tasks (Merged)"]
+        },
+        "log_display": {
+          "type": "TextBox with monospace font (Consolas 10pt)",
+          "scrollable": "Vertical scrollbar, auto-scroll to bottom for real-time",
+          "line_numbers": "Optional toggle to show line numbers",
+          "syntax_highlighting": "Color-code log levels: INFO=blue, WARNING=yellow, ERROR=red"
+        },
+        "controls": {
+          "real_time_toggle": "Checkbox: 'Enable real-time tailing' (polls every 2s)",
+          "search_box": "Textbox with 'Search logs...' placeholder and Search button",
+          "date_range_pickers": "Start Date, End Date (defaults to last 7 days)",
+          "log_level_filter": "Multi-select checkboxes: INFO, WARNING, ERROR, DEBUG",
+          "pagination": "Buttons: << Prev Page | Page 1 of 42 | Next Page >>",
+          "export_button": "Opens save dialog with format selection (TXT, CSV, JSON, HTML)",
+          "clear_button": "Clear current view (doesn't delete logs)"
+        }
+      }
+    },
+
+    "metrics_charts_tab": {
+      "purpose": "Visual analytics of system performance",
+      "charts": [
+        {
+          "name": "Task Execution Times (Line Chart)",
+          "x_axis": "Date/Time (last 30 days)",
+          "y_axis": "Duration in minutes",
+          "series": "One line per task (6 total)",
+          "interactivity": "Hover to see exact values, click to filter by task"
+        },
+        {
+          "name": "Success/Failure Rates (Pie Chart)",
+          "segments": "Success (green), Failed (red), Skipped (gray)",
+          "displays": "Percentage and count for each"
+        },
+        {
+          "name": "Symbols Ingested (Bar Chart)",
+          "x_axis": "Date (last 30 days)",
+          "y_axis": "Number of symbols",
+          "color": "Green bars, red outline if failures"
+        },
+        {
+          "name": "Drift Alerts (Heatmap)",
+          "x_axis": "Feature names",
+          "y_axis": "Date",
+          "color_scale": "White=no drift, Yellow=moderate, Red=high drift"
+        },
+        {
+          "name": "Resource Usage (Stacked Area Chart)",
+          "x_axis": "Time (last 24 hours)",
+          "y_axis": "Percentage",
+          "series": "CPU (blue), Memory (green), Disk I/O (orange)",
+          "data_source": "Fetch from Flask /scheduler/metrics endpoint"
+        }
+      ],
+      "controls": {
+        "date_range_selector": "Dropdown: Last 24h, Last 7d, Last 30d, Custom",
+        "refresh_button": "Manually refresh charts",
+        "export_chart": "Save as PNG or SVG"
+      }
+    },
+
+    "configuration_editor_tab": {
+      "purpose": "Edit scheduler_config.json via GUI",
+      "layout": {
+        "config_tree": {
+          "type": "TreeView with expandable nodes",
+          "structure": [
+            "Global Settings (timezone, max_concurrent_jobs)",
+            "Task 1 (Ingestion) - Schedule, Timeout, Retry",
+            "Task 2 (Training) - Schedule, Timeout, Retry",
+            "Task 3 (Scanner) - Schedule, Timeout, Retry",
+            "Task 4 (Backtest) - Schedule, Timeout, Retry",
+            "Task 5 (Drift) - Schedule, Timeout, Retry",
+            "Task 6 (Maintenance) - Schedule, Timeout, Retry"
+          ]
+        },
+        "editor_panel": {
+          "type": "Form with labeled fields",
+          "fields_per_task": [
+            "Enabled: Checkbox",
+            "Schedule Hour: NumericUpDown (0-23)",
+            "Schedule Minute: NumericUpDown (0-59)",
+            "Day of Week: CheckBoxes (Mon-Sun)",
+            "Timeout (minutes): NumericUpDown (1-600)",
+            "Retry on Failure: Checkbox",
+            "Max Retries: NumericUpDown (0-10)"
+          ]
+        },
+        "actions": {
+          "save_button": "POST updated config to Flask /scheduler/config",
+          "reset_button": "Reload config from Flask",
+          "validate_button": "Check if config is valid JSON before saving",
+          "backup_button": "Export current config to timestamped JSON file"
+        }
+      },
+      "validation": {
+        "schedule_conflicts": "Warn if two tasks have same schedule",
+        "timeout_warnings": "Warn if timeout < typical duration",
+        "dependency_cycles": "Error if circular dependencies detected"
+      }
+    },
+
+    "audit_log_tab": {
+      "purpose": "Track all user actions in GUI",
+      "layout": {
+        "log_table": {
+          "columns": ["Timestamp", "User", "Action", "Target", "Result", "Details"],
+          "sortable": "Click column headers to sort",
+          "filterable": "Filter by user, action type, date range"
+        },
+        "action_types": [
+          "Login/Logout",
+          "Task Triggered",
+          "Config Changed",
+          "Scheduler Started/Stopped",
+          "Log Exported",
+          "Settings Modified"
+        ]
+      },
+      "data_source": "Fetch from Flask /audit/logs endpoint",
+      "export": "Export audit log to CSV for compliance"
+    }
+  },
+
+  "advanced_features": {
+    "authentication": {
+      "login_window": {
+        "fields": ["Username", "Password", "Remember Me checkbox"],
+        "actions": ["Login button", "Forgot Password link (not implemented)"],
+        "validation": "POST to Flask /auth/login, receive JWT token",
+        "error_handling": "Display 'Invalid credentials' if 401 response"
+      },
+      "user_roles": {
+        "admin": {
+          "permissions": ["All features", "Edit config", "Trigger tasks", "View all logs", "Manage users"]
+        },
+        "operator": {
+          "permissions": ["Trigger tasks", "View logs", "View metrics"]
+        },
+        "viewer": {
+          "permissions": ["View logs", "View metrics", "Dashboard only"]
+        }
+      },
+      "session_management": {
+        "token_storage": "Encrypted in %APPDATA%/TurboModeGUI/session.dat",
+        "auto_logout": "After 24 hours or on inactivity",
+        "token_refresh": "Refresh token before expiry via Flask endpoint"
+      }
+    },
+
+    "notifications": {
+      "system_tray": {
+        "icon": "TurboMode logo, changes color based on status (green=OK, red=error)",
+        "tooltip": "Shows scheduler status and next run time",
+        "context_menu": [
+          "Show Dashboard",
+          "Start/Stop Scheduler",
+          "Exit"
+        ]
+      },
+      "toast_notifications": {
+        "triggers": [
+          "Task completed successfully",
+          "Task failed with error",
+          "Scheduler started/stopped",
+          "New drift alert detected"
+        ],
+        "appearance": "Windows 10/11 native toast with icon, title, message, action buttons",
+        "actions": ["View Log", "Dismiss", "Retry Task"]
+      },
+      "email_notifications": {
+        "configuration": {
+          "smtp_server": "Configurable in Settings",
+          "recipients": "Comma-separated list of email addresses",
+          "triggers": "Checkboxes for: Task Failure, Critical Error, Daily Summary"
+        },
+        "templates": [
+          "Task Failure Email: Subject: [TurboMode] Task {id} Failed, Body: Error details + link to logs",
+          "Daily Summary Email: List of all tasks run today with success/failure counts"
+        ]
+      }
+    },
+
+    "search_functionality": {
+      "global_search": {
+        "location": "Top-right search bar in main window",
+        "scope": "Search across all logs, config values, task names, error messages",
+        "results": "Display in popup window with links to source (task, log line, config)"
+      },
+      "log_search": {
+        "regex_support": "Checkbox to enable regex mode",
+        "case_sensitive": "Toggle case-sensitive search",
+        "highlight_matches": "Yellow highlight on matching text in log viewer",
+        "jump_buttons": "Next/Previous Match buttons"
+      }
+    },
+
+    "bulk_operations": {
+      "multi_select_tasks": {
+        "ui": "Checkboxes next to each task in Task Manager",
+        "actions": [
+          "Trigger Selected (runs all checked tasks)",
+          "Enable/Disable Selected",
+          "Export Logs for Selected"
+        ]
+      },
+      "schedule_presets": {
+        "options": [
+          "Disable All Non-Critical (disables Tasks 4, 5)",
+          "Enable All",
+          "Weekend Mode (run only Task 6 on Sunday)"
+        ]
+      }
+    },
+
+    "internationalization": {
+      "supported_languages": ["English (en-US)", "Spanish (es-ES)", "French (fr-FR)", "German (de-DE)", "Japanese (ja-JP)"],
+      "translation_files": "JSON files in gui/i18n/ directory",
+      "language_selector": "Settings > Language dropdown",
+      "dynamic_reload": "Change language without restarting GUI"
+    },
+
+    "accessibility": {
+      "keyboard_navigation": {
+        "tab_order": "Logical tab order through all controls",
+        "shortcuts": [
+          "Ctrl+T: Open Task Manager",
+          "Ctrl+L: Open Log Viewer",
+          "Ctrl+M: Open Metrics",
+          "Ctrl+S: Start/Stop Scheduler",
+          "F5: Refresh current view"
+        ]
+      },
+      "screen_reader": {
+        "labels": "All controls have AutomationProperties.Name set",
+        "announcements": "Use UI Automation to announce task completions"
+      },
+      "high_contrast_mode": {
+        "detection": "Detect Windows high-contrast setting",
+        "adjustments": "Use system colors, increase border thickness, larger fonts"
+      }
+    },
+
+    "help_system": {
+      "tooltips": "Hover over any button/field to see explanation",
+      "documentation_links": {
+        "location": "Help menu",
+        "links": [
+          "Online Documentation (opens browser to docs site)",
+          "Scheduler API Reference",
+          "Troubleshooting Guide",
+          "Contact Support"
+        ]
+      },
+      "search_help": {
+        "location": "Help > Search Documentation",
+        "functionality": "Search bar that indexes all help content locally"
+      }
+    }
+  },
+
+  "technical_implementation": {
+    "wpf_xaml_structure": {
+      "main_window_xaml": "Define grid layout with menu, sidebar, tabs, status bar",
+      "material_design": "Use MaterialDesignThemes.Wpf NuGet package for modern UI",
+      "data_binding": "Bind UI elements to PowerShell variables with INotifyPropertyChanged pattern",
+      "charts": "Use LiveCharts.Wpf for interactive charts"
+    },
+
+    "powershell_code_structure": {
+      "modules": [
+        "GUI-Main.ps1: Entry point, loads XAML, initializes window",
+        "API-Client.ps1: All Flask REST API calls (Invoke-RestMethod wrappers)",
+        "Auth-Manager.ps1: Login, token storage, session management",
+        "Log-Viewer.ps1: Log fetching, parsing, display, search",
+        "Config-Editor.ps1: Read/write scheduler_config.json",
+        "Notification-Manager.ps1: Toast, tray, email notifications",
+        "Theme-Manager.ps1: Switch between light/dark themes",
+        "i18n-Manager.ps1: Load translations, apply to UI"
+      ],
+      "error_handling": {
+        "try_catch": "Wrap all API calls in try-catch blocks",
+        "logging": "Log GUI errors to gui/logs/gui_errors.log",
+        "user_feedback": "Show MessageBox with clear error message and suggested action"
+      }
+    },
+
+    "performance_optimization": {
+      "async_operations": "Use runspaces for API calls to keep UI responsive",
+      "caching": "Cache scheduler status, task list, metrics for 30 seconds",
+      "lazy_loading": "Load logs on demand, not all at once",
+      "pagination": "Limit log display to 1000 lines per page"
+    },
+
+    "security": {
+      "credential_storage": "Use Windows DPAPI to encrypt stored credentials",
+      "https_enforcement": "Warn if Flask is using HTTP instead of HTTPS in production",
+      "input_validation": "Sanitize all user inputs before sending to Flask",
+      "xss_prevention": "Escape HTML when displaying log content"
+    }
+  },
+
+  "testing_requirements": {
+    "unit_tests": "Test each PowerShell function independently",
+    "integration_tests": "Test API calls against live Flask server",
+    "ui_tests": "Manual testing checklist for all tabs and features",
+    "accessibility_tests": "Test with screen reader (NVDA or JAWS) and keyboard-only navigation"
+  },
+
+  "deployment": {
+    "installer": {
+      "type": "NSIS or Inno Setup for Windows installer",
+      "includes": [
+        "TurboModeGUI.ps1",
+        "All dependency DLLs (MaterialDesign, LiveCharts)",
+        "Theme files",
+        "Translation files",
+        "README.md"
+      ],
+      "install_location": "C:/Program Files/TurboMode/GUI/",
+      "shortcuts": "Desktop and Start Menu shortcuts"
+    },
+    "prerequisites": {
+      "check": "Installer checks for PowerShell 7+ and .NET 4.7+",
+      "auto_install": "Prompt to install if missing"
+    }
+  },
+
+  "documentation": {
+    "user_guide": {
+      "sections": [
+        "Installation",
+        "First Launch and Login",
+        "Dashboard Overview",
+        "Triggering Tasks Manually",
+        "Viewing Logs",
+        "Understanding Metrics",
+        "Editing Configuration",
+        "Troubleshooting Common Issues"
+      ],
+      "screenshots": "Include annotated screenshots for each feature"
+    },
+    "developer_guide": {
+      "sections": [
+        "PowerShell Module Structure",
+        "Adding New Features",
+        "Customizing Themes",
+        "Adding Translations",
+        "API Endpoint Requirements"
+      ]
+    }
+  },
+
+  "future_enhancements": {
+    "phase_4_ideas": [
+      "Mobile companion app (REST API ready)",
+      "Slack/Teams integration for notifications",
+      "Historical data export to Excel/Power BI",
+      "Machine learning model performance comparison tool",
+      "Custom dashboard widgets (user can add/remove widgets)",
+      "Remote management (control scheduler on different machines)"
+    ]
+  },
+
+  "success_criteria": {
+    "must_have": [
+      "All 6 tasks can be triggered manually",
+      "Scheduler can be started/stopped",
+      "Logs are viewable and searchable",
+      "Basic metrics are displayed",
+      "Config can be edited and saved",
+      "Authentication works"
+    ],
+    "nice_to_have": [
+      "All advanced features implemented",
+      "Multi-language support",
+      "Full accessibility compliance",
+      "Email notifications"
+    ]
+  }
+}

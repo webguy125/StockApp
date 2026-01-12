@@ -1,0 +1,360 @@
+{
+  "config_metadata": {
+    "version": "1.0.0",
+    "created_at": "2026-01-06T00:00:00Z",
+    "updated_at": "2026-01-06T00:00:00Z",
+    "description": "TurboMode Training Configuration - Defines all training philosophy, rules, and architecture",
+    "changelog": [
+      {
+        "version": "1.0.0",
+        "date": "2026-01-06",
+        "changes": "Initial configuration based on architecture v1.1"
+      }
+    ]
+  },
+  "rare_event_archive": {
+    "description": "Rules for archiving rare market events for balanced training",
+    "enabled": true,
+    "rare_event_definitions": [
+      {
+        "event_type": "flash_crash",
+        "criteria": {
+          "intraday_drop_pct": -10.0,
+          "recovery_within_minutes": 60
+        }
+      },
+      {
+        "event_type": "circuit_breaker",
+        "criteria": {
+          "market_halt": true,
+          "halt_duration_minutes": ">= 15"
+        }
+      },
+      {
+        "event_type": "earnings_surprise",
+        "criteria": {
+          "eps_surprise_pct": ">= 20",
+          "price_gap_pct": ">= 8"
+        }
+      },
+      {
+        "event_type": "black_swan",
+        "criteria": {
+          "price_move_std_devs": ">= 5",
+          "volume_spike_ratio": ">= 10"
+        }
+      }
+    ],
+    "archive_retention_years": 10,
+    "max_archive_size_samples": 10000
+  },
+  "regime_labeling_rules": {
+    "description": "Criteria for classifying market regimes",
+    "enabled": true,
+    "regimes": [
+      {
+        "regime_name": "bull_market",
+        "criteria": {
+          "spy_200ma_slope": "> 0",
+          "spy_price_vs_200ma": "> 1.0",
+          "vix_level": "< 20",
+          "duration_days": ">= 30"
+        },
+        "label": "bull"
+      },
+      {
+        "regime_name": "bear_market",
+        "criteria": {
+          "spy_200ma_slope": "< 0",
+          "spy_price_vs_200ma": "< 1.0",
+          "vix_level": "> 30",
+          "duration_days": ">= 30"
+        },
+        "label": "bear"
+      },
+      {
+        "regime_name": "sideways_market",
+        "criteria": {
+          "spy_200ma_slope": "abs < 0.001",
+          "vix_level": "15-25",
+          "price_range_pct": "< 10"
+        },
+        "label": "sideways"
+      },
+      {
+        "regime_name": "high_volatility",
+        "criteria": {
+          "vix_level": "> 35",
+          "spy_atr_ratio": "> 2.0"
+        },
+        "label": "high_vol"
+      }
+    ],
+    "default_regime": "neutral"
+  },
+  "balanced_sampling_ratios": {
+    "description": "Sampling ratios to balance training data across regimes",
+    "enabled": true,
+    "regime_ratios": {
+      "bull": 0.35,
+      "bear": 0.35,
+      "sideways": 0.20,
+      "high_vol": 0.10
+    },
+    "outcome_ratios": {
+      "buy": 0.50,
+      "sell": 0.50
+    },
+    "min_samples_per_regime": 500,
+    "oversample_minority_class": true,
+    "undersample_majority_class": false
+  },
+  "validation_set_definitions": {
+    "description": "Time-based validation splits for model evaluation",
+    "strategy": "time_series_split",
+    "train_ratio": 0.70,
+    "validation_ratio": 0.15,
+    "test_ratio": 0.15,
+    "walk_forward_splits": 5,
+    "embargo_days": 14,
+    "purge_overlapping_samples": true
+  },
+  "regime_weighted_loss": {
+    "description": "Loss function weighting by market regime",
+    "enabled": true,
+    "regime_weights": {
+      "bull": 1.0,
+      "bear": 1.2,
+      "sideways": 0.8,
+      "high_vol": 1.5
+    },
+    "outcome_weights": {
+      "buy": 1.0,
+      "sell": 1.0
+    },
+    "rare_event_weight": 3.0
+  },
+  "drift_detection_thresholds": {
+    "description": "Thresholds for detecting data/model drift",
+    "enabled": true,
+    "psi_threshold": 0.10,
+    "kl_divergence_threshold": 0.15,
+    "ks_statistic_threshold": 0.05,
+    "performance_degradation_threshold_pct": 5.0,
+    "check_frequency_days": 7,
+    "features_to_monitor": [
+      "rsi_14",
+      "macd_histogram",
+      "volume_ratio",
+      "volatility_score",
+      "momentum_score"
+    ],
+    "alert_on_drift": true,
+    "auto_retrain_on_drift": false
+  },
+  "dynamic_archive_update_rules": {
+    "description": "Rules for updating the rare event archive",
+    "update_frequency_days": 30,
+    "auto_detect_rare_events": true,
+    "require_manual_approval": false,
+    "max_events_per_update": 100,
+    "deduplication_window_days": 7
+  },
+  "error_replay_buffer_rules": {
+    "description": "Buffer for storing and replaying incorrect predictions",
+    "enabled": true,
+    "buffer_size": 5000,
+    "sampling_strategy": "prioritized",
+    "priority_weights": {
+      "high_confidence_error": 2.0,
+      "low_confidence_error": 1.0,
+      "rare_event_error": 3.0
+    },
+    "replay_ratio": 0.15,
+    "purge_after_days": 365
+  },
+  "sector_symbol_tracking_thresholds": {
+    "description": "Thresholds for sector/symbol tracking",
+    "min_symbols_per_sector": 5,
+    "min_samples_per_symbol": 100,
+    "track_sector_drift": true,
+    "alert_on_sector_imbalance": true,
+    "max_sector_concentration_pct": 40.0
+  },
+  "model_promotion_gate_rules": {
+    "description": "Criteria for promoting models to production",
+    "min_accuracy": 0.65,
+    "min_precision": 0.60,
+    "min_recall": 0.60,
+    "min_f1_score": 0.60,
+    "min_improvement_over_baseline_pct": 2.0,
+    "require_regime_validation": true,
+    "min_regime_accuracy": {
+      "bull": 0.62,
+      "bear": 0.62,
+      "sideways": 0.58,
+      "high_vol": 0.55
+    },
+    "require_sector_validation": true,
+    "min_sector_accuracy": 0.58,
+    "max_drift_score": 0.15,
+    "require_manual_approval": false
+  },
+  "shap_analysis_settings": {
+    "description": "Settings for SHAP feature importance analysis",
+    "enabled": true,
+    "sample_size": 1000,
+    "max_features_to_analyze": 50,
+    "generate_summary_plot": true,
+    "generate_dependence_plots": true,
+    "save_plots_to_disk": true,
+    "plots_directory": "backend/data/shap_plots"
+  },
+  "training_orchestrator_steps": {
+    "description": "Sequence of steps in the training orchestrator",
+    "steps": [
+      "load_config_version",
+      "load_raw_data_from_master_db",
+      "build_datasets",
+      "apply_regime_labels",
+      "apply_balanced_sampling",
+      "train_ensemble",
+      "apply_regime_weighted_loss",
+      "run_regime_aware_validation",
+      "run_sector_symbol_analysis",
+      "run_drift_detection",
+      "run_shap_analysis",
+      "compare_models_promotion_gate",
+      "store_model_and_metadata"
+    ],
+    "parallelizable_steps": [
+      "train_ensemble",
+      "run_shap_analysis"
+    ],
+    "error_handling": {
+      "retry_failed_steps": true,
+      "max_retries": 3,
+      "rollback_on_failure": true,
+      "continue_on_non_critical_errors": true
+    }
+  },
+  "ensemble_configuration": {
+    "description": "Ensemble model configuration",
+    "base_models": [
+      {
+        "name": "xgboost",
+        "enabled": true,
+        "hyperparameters": {
+          "n_estimators": 300,
+          "max_depth": 8,
+          "learning_rate": 0.05,
+          "subsample": 0.8,
+          "colsample_bytree": 0.8,
+          "tree_method": "gpu_hist"
+        }
+      },
+      {
+        "name": "xgboost_et",
+        "enabled": true,
+        "hyperparameters": {
+          "n_estimators": 300,
+          "max_depth": 10,
+          "learning_rate": 0.05,
+          "booster": "dart",
+          "tree_method": "gpu_hist"
+        }
+      },
+      {
+        "name": "lightgbm",
+        "enabled": true,
+        "hyperparameters": {
+          "n_estimators": 300,
+          "max_depth": 8,
+          "learning_rate": 0.05,
+          "device": "gpu"
+        }
+      },
+      {
+        "name": "catboost",
+        "enabled": true,
+        "hyperparameters": {
+          "iterations": 300,
+          "depth": 8,
+          "learning_rate": 0.05,
+          "task_type": "GPU"
+        }
+      }
+    ],
+    "meta_learner": {
+      "name": "logistic_regression",
+      "enabled": true,
+      "hyperparameters": {
+        "C": 1.0,
+        "max_iter": 1000
+      }
+    }
+  },
+  "feature_engineering": {
+    "description": "Feature engineering configuration",
+    "total_features": 179,
+    "feature_groups": {
+      "price_features": 40,
+      "volume_features": 20,
+      "technical_indicators": 50,
+      "momentum_features": 30,
+      "volatility_features": 20,
+      "time_features": 10,
+      "fundamental_features": 9
+    },
+    "normalization": "standard_scaler",
+    "handle_missing_values": "forward_fill",
+    "feature_selection": {
+      "enabled": false,
+      "method": "mutual_information",
+      "top_k_features": 150
+    }
+  },
+  "data_sources": {
+    "description": "Data source configuration",
+    "master_market_data_db": {
+      "path": "C:\\StockApp\\master_market_data\\market_data.db",
+      "access_mode": "read_only",
+      "tables_used": [
+        "candles",
+        "fundamentals",
+        "symbol_metadata",
+        "sector_mappings"
+      ]
+    },
+    "turbomode_db": {
+      "path": "C:\\StockApp\\backend\\data\\turbomode.db",
+      "access_mode": "read_write",
+      "tables_used": [
+        "trades",
+        "signal_history",
+        "drift_monitoring",
+        "model_metadata",
+        "training_runs"
+      ]
+    }
+  },
+  "monitoring_and_alerts": {
+    "description": "Monitoring and alerting configuration",
+    "alert_channels": [
+      "log_file",
+      "database"
+    ],
+    "alert_severity_levels": {
+      "critical": ["model_promotion_failed", "drift_exceeded_threshold"],
+      "warning": ["low_sample_count", "sector_imbalance"],
+      "info": ["training_completed", "config_updated"]
+    },
+    "metrics_to_track": [
+      "training_duration_seconds",
+      "model_accuracy",
+      "drift_score",
+      "samples_processed",
+      "errors_count"
+    ]
+  }
+}

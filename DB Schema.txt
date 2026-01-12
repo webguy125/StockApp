@@ -1,0 +1,177 @@
+ Perfect! Here's the complete schema for turbomode.db:
+
+  TurboMode.db Complete Schema
+
+  Total Tables: 7
+
+  ---
+  1. active_signals (81 rows)
+
+  Current predictions awaiting outcome tracking
+
+  Columns (16):
+  - id INTEGER PRIMARY KEY
+  - symbol TEXT NOT NULL
+  - signal_type TEXT NOT NULL (BUY/SELL)
+  - confidence REAL NOT NULL
+  - entry_date TEXT NOT NULL
+  - entry_price REAL NOT NULL
+  - target_price REAL NOT NULL
+  - stop_price REAL NOT NULL
+  - market_cap TEXT NOT NULL
+  - sector TEXT NOT NULL
+  - age_days INTEGER DEFAULT 0
+  - status TEXT DEFAULT 'ACTIVE'
+  - created_at TEXT NOT NULL
+  - updated_at TEXT NOT NULL
+  - entry_min REAL (entry range minimum)
+  - entry_max REAL (entry range maximum)
+
+  Indexes: 6 (symbol, signal_type, sector, market_cap, age_days)
+
+  ---
+  2. signal_history (0 rows)
+
+  Tracked outcomes after 14-day evaluation
+
+  Columns (20):
+  - id INTEGER PRIMARY KEY
+  - symbol TEXT NOT NULL
+  - signal_type TEXT NOT NULL
+  - confidence REAL NOT NULL
+  - entry_date TEXT NOT NULL
+  - entry_price REAL NOT NULL
+  - exit_date TEXT NOT NULL
+  - exit_price REAL NOT NULL
+  - exit_reason TEXT NOT NULL
+  - profit_loss_pct REAL NOT NULL
+  - hold_days INTEGER NOT NULL
+  - market_cap TEXT NOT NULL
+  - sector TEXT NOT NULL
+  - created_at TEXT NOT NULL
+  - signal_id TEXT (NEW - for outcome tracking)
+  - outcome TEXT (NEW - 'correct'/'incorrect')
+  - is_correct INTEGER DEFAULT 0 (NEW)
+  - return_pct REAL (NEW)
+  - processed_for_training INTEGER DEFAULT 0 (NEW)
+  - updated_at TEXT (NEW)
+
+  Indexes: 3 (symbol, sector, exit_date)
+
+  ---
+  3. trades (0 rows - EMPTY)
+
+  Training samples for model retraining
+
+  Columns (16):
+  - id TEXT PRIMARY KEY
+  - symbol TEXT NOT NULL
+  - entry_date TEXT NOT NULL
+  - entry_price REAL NOT NULL
+  - exit_date TEXT
+  - exit_price REAL
+  - position_size REAL DEFAULT 1.0
+  - outcome TEXT DEFAULT 'open' (label: 'buy' or 'sell')
+  - profit_loss REAL
+  - profit_loss_pct REAL
+  - exit_reason TEXT
+  - entry_features_json TEXT (179 features in JSON)
+  - trade_type TEXT DEFAULT 'backtest' ('backtest' or 'real_prediction')
+  - strategy TEXT
+  - notes TEXT
+  - created_at TEXT DEFAULT CURRENT_TIMESTAMP
+
+  Status: Currently empty - needs to be populated via generate_backtest_data.py
+
+  ---
+  4. feature_store (0 rows - UNUSED)
+
+  Precomputed features cache
+
+  Columns (12):
+  - id INTEGER PRIMARY KEY
+  - symbol TEXT NOT NULL
+  - timestamp TEXT NOT NULL
+  - features_json TEXT NOT NULL
+  - rsi_14 REAL
+  - macd_histogram REAL
+  - volume_ratio REAL
+  - trend_strength REAL
+  - momentum_score REAL
+  - volatility_score REAL
+  - feature_version TEXT DEFAULT 'v1'
+  - created_at TEXT DEFAULT CURRENT_TIMESTAMP
+
+  Status: Currently empty - features are computed on-the-fly
+
+  ---
+  5. price_data (0 rows - UNUSED)
+
+  Historical OHLCV data cache
+
+  Columns (10):
+  - id INTEGER PRIMARY KEY
+  - symbol TEXT NOT NULL
+  - timestamp TEXT NOT NULL
+  - timeframe TEXT NOT NULL
+  - open REAL NOT NULL
+  - high REAL NOT NULL
+  - low REAL NOT NULL
+  - close REAL NOT NULL
+  - volume REAL NOT NULL
+  - created_at TEXT DEFAULT CURRENT_TIMESTAMP
+
+  Status: Currently empty - price data fetched from yfinance on-demand
+
+  ---
+  6. sector_stats (23 rows)
+
+  Sector performance tracking
+
+  Columns (11):
+  - id INTEGER PRIMARY KEY
+  - date TEXT NOT NULL
+  - sector TEXT NOT NULL
+  - total_buy_signals INTEGER DEFAULT 0
+  - total_sell_signals INTEGER DEFAULT 0
+  - avg_buy_confidence REAL DEFAULT 0.0
+  - avg_sell_confidence REAL DEFAULT 0.0
+  - win_rate_30d REAL DEFAULT 0.0
+  - avg_profit_30d REAL DEFAULT 0.0
+  - sentiment TEXT DEFAULT 'NEUTRAL'
+  - created_at TEXT NOT NULL
+
+  Indexes: 2 (sector, date)
+
+  ---
+  7. sqlite_sequence (2 rows)
+
+  SQLite internal table for auto-increment tracking
+
+  Columns (2):
+  - name
+  - seq
+
+  ---
+  Summary by Usage:
+
+  ACTIVELY USED:
+
+  1. active_signals (81 rows) - Current predictions
+  2. signal_history (0 rows) - Will populate after 14 days
+  3. sector_stats (23 rows) - Sector tracking
+
+  READY FOR AUTONOMOUS SYSTEM:
+
+  4. trades (0 rows) - Needs initial backtest data, then will accumulate real predictions
+
+  CURRENTLY UNUSED (Future Optimization):
+
+  5. feature_store (0 rows) - Feature caching
+  6. price_data (0 rows) - Price caching
+
+  SYSTEM TABLE:
+
+  7. sqlite_sequence - SQLite internal
+
+  The schema is complete and ready for the full autonomous learning pipeline!

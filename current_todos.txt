@@ -1,0 +1,108 @@
+============================================
+TODAY'S TODO LIST - Updated 2026-01-11 19:08
+============================================
+
+COMPLETED TODAY (2026-01-11):
+[X] DECIDED: Option 1 selected (disable NNs, fast path)
+[X] Modified train_turbomode_models.py to exclude tc_nn_lstm, tc_nn_gru
+[X] Trained meta-learner with 8 tree models (93.99% val accuracy!)
+[X] Fixed scanner bug #1: Column name case mismatch (Volume → volume)
+[X] Fixed scanner bug #2: Data threshold too strict (500 → 400 rows)
+[X] Fixed scanner bug #3: Feature extraction method mismatch
+[X] Fixed scanner bug #4: Dict-to-array conversion missing
+[X] Verified all 9 models work (8 base + 1 meta)
+[X] Tested predictions pipeline end-to-end
+[X] System OPERATIONAL and PRODUCTION READY
+
+PENDING TASKS:
+[ ] Wait for Monday market open - test options page with live data
+[ ] Quarterly curation (optional - checkpointed at 52/80 candidates)
+
+CURRENT MODEL STATUS (2026-01-11 19:08):
+✓ ALL MODELS TRAINED AND OPERATIONAL
+
+Tree Models (8/8) - All trained Jan 11:
+  - xgboost (gbtree) - 87.24% val accuracy
+  - xgboost_et (ExtraTrees) - BEST BASE MODEL
+  - xgboost_approx
+  - xgboost_hist
+  - xgboost_dart
+  - xgboost_gblinear
+  - lightgbm
+  - catboost
+
+Meta-Learner (1/1):
+  - meta_learner - 93.99% val accuracy (stacks 8 models)
+
+Neural Networks: DISABLED
+  - tc_nn_lstm - Removed (architectural mismatch with tabular data)
+  - tc_nn_gru - Removed (architectural mismatch with tabular data)
+
+SYSTEM STATUS:
+✓ Scanner bugs fixed (4 critical issues resolved)
+✓ Feature extraction pipeline working
+✓ Model predictions working end-to-end
+✓ PRODUCTION READY
+
+AUTOMATED SCANNING SCHEDULE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AUTOMATED: Full 82 Stocks (Overnight Scan)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Symbols: All 82 curated stocks from core_symbols.py
+Scanner: TurboMode Scheduler (integrated in Flask)
+Duration: ~60 minutes
+Schedule: 11:00 PM (23:00) EVERY NIGHT
+Status: ENABLED (but needs model retraining first)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MANUAL: Top 10 Stocks (Intraday Updates)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Symbols: SMCI, TMDX, TSLA, MTDR, CRWD, TEAM, BOOT, NVDA, KRYS, SHAK
+Scanner: backend/turbomode/top10_scanner.py
+Duration: ~7 minutes
+Status: Will work after model retraining
+
+KNOWN ISSUES:
+[CRITICAL] Models not fully trained
+   - Cause: Jan 10 training crashed during meta-learner phase
+   - Resolution: Rerun training pipeline
+
+Options page: "No liquid options found" error
+   - Cause: yfinance OI data = 0 for all stocks (weekend data issue)
+   - Resolution: Expected Monday when markets open
+
+FUTURE TASKS (After 30 Days):
+[ ] Accumulate 30 days of real data for TurboOptions training
+[ ] Train TurboOptions ML ensemble on real data
+[ ] Enable hybrid scoring (40% rules + 60% ML)
+
+============================================
+END OF TODO LIST
+============================================
+
+============================================
+INSTRUCTIONS FOR CLAUDE (READ AT EVERY SESSION STARTUP)
+============================================
+
+AT THE START OF EVERY SESSION, YOU MUST:
+
+1. PRINT the TODO list above to the screen immediately
+   - Show it in a clean, readable format
+   - Use checkboxes to show pending/completed status
+
+2. USE the TodoWrite tool to initialize your task tracking
+   - Load all tasks from the list above
+   - Mark tasks as in_progress/completed as you work
+
+3. UPDATE this file (current_todos.txt) whenever:
+   - A task is completed (change [ ] to [X])
+   - A new task is added
+   - A task is removed or becomes irrelevant
+   - Keep this file synchronized with TodoWrite state
+
+4. AT END OF SESSION:
+   - Update this file with final TODO state
+   - Remove completed tasks or mark them [X]
+   - Ensure next session starts with clean, current list
+
+This ensures continuity across sessions and we never forget tasks!

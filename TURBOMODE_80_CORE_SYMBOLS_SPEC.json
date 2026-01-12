@@ -1,0 +1,280 @@
+{
+  "universe_name": "TurboMode_80_Core_Symbols",
+  "version": "1.2.0",
+  "description": "Further improved canonical selection criteria for TurboMode's 80 core optionable symbols. Enhancements in v1.2.0 include variable thresholds for key criteria by sector and market cap bucket to address feasibility in underrepresented areas (e.g., lower liquidity sectors like Utilities or small caps), based on market data showing skewed options activity toward Tech/Large Cap. This makes the universe more balanced while maintaining quality.",
+  "constraints": {
+    "total_symbols": 80,
+    "sectors": {
+      "Technology": 9,
+      "Financials": 8,
+      "Healthcare": 8,
+      "Consumer Discretionary": 8,
+      "Communication Services": 7,
+      "Industrials": 8,
+      "Consumer Staples": 7,
+      "Energy": 6,
+      "Materials": 6,
+      "Real Estate": 7,
+      "Utilities": 6
+    },
+    "market_cap_buckets": {
+      "large_cap": {
+        "label": "Large Cap",
+        "min_market_cap_usd": 50000000000,
+        "max_market_cap_usd": null,
+        "target_allocation_percentage": 50,
+        "target_symbols": 40
+      },
+      "mid_cap": {
+        "label": "Mid Cap",
+        "min_market_cap_usd": 10000000000,
+        "max_market_cap_usd": 50000000000,
+        "target_allocation_percentage": 30,
+        "target_symbols": 24
+      },
+      "small_cap": {
+        "label": "Small Cap",
+        "min_market_cap_usd": 2000000000,
+        "max_market_cap_usd": 10000000000,
+        "target_allocation_percentage": 20,
+        "target_symbols": 16
+      }
+    },
+    "market_cap_tolerance": {
+      "description": "Allow +/- 5% deviation from target allocations to accommodate sector constraints.",
+      "percentage_tolerance": 5
+    }
+  },
+  "variable_thresholds": {
+    "description": "Variable criteria by sector and market cap to relax constraints in low-liquidity areas. Sectors grouped into high/mid/low liquidity based on 2025-2026 market data (e.g., Tech/Consumer Discretionary high, Utilities/Materials low). Market caps: large least restrictive, small most relaxed.",
+    "sector_liquidity_groups": {
+      "high": ["Technology", "Consumer Discretionary", "Communication Services"],
+      "medium": ["Financials", "Healthcare", "Industrials", "Consumer Staples"],
+      "low": ["Energy", "Materials", "Real Estate", "Utilities"]
+    },
+    "stock_liquidity_adjustments": {
+      "min_avg_daily_volume_shares": {
+        "high": 1000000,
+        "medium": 750000,
+        "low": 500000
+      },
+      "by_market_cap": {
+        "large_cap": 1000000,
+        "mid_cap": 750000,
+        "small_cap": 500000
+      }
+    },
+    "options_volume_adjustments": {
+      "min_avg_daily_options_volume_contracts": {
+        "high": 5000,
+        "medium": 3000,
+        "low": 1500
+      },
+      "by_market_cap": {
+        "large_cap": 5000,
+        "mid_cap": 3000,
+        "small_cap": 1500
+      }
+    },
+    "open_interest_adjustments": {
+      "min_avg_open_interest_contracts": {
+        "high": 10000,
+        "medium": 7500,
+        "low": 5000
+      },
+      "by_market_cap": {
+        "large_cap": 10000,
+        "mid_cap": 7500,
+        "small_cap": 5000
+      }
+    },
+    "spread_adjustments": {
+      "absolute_atm_spread_usd_max": {
+        "high": 0.10,
+        "medium": 0.15,
+        "low": 0.20
+      },
+      "by_market_cap": {
+        "large_cap": 0.10,
+        "mid_cap": 0.15,
+        "small_cap": 0.20
+      }
+    },
+    "notes": [
+      "Apply the stricter of sector or market cap threshold if conflict (e.g., small cap in high sector uses small cap value if lower).",
+      "Based on 2025 data: ~220 stocks >5000 contracts overall (up 50% from 147 in 2023 due to market growth), but skewed (e.g., Tech: ~40-50 >5000, Utilities: ~5-10 >1500)."
+    ]
+  },
+  "stock_level_criteria": {
+    "liquidity": {
+      "min_avg_daily_volume_shares": "variable (see variable_thresholds)",
+      "min_trading_days_listed": 252,
+      "max_underlying_bid_ask_spread_percentage": 0.01,
+      "max_underlying_bid_ask_spread_usd": 0.05,
+      "min_float_shares": 10000000,
+      "min_stock_price_usd": 5.00,
+      "notes": [
+        "Average daily volume computed over a 90-day rolling window.",
+        "Adjust min volume by sector/group and market cap for feasibility."
+      ]
+    },
+    "company_profile": {
+      "min_listing_age_years": 2,
+      "exclude_IPOs_SPACs_recent_listings": true,
+      "exclude_microcaps": true,
+      "require_established_company": true,
+      "notes": [
+        "Established company: positive earnings in at least 2 of last 4 quarters or equivalent stability metrics."
+      ]
+    },
+    "sector_behavior": {
+      "must_be_sector_representative": true,
+      "min_sector_correlation": 0.6,
+      "description": "Price behavior should have a minimum correlation with its GICS sector index over the past 252 trading days.",
+      "exclude_event_driven_profiles": [
+        "Highly binary biotech (e.g., single FDA outcome driven)",
+        "Meme stocks with unstable liquidity (e.g., 30-day volatility > 100%)",
+        "Extreme SPAC-style volatility names"
+      ]
+    },
+    "market_cap_profile": {
+      "min_market_cap_usd": 2000000000,
+      "max_market_cap_usd": null,
+      "allowed_buckets": [
+        "large_cap",
+        "mid_cap",
+        "small_cap"
+      ]
+    }
+  },
+  "options_level_criteria": {
+    "spread_quality": {
+      "require_tight_spreads": true,
+      "preferred_atm_spread_usd_max": 0.05,
+      "absolute_atm_spread_usd_max": "variable (see variable_thresholds)",
+      "hard_reject_spread_usd_threshold": 0.25,
+      "description": "Spread checks evaluated on front-month and weekly expirations, ATM strikes. Average over 10 recent trading days. Adjust max by sector/cap."
+    },
+    "volume_and_open_interest": {
+      "require_high_options_volume": true,
+      "min_avg_daily_options_volume_contracts": "variable (see variable_thresholds)",
+      "require_high_open_interest": true,
+      "min_avg_open_interest_contracts": "variable (see variable_thresholds)",
+      "volume_consistency": "Volume should be above threshold in at least 80% of the last 60 trading days.",
+      "oi_distribution": "At least 20% of OI distributed across 5+ strikes and 3+ expirations."
+    },
+    "depth_of_book": {
+      "require_meaningful_bid_ask_size": true,
+      "min_bid_ask_size_contracts": 50,
+      "description": "Minimum size at bid/ask for ATM options, averaged over intraday snapshots. Relax to 25 for low sectors/small caps if needed.",
+      "exclude_tiny_size_with_tight_spread": true
+    },
+    "expiration_structure": {
+      "require_weekly_options": true,
+      "require_liquidity_in_weeklies": true,
+      "require_liquidity_in_front_month": true,
+      "check_back_month_health": true,
+      "notes": [
+        "Weeklies must have volume > 1000 contracts/day average for high, >500 for low.",
+        "Back months: spreads < 0.50 USD for near-ATM."
+      ]
+    },
+    "iv_and_chain_smoothness": {
+      "require_smooth_iv_curve": true,
+      "require_smooth_delta_and_pricing": true,
+      "exclude_random_iv_spikes": true,
+      "exclude_missing_strikes_or_gaps": true,
+      "max_iv_skew_deviation": 10,
+      "description": "IV surface should have no discontinuities > threshold percentage points between adjacent strikes."
+    },
+    "regime_stability": {
+      "require_liquidity_across_volatility_regimes": true,
+      "min_liquidity_during_high_vol": 50,
+      "description": "Options volume during top 20% VIX days should be at least percentage of normal volume."
+    },
+    "leaps_behavior": {
+      "exclude_broken_leaps": true,
+      "max_acceptable_leaps_spread_usd": 2.00,
+      "notes": [
+        "LEAPS volume not required, but pricing must align with shorter-term IV (±5%)."
+      ]
+    }
+  },
+  "exclusion_filters": {
+    "event_driven_and_idiosyncratic": {
+      "exclude_biotech_binary_fda": true,
+      "exclude_meme_stocks": true,
+      "exclude_spacs": true,
+      "exclude_extreme_idiosyncratic_risk": true,
+      "notes": [
+        "Meme stocks: detected via social sentiment spikes > 5x average."
+      ]
+    },
+    "trap_liquidity_patterns": {
+      "exclude_high_volume_low_oi": true,
+      "exclude_tight_spread_tiny_size": true,
+      "exclude_one_sided_order_books": true,
+      "exclude_illiquid_back_months": true
+    },
+    "broken_chains": {
+      "exclude_missing_key_strikes": true,
+      "exclude_missing_front_or_weekly_expirations": true,
+      "exclude_unstable_iv_structures": true
+    },
+    "additional_exclusions": {
+      "exclude_dual_listed_or_adr": true,
+      "exclude_high_short_interest": 30,
+      "description": "Exclude ADRs with home-market liquidity issues; short interest > percentage threshold."
+    }
+  },
+  "selection_logic": {
+    "step_order": [
+      "1. Start from all listed equities with options.",
+      "2. Apply variable thresholds based on sector and market cap.",
+      "3. Filter by stock-level liquidity and company requirements (variable).",
+      "4. Filter by options-level liquidity, spreads, OI, and structure (variable).",
+      "5. Remove names matching exclusion filters.",
+      "6. Apply sector mapping and count constraints (11 GICS sectors).",
+      "7. Enforce market-cap bucket balance with target allocations and tolerance.",
+      "8. Rank within each sector by combined liquidity/quality score.",
+      "9. Select top N per sector according to the sector distribution, adjusting for market cap balance.",
+      "10. Validate final list for any broken chains or recent regime shifts.",
+      "11. Backtest universe performance against benchmarks for diversification."
+    ],
+    "ranking_signals": {
+      "liquidity_score_weights": {
+        "underlying_volume": 0.20,
+        "options_volume": 0.20,
+        "open_interest": 0.20,
+        "spread_tightness": 0.20,
+        "chain_smoothness_and_iv_quality": 0.20
+      },
+      "score_calculation": "Normalize each metric to 0-1 scale, then weighted sum. Use z-scores within sector for normalization.",
+      "description": "Weights can be adjusted, but default assumes equal emphasis. Incorporate sector correlation and regime stability into final score."
+    }
+  },
+  "maintenance_and_rebalance": {
+    "rebalance_frequency": "quarterly",
+    "mid_cycle_checks": "monthly_light_review",
+    "rules_on_removal": {
+      "persistent_liquidity_deterioration_days_threshold": 20,
+      "event_driven_breakage": "Immediate review if stock becomes meme-like or undergoes structural change (e.g., acquisition, delisting, bankruptcy risk).",
+      "violation_threshold": "Fail criteria in >50% of checks over 20 days."
+    },
+    "rules_on_addition": {
+      "must_meet_all_criteria_for_min_days": 90,
+      "description": "New symbols must satisfy the core filters consistently over a lookback window before being promoted. Require probation period with monitoring."
+    }
+  },
+  "notes": {
+    "intent": "This JSON is the canonical, all-encompassing specification for TurboMode's 80-symbol core options universe.",
+    "scope": "Defines what qualifies a symbol, how many per sector/market cap, and the microstructure rules that make them tradeable.",
+    "extensibility": "Fields are structured for easy use in code, screeners, and audit logs. Added quantifiability for automation.",
+    "changes_in_v1.2.0": [
+      "Introduced variable_thresholds section for sector and market cap adjustments.",
+      "Grouped sectors into high/medium/low liquidity for threshold scaling.",
+      "Adjusted min volumes, OI, spreads downward for low-liquidity sectors/small caps to improve feasibility (e.g., based on 2025 data showing ~220 stocks >5000 overall, but only ~10 in Utilities >1500).",
+      "Updated selection logic to apply variables early."
+    ]
+  }
+}

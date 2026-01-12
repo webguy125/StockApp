@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Options Performance Dashboard - TurboMode</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .stat-value.positive {
+            color: #48bb78;
+        }
+
+        .stat-value.negative {
+            color: #f56565;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .chart-container h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .predictions-table {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f7fafc;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-fail {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .status-tracking {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #5a67d8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Options Performance Dashboard</h1>
+            <p>Real-time tracking of ML-powered options recommendations</p>
+            <button class="refresh-btn" onclick="loadDashboard()">🔄 Refresh Data</button>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="loading">Loading statistics...</div>
+        </div>
+
+        <div class="chart-container">
+            <h2>Win Rate Over Time</h2>
+            <canvas id="winRateChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h2>Average Profit % Distribution</h2>
+            <canvas id="profitDistChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h2>Hybrid Score vs Success Rate</h2>
+            <canvas id="scoreSuccessChart"></canvas>
+        </div>
+
+        <div class="predictions-table">
+            <h2>Recent Predictions (Last 50)</h2>
+            <div id="predictionsContainer">
+                <div class="loading">Loading predictions...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let winRateChart, profitDistChart, scoreSuccessChart;
+
+        async function loadDashboard() {
+            try {
+                // Fetch performance data from database
+                const response = await fetch('/api/options/performance');
+                const data = await response.json();
+
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                // Update statistics cards
+                renderStats(data.stats);
+
+                // Update charts
+                renderWinRateChart(data.win_rate_over_time);
+                renderProfitDistChart(data.profit_distribution);
+                renderScoreSuccessChart(data.score_vs_success);
+
+                // Update predictions table
+                renderPredictionsTable(data.recent_predictions);
+
+            } catch (error) {
+                showError('Failed to load performance data: ' + error.message);
+            }
+        }
+
+        function renderStats(stats) {
+            const statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Total Predictions</div>
+                    <div class="stat-value">${stats.total_predictions}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Completed (14 days)</div>
+                    <div class="stat-value">${stats.completed_predictions}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-value positive">${stats.win_rate.toFixed(1)}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Win</div>
+                    <div class="stat-value positive">+${stats.avg_win_pct.toFixed(1)}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Loss</div>
+                    <div class="stat-value negative">${stats.avg_loss_pct.toFixed(1)}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Days to Target</div>
+                    <div class="stat-value">${stats.avg_days_to_target.toFixed(1)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Best Prediction</div>
+                    <div class="stat-value positive">+${stats.best_prediction_pct.toFixed(1)}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Hybrid Score</div>
+                    <div class="stat-value">${stats.avg_hybrid_score.toFixed(1)}/100</div>
+                </div>
+            `;
+
+            document.getElementById('statsGrid').innerHTML = statsHTML;
+        }
+
+        function renderWinRateChart(data) {
+            const ctx = document.getElementById('winRateChart').getContext('2d');
+
+            if (winRateChart) {
+                winRateChart.destroy();
+            }
+
+            winRateChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [{
+                        label: 'Win Rate %',
+                        data: data.win_rates,
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderProfitDistChart(data) {
+            const ctx = document.getElementById('profitDistChart').getContext('2d');
+
+            if (profitDistChart) {
+                profitDistChart.destroy();
+            }
+
+            profitDistChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.bins,
+                    datasets: [{
+                        label: 'Number of Trades',
+                        data: data.counts,
+                        backgroundColor: data.counts.map((_, i) =>
+                            i < data.bins.length / 2 ? '#f56565' : '#48bb78'
+                        )
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Profit/Loss %'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderScoreSuccessChart(data) {
+            const ctx = document.getElementById('scoreSuccessChart').getContext('2d');
+
+            if (scoreSuccessChart) {
+                scoreSuccessChart.destroy();
+            }
+
+            scoreSuccessChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Success',
+                        data: data.successes,
+                        backgroundColor: '#48bb78',
+                        pointRadius: 6
+                    }, {
+                        label: 'Failure',
+                        data: data.failures,
+                        backgroundColor: '#f56565',
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Hybrid Score'
+                            },
+                            min: 0,
+                            max: 100
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Max Profit %'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderPredictionsTable(predictions) {
+            if (predictions.length === 0) {
+                document.getElementById('predictionsContainer').innerHTML = '<p>No predictions found</p>';
+                return;
+            }
+
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Symbol</th>
+                            <th>Type</th>
+                            <th>Strike</th>
+                            <th>Premium</th>
+                            <th>Hybrid Score</th>
+                            <th>Max Profit</th>
+                            <th>Days to Peak</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            predictions.forEach(pred => {
+                const statusClass = pred.hit_target ? 'status-success' :
+                                   pred.tracking_complete ? 'status-fail' : 'status-tracking';
+                const statusText = pred.hit_target ? 'HIT +10%' :
+                                  pred.tracking_complete ? 'MISS' : 'TRACKING';
+
+                tableHTML += `
+                    <tr>
+                        <td>${new Date(pred.created_at).toLocaleDateString()}</td>
+                        <td><a href="/turbomode/options.html?symbol=${pred.symbol}" style="color: #667eea; font-weight: bold; text-decoration: none; cursor: pointer;">${pred.symbol}</a></td>
+                        <td>${pred.option_type}</td>
+                        <td>$${pred.strike}</td>
+                        <td>$${pred.entry_premium.toFixed(2)}</td>
+                        <td><strong>${pred.hybrid_score.toFixed(1)}</strong>/100</td>
+                        <td class="${pred.max_profit_pct >= 0 ? 'positive' : 'negative'}">
+                            ${pred.max_profit_pct >= 0 ? '+' : ''}${pred.max_profit_pct.toFixed(1)}%
+                        </td>
+                        <td>${pred.days_to_target || '-'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += '</tbody></table>';
+            document.getElementById('predictionsContainer').innerHTML = tableHTML;
+        }
+
+        function showError(message) {
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="error">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+        }
+
+        // Load dashboard on page load
+        window.addEventListener('load', loadDashboard);
+
+        // Auto-refresh every 5 minutes
+        setInterval(loadDashboard, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

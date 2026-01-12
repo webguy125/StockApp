@@ -27,13 +27,19 @@ try:
     sys.path.insert(0, os.path.join(parent_dir, '..'))
     from backend.turbomode.overnight_scanner import OvernightScanner
     TURBOMODE_AVAILABLE = True
+    TURBOMODE_IMPORT_ERROR = None
 except ImportError as e:
-    logger.warning(f"TurboMode not available: {e}")
+    # Logger not defined yet - store error for later
     TURBOMODE_AVAILABLE = False
+    TURBOMODE_IMPORT_ERROR = str(e)
 
 # Setup logging
 logger = logging.getLogger('ml_automation')
 logger.setLevel(logging.INFO)
+
+# Log TurboMode import status
+if not TURBOMODE_AVAILABLE:
+    logger.warning(f"TurboMode not available: {TURBOMODE_IMPORT_ERROR}")
 
 # Scheduler instance (global)
 scheduler = None

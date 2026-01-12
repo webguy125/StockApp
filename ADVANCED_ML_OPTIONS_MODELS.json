@@ -1,0 +1,530 @@
+{
+  "project_name": "Advanced ML Models for Options Success Prediction",
+  "version": "1.0",
+  "created": "2026-01-03",
+
+  "overview": {
+    "goal": "Predict if option will hit +10% profit target within 14 days",
+    "progression": "Start simple (XGBoost), evolve to ensemble, add LSTM if needed",
+    "expected_accuracy_evolution": "70% → 75% → 80% → 85%"
+  },
+
+  "model_comparison": {
+    "gradient_boosting_models": [
+      {
+        "name": "XGBoost",
+        "library": "xgboost",
+        "current_use": "TurboMode stock predictions (xgboost variants)",
+        "pros": [
+          "Fast training (GPU-accelerated)",
+          "Excellent with tabular data",
+          "Feature importance interpretable",
+          "Proven in financial ML",
+          "Hyperparameter flexibility"
+        ],
+        "cons": [
+          "No native time-series handling",
+          "Needs feature engineering for sequences"
+        ],
+        "expected_accuracy": "70-75% (single model)",
+        "training_time": "10-30 minutes",
+        "inference_time": "<100ms per option",
+        "recommendation": "✅ USE - Start here"
+      },
+      {
+        "name": "LightGBM",
+        "library": "lightgbm",
+        "current_use": "TurboMode stock predictions (lightgbm variant)",
+        "pros": [
+          "Faster than XGBoost",
+          "Lower memory footprint",
+          "Better with categorical features",
+          "Handles large datasets efficiently"
+        ],
+        "cons": [
+          "Slightly less accurate than XGBoost (sometimes)",
+          "Fewer advanced features"
+        ],
+        "expected_accuracy": "70-74%",
+        "training_time": "5-15 minutes",
+        "inference_time": "<50ms per option",
+        "recommendation": "✅ USE - Train as variant"
+      },
+      {
+        "name": "CatBoost",
+        "library": "catboost",
+        "current_use": "TurboMode stock predictions (catboost_model.cbm)",
+        "pros": [
+          "Best categorical feature handling",
+          "Less hyperparameter tuning needed",
+          "Built-in GPU support",
+          "Robust to overfitting",
+          "Ordered boosting (reduces prediction shift)"
+        ],
+        "cons": [
+          "Slower training than LightGBM",
+          "Larger model files"
+        ],
+        "expected_accuracy": "72-76%",
+        "training_time": "15-45 minutes",
+        "inference_time": "<100ms per option",
+        "recommendation": "✅ USE - Train as variant"
+      }
+    ],
+
+    "deep_learning_models": [
+      {
+        "name": "LSTM (Long Short-Term Memory)",
+        "library": "tensorflow or pytorch",
+        "use_case": "Predict IV and stock price trajectories",
+        "architecture": {
+          "input": "Sequence of [price, volume, IV] for last 30-60 days",
+          "hidden_layers": "2-3 LSTM layers (128-256 units each)",
+          "output": "Next 14 days of predicted prices + IV",
+          "purpose": "Generate time-series features for gradient boosting models"
+        },
+        "pros": [
+          "Models temporal dependencies",
+          "Can predict volatility changes",
+          "Captures market regimes"
+        ],
+        "cons": [
+          "Needs lots of data (>10k sequences)",
+          "Slow training (hours on GPU)",
+          "Black box (hard to interpret)",
+          "Complex to implement"
+        ],
+        "expected_accuracy_boost": "+3-5% when combined with XGBoost",
+        "training_time": "2-4 hours on GPU",
+        "inference_time": "~500ms per option",
+        "recommendation": "⏳ PHASE 4 - Add after 6 months of data"
+      },
+      {
+        "name": "Transformer",
+        "library": "pytorch (attention mechanism)",
+        "use_case": "Model complex option price evolution patterns",
+        "architecture": {
+          "input": "Sequence of option features over time",
+          "mechanism": "Multi-head self-attention",
+          "output": "Probability of hitting target"
+        },
+        "pros": [
+          "State-of-the-art for sequences",
+          "Attention shows which days matter",
+          "Can capture long-range dependencies"
+        ],
+        "cons": [
+          "Requires massive data (50k+ examples)",
+          "Very slow training",
+          "Computational overhead",
+          "Overkill for binary classification"
+        ],
+        "expected_accuracy_boost": "+2-4% over LSTM",
+        "training_time": "6-12 hours on GPU",
+        "inference_time": "~1 second per option",
+        "recommendation": "❌ NOT RECOMMENDED - Too complex for our use case"
+      }
+    ],
+
+    "reinforcement_learning": [
+      {
+        "name": "Deep Q-Network (DQN)",
+        "library": "stable-baselines3 or ray[rllib]",
+        "use_case": "Learn optimal option trading strategy",
+        "approach": {
+          "state": "Stock price, Greeks, ML prediction, days held",
+          "actions": ["BUY", "HOLD", "SELL"],
+          "reward": "Profit/loss when position closed",
+          "learning": "Agent learns when to enter/exit for maximum profit"
+        },
+        "pros": [
+          "Learns timing strategy (not just binary prediction)",
+          "Can optimize for risk-adjusted returns",
+          "Adapts to changing market conditions"
+        ],
+        "cons": [
+          "Extremely complex to implement",
+          "Needs simulation environment",
+          "Unstable training",
+          "Hard to debug",
+          "Not suitable for our 14-day hold strategy"
+        ],
+        "recommendation": "❌ NOT RECOMMENDED - We have fixed 14-day strategy"
+      }
+    ]
+  },
+
+  "recommended_progression": {
+    "phase_1_week_2": {
+      "name": "Single XGBoost Model",
+      "implementation": "train_options_ml_model.py with XGBoost",
+      "features": "~50 features (Greeks, stock ML, liquidity, rules scores)",
+      "training_data": "Simulated backtesting (6 months TurboMode signals)",
+      "hyperparameters": {
+        "tree_method": "hist",
+        "device": "cuda",
+        "max_depth": 6,
+        "learning_rate": 0.01,
+        "n_estimators": 1000,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "objective": "binary:logistic",
+        "eval_metric": "auc"
+      },
+      "validation": "Time-based train/val/test split",
+      "expected_accuracy": "70-75%",
+      "deployment": "Hybrid score = 0.4*rules + 0.6*xgb_pred",
+      "timeline": "Jan 10-17, 2026"
+    },
+
+    "phase_2_week_3": {
+      "name": "Gradient Boosting Ensemble (XGB + LGB + CAT)",
+      "implementation": "Train all 3 models, use meta-learner to combine",
+      "approach": {
+        "step_1": "Train XGBoost, LightGBM, CatBoost independently",
+        "step_2": "Generate predictions from all 3 models",
+        "step_3": "Train meta-learner (logistic regression or simple NN)",
+        "step_4": "Meta-learner learns optimal weights for each model"
+      },
+      "pseudo_code": [
+        "xgb_pred = xgb_model.predict_proba(features)",
+        "lgb_pred = lgb_model.predict_proba(features)",
+        "cat_pred = cat_model.predict_proba(features)",
+        "",
+        "meta_features = np.column_stack([xgb_pred, lgb_pred, cat_pred])",
+        "final_pred = meta_learner.predict_proba(meta_features)"
+      ],
+      "expected_accuracy": "73-78%",
+      "improvement": "+3-5% over single model",
+      "timeline": "Jan 17-24, 2026"
+    },
+
+    "phase_3_month_2": {
+      "name": "Ensemble + Real Data Retraining",
+      "trigger": "30 days of logged real options data available",
+      "approach": "Retrain ensemble on mix of simulated + real data",
+      "expected_accuracy": "75-80%",
+      "improvement": "+2-5% from real data",
+      "timeline": "Feb 1, 2026 and monthly thereafter"
+    },
+
+    "phase_4_month_6": {
+      "name": "LSTM + Gradient Boosting (Optional)",
+      "trigger": "6 months of real data, want to push accuracy higher",
+      "implementation": {
+        "lstm_component": {
+          "purpose": "Predict next 14 days of stock prices and IV",
+          "architecture": [
+            "Input: 60-day history of [price, volume, IV]",
+            "LSTM Layer 1: 256 units",
+            "Dropout: 0.2",
+            "LSTM Layer 2: 128 units",
+            "Dropout: 0.2",
+            "Dense Output: 14 days × 2 features (price, IV)"
+          ],
+          "training_data": "All logged options with daily tracking",
+          "outputs": [
+            "predicted_prices_day1 to day14",
+            "predicted_iv_day1 to day14",
+            "price_volatility_forecast",
+            "iv_trend (increasing/decreasing)"
+          ]
+        },
+        "feature_integration": {
+          "method": "Use LSTM outputs as additional features for gradient boosting",
+          "new_features": [
+            "lstm_price_day7",
+            "lstm_price_day14",
+            "lstm_iv_day7",
+            "lstm_iv_day14",
+            "lstm_price_volatility",
+            "lstm_iv_trend",
+            "lstm_max_predicted_price",
+            "lstm_confidence"
+          ],
+          "total_features": "~58 (original 50 + 8 LSTM-derived)"
+        },
+        "ensemble_structure": {
+          "models": ["XGBoost", "LightGBM", "CatBoost"],
+          "each_uses": "Original 50 features + 8 LSTM features",
+          "meta_learner": "Combines 3 model predictions",
+          "final_hybrid": "0.4*rules + 0.6*ensemble_with_lstm"
+        }
+      },
+      "expected_accuracy": "80-85%",
+      "improvement": "+5-7% from LSTM features",
+      "complexity": "High - requires TensorFlow/PyTorch",
+      "training_time": "3-5 hours total (LSTM + ensemble)",
+      "timeline": "July 2026 (if needed)"
+    }
+  },
+
+  "feature_engineering_enhancements": {
+    "current_features": 50,
+    "categories": [
+      "Option Greeks (5 features)",
+      "Option characteristics (8 features)",
+      "Liquidity (5 features)",
+      "Stock ML prediction (4 features)",
+      "Market context (4 features)",
+      "Rules-based scores (5 features)",
+      "Time features (3 features)"
+    ],
+
+    "advanced_features_to_add": {
+      "volatility_features": [
+        {
+          "name": "iv_percentile_30d",
+          "description": "Where current IV ranks in last 30 days (0-100%)",
+          "rationale": "High IV percentile = expensive options = lower probability"
+        },
+        {
+          "name": "hv_iv_spread",
+          "description": "Historical vol - Implied vol",
+          "rationale": "Negative spread = IV overpriced"
+        },
+        {
+          "name": "iv_skew",
+          "description": "OTM put IV - ATM call IV",
+          "rationale": "Measures market fear/complacency"
+        }
+      ],
+
+      "greek_derivatives": [
+        {
+          "name": "gamma_dollar",
+          "description": "Gamma × stock price²",
+          "rationale": "Dollar gamma shows how much delta changes with $1 stock move"
+        },
+        {
+          "name": "theta_to_delta_ratio",
+          "description": "abs(Theta) / Delta",
+          "rationale": "Time decay efficiency"
+        },
+        {
+          "name": "vega_to_premium_ratio",
+          "description": "Vega / Premium",
+          "rationale": "Volatility sensitivity per dollar invested"
+        }
+      ],
+
+      "technical_indicators": [
+        {
+          "name": "rsi_14d",
+          "description": "Relative Strength Index",
+          "rationale": "Overbought/oversold conditions"
+        },
+        {
+          "name": "bb_position",
+          "description": "Where stock price is within Bollinger Bands",
+          "rationale": "Mean reversion indicator"
+        },
+        {
+          "name": "macd_signal",
+          "description": "MACD histogram",
+          "rationale": "Momentum confirmation"
+        }
+      ],
+
+      "market_microstructure": [
+        {
+          "name": "option_put_call_ratio",
+          "description": "Put OI / Call OI at same strike",
+          "rationale": "Sentiment indicator"
+        },
+        {
+          "name": "max_pain",
+          "description": "Strike where most options expire worthless",
+          "rationale": "Price gravity theory"
+        },
+        {
+          "name": "skew_slope",
+          "description": "How fast IV changes across strikes",
+          "rationale": "Market expectations of tail risk"
+        }
+      ],
+
+      "time_series_features": [
+        {
+          "name": "iv_rolling_mean_7d",
+          "description": "7-day average IV",
+          "rationale": "Smooth out noise"
+        },
+        {
+          "name": "iv_rolling_std_7d",
+          "description": "7-day IV standard deviation",
+          "rationale": "Volatility of volatility"
+        },
+        {
+          "name": "price_momentum_5d",
+          "description": "(current_price - price_5d_ago) / price_5d_ago",
+          "rationale": "Recent price trend"
+        }
+      ]
+    },
+
+    "total_advanced_features": 18,
+    "new_total": "~68 features",
+    "implementation_priority": [
+      "Phase 1: Use basic 50 features (week 2)",
+      "Phase 2: Add volatility features (week 3)",
+      "Phase 3: Add Greek derivatives (month 2)",
+      "Phase 4: Add all advanced features (month 4)"
+    ]
+  },
+
+  "model_performance_monitoring": {
+    "metrics_to_track": {
+      "accuracy_metrics": [
+        "AUC-ROC (primary)",
+        "Precision at 0.65 threshold",
+        "Recall at 0.65 threshold",
+        "F1 score",
+        "Calibration (predicted prob vs actual rate)"
+      ],
+      "business_metrics": [
+        "% of recommendations that hit +10%",
+        "Average profit % for winners",
+        "Average loss % for losers",
+        "Risk-reward ratio",
+        "Days to target (median)",
+        "Sharpe ratio (if simulating portfolio)"
+      ],
+      "segmented_analysis": [
+        "Performance by sector",
+        "Performance by market cap",
+        "Performance by volatility regime (HV < 0.3, 0.3-0.5, > 0.5)",
+        "Performance by option type (CALL vs PUT)",
+        "Performance by DTE range (30-35, 36-40, 41-45)"
+      ]
+    },
+
+    "dashboard_features": {
+      "file": "frontend/turbomode/model_performance.html",
+      "sections": [
+        "Overall Metrics (AUC, hit rate, avg profit)",
+        "Daily Performance Chart (rolling 30-day hit rate)",
+        "Confusion Matrix (predicted yes/no vs actual yes/no)",
+        "Calibration Plot (predicted probability vs actual frequency)",
+        "Feature Importance (top 20 features)",
+        "Prediction Distribution (histogram of predicted probabilities)",
+        "Performance by Segment (sector, market cap, volatility)"
+      ],
+      "update_frequency": "Daily at 5 PM after tracking script runs"
+    }
+  },
+
+  "implementation_priorities": {
+    "must_have_week_2": [
+      "✅ XGBoost single model",
+      "✅ Basic 50 features",
+      "✅ Time-based validation",
+      "✅ Hybrid scoring (0.4*rules + 0.6*ml)"
+    ],
+
+    "should_have_week_3": [
+      "✅ LightGBM and CatBoost variants",
+      "✅ Meta-learner ensemble",
+      "✅ Volatility features added",
+      "✅ Performance dashboard"
+    ],
+
+    "nice_to_have_month_2": [
+      "Greek derivative features",
+      "Technical indicators",
+      "Segmented performance analysis",
+      "A/B testing of hybrid weights"
+    ],
+
+    "future_month_6": [
+      "LSTM for IV prediction",
+      "Market microstructure features",
+      "Time-series feature engineering",
+      "Advanced ensembling"
+    ]
+  },
+
+  "code_structure": {
+    "model_training": {
+      "file": "backend/turbomode/train_options_ml_model.py",
+      "classes": [
+        {
+          "name": "OptionsMLTrainer",
+          "methods": [
+            "__init__(model_type='xgboost')",
+            "load_training_data()",
+            "extract_features()",
+            "train_model()",
+            "validate_model()",
+            "save_model(version)",
+            "generate_report()"
+          ]
+        }
+      ],
+      "supports_model_types": ["xgboost", "lightgbm", "catboost", "ensemble"]
+    },
+
+    "ensemble_training": {
+      "file": "backend/turbomode/train_ensemble.py",
+      "approach": "Train XGB, LGB, CAT in parallel → train meta-learner",
+      "pseudo_code": [
+        "# Train base models",
+        "xgb = OptionsMLTrainer('xgboost').train()",
+        "lgb = OptionsMLTrainer('lightgbm').train()",
+        "cat = OptionsMLTrainer('catboost').train()",
+        "",
+        "# Generate out-of-fold predictions for meta-learner training",
+        "xgb_oof = xgb.predict_oof(validation_set)",
+        "lgb_oof = lgb.predict_oof(validation_set)",
+        "cat_oof = cat.predict_oof(validation_set)",
+        "",
+        "# Train meta-learner",
+        "meta_features = np.column_stack([xgb_oof, lgb_oof, cat_oof])",
+        "meta_learner = LogisticRegression()",
+        "meta_learner.fit(meta_features, labels)",
+        "",
+        "# Save ensemble",
+        "save_ensemble(xgb, lgb, cat, meta_learner)"
+      ]
+    },
+
+    "prediction_inference": {
+      "file": "backend/turbomode/options_api.py",
+      "modification": "Load ensemble models at startup",
+      "pseudo_code": [
+        "# At module init",
+        "ENSEMBLE = load_ensemble_models('backend/data/options_models/current/')",
+        "",
+        "# In predict_option_success()",
+        "def predict_option_success(features_dict):",
+        "    features = prepare_features(features_dict)",
+        "    ",
+        "    xgb_pred = ENSEMBLE['xgboost'].predict_proba(features)[0][1]",
+        "    lgb_pred = ENSEMBLE['lightgbm'].predict_proba(features)[0][1]",
+        "    cat_pred = ENSEMBLE['catboost'].predict_proba(features)[0][1]",
+        "    ",
+        "    meta_features = np.array([[xgb_pred, lgb_pred, cat_pred]])",
+        "    final_prob = ENSEMBLE['meta_learner'].predict_proba(meta_features)[0][1]",
+        "    ",
+        "    return final_prob  # 0-1 probability"
+      ]
+    }
+  },
+
+  "summary_recommendations": {
+    "start_simple": "XGBoost in week 2 - 70-75% accuracy",
+    "quick_wins": "Add LGB + CAT ensemble in week 3 - 73-78% accuracy",
+    "continuous_improvement": "Monthly retraining with real data - 75-80% by month 4",
+    "optional_advanced": "LSTM features if needed - 80-85% by month 6",
+    "avoid": "Transformers, RL (too complex, not worth it)",
+
+    "why_gradient_boosting_is_perfect": [
+      "We have tabular data (not images or text)",
+      "Binary classification problem",
+      "Need interpretability (feature importance)",
+      "Need fast inference (<100ms)",
+      "Proven in finance (Kaggle competitions dominated by GBM)",
+      "We already use XGB/LGB/CAT in TurboMode with success"
+    ]
+  }
+}

@@ -1,0 +1,331 @@
+{
+  "options_trading_page": {
+    "description": "Intelligent Options Trading Page integrated with TurboMode ML predictions for enhanced decision-making",
+    "integration_points": [
+      "Top 10 Stocks page (clickable symbols leading to options page)",
+      "All Predictions page (clickable symbols leading to options page)",
+      "Stock Signals page (clickable symbols leading to options page)"
+    ],
+    "features": {
+      "automatic_calculations": {
+        "greeks": {
+          "delta": "Rate of change of option price vs stock price (measures directional exposure)",
+          "gamma": "Rate of change of delta (measures convexity)",
+          "theta": "Time decay per day (measures erosion of extrinsic value)",
+          "vega": "Sensitivity to volatility changes (measures vol risk)",
+          "rho": "Sensitivity to interest rate changes (measures rate risk)"
+        },
+        "optimal_strike_selection": {
+          "method": "ML-driven based on TurboMode prediction + Greeks optimization + liquidity filters",
+          "criteria": [
+            "Delta between 0.60-0.80 for calls (moderately in-the-money to at-the-money)",
+            "Liquidity (open interest > 100, volume > 10)",
+            "Tight bid-ask spread (< 5% of mid-price)",
+            "Alignment with predicted price movement direction and magnitude"
+          ]
+        },
+        "optimal_expiration": {
+          "based_on": "14-day hold period from OPTIONS_TRADING_SETTINGS.md",
+          "target_DTE": "30-45 days (focusing on monthly options cycles)",
+          "logic": "Purchase with 30-45 DTE, hold for up to 14 days, exit with 16-31 DTE remaining to minimize theta decay acceleration"
+        },
+        "profit_targets": {
+          "take_profit": "+10% on option contract price",
+          "stop_loss": "-5% on option contract price",
+          "calculation": "Derived from OPTIONS_TRADING_SETTINGS.md; adjustable based on user risk profile",
+          "trailing_stop": "Optional: Implement trailing stop at +5% to lock in gains"
+        }
+      },
+      "ml_integration": {
+        "prediction_source": "TurboMode meta-learner incorporating fundamental, technical, and sentiment features",
+        "confidence_threshold": "65% minimum for generating options recommendations; below threshold shows warning",
+        "expected_move_calculation": {
+          "method": "Blend of historical volatility, implied volatility, and ML prediction confidence",
+          "formula": "expected_move = current_price * (ML_confidence - 0.5) * volatility_factor * adjustment_multiplier",
+          "volatility_factor": "sqrt(annualized_hv^2 + iv^2) / sqrt(252) * sqrt(14) for 14-day horizon"
+        },
+        "strike_recommendation": {
+          "for_bullish_signal": "Call option with strike ≈ current_price - (0.5 * expected_move) for slight ITM positioning",
+          "for_bearish_signal": "Put option with strike ≈ current_price + (0.5 * expected_move) for slight ITM positioning",
+          "reasoning": "Slightly ITM options balance higher delta for directional leverage with manageable theta decay and premium cost",
+          "alternatives": "Provide 2-3 strike options (conservative, balanced, aggressive) based on risk tolerance"
+        }
+      },
+      "display_components": {
+        "header": {
+          "symbol": "Stock symbol (e.g., AAPL)",
+          "current_price": "Real-time stock price with last update timestamp",
+          "ml_prediction": "BUY/SELL/HOLD signal",
+          "confidence": "ML confidence % (e.g., 73.4%) with color-coding (green >70%, yellow 65-70%, red <65%)",
+          "expected_14d_move": "Predicted % move in 14 days with directional arrow"
+        },
+        "options_chain": {
+          "calls_table_columns": [
+            "Strike",
+            "Last Price",
+            "Bid/Ask",
+            "Delta",
+            "Gamma",
+            "Theta",
+            "Vega",
+            "IV (Implied Volatility)",
+            "Open Interest",
+            "Volume",
+            "ML Score (0-100)"
+          ],
+          "puts_table_columns": "Mirror of calls_table_columns",
+          "recommended_row_highlight": "Highlighted in green with star icon and tooltip explaining recommendation rationale",
+          "sorting_filtering": "Sortable by any column; filters for DTE range, delta range, liquidity"
+        },
+        "recommended_trade": {
+          "option_type": "CALL or PUT",
+          "strike_price": "Recommended strike with alternatives listed",
+          "expiration_date": "Recommended expiration with DTE countdown",
+          "entry_price": "Current option premium (mid-price between bid/ask)",
+          "quantity_suggestion": "Based on $10k portfolio, max 3% position sizing per trade",
+          "greeks_summary": {
+            "delta": "e.g., 0.65 (directional bias)",
+            "theta": "e.g., -$0.08/day (daily decay cost)",
+            "iv": "e.g., 32% (volatility premium)"
+          },
+          "profit_loss_targets": {
+            "take_profit_price": "entry_price * 1.10",
+            "take_profit_pnl": "Estimated $ profit at +10% (per contract and total position)",
+            "stop_loss_price": "entry_price * 0.95",
+            "stop_loss_pnl": "Estimated $ loss at -5% (per contract and total position)",
+            "breakeven_stock_price": "Stock price needed to break even at 14 days, accounting for theta"
+          },
+          "expected_outcome": {
+            "if_ml_correct": "If stock moves as predicted, estimated P/L in 14 days (monte carlo simulation-based)",
+            "best_case": "+20% to +40% (if strong move beyond expectations)",
+            "base_case": "+10% to +15% (target hit within confidence interval)",
+            "worst_case": "-5% (stop loss hit) or full premium if held to expiration"
+          }
+        },
+        "risk_metrics": {
+          "max_loss": "Total premium paid (e.g., $333 per position, capped at 3% of portfolio)",
+          "probability_of_profit": "Estimated based on ML confidence, IV, and historical backtests",
+          "theta_decay_14d": "Projected total theta cost over 14-day hold period",
+          "iv_rank": "Current IV percentile vs 52-week historical range (high IV warns of potential crush)"
+        },
+        "chart_visualization": {
+          "payoff_diagram": "Interactive P/L chart at 14 days for various stock prices, with zoom/pan",
+          "probability_cone": "68%/95% confidence intervals for stock price in 14 days (normal distribution assumption)",
+          "breakeven_markers": "Visual markers for breakeven, take profit, stop loss levels on both charts"
+        }
+      }
+    },
+    "backend_api": {
+      "endpoint": "/api/options/<symbol>",
+      "method": "GET",
+      "authentication": "API key or JWT for secure access",
+      "response_structure": {
+        "symbol": "AAPL",
+        "stock_data": {
+          "current_price": 227.85,
+          "volume": 45000000,
+          "implied_volatility": 0.28,
+          "historical_volatility_30d": 0.25
+        },
+        "ml_prediction": {
+          "signal": "BUY",
+          "confidence": 0.734,
+          "expected_14d_move_pct": 4.2,
+          "expected_target_price": 237.42
+        },
+        "recommended_option": {
+          "type": "CALL",
+          "strike": 225.0,
+          "expiration": "2026-02-21",
+          "dte": 42,
+          "premium": 8.50,
+          "bid": 8.40,
+          "ask": 8.60,
+          "greeks": {
+            "delta": 0.68,
+            "gamma": 0.025,
+            "theta": -0.12,
+            "vega": 0.18,
+            "rho": 0.08
+          },
+          "implied_volatility": 0.31,
+          "open_interest": 2450,
+          "volume": 680,
+          "ml_score": 92
+        },
+        "profit_targets": {
+          "entry_price": 8.50,
+          "take_profit_price": 9.35,
+          "take_profit_pnl": 85.00,
+          "stop_loss_price": 8.08,
+          "stop_loss_pnl": -42.00,
+          "risk_reward_ratio": 2.02
+        },
+        "position_sizing": {
+          "portfolio_value": 10000,
+          "max_positions": 30,
+          "position_size_dollars": 333,
+          "contracts_to_buy": 3,
+          "total_premium": 2550.00,
+          "max_loss": 2550.00
+        },
+        "full_options_chain": {
+          "calls": [
+            {
+              "strike": 220.0,
+              "last": 11.20,
+              "bid": 11.10,
+              "ask": 11.30,
+              "delta": 0.82,
+              "gamma": 0.018,
+              "theta": -0.15,
+              "vega": 0.14,
+              "iv": 0.29,
+              "open_interest": 5600,
+              "volume": 1200,
+              "ml_score": 78
+            },
+            {
+              "strike": 225.0,
+              "last": 8.50,
+              "bid": 8.40,
+              "ask": 8.60,
+              "delta": 0.68,
+              "gamma": 0.025,
+              "theta": -0.12,
+              "vega": 0.18,
+              "iv": 0.31,
+              "open_interest": 2450,
+              "volume": 680,
+              "ml_score": 92,
+              "recommended": true
+            }
+          ],
+          "puts": []
+        },
+        "error_handling": {
+          "status": "success",
+          "message": "Optional error message if data fetch fails"
+        }
+      }
+    },
+    "frontend_page": {
+      "file": "frontend/turbomode/options.html",
+      "url": "/turbomode/options.html?symbol=AAPL",
+      "layout": {
+        "header_section": "Symbol, price, ML prediction, confidence",
+        "recommended_trade_card": "Highlighted card with best option + targets + quick buy button",
+        "options_chain_table": "Full chain with all strikes/expirations, pagination for long chains",
+        "greeks_visualization": "Bar/line charts showing Greek values across strikes",
+        "payoff_diagram": "Interactive P/L chart with scenario sliders",
+        "trade_summary": "Position sizing, risk metrics, expected outcomes in expandable accordion"
+      },
+      "interactive_features": [
+        "Click any row to see detailed Greeks breakdown in modal",
+        "Toggle between different expiration dates via dropdown",
+        "Adjust position size slider to see real-time P/L changes",
+        "Compare multiple strikes side-by-side in split view",
+        "Export recommended trade to clipboard or CSV",
+        "Real-time refresh button for price updates"
+      ],
+      "accessibility": "ARIA labels for tables/charts, high contrast mode support"
+    },
+    "integration_with_existing_pages": {
+      "top_10_stocks_page": {
+        "modification": "Add 'Options' button next to each symbol",
+        "click_action": "Opens options.html?symbol=<SYMBOL> in new tab or modal",
+        "file_to_modify": "frontend/turbomode/top_10_stocks.html"
+      },
+      "all_predictions_page": {
+        "modification": "Add 'Options' column with clickable icon",
+        "click_action": "Opens options page for that symbol",
+        "file_to_modify": "frontend/turbomode/all_predictions.html"
+      },
+      "turbomode_main_page": {
+        "modification": "Add new card: 'Options Trading' with link to overview or search",
+        "file_to_modify": "frontend/turbomode.html"
+      }
+    },
+    "greeks_calculation_library": {
+      "options": [
+        {
+          "library": "py_vollib",
+          "pros": "Black-Scholes model, accurate, widely used",
+          "cons": "European options only; no American pricing",
+          "install": "pip install py_vollib"
+        },
+        {
+          "library": "mibian",
+          "pros": "Simple API, supports American options via binomial model",
+          "cons": "Less maintained, potential accuracy issues",
+          "install": "pip install mibian"
+        },
+        {
+          "library": "Custom implementation",
+          "pros": "Full control, can integrate ML adjustments and custom models",
+          "cons": "Development time, potential for errors",
+          "method": "Black-Scholes formulas for European-style options; extend to binomial for American"
+        }
+      ],
+      "recommended": "py_vollib for initial accuracy + custom ML scoring layer; fallback to custom for edge cases"
+    },
+    "data_sources": {
+      "options_chain": "yfinance (Ticker.option_chain(date)) with fallback to Polygon API for real-time",
+      "stock_price": "yfinance (Ticker.history()) or Polygon for intraday updates",
+      "ml_prediction": "TurboMode overnight_scanner predictions from PostgreSQL/MySQL database",
+      "implied_volatility": "yfinance options data or calculated via reverse Black-Scholes",
+      "historical_volatility": "Calculated from price history using pandas (e.g., std of log returns)",
+      "rate_limiting": "Cache results for 5-15 minutes to avoid API abuse"
+    },
+    "ml_strike_selection_algorithm": {
+      "step1": "Retrieve ML prediction (BUY/SELL) and confidence from TurboMode database",
+      "step2": "Compute expected 14-day price move using enhanced formula",
+      "step3": "Fetch options chain for expirations in 30-45 DTE range",
+      "step4": "Filter options by liquidity (OI > 100, volume > 10, bid-ask spread < 5%)",
+      "step5": "Calculate ML Score for each qualifying option",
+      "ml_score_formula": {
+        "components": [
+          "delta_score: Gaussian around 0.7 (max 40 points for 0.60-0.80 range)",
+          "liquidity_score: Normalized OI + volume (max 20 points, logarithmic scale)",
+          "iv_score: Inverse of IV percentile (max 15 points, prefer undervalued)",
+          "alignment_score: Proximity of strike to predicted target (max 25 points, quadratic penalty for deviation)"
+        ],
+        "total": "100 points max; normalize and weight if needed"
+      },
+      "step6": "Select and recommend highest ML Score option; provide top 3 as alternatives",
+      "step7": "Compute profit targets, breakeven, and risk metrics based on OPTIONS_TRADING_SETTINGS"
+    },
+    "implementation_priority": {
+      "phase_1": [
+        "Create backend API endpoint (/api/options/<symbol>) with caching",
+        "Implement Greeks calculation using py_vollib",
+        "Build ML strike selection algorithm with unit tests",
+        "Calculate profit/loss targets and position sizing"
+      ],
+      "phase_2": [
+        "Create frontend options.html page with responsive design",
+        "Display recommended option with Greeks summary",
+        "Show full options chain table with sorting/filtering",
+        "Add basic profit/loss calculator widget"
+      ],
+      "phase_3": [
+        "Integrate 'Options' buttons/links into existing pages",
+        "Implement interactive payoff diagram using Chart.js",
+        "Add probability cone chart with monte carlo options",
+        "Enable export/share functionality and user customization"
+      ],
+      "phase_4": [
+        "Add real-time WebSocket updates for prices/Greeks",
+        "Implement backtesting module for strategy validation",
+        "Add user authentication for personalized portfolio integration"
+      ]
+    },
+    "additional_considerations": {
+      "security": "Sanitize inputs, use HTTPS, rate-limit API calls",
+      "performance": "Optimize chain fetching; use async for ML computations",
+      "compliance": "Include disclaimers: 'Not financial advice; options involve risk'",
+      "testing": "Unit tests for calculations; integration tests for API/frontend",
+      "scalability": "Support multiple symbols; batch processing for predictions"
+    }
+  }
+}

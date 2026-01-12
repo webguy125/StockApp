@@ -96,7 +96,64 @@ if exist preload.txt del preload.txt
 >> preload.txt echo END OF RULES
 >> preload.txt echo ============================================
 >> preload.txt echo.
+>> preload.txt echo ============================================
+>> preload.txt echo CRITICAL CODING RULE - READ DAILY
+>> preload.txt echo ============================================
+>> preload.txt echo.
+>> preload.txt echo NEVER EVER USE EMOJIS IN PYTHON CODE!
+>> preload.txt echo.
+>> preload.txt echo - Windows console uses cp1252 encoding
+>> preload.txt echo - Emojis (checkmarks, arrows, boxes) cause UnicodeEncodeError
+>> preload.txt echo - Use plain text: [OK], [FAIL], [WARN], ===, ---
+>> preload.txt echo - NO: checkmark, X, warning, box-drawing characters
+>> preload.txt echo - This applies to ALL Python files (.py)
+>> preload.txt echo.
+>> preload.txt echo ============================================
+>> preload.txt echo END OF CRITICAL RULE
+>> preload.txt echo ============================================
+>> preload.txt echo.
 >> preload.txt echo SESSION START TIME: %SESSION_START%
+>> preload.txt echo.
+>> preload.txt echo ============================================
+>> preload.txt echo PENDING FUTURE TASKS (Options ML System)
+>> preload.txt echo ============================================
+>> preload.txt echo.
+>> preload.txt echo The Options ML System is 100%% operational in rules-only mode.
+>> preload.txt echo Three tasks remain to enable full ML hybrid scoring (40%% rules + 60%% ML):
+>> preload.txt echo.
+>> preload.txt echo 1. FUTURE TASK 1: Accumulate 30 days of real data
+>> preload.txt echo    - Use options system daily on Top 30 symbols
+>> preload.txt echo    - Run track_options_outcomes.py daily at 4:30 PM ET
+>> preload.txt echo    - Database: C:\StockApp\backend\data\options_logs\options_predictions.db
+>> preload.txt echo    - Target: 2000-3000 labeled examples
+>> preload.txt echo.
+>> preload.txt echo 2. FUTURE TASK 2: Train ML ensemble on real data (after 30 days)
+>> preload.txt echo    - Run: python backend/turbomode/options_data_collector.py
+>> preload.txt echo    - Run: python backend/turbomode/options_feature_engineer.py
+>> preload.txt echo    - Run: python backend/turbomode/train_options_ml_model.py (3-4 hours)
+>> preload.txt echo    - Expected: Test AUC ^> 0.75, Win rate 75-80%%
+>> preload.txt echo.
+>> preload.txt echo 3. FUTURE TASK 3: Enable hybrid scoring (40%% rules + 60%% ML)
+>> preload.txt echo    - Restart Flask server after training completes
+>> preload.txt echo    - Models auto-load on startup
+>> preload.txt echo    - Hybrid scoring activates automatically
+>> preload.txt echo    - Frontend displays ML component (XGB/LGB/CAT probabilities)
+>> preload.txt echo.
+>> preload.txt echo NOTE: These tasks will be removed from this startup message
+>> preload.txt echo       after all three are completed.
+>> preload.txt echo.
+>> preload.txt echo ============================================
+>> preload.txt echo END OF PENDING TASKS
+>> preload.txt echo ============================================
+>> preload.txt echo.
+
+REM ========================================
+REM INJECT CURRENT TODO LIST
+REM ========================================
+if exist "current_todos.txt" (
+    type current_todos.txt >> preload.txt
+    >> preload.txt echo.
+)
 
 echo Context loader created: preload.txt
 echo.

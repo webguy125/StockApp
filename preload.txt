@@ -1,9 +1,9 @@
 Hi Claude - please read the previous working session file for context only:
 
-  Previous file (READ ONLY): C:\StockApp\session_files\SESSION_NOTES_2025-12-31.md
+  Previous file (READ ONLY): C:\StockApp\session_files\session_notes_2026-01-10.md
 
 CRITICAL: All session updates MUST be APPENDED to today's file:
-  C:\StockApp\session_files\session_notes_2026-01-01.md
+  C:\StockApp\session_files\session_notes_2026-01-11.md
 
 DO NOT create new files like "_part2" or "_continuation".
 DO NOT overwrite. ALWAYS APPEND using the Edit tool.
@@ -38,4 +38,210 @@ CANONICAL SESSION FILE RULES (READ DAILY)
 END OF RULES
 ============================================
 
-SESSION START TIME: 2026-01-01 19:35
+============================================
+CRITICAL CODING RULE - READ DAILY
+============================================
+
+NEVER EVER USE EMOJIS IN PYTHON CODE
+
+- Windows console uses cp1252 encoding
+- Emojis (checkmarks, arrows, boxes) cause UnicodeEncodeError
+- Use plain text: [OK], [FAIL], [WARN], ===, ---
+- NO: checkmark, X, warning, box-drawing characters
+- This applies to ALL Python files (.py)
+
+============================================
+END OF CRITICAL RULE
+============================================
+
+============================================
+CENTRALIZED PATH CONFIGURATION - READ DAILY
+============================================
+
+USE THIS FOR ALL FILE PATHS:
+  File: C:\StockApp\backend\turbomode\paths.py
+
+ALWAYS import paths from this module:
+  from backend.turbomode.paths import TURBOMODE_DB, MODELS_DIR, DATA_DIR
+
+NEVER use hardcoded relative paths like:
+  db_path = "backend/data/turbomode.db"  # BAD - causes duplicates
+
+ALWAYS use absolute paths from paths.py:
+  from backend.turbomode.paths import TURBOMODE_DB
+  db_path = str(TURBOMODE_DB)  # GOOD - always correct
+
+Available path constants:
+  - TURBOMODE_DB: Main production database
+  - MODELS_DIR: Model storage directory
+  - DATA_DIR: Backend data directory
+  - TURBOMODE_DATA_DIR: TurboMode-specific data
+  - ALL_PREDICTIONS_JSON: Scanner predictions file
+  - STOCK_RANKINGS_JSON: Stock rankings file
+
+Migration tracking:
+  File: C:\StockApp\backend\turbomode\PATH_MIGRATION_TODO.md
+  Status: Migrating scripts gradually over time
+
+============================================
+END OF PATH CONFIGURATION
+============================================
+
+SESSION START TIME: 2026-01-11 19:08
+
+============================================
+PENDING FUTURE TASKS (Options ML System)
+============================================
+
+The Options ML System is 100% operational in rules-only mode.
+Three tasks remain to enable full ML hybrid scoring (40% rules + 60% ML):
+
+1. FUTURE TASK 1: Accumulate 30 days of real data
+   - Use options system daily on Top 30 symbols
+   - Run track_options_outcomes.py daily at 4:30 PM ET
+   - Database: C:\StockApp\backend\data\options_logs\options_predictions.db
+   - Target: 2000-3000 labeled examples
+
+2. FUTURE TASK 2: Train ML ensemble on real data (after 30 days)
+   - Run: python backend/turbomode/options_data_collector.py
+   - Run: python backend/turbomode/options_feature_engineer.py
+   - Run: python backend/turbomode/train_options_ml_model.py (3-4 hours)
+   - Expected: Test AUC > 0.75, Win rate 75-80%
+
+3. FUTURE TASK 3: Enable hybrid scoring (40% rules + 60% ML)
+   - Restart Flask server after training completes
+   - Models auto-load on startup
+   - Hybrid scoring activates automatically
+   - Frontend displays ML component (XGB/LGB/CAT probabilities)
+
+NOTE: These tasks will be removed from this startup message
+      after all three are completed.
+
+============================================
+END OF PENDING TASKS
+============================================
+
+============================================
+TODAY'S TODO LIST - Updated 2026-01-10 23:00
+============================================
+
+COMPLETED TODAY (2026-01-10):
+[X] Diagnosed meta-learner training failure
+[X] Created diagnostic tool (diagnose_meta_features.py)
+[X] Fixed emoji encoding errors in 8 tree models
+[X] Fixed emoji encoding errors in training script
+[X] Added permanent "NO EMOJIS" warning to launch_claude_session.bat
+[X] Fixed neural network training hyperparameters (didn't work)
+[X] Deleted old broken neural network models
+[X] Ran full TurboMode training pipeline (2h 52m)
+[X] Successfully trained 8/10 models (all tree models EXCELLENT)
+[X] Updated session notes
+
+DECISION REQUIRED - NEXT SESSION:
+[ ] DECIDE: Option 1 (disable NNs, fast) or Option 2 (fix NNs, slow)
+
+IF OPTION 1 (RECOMMENDED - 30 minutes):
+[ ] Modify train_turbomode_models.py to exclude tc_nn_lstm, tc_nn_gru
+[ ] Train meta-learner only (uses 8 tree models)
+[ ] Verify all models work
+[ ] Test predictions
+[ ] System OPERATIONAL
+
+IF OPTION 2 (DEEP FIX - 4-8 hours):
+[ ] Debug neural network architecture
+[ ] Add feature normalization for NNs
+[ ] Fix LSTM/GRU input handling
+[ ] Test NN training standalone
+[ ] Full retraining (2-3 hours)
+
+PENDING TASKS:
+[ ] Wait for Monday market open - test options page with live data
+[ ] Quarterly curation (optional - checkpointed at 52/80 candidates)
+
+CURRENT MODEL STATUS (2026-01-10):
+Models on disk (old, from Jan 8):
+  - xgboost, catboost, xgboost_approx, lightgbm (4/10)
+
+Models missing (need retraining):
+  - xgboost_et, xgboost_hist, xgboost_dart, xgboost_gblinear (4/10)
+  - tc_nn_lstm, tc_nn_gru (2/10 - deleted, need retraining)
+
+WHAT HAPPENED TODAY:
+Training on Jan 10 16:49 succeeded for all 10 models in memory but crashed
+during meta-learner phase due to neural networks outputting constant
+predictions. This caused LightGBM to fail with zero-variance features.
+Models were never saved before crash.
+
+FIXES APPLIED:
+1. Removed emoji encoding errors (✅→[OK]) from 8 tree model files
+2. Fixed neural network hyperparameters:
+   - Learning rate: 1e-3 → 3e-3
+   - Dropout: 0.2 → 0.1
+   - Patience: 5 → 10 epochs
+   - Added gradient clipping (max_norm=1.0)
+   - Added LSTM weight initialization
+3. Deleted old neural network models (.pth files)
+
+AUTOMATED SCANNING SCHEDULE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AUTOMATED: Full 82 Stocks (Overnight Scan)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Symbols: All 82 curated stocks from core_symbols.py
+Scanner: TurboMode Scheduler (integrated in Flask)
+Duration: ~60 minutes
+Schedule: 11:00 PM (23:00) EVERY NIGHT
+Status: ENABLED (but needs model retraining first)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MANUAL: Top 10 Stocks (Intraday Updates)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Symbols: SMCI, TMDX, TSLA, MTDR, CRWD, TEAM, BOOT, NVDA, KRYS, SHAK
+Scanner: backend/turbomode/top10_scanner.py
+Duration: ~7 minutes
+Status: Will work after model retraining
+
+KNOWN ISSUES:
+[CRITICAL] Models not fully trained
+   - Cause: Jan 10 training crashed during meta-learner phase
+   - Resolution: Rerun training pipeline
+
+Options page: "No liquid options found" error
+   - Cause: yfinance OI data = 0 for all stocks (weekend data issue)
+   - Resolution: Expected Monday when markets open
+
+FUTURE TASKS (After 30 Days):
+[ ] Accumulate 30 days of real data for TurboOptions training
+[ ] Train TurboOptions ML ensemble on real data
+[ ] Enable hybrid scoring (40% rules + 60% ML)
+
+============================================
+END OF TODO LIST
+============================================
+
+============================================
+INSTRUCTIONS FOR CLAUDE (READ AT EVERY SESSION STARTUP)
+============================================
+
+AT THE START OF EVERY SESSION, YOU MUST:
+
+1. PRINT the TODO list above to the screen immediately
+   - Show it in a clean, readable format
+   - Use checkboxes to show pending/completed status
+
+2. USE the TodoWrite tool to initialize your task tracking
+   - Load all tasks from the list above
+   - Mark tasks as in_progress/completed as you work
+
+3. UPDATE this file (current_todos.txt) whenever:
+   - A task is completed (change [ ] to [X])
+   - A new task is added
+   - A task is removed or becomes irrelevant
+   - Keep this file synchronized with TodoWrite state
+
+4. AT END OF SESSION:
+   - Update this file with final TODO state
+   - Remove completed tasks or mark them [X]
+   - Ensure next session starts with clean, current list
+
+This ensures continuity across sessions and we never forget tasks!
+
