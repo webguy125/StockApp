@@ -56,3 +56,10 @@ backend/nul
 # Environment variables (API keys, secrets)
 .env
 backend/.env
+# Large files excluded from git
+IbGateway/
+backend/data/turbomode_models/*/model.json
+backend/data/turbomode_models/*/lightgbm_model.txt
+backend/data/turbomode_models/*/meta_learner*.txt
+backend/data/turbomode_models/*/catboost_model.cbm
+*.jar
