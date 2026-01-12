@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "provider": "gmail_smtp",
+  "from_email": "webguy125@gmail.com",
+  "app_password": "vvbriwspxkyrgmei",
+  "admin_emails": [
+    "webguy125@gmail.com"
+  ],
+  "user_emails": [
+    "alfinitos@gmail.com"
+  ],
+  "last_sent": "2026-01-12T09:18:13.366624"
+}
