@@ -18,6 +18,12 @@ if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
 from turbomode.overnight_scanner import OvernightScanner
+from turbomode.outcome_tracker import track_signal_outcomes
+from turbomode.training_sample_generator import generate_training_samples_from_outcomes
+from turbomode.automated_retrainer import automated_model_retraining
+from turbomode.meta_retrain import maybe_retrain_meta
+from turbomode.task_monitor import log_task_result, send_daily_report
+import time
 
 # Setup logging
 logger = logging.getLogger('turbomode_scheduler')
@@ -53,22 +59,24 @@ def save_state(state):
 
 def run_overnight_scan():
     """
-    Run TurboMode overnight S&P 500 scan
-    Scans all 500 symbols and generates top signals
+    Run TurboMode overnight scan on 82 curated stocks
+    Uses GPU-accelerated 8-model ensemble with 179 features
     """
     logger.info("=" * 80)
-    logger.info("TURBOMODE - OVERNIGHT S&P 500 SCAN STARTED")
+    logger.info("TURBOMODE - OVERNIGHT SCAN (82 CURATED STOCKS)")
     logger.info(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 80)
 
+    start_time = time.time()
+
     try:
-        # Initialize scanner
+        # Initialize scanner (scans 82 curated stocks from CORE_SYMBOLS)
         scanner = OvernightScanner(
             db_path="backend/data/turbomode.db",
-            ml_db_path="backend/backend/data/advanced_ml_system.db"
+            model_path="backend/data/turbomode_models"
         )
 
-        # Run full scan (500 symbols, top 100 of each type)
+        # Run full scan (82 curated stocks, top 100 signals of each type)
         results = scanner.scan_all(max_signals_per_type=100)
 
         # Print summary
@@ -90,12 +98,77 @@ def run_overnight_scan():
         logger.info("TURBOMODE - SCAN COMPLETED")
         logger.info("=" * 80)
 
+        # Log success
+        duration = time.time() - start_time
+        log_task_result('overnight_scan', True, duration=duration)
+
         return True
 
     except Exception as e:
         logger.error(f"❌ TurboMode scan failed: {e}")
         import traceback
         traceback.print_exc()
+
+        # Log failure
+        duration = time.time() - start_time
+        log_task_result('overnight_scan', False, error_msg=str(e), duration=duration)
+
+        return False
+
+
+def run_outcome_tracker_monitored():
+    """Wrapper for outcome tracker with monitoring"""
+    start_time = time.time()
+    try:
+        success = track_signal_outcomes()
+        duration = time.time() - start_time
+        log_task_result('outcome_tracker', success, duration=duration)
+        return success
+    except Exception as e:
+        duration = time.time() - start_time
+        log_task_result('outcome_tracker', False, error_msg=str(e), duration=duration)
+        return False
+
+
+def run_sample_generator_monitored():
+    """Wrapper for training sample generator with monitoring"""
+    start_time = time.time()
+    try:
+        success = generate_training_samples_from_outcomes()
+        duration = time.time() - start_time
+        log_task_result('sample_generator', success, duration=duration)
+        return success
+    except Exception as e:
+        duration = time.time() - start_time
+        log_task_result('sample_generator', False, error_msg=str(e), duration=duration)
+        return False
+
+
+def run_monthly_retrain_monitored():
+    """Wrapper for monthly retraining with monitoring"""
+    start_time = time.time()
+    try:
+        success = automated_model_retraining()
+        duration = time.time() - start_time
+        log_task_result('monthly_retrain', success, duration=duration)
+        return success
+    except Exception as e:
+        duration = time.time() - start_time
+        log_task_result('monthly_retrain', False, error_msg=str(e), duration=duration)
+        return False
+
+
+def run_meta_retrain_monitored():
+    """Wrapper for meta-learner retraining with monitoring"""
+    start_time = time.time()
+    try:
+        success = maybe_retrain_meta()
+        duration = time.time() - start_time
+        log_task_result('meta_retrain', success, duration=duration)
+        return success
+    except Exception as e:
+        duration = time.time() - start_time
+        log_task_result('meta_retrain', False, error_msg=str(e), duration=duration)
         return False
 
 
@@ -128,6 +201,61 @@ def start_scheduler(schedule_time='23:00'):
         replace_existing=True
     )
 
+    # Add outcome tracker job (Daily at 2 AM)
+    scheduler.add_job(
+        run_outcome_tracker_monitored,
+        trigger=CronTrigger(hour=2, minute=0),
+        id='turbomode_outcome_tracker',
+        name='TurboMode - Outcome Tracker',
+        replace_existing=True
+    )
+
+    # Add training sample generator (Sunday at 3 AM)
+    scheduler.add_job(
+        run_sample_generator_monitored,
+        trigger=CronTrigger(day_of_week='sun', hour=3, minute=0),
+        id='turbomode_sample_generator',
+        name='TurboMode - Training Sample Generator',
+        replace_existing=True
+    )
+
+    # Add automated retrainer (1st of month at 4 AM)
+    scheduler.add_job(
+        run_monthly_retrain_monitored,
+        trigger=CronTrigger(day=1, hour=4, minute=0),
+        id='turbomode_monthly_retrain',
+        name='TurboMode - Monthly Model Retraining',
+        replace_existing=True
+    )
+
+    # Add meta-learner retraining (Every 6 weeks on Sunday at 11:45 PM)
+    # Calculate first run time: 6 weeks from Jan 11, 2026
+    from datetime import datetime, timedelta
+    first_run = datetime(2026, 1, 11, 23, 45) + timedelta(weeks=6)
+
+    scheduler.add_job(
+        run_meta_retrain_monitored,
+        trigger=CronTrigger(
+            day_of_week='sun',
+            hour=23,
+            minute=45,
+            start_date=first_run
+        ),
+        id='turbomode_meta_retrain',
+        name='TurboMode - Meta-Learner Retraining (6-weekly)',
+        replace_existing=True,
+        misfire_grace_time=3600  # 1 hour grace period
+    )
+
+    # Add daily SMS report (Daily at 8:00 AM)
+    scheduler.add_job(
+        send_daily_report,
+        trigger=CronTrigger(hour=8, minute=0),
+        id='turbomode_daily_report',
+        name='TurboMode - Daily Email Report',
+        replace_existing=True
+    )
+
     # Start scheduler
     scheduler.start()
 
@@ -140,8 +268,14 @@ def start_scheduler(schedule_time='23:00'):
     }
     save_state(state)
 
-    logger.info(f"✅ TurboMode Scheduler STARTED - Will run daily at {schedule_time}")
-    logger.info(f"   Next run: {state['next_run']}")
+    logger.info(f"✅ TurboMode Scheduler STARTED")
+    logger.info(f"   Overnight Scan: Daily at {schedule_time}")
+    logger.info(f"   Outcome Tracker: Daily at 02:00")
+    logger.info(f"   Sample Generator: Sunday at 03:00")
+    logger.info(f"   Model Retraining: 1st of month at 04:00")
+    logger.info(f"   Meta-Learner Retrain: Every 6 weeks, Sunday at 23:45 (first run: {first_run.strftime('%Y-%m-%d')})")
+    logger.info(f"   Daily Email Report: Daily at 08:00")
+    logger.info(f"   Next scan: {state['next_run']}")
 
     return True
 
