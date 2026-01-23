@@ -63,3 +63,6 @@ backend/data/turbomode_models/*/lightgbm_model.txt
 backend/data/turbomode_models/*/meta_learner*.txt
 backend/data/turbomode_models/*/catboost_model.cbm
 *.jar
+
+# Training cache files (numpy arrays can be very large)
+backend/data/training_cache/*.npy

@@ -107,14 +107,19 @@ def run_ingestion() -> Dict[str, Any]:
 
     try:
         # Import ingestion module
-        from master_market_data.ingest_via_ibkr import IBKRMarketDataIngestion
-        from backend.advanced_ml.config.core_symbols import get_all_core_symbols, CRYPTO_SYMBOLS
+        from backend.turbomode.core_engine.ingest_via_ibkr import IBKRMarketDataIngestion
+        from backend.turbomode.core_engine.training_symbols import get_training_symbols, CRYPTO_SYMBOLS
+        from backend.turbomode.core_engine.scanning_symbols import get_scanning_symbols
 
         # Initialize ingestion
         ingestion = IBKRMarketDataIngestion()
 
-        # Get all symbols
-        all_symbols = get_all_core_symbols() + CRYPTO_SYMBOLS
+        # Get all symbols: training (40) + scanning (208) + crypto (3)
+        # Deduplicate since some training symbols are also in scanning list
+        training_symbols = get_training_symbols()
+        scanning_symbols = get_scanning_symbols()
+        all_stock_symbols = list(set(training_symbols + scanning_symbols))
+        all_symbols = sorted(all_stock_symbols + CRYPTO_SYMBOLS)
 
         task_logger.info(f"Ingesting {len(all_symbols)} symbols...")
 
@@ -194,24 +199,31 @@ def run_orchestrator() -> Dict[str, Any]:
     task_logger.info("=" * 80)
 
     try:
-        # Import training orchestrator
-        from backend.turbomode.training_orchestrator import TrainingOrchestrator
+        # Import Fast Mode training script
+        import subprocess
+        training_script = os.path.join(current_dir, 'turbomode', 'core_engine', 'train_all_sectors_fastmode_orchestrator.py')
 
-        # Initialize orchestrator
-        orchestrator = TrainingOrchestrator()
+        task_logger.info("Running Fast Mode training for all sectors...")
+        task_logger.info(f"Training script: {training_script}")
 
-        task_logger.info("Running full training pipeline...")
+        # Run Fast Mode training script (11 sectors × 3 horizons = 33 model sets)
+        result = subprocess.run(
+            [sys.executable, training_script],
+            capture_output=True,
+            text=True,
+            timeout=7200  # 2 hour timeout
+        )
 
-        # Run 12-step training pipeline
-        run_id = orchestrator.run_full_training_pipeline()
-
-        if run_id:
-            task_logger.info(f"[SUCCESS] Task {task_id} completed - Training Run ID: {run_id}")
+        if result.returncode == 0:
+            task_logger.info(f"[SUCCESS] Task {task_id} completed - Fast Mode training")
+            task_logger.info("Training output:")
+            task_logger.info(result.stdout)
 
             job_state['last_runs'][task_id] = datetime.now().isoformat()
             job_state['last_results'][task_id] = {
                 'status': 'success',
-                'training_run_id': run_id
+                'training_type': 'fast_mode',
+                'model_sets': 33  # 11 sectors × 3 horizons
             }
 
             task_logger.info("=" * 80)
@@ -219,10 +231,11 @@ def run_orchestrator() -> Dict[str, Any]:
             return {
                 'success': True,
                 'task_id': task_id,
-                'training_run_id': run_id
+                'training_type': 'fast_mode',
+                'model_sets': 33
             }
         else:
-            raise Exception("Training pipeline returned None - check logs")
+            raise Exception(f"Training failed with return code {result.returncode}: {result.stderr}")
 
     except Exception as e:
         task_logger.error(f"[ERROR] Task {task_id} failed: {e}")
@@ -268,20 +281,21 @@ def run_overnight_scanner() -> Dict[str, Any]:
     task_logger.info("=" * 80)
 
     try:
-        # Import overnight scanner
-        from backend.turbomode.overnight_scanner import OvernightScanner
-        from backend.advanced_ml.config.core_symbols import get_all_core_symbols
+        # Import scanner and paths
+        from backend.turbomode.core_engine.overnight_scanner import ProductionScanner
+        from backend.turbomode.core_engine.scanning_symbols import get_scanning_symbols
+        from backend.turbomode.paths import TURBOMODE_DB
 
-        # Initialize scanner
-        scanner = OvernightScanner()
+        # Initialize scanner (defaults to 1d horizon)
+        scanner = ProductionScanner(horizon='1d')
 
-        # Get all core symbols
-        symbols = get_all_core_symbols()
+        # Get all scanning symbols (208 stocks)
+        symbols = get_scanning_symbols()
 
         task_logger.info(f"Scanning {len(symbols)} symbols...")
 
-        # Run overnight scan
-        results = scanner.run_overnight_scan(symbols)
+        # Run scanner on all symbols
+        results = scanner.scan_all(max_signals_per_type=100)
 
         # Count signals
         num_signals = len(results.get('signals', []))
@@ -350,14 +364,14 @@ def run_backtest_generator() -> Dict[str, Any]:
 
     try:
         # Import backtest generator
-        from backend.turbomode.backtest_generator import BacktestGenerator
-        from backend.advanced_ml.config.core_symbols import get_all_core_symbols
+        from backend.turbomode.core_engine.backtest_generator import BacktestGenerator
+        from backend.turbomode.core_engine.training_symbols import get_training_symbols
 
         # Initialize backtest generator
         generator = BacktestGenerator(lookback_days=90)
 
-        # Get symbols
-        symbols = get_all_core_symbols()
+        # Get training symbols (40 stocks) for backtesting
+        symbols = get_training_symbols()
 
         task_logger.info(f"Generating backtest for {len(symbols)} symbols...")
 
@@ -549,6 +563,9 @@ def run_weekly_maintenance() -> Dict[str, Any]:
     task_logger.info("=" * 80)
 
     try:
+        # Import paths
+        from backend.turbomode.paths import TURBOMODE_DB
+
         results = {
             'master_db_vacuum': False,
             'turbomode_db_vacuum': False,
@@ -568,9 +585,9 @@ def run_weekly_maintenance() -> Dict[str, Any]:
         except Exception as e:
             task_logger.warning(f"[WARNING] Failed to vacuum Master DB: {e}")
 
-        # VACUUM TurboMode DB
+        # VACUUM TurboMode DB (using absolute path from paths module)
         try:
-            turbomode_db_path = os.path.join(current_dir, 'data', 'turbomode.db')
+            turbomode_db_path = str(TURBOMODE_DB)
             if os.path.exists(turbomode_db_path):
                 conn = sqlite3.connect(turbomode_db_path)
                 conn.execute("VACUUM")

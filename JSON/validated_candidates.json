@@ -1,0 +1,1927 @@
+{
+  "communication_services": {
+    "mid_cap": [
+      {
+        "symbol": "PINS",
+        "market_cap": 18405695488,
+        "market_cap_billions": 18.41,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 15067769,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "SNAP",
+        "market_cap": 13582932992,
+        "market_cap_billions": 13.58,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 43937450,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ROKU",
+        "market_cap": 15890704384,
+        "market_cap_billions": 15.89,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 3110675,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "MTCH",
+        "market_cap": 7697502208,
+        "market_cap_billions": 7.7,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 3452380,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "IAC",
+        "market_cap": 3177434112,
+        "market_cap_billions": 3.18,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1132972,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "PARA",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "WBD",
+        "market_cap": 70987702272,
+        "market_cap_billions": 70.99,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 45020108,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "BMBL",
+        "market_cap": 570625792,
+        "market_cap_billions": 0.57,
+        "tier_name": "small_cap",
+        "tier_code": 0,
+        "avg_volume": 2863122,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "FUBO",
+        "market_cap": 884228736,
+        "market_cap_billions": 0.88,
+        "tier_name": "small_cap",
+        "tier_code": 0,
+        "avg_volume": 14101675,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "SIRI",
+        "market_cap": 7108591104,
+        "market_cap_billions": 7.11,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 3829304,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "NWSA",
+        "market_cap": 15656594432,
+        "market_cap_billions": 15.66,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 3616541,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "NYT",
+        "market_cap": 11682249728,
+        "market_cap_billions": 11.68,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1790938,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "MSGN",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "DISCA",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      }
+    ]
+  },
+  "consumer_discretionary": {
+    "mid_cap": [
+      {
+        "symbol": "ETSY",
+        "market_cap": 6103106048,
+        "market_cap_billions": 6.1,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 3685696,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "W",
+        "market_cap": 14936743936,
+        "market_cap_billions": 14.94,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 3303830,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "BKNG",
+        "market_cap": 168110735360,
+        "market_cap_billions": 168.11,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 256837,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "RCL",
+        "market_cap": 76176908288,
+        "market_cap_billions": 76.18,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2311985,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "LVS",
+        "market_cap": 41118572544,
+        "market_cap_billions": 41.12,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 5509841,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "CHWY",
+        "market_cap": 13309003776,
+        "market_cap_billions": 13.31,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 7328385,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "PRTY",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "BBWI",
+        "market_cap": 4746438144,
+        "market_cap_billions": 4.75,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 7685704,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "URBN",
+        "market_cap": 6286926848,
+        "market_cap_billions": 6.29,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 2208625,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ANF",
+        "market_cap": 4750756864,
+        "market_cap_billions": 4.75,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 2151730,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CPRI",
+        "market_cap": 3066747904,
+        "market_cap_billions": 3.07,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 2436554,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "RL",
+        "market_cap": 22004068352,
+        "market_cap_billions": 22.0,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 623582,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "TPR",
+        "market_cap": 27566921728,
+        "market_cap_billions": 27.57,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2923161,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ]
+  },
+  "consumer_staples": {
+    "mid_cap": [
+      {
+        "symbol": "BG",
+        "market_cap": 20391854080,
+        "market_cap_billions": 20.39,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1559979,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "TSN",
+        "market_cap": 21338757120,
+        "market_cap_billions": 21.34,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2998177,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CAG",
+        "market_cap": 8189685760,
+        "market_cap_billions": 8.19,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 10679588,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "SJM",
+        "market_cap": 11131419648,
+        "market_cap_billions": 11.13,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1626409,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "K",
+        "market_cap": 29031499776,
+        "market_cap_billions": 29.03,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 3466885,
+        "has_options": false,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "GIS",
+        "market_cap": 24342013952,
+        "market_cap_billions": 24.34,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 6890198,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "HSY",
+        "market_cap": 40378572800,
+        "market_cap_billions": 40.38,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1701816,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CPB",
+        "market_cap": 7992978944,
+        "market_cap_billions": 7.99,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 6273958,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "HRL",
+        "market_cap": 13472126976,
+        "market_cap_billions": 13.47,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 5030638,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "MKC",
+        "market_cap": 18402519040,
+        "market_cap_billions": 18.4,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2544282,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "LW",
+        "market_cap": 6031175168,
+        "market_cap_billions": 6.03,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 2337656,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "POST",
+        "market_cap": 5125773824,
+        "market_cap_billions": 5.13,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 783838,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "INGR",
+        "market_cap": 7442415616,
+        "market_cap_billions": 7.44,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 653517,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "FLO",
+        "market_cap": 2301842688,
+        "market_cap_billions": 2.3,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 4085108,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CAL",
+        "market_cap": 469792448,
+        "market_cap_billions": 0.47,
+        "tier_name": "small_cap",
+        "tier_code": 0,
+        "avg_volume": 1103140,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "BGS",
+        "market_cap": 340816000,
+        "market_cap_billions": 0.34,
+        "tier_name": "small_cap",
+        "tier_code": 0,
+        "avg_volume": 1946590,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ]
+  },
+  "energy": {
+    "mid_cap": [
+      {
+        "symbol": "FANG",
+        "market_cap": 44502700032,
+        "market_cap_billions": 44.5,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1742975,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "DVN",
+        "market_cap": 24071614464,
+        "market_cap_billions": 24.07,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 7943440,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "OXY",
+        "market_cap": 43664527360,
+        "market_cap_billions": 43.66,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 9720032,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "MRO",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "HES",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "EQT",
+        "market_cap": 31365799936,
+        "market_cap_billions": 31.37,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 8072401,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CTRA",
+        "market_cap": 19353229312,
+        "market_cap_billions": 19.35,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 7985561,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "VLO",
+        "market_cap": 57939656704,
+        "market_cap_billions": 57.94,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2955108,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "SM",
+        "market_cap": 2127271296,
+        "market_cap_billions": 2.13,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 3048754,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "MGY",
+        "market_cap": 4358204416,
+        "market_cap_billions": 4.36,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 2239614,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "MTDR",
+        "market_cap": 5426712064,
+        "market_cap_billions": 5.43,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1832120,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "PR",
+        "market_cap": 10928028672,
+        "market_cap_billions": 10.93,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 10158961,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CHRD",
+        "market_cap": 5411463680,
+        "market_cap_billions": 5.41,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 699914,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "AR",
+        "market_cap": 9853812736,
+        "market_cap_billions": 9.85,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 5151804,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "RRC",
+        "market_cap": 7962727936,
+        "market_cap_billions": 7.96,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 3073975,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CNX",
+        "market_cap": 5193419264,
+        "market_cap_billions": 5.19,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1966045,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ]
+  },
+  "financials": {
+    "mid_cap": [
+      {
+        "symbol": "SOFI",
+        "market_cap": 33701750784,
+        "market_cap_billions": 33.7,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 64382690,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "AFRM",
+        "market_cap": 23966646272,
+        "market_cap_billions": 23.97,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 5306733,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "LC",
+        "market_cap": 2304875776,
+        "market_cap_billions": 2.3,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1906483,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ALLY",
+        "market_cap": 13514293248,
+        "market_cap_billions": 13.51,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 3067100,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "SYF",
+        "market_cap": 28953518080,
+        "market_cap_billions": 28.95,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 3405782,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "DFS",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "KEY",
+        "market_cap": 22896664576,
+        "market_cap_billions": 22.9,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 16999025,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "RF",
+        "market_cap": 25109557248,
+        "market_cap_billions": 25.11,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 20368801,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "HBAN",
+        "market_cap": 27842521088,
+        "market_cap_billions": 27.84,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 28392501,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "EWBC",
+        "market_cap": 15775078400,
+        "market_cap_billions": 15.78,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 706970,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "WAL",
+        "market_cap": 9747773440,
+        "market_cap_billions": 9.75,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1076143,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "PACW",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "FHN",
+        "market_cap": 12211330048,
+        "market_cap_billions": 12.21,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 8254433,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ONB",
+        "market_cap": 8929163264,
+        "market_cap_billions": 8.93,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 3163383,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "UMBF",
+        "market_cap": 9170764800,
+        "market_cap_billions": 9.17,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 474403,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "SBNY",
+        "market_cap": 66122740,
+        "market_cap_billions": 0.07,
+        "tier_name": "small_cap",
+        "tier_code": 0,
+        "avg_volume": 145575,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "OZK",
+        "market_cap": 5345523200,
+        "market_cap_billions": 5.35,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1207809,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ]
+  },
+  "healthcare": {
+    "mid_cap": [
+      {
+        "symbol": "DXCM",
+        "market_cap": 27333220352,
+        "market_cap_billions": 27.33,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 6044783,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ALGN",
+        "market_cap": 12266867712,
+        "market_cap_billions": 12.27,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1307498,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "PODD",
+        "market_cap": 19913345024,
+        "market_cap_billions": 19.91,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 659609,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "TDOC",
+        "market_cap": 1173099264,
+        "market_cap_billions": 1.17,
+        "tier_name": "small_cap",
+        "tier_code": 0,
+        "avg_volume": 6280700,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "VEEV",
+        "market_cap": 35976613888,
+        "market_cap_billions": 35.98,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1423788,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "EXAS",
+        "market_cap": 19420901376,
+        "market_cap_billions": 19.42,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 5381843,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "TECH",
+        "market_cap": 10657589248,
+        "market_cap_billions": 10.66,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1853962,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "INCY",
+        "market_cap": 20800389120,
+        "market_cap_billions": 20.8,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2371140,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "NTRA",
+        "market_cap": 33354835968,
+        "market_cap_billions": 33.35,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1368043,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "IONS",
+        "market_cap": 12774921216,
+        "market_cap_billions": 12.77,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2353043,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "UTHR",
+        "market_cap": 21515491328,
+        "market_cap_billions": 21.52,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 488914,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "NBIX",
+        "market_cap": 13493172224,
+        "market_cap_billions": 13.49,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1064672,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ALNY",
+        "market_cap": 48467271680,
+        "market_cap_billions": 48.47,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1332982,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "BMRN",
+        "market_cap": 10773772288,
+        "market_cap_billions": 10.77,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2914362,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "SRPT",
+        "market_cap": 2389147648,
+        "market_cap_billions": 2.39,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 4226053,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "RARE",
+        "market_cap": 2322214912,
+        "market_cap_billions": 2.32,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 2219861,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ]
+  },
+  "industrials": {
+    "mid_cap": [
+      {
+        "symbol": "CARR",
+        "market_cap": 47316869120,
+        "market_cap_billions": 47.32,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 7152900,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "OTIS",
+        "market_cap": 35303145472,
+        "market_cap_billions": 35.3,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2422051,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "URI",
+        "market_cap": 59022778368,
+        "market_cap_billions": 59.02,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 647404,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "JBHT",
+        "market_cap": 19922259968,
+        "market_cap_billions": 19.92,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1311625,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CHRW",
+        "market_cap": 20356216832,
+        "market_cap_billions": 20.36,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1598103,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "EXPD",
+        "market_cap": 22016260096,
+        "market_cap_billions": 22.02,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1345404,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ODFL",
+        "market_cap": 36468375552,
+        "market_cap_billions": 36.47,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2205333,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "R",
+        "market_cap": 7842816000,
+        "market_cap_billions": 7.84,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 396977,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "JBLU",
+        "market_cap": 1760359936,
+        "market_cap_billions": 1.76,
+        "tier_name": "small_cap",
+        "tier_code": 0,
+        "avg_volume": 19202290,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ALK",
+        "market_cap": 5543096320,
+        "market_cap_billions": 5.54,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 3407720,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "SAVE",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "MATX",
+        "market_cap": 4193607424,
+        "market_cap_billions": 4.19,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 330846,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "HUBG",
+        "market_cap": 2886503168,
+        "market_cap_billions": 2.89,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 700688,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "SAIA",
+        "market_cap": 9543926784,
+        "market_cap_billions": 9.54,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 510920,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ARCB",
+        "market_cap": 2043373824,
+        "market_cap_billions": 2.04,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 344998,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      }
+    ]
+  },
+  "materials": {
+    "mid_cap": [
+      {
+        "symbol": "FCX",
+        "market_cap": 86658408448,
+        "market_cap_billions": 86.66,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 15718820,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ALB",
+        "market_cap": 20897198080,
+        "market_cap_billions": 20.9,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 3450229,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "MP",
+        "market_cap": 12282073088,
+        "market_cap_billions": 12.28,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 10435329,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "STLD",
+        "market_cap": 25142544384,
+        "market_cap_billions": 25.14,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1259345,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CF",
+        "market_cap": 13775800320,
+        "market_cap_billions": 13.78,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2370545,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "X",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "CLF",
+        "market_cap": 7953116160,
+        "market_cap_billions": 7.95,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 21043175,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "NUE",
+        "market_cap": 39430057984,
+        "market_cap_billions": 39.43,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1547004,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CMC",
+        "market_cap": 8246420480,
+        "market_cap_billions": 8.25,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1229967,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "RS",
+        "market_cap": 16597470208,
+        "market_cap_billions": 16.6,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 326077,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "HCC",
+        "market_cap": 5366361600,
+        "market_cap_billions": 5.37,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 779774,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CENX",
+        "market_cap": 4472946688,
+        "market_cap_billions": 4.47,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 2242419,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "TECK",
+        "market_cap": 25542496256,
+        "market_cap_billions": 25.54,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 3771841,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ]
+  },
+  "real_estate": {
+    "mid_cap": [
+      {
+        "symbol": "INVH",
+        "market_cap": 16398301184,
+        "market_cap_billions": 16.4,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 5662038,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "EXR",
+        "market_cap": 32070162432,
+        "market_cap_billions": 32.07,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1210867,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "AVB",
+        "market_cap": 25651726336,
+        "market_cap_billions": 25.65,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1007166,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "EQR",
+        "market_cap": 24085987328,
+        "market_cap_billions": 24.09,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2538953,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "VTR",
+        "market_cap": 36131848192,
+        "market_cap_billions": 36.13,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2991054,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ARE",
+        "market_cap": 9702398976,
+        "market_cap_billions": 9.7,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 2945056,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "DLR",
+        "market_cap": 55693942784,
+        "market_cap_billions": 55.69,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1936929,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "PSA",
+        "market_cap": 50492989440,
+        "market_cap_billions": 50.49,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1116217,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "CUBE",
+        "market_cap": 8871226368,
+        "market_cap_billions": 8.87,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 2125185,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "LSI",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "NSA",
+        "market_cap": 4827240960,
+        "market_cap_billions": 4.83,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1281662,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "REXR",
+        "market_cap": 10025696256,
+        "market_cap_billions": 10.03,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2116658,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "FR",
+        "market_cap": 8074258432,
+        "market_cap_billions": 8.07,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 974819,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "TRNO",
+        "market_cap": 6281769984,
+        "market_cap_billions": 6.28,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 670969,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "EGP",
+        "market_cap": 9931945984,
+        "market_cap_billions": 9.93,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 333577,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "STAG",
+        "market_cap": 7189345280,
+        "market_cap_billions": 7.19,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1299996,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ]
+  },
+  "technology": {
+    "mid_cap": [
+      {
+        "symbol": "SNOW",
+        "market_cap": 70547955712,
+        "market_cap_billions": 70.55,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 4693159,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "PLTR",
+        "market_cap": 425205006336,
+        "market_cap_billions": 425.21,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 45733337,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "DDOG",
+        "market_cap": 42925608960,
+        "market_cap_billions": 42.93,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 4297851,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "OKTA",
+        "market_cap": 16544441344,
+        "market_cap_billions": 16.54,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2422609,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ZS",
+        "market_cap": 34169894912,
+        "market_cap_billions": 34.17,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1683135,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CRWD",
+        "market_cap": 116141752320,
+        "market_cap_billions": 116.14,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2287422,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "NET",
+        "market_cap": 65989464064,
+        "market_cap_billions": 65.99,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2635691,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "TWLO",
+        "market_cap": 18876936192,
+        "market_cap_billions": 18.88,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2151272,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "MDB",
+        "market_cap": 31489658880,
+        "market_cap_billions": 31.49,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1709991,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "HUBS",
+        "market_cap": 18194931712,
+        "market_cap_billions": 18.19,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 802185,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "FROG",
+        "market_cap": 6668111360,
+        "market_cap_billions": 6.67,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1722082,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "BILL",
+        "market_cap": 5050059776,
+        "market_cap_billions": 5.05,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 2424891,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "S",
+        "market_cap": 4832936960,
+        "market_cap_billions": 4.83,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 7321043,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "GTLB",
+        "market_cap": 6089344000,
+        "market_cap_billions": 6.09,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 4398414,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "DT",
+        "market_cap": 12054219776,
+        "market_cap_billions": 12.05,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 3359841,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "ESTC",
+        "market_cap": 7700500992,
+        "market_cap_billions": 7.7,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1698030,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "SMCI",
+        "market_cap": 16876374016,
+        "market_cap_billions": 16.88,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 26519737,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CVLT",
+        "market_cap": 5529892352,
+        "market_cap_billions": 5.53,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 773170,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ]
+  },
+  "utilities": {
+    "mid_cap": [
+      {
+        "symbol": "ES",
+        "market_cap": 26244481024,
+        "market_cap_billions": 26.24,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2597451,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "CMS",
+        "market_cap": 21582358528,
+        "market_cap_billions": 21.58,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2399233,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "AEE",
+        "market_cap": 27736549376,
+        "market_cap_billions": 27.74,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1714409,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "LNT",
+        "market_cap": 17186611200,
+        "market_cap_billions": 17.19,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2059291,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "EVRG",
+        "market_cap": 17325916160,
+        "market_cap_billions": 17.33,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 2030472,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "NI",
+        "market_cap": 20495702016,
+        "market_cap_billions": 20.5,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 3679854,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "PNW",
+        "market_cap": 11047424000,
+        "market_cap_billions": 11.05,
+        "tier_name": "large_cap",
+        "tier_code": 2,
+        "avg_volume": 1280524,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      }
+    ],
+    "small_cap": [
+      {
+        "symbol": "OGE",
+        "market_cap": 8962774016,
+        "market_cap_billions": 8.96,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1326995,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "NWE",
+        "market_cap": 4147430656,
+        "market_cap_billions": 4.15,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 514558,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "AVA",
+        "market_cap": 3222320896,
+        "market_cap_billions": 3.22,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 703038,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "POR",
+        "market_cap": 5543455232,
+        "market_cap_billions": 5.54,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 1188943,
+        "has_options": true,
+        "valid": true,
+        "error": null
+      },
+      {
+        "symbol": "NWN",
+        "market_cap": 1929247232,
+        "market_cap_billions": 1.93,
+        "tier_name": "small_cap",
+        "tier_code": 0,
+        "avg_volume": 267325,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "SJW",
+        "market_cap": null,
+        "market_cap_billions": null,
+        "tier_name": "unknown",
+        "tier_code": 3,
+        "avg_volume": 0,
+        "has_options": false,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "AWR",
+        "market_cap": 2925261824,
+        "market_cap_billions": 2.93,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 282909,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      },
+      {
+        "symbol": "CWT",
+        "market_cap": 2721536512,
+        "market_cap_billions": 2.72,
+        "tier_name": "mid_cap",
+        "tier_code": 1,
+        "avg_volume": 416469,
+        "has_options": true,
+        "valid": false,
+        "error": null
+      }
+    ]
+  }
+}

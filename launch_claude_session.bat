@@ -112,6 +112,42 @@ if exist preload.txt del preload.txt
 >> preload.txt echo END OF CRITICAL RULE
 >> preload.txt echo ============================================
 >> preload.txt echo.
+>> preload.txt echo ============================================
+>> preload.txt echo CRITICAL DATABASE POLICY - READ DAILY
+>> preload.txt echo ============================================
+>> preload.txt echo.
+>> preload.txt echo 1. NEVER modify databases directly (neither master_market_data nor turbomode databases)
+>> preload.txt echo 2. ALL changes must be implemented in code - databases are read-only from my perspective
+>> preload.txt echo 3. Waiting for your instructions before proceeding with any tasks
+>> preload.txt echo.
+>> preload.txt echo ============================================
+>> preload.txt echo END OF DATABASE POLICY
+>> preload.txt echo ============================================
+>> preload.txt echo.
+>> preload.txt echo ============================================
+>> preload.txt echo CODE FORMATTING POLICY - READ DAILY
+>> preload.txt echo ============================================
+>> preload.txt echo.
+>> preload.txt echo When displaying code to the user, use this EXACT format:
+>> preload.txt echo.
+>> preload.txt echo CORRECT FORMAT (colorized, no wrapper):
+>> preload.txt echo ```python
+>> preload.txt echo def example_function(param1, param2):
+>> preload.txt echo     """This is how code should look."""
+>> preload.txt echo     result = param1 + param2
+>> preload.txt echo     return result
+>> preload.txt echo ```
+>> preload.txt echo.
+>> preload.txt echo Key rules:
+>> preload.txt echo - Use ```python for syntax highlighting
+>> preload.txt echo - NO borders/boxes around the code block
+>> preload.txt echo - Code appears directly for easy copy/paste
+>> preload.txt echo - The triple backticks are MINIMAL wrapping, not borders
+>> preload.txt echo.
+>> preload.txt echo ============================================
+>> preload.txt echo END OF CODE FORMATTING POLICY
+>> preload.txt echo ============================================
+>> preload.txt echo.
 >> preload.txt echo SESSION START TIME: %SESSION_START%
 >> preload.txt echo.
 >> preload.txt echo ============================================

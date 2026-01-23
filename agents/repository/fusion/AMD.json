@@ -1,6 +1,6 @@
 {
   "symbol": "AMD",
-  "timestamp": "2026-01-12T00:02:32.149010",
+  "timestamp": "2026-01-23T00:02:27.427536",
   "agent": "fusion_agent",
   "total_score": 40.0,
   "confidence": 0.7,
@@ -11,7 +11,7 @@
     "💰"
   ],
   "emoji_string": "📈❌💰",
-  "shorthand": "AMD | 📈❌💰 | 40 | 0.70 | 2026-01-12",
+  "shorthand": "AMD | 📈❌💰 | 40 | 0.70 | 2026-01-23",
   "weighted_scores": {
     "indicators_agent": {
       "score": 40,

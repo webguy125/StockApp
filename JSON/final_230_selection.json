@@ -1,0 +1,370 @@
+{
+  "final_selection": {
+    "Communication Services": {
+      "large_cap": [],
+      "mid_cap": [],
+      "small_cap": []
+    },
+    "Consumer Cyclical": {
+      "large_cap": [],
+      "mid_cap": [],
+      "small_cap": []
+    },
+    "Consumer Defensive": {
+      "large_cap": [],
+      "mid_cap": [],
+      "small_cap": []
+    },
+    "Energy": {
+      "large_cap": [],
+      "mid_cap": [],
+      "small_cap": []
+    },
+    "Healthcare": {
+      "large_cap": [],
+      "mid_cap": [],
+      "small_cap": []
+    },
+    "Industrials": {
+      "large_cap": [],
+      "mid_cap": [],
+      "small_cap": []
+    },
+    "Real Estate": {
+      "large_cap": [],
+      "mid_cap": [],
+      "small_cap": []
+    },
+    "Technology": {
+      "large_cap": [],
+      "mid_cap": [],
+      "small_cap": []
+    },
+    "communication_services": {
+      "large_cap": [
+        "GOOGL",
+        "META",
+        "NFLX",
+        "DIS"
+      ],
+      "mid_cap": [
+        "WBD"
+      ],
+      "small_cap": [
+        "IMAX",
+        "WLY",
+        "CCOI",
+        "AMC",
+        "GOGO",
+        "PLAY",
+        "GTN"
+      ]
+    },
+    "consumer_discretionary": {
+      "large_cap": [
+        "AMZN",
+        "TSLA",
+        "WMT",
+        "HD",
+        "MCD",
+        "TJX",
+        "LOW",
+        "SBUX",
+        "NKE",
+        "MAR"
+      ],
+      "mid_cap": [
+        "ORLY",
+        "GM",
+        "RCL",
+        "HLT",
+        "ROST",
+        "CMG",
+        "TGT",
+        "EBAY",
+        "LVS",
+        "CCL",
+        "EXPE",
+        "DG",
+        "LEN",
+        "ULTA"
+      ],
+      "small_cap": [
+        "TRIP",
+        "CRI",
+        "DBI",
+        "PLCE",
+        "IRBT"
+      ]
+    },
+    "consumer_staples": {
+      "large_cap": [
+        "COST",
+        "PG",
+        "KO"
+      ],
+      "mid_cap": [
+        "HSY"
+      ],
+      "small_cap": [
+        "SMPL",
+        "GO",
+        "EPC",
+        "HAIN"
+      ]
+    },
+    "energy": {
+      "large_cap": [
+        "XOM",
+        "CVX"
+      ],
+      "mid_cap": [
+        "SLB",
+        "VLO",
+        "FANG",
+        "OXY",
+        "EQT"
+      ],
+      "small_cap": [
+        "DK",
+        "HLX",
+        "VTLE",
+        "WTI",
+        "REI"
+      ]
+    },
+    "financials": {
+      "large_cap": [
+        "BRK-B",
+        "JPM",
+        "V",
+        "BAC",
+        "MS",
+        "WFC",
+        "GS",
+        "AXP",
+        "C",
+        "SCHW",
+        "BLK",
+        "SPGI",
+        "COF",
+        "PGR",
+        "CME",
+        "ICE",
+        "BK"
+      ],
+      "mid_cap": [
+        "USB",
+        "TFC",
+        "TRV",
+        "PYPL",
+        "MET",
+        "ALL",
+        "PRU",
+        "AIG",
+        "SOFI"
+      ],
+      "small_cap": []
+    },
+    "healthcare": {
+      "large_cap": [
+        "LLY",
+        "JNJ",
+        "ABBV",
+        "UNH",
+        "MRK",
+        "TMO",
+        "ABT",
+        "ISRG",
+        "AMGN",
+        "DHR",
+        "GILD",
+        "PFE",
+        "SYK",
+        "MDT",
+        "BMY",
+        "HCA",
+        "CVS"
+      ],
+      "mid_cap": [
+        "CI",
+        "BDX",
+        "IDXX",
+        "CAH",
+        "EW",
+        "ALNY",
+        "RMD",
+        "VEEV",
+        "NTRA",
+        "HUM",
+        "MTD"
+      ],
+      "small_cap": [
+        "SGRY",
+        "ATRC",
+        "BCRX",
+        "TNDM",
+        "ACHC",
+        "OMI",
+        "BTAI"
+      ]
+    },
+    "industrials": {
+      "large_cap": [
+        "GE",
+        "CAT",
+        "HON",
+        "DE",
+        "UNP",
+        "LMT",
+        "ETN",
+        "PH",
+        "GD",
+        "NOC",
+        "UPS",
+        "HWM",
+        "TT",
+        "EMR"
+      ],
+      "mid_cap": [
+        "CTAS",
+        "CMI",
+        "ITW",
+        "FDX",
+        "JCI",
+        "CSX",
+        "RSG",
+        "PWR",
+        "NSC",
+        "PCAR",
+        "URI",
+        "GWW",
+        "FAST",
+        "CARR",
+        "ROK",
+        "ROP",
+        "WAB",
+        "ODFL",
+        "OTIS",
+        "XYL",
+        "ROL"
+      ],
+      "small_cap": [
+        "WERN",
+        "ARLO",
+        "NX"
+      ]
+    },
+    "materials": {
+      "large_cap": [
+        "LIN",
+        "NEM",
+        "SHW",
+        "FCX"
+      ],
+      "mid_cap": [
+        "ECL",
+        "APD",
+        "A",
+        "VMC",
+        "NUE",
+        "MLM"
+      ],
+      "small_cap": []
+    },
+    "real_estate": {
+      "large_cap": [
+        "PLD"
+      ],
+      "mid_cap": [
+        "AMT",
+        "DLR",
+        "PSA",
+        "VTR",
+        "EXR"
+      ],
+      "small_cap": [
+        "UNIT",
+        "ESRT",
+        "ALEX",
+        "PDM"
+      ]
+    },
+    "technology": {
+      "large_cap": [
+        "NVDA",
+        "AAPL",
+        "MSFT",
+        "AVGO",
+        "ORCL",
+        "PLTR",
+        "MU",
+        "AMD",
+        "CSCO",
+        "LRCX",
+        "AMAT",
+        "CRM",
+        "KLAC",
+        "QCOM",
+        "TXN",
+        "INTU",
+        "ANET",
+        "ADI",
+        "NOW",
+        "PANW",
+        "ADBE",
+        "CRWD",
+        "VRTX",
+        "SNPS",
+        "CDNS"
+      ],
+      "mid_cap": [
+        "SNOW",
+        "NET",
+        "FTNT",
+        "ADSK",
+        "CRWV",
+        "DDOG",
+        "CTSH",
+        "ZS",
+        "MDB"
+      ],
+      "small_cap": [
+        "VMEO",
+        "COHU",
+        "WOLF",
+        "DOMO"
+      ]
+    },
+    "utilities": {
+      "large_cap": [
+        "NEE",
+        "SO",
+        "DUK"
+      ],
+      "mid_cap": [
+        "AEP",
+        "SRE",
+        "D",
+        "XEL",
+        "EXC",
+        "ETR",
+        "PEG",
+        "ED",
+        "WEC"
+      ],
+      "small_cap": []
+    }
+  },
+  "totals": {
+    "large_cap": 100,
+    "mid_cap": 91,
+    "small_cap": 39,
+    "total": 230
+  },
+  "with_options": {
+    "large_cap": 100,
+    "mid_cap": 91,
+    "small_cap": "unknown"
+  }
+}

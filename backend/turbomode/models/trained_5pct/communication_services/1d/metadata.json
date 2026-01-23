@@ -1,0 +1,14 @@
+{
+  "sector": "communication_services",
+  "horizon_days": 1,
+  "model_names": [
+    "lightgbm",
+    "catboost",
+    "xgb_hist",
+    "xgb_linear",
+    "random_forest"
+  ],
+  "n_base_models": 5,
+  "architecture": "fastmode_sklearn",
+  "training_timestamp": "2026-01-20 15:51:54"
+}

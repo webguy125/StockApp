@@ -1,6 +1,6 @@
 {
   "symbol": "ETH-USD",
-  "timestamp": "2026-01-12T00:02:31.861350",
+  "timestamp": "2026-01-23T00:02:27.175608",
   "agent": "fusion_agent",
   "total_score": 6.307692307692307,
   "confidence": 0.363076923076923,
@@ -11,7 +11,7 @@
     "💸"
   ],
   "emoji_string": "📉❌💸",
-  "shorthand": "ETH-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+  "shorthand": "ETH-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
   "weighted_scores": {
     "indicators_agent": {
       "score": 4,

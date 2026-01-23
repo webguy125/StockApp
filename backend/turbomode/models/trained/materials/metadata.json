@@ -1,0 +1,9 @@
+{
+  "sector": "materials",
+  "horizon_days": 1,
+  "threshold_pct": 5,
+  "label": "label_1d_5pct",
+  "architecture": "single_model",
+  "model_type": "LGBMClassifier",
+  "training_timestamp": "2026-01-21 09:39:38"
+}

@@ -588,6 +588,7 @@
                     <thead>
                         <tr>
                             <th>Strike</th>
+                            <th>Expiration</th>
                             <th>Last</th>
                             <th>Bid/Ask</th>
                             <th>Delta</th>
@@ -609,6 +610,7 @@
                 tableHTML += `
                     <tr ${option.recommended ? 'style="background: #c6f6d5; font-weight: bold;"' : ''}>
                         <td>$${option.strike}</td>
+                        <td>${option.expiration || 'N/A'}<br><span style="font-size: 11px; color: #718096;">(${option.dte || '?'} days)</span></td>
                         <td>$${option.last.toFixed(2)}</td>
                         <td>$${option.bid.toFixed(2)} / $${option.ask.toFixed(2)}</td>
                         <td>${option.delta.toFixed(3)}</td>

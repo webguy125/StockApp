@@ -17,13 +17,14 @@ parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-from turbomode.overnight_scanner import OvernightScanner
+from turbomode.core_engine.overnight_scanner import OvernightScanner
 from turbomode.outcome_tracker import track_signal_outcomes
 from turbomode.training_sample_generator import generate_training_samples_from_outcomes
 from turbomode.automated_retrainer import automated_model_retraining
 from turbomode.meta_retrain import maybe_retrain_meta
 from turbomode.task_monitor import log_task_result, send_daily_report
 import time
+import subprocess
 
 # Setup logging
 logger = logging.getLogger('turbomode_scheduler')
@@ -59,24 +60,24 @@ def save_state(state):
 
 def run_overnight_scan():
     """
-    Run TurboMode overnight scan on 82 curated stocks
+    Run TurboMode overnight scan on 40 curated stocks
     Uses GPU-accelerated 8-model ensemble with 179 features
     """
     logger.info("=" * 80)
-    logger.info("TURBOMODE - OVERNIGHT SCAN (82 CURATED STOCKS)")
+    logger.info("TURBOMODE - OVERNIGHT SCAN (40 CURATED STOCKS)")
     logger.info(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 80)
 
     start_time = time.time()
 
     try:
-        # Initialize scanner (scans 82 curated stocks from CORE_SYMBOLS)
+        # Initialize scanner (scans 40 curated stocks from CORE_SYMBOLS)
         scanner = OvernightScanner(
-            db_path="backend/data/turbomode.db",
-            model_path="backend/data/turbomode_models"
+            db_path=r"C:\StockApp\backend\data\turbomode.db",
+            model_path=r"C:\StockApp\backend\turbomode\models\trained"
         )
 
-        # Run full scan (82 curated stocks, top 100 signals of each type)
+        # Run full scan (40 curated stocks, top 100 signals of each type)
         results = scanner.scan_all(max_signals_per_type=100)
 
         # Print summary
@@ -172,6 +173,49 @@ def run_meta_retrain_monitored():
         return False
 
 
+def run_backtest_generation_monitored():
+    """
+    Wrapper for backtest data generation with monitoring
+    Regenerates training data for all 230 stocks + 3 crypto (10 years history)
+    Automatically runs feature extraction after backtest completes
+    """
+    start_time = time.time()
+    try:
+        logger.info("=" * 80)
+        logger.info("BACKTEST GENERATION - MONTHLY DATA REFRESH")
+        logger.info(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info("=" * 80)
+
+        # Run generate_backtest_data.py (which now calls extract_features.py automatically)
+        script_path = os.path.join(current_dir, 'core_engine', 'generate_backtest_data.py')
+        result = subprocess.run(
+            [sys.executable, script_path],
+            cwd=current_dir,
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode == 0:
+            logger.info("[OK] Backtest generation completed successfully!")
+            duration = time.time() - start_time
+            log_task_result('backtest_generation', True, duration=duration)
+            return True
+        else:
+            logger.error(f"[ERROR] Backtest generation failed with code {result.returncode}")
+            logger.error(f"STDERR: {result.stderr}")
+            duration = time.time() - start_time
+            log_task_result('backtest_generation', False, error_msg=result.stderr, duration=duration)
+            return False
+
+    except Exception as e:
+        logger.error(f"[ERROR] Backtest generation failed: {e}")
+        import traceback
+        traceback.print_exc()
+        duration = time.time() - start_time
+        log_task_result('backtest_generation', False, error_msg=str(e), duration=duration)
+        return False
+
+
 def start_scheduler(schedule_time='23:00'):
     """
     Start the TurboMode background scheduler
@@ -216,6 +260,15 @@ def start_scheduler(schedule_time='23:00'):
         trigger=CronTrigger(day_of_week='sun', hour=3, minute=0),
         id='turbomode_sample_generator',
         name='TurboMode - Training Sample Generator',
+        replace_existing=True
+    )
+
+    # Add backtest data generation (1st of month at 3 AM - 1 hour before model retraining)
+    scheduler.add_job(
+        run_backtest_generation_monitored,
+        trigger=CronTrigger(day=1, hour=3, minute=0),
+        id='turbomode_backtest_generation',
+        name='TurboMode - Monthly Backtest Data Generation',
         replace_existing=True
     )
 
@@ -268,10 +321,11 @@ def start_scheduler(schedule_time='23:00'):
     }
     save_state(state)
 
-    logger.info(f"✅ TurboMode Scheduler STARTED")
+    logger.info(f"[OK] TurboMode Scheduler STARTED")
     logger.info(f"   Overnight Scan: Daily at {schedule_time}")
     logger.info(f"   Outcome Tracker: Daily at 02:00")
     logger.info(f"   Sample Generator: Sunday at 03:00")
+    logger.info(f"   Backtest Generation: 1st of month at 03:00")
     logger.info(f"   Model Retraining: 1st of month at 04:00")
     logger.info(f"   Meta-Learner Retrain: Every 6 weeks, Sunday at 23:45 (first run: {first_run.strftime('%Y-%m-%d')})")
     logger.info(f"   Daily Email Report: Daily at 08:00")
@@ -297,7 +351,7 @@ def stop_scheduler():
     state['next_run'] = None
     save_state(state)
 
-    logger.info("✅ TurboMode Scheduler STOPPED")
+    logger.info("[OK] TurboMode Scheduler STOPPED")
 
     return True
 

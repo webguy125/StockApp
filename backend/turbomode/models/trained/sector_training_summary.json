@@ -1,0 +1,109 @@
+{
+  "started": "2026-01-17T08:14:07.830303",
+  "completed": "2026-01-17T11:09:37.808171",
+  "total_time_minutes": 175.5,
+  "parallel_workers": 1,
+  "sectors_trained": 11,
+  "sectors_skipped": 0,
+  "results": [
+    {
+      "sector": "technology",
+      "status": "completed",
+      "num_symbols": 38,
+      "num_samples": 155652,
+      "num_base_models": 8,
+      "meta_accuracy": 0.9063295042787757,
+      "training_time_minutes": 14.2
+    },
+    {
+      "sector": "communication_services",
+      "status": "completed",
+      "num_symbols": 12,
+      "num_samples": 53651,
+      "num_base_models": 8,
+      "meta_accuracy": 0.9065086110489823,
+      "training_time_minutes": 11.54
+    },
+    {
+      "sector": "consumer_discretionary",
+      "status": "completed",
+      "num_symbols": 29,
+      "num_samples": 125852,
+      "num_base_models": 8,
+      "meta_accuracy": 0.945207220950928,
+      "training_time_minutes": 18.95
+    },
+    {
+      "sector": "consumer_staples",
+      "status": "completed",
+      "num_symbols": 8,
+      "num_samples": 37247,
+      "num_base_models": 8,
+      "meta_accuracy": 0.9984965635738832,
+      "training_time_minutes": 7.92
+    },
+    {
+      "sector": "financials",
+      "status": "completed",
+      "num_symbols": 26,
+      "num_samples": 128238,
+      "num_base_models": 8,
+      "meta_accuracy": 0.9993761696818465,
+      "training_time_minutes": 19.63
+    },
+    {
+      "sector": "healthcare",
+      "status": "completed",
+      "num_symbols": 35,
+      "num_samples": 141467,
+      "num_base_models": 8,
+      "meta_accuracy": 0.8962874996465632,
+      "training_time_minutes": 22.2
+    },
+    {
+      "sector": "industrials",
+      "status": "completed",
+      "num_symbols": 38,
+      "num_samples": 160608,
+      "num_base_models": 8,
+      "meta_accuracy": 0.9694418847906756,
+      "training_time_minutes": 24.47
+    },
+    {
+      "sector": "energy",
+      "status": "completed",
+      "num_symbols": 12,
+      "num_samples": 48244,
+      "num_base_models": 8,
+      "meta_accuracy": 0.9252196982258332,
+      "training_time_minutes": 13.43
+    },
+    {
+      "sector": "materials",
+      "status": "completed",
+      "num_symbols": 10,
+      "num_samples": 48887,
+      "num_base_models": 8,
+      "meta_accuracy": 0.9998363606611029,
+      "training_time_minutes": 16.1
+    },
+    {
+      "sector": "utilities",
+      "status": "completed",
+      "num_symbols": 12,
+      "num_samples": 58915,
+      "num_base_models": 8,
+      "meta_accuracy": 1.0,
+      "training_time_minutes": 15.74
+    },
+    {
+      "sector": "real_estate",
+      "status": "completed",
+      "num_symbols": 10,
+      "num_samples": 34848,
+      "num_base_models": 8,
+      "meta_accuracy": 0.953971533516988,
+      "training_time_minutes": 8.99
+    }
+  ]
+}

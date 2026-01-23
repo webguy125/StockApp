@@ -1,0 +1,1412 @@
+{
+  "A": {
+    "market_cap": 41368379392,
+    "market_cap_billions": 41.37,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AAPL": {
+    "market_cap": 3841260519424,
+    "market_cap_billions": 3841.26,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ABBV": {
+    "market_cap": 392164966400,
+    "market_cap_billions": 392.16,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ABT": {
+    "market_cap": 217557368832,
+    "market_cap_billions": 217.56,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ADBE": {
+    "market_cap": 129143447552,
+    "market_cap_billions": 129.14,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ADI": {
+    "market_cap": 145912020992,
+    "market_cap_billions": 145.91,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ADSK": {
+    "market_cap": 55652638720,
+    "market_cap_billions": 55.65,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AEP": {
+    "market_cap": 63220219904,
+    "market_cap_billions": 63.22,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AES": {
+    "market_cap": 9969693696,
+    "market_cap_billions": 9.97,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "AIG": {
+    "market_cap": 40464441344,
+    "market_cap_billions": 40.46,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AKAM": {
+    "market_cap": 13041383424,
+    "market_cap_billions": 13.04,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ALGN": {
+    "market_cap": 12266867712,
+    "market_cap_billions": 12.27,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ALL": {
+    "market_cap": 51652317184,
+    "market_cap_billions": 51.65,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AMAT": {
+    "market_cap": 240498393088,
+    "market_cap_billions": 240.5,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AMD": {
+    "market_cap": 364030099456,
+    "market_cap_billions": 364.03,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AMGN": {
+    "market_cap": 177143971840,
+    "market_cap_billions": 177.14,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AMT": {
+    "market_cap": 83105226752,
+    "market_cap_billions": 83.11,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AMZN": {
+    "market_cap": 2529839546368,
+    "market_cap_billions": 2529.84,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ANET": {
+    "market_cap": 157523968000,
+    "market_cap_billions": 157.52,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "APD": {
+    "market_cap": 59487649792,
+    "market_cap_billions": 59.49,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "APTV": {
+    "market_cap": 18058821632,
+    "market_cap_billions": 18.06,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AVGO": {
+    "market_cap": 1611511496704,
+    "market_cap_billions": 1611.51,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AVY": {
+    "market_cap": 14560906240,
+    "market_cap_billions": 14.56,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "AXP": {
+    "market_cap": 249306775552,
+    "market_cap_billions": 249.31,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "BAC": {
+    "market_cap": 396754026496,
+    "market_cap_billions": 396.75,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "BAX": {
+    "market_cap": 10198866944,
+    "market_cap_billions": 10.2,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "BDX": {
+    "market_cap": 59201515520,
+    "market_cap_billions": 59.2,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "BIIB": {
+    "market_cap": 24838160384,
+    "market_cap_billions": 24.84,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "BK": {
+    "market_cap": 86882721792,
+    "market_cap_billions": 86.88,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "BLK": {
+    "market_cap": 169401516032,
+    "market_cap_billions": 169.4,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "BLL": {
+    "market_cap": null,
+    "market_cap_billions": null,
+    "tier_name": "unknown",
+    "tier_code": 3
+  },
+  "BMY": {
+    "market_cap": 116078641152,
+    "market_cap_billions": 116.08,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "BRK-B": {
+    "market_cap": 1063889666048,
+    "market_cap_billions": 1063.89,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "C": {
+    "market_cap": 206935343104,
+    "market_cap_billions": 206.94,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CAH": {
+    "market_cap": 50740797440,
+    "market_cap_billions": 50.74,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CAT": {
+    "market_cap": 299240914944,
+    "market_cap_billions": 299.24,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CCL": {
+    "market_cap": 39612489728,
+    "market_cap_billions": 39.61,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CDNS": {
+    "market_cap": 85335695360,
+    "market_cap_billions": 85.34,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CE": {
+    "market_cap": 5142349824,
+    "market_cap_billions": 5.14,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "CF": {
+    "market_cap": 13775800320,
+    "market_cap_billions": 13.78,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CFG": {
+    "market_cap": 25850744832,
+    "market_cap_billions": 25.85,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CI": {
+    "market_cap": 72391098368,
+    "market_cap_billions": 72.39,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CME": {
+    "market_cap": 99247882240,
+    "market_cap_billions": 99.25,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CMG": {
+    "market_cap": 54426521600,
+    "market_cap_billions": 54.43,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CMI": {
+    "market_cap": 78015332352,
+    "market_cap_billions": 78.02,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CNC": {
+    "market_cap": 22693386240,
+    "market_cap_billions": 22.69,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CNP": {
+    "market_cap": 25501036544,
+    "market_cap_billions": 25.5,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "COF": {
+    "market_cap": 149915648000,
+    "market_cap_billions": 149.92,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "COST": {
+    "market_cap": 422194872320,
+    "market_cap_billions": 422.19,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CRM": {
+    "market_cap": 228070653952,
+    "market_cap_billions": 228.07,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CRWV": {
+    "market_cap": 44748914688,
+    "market_cap_billions": 44.75,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CSCO": {
+    "market_cap": 294000951296,
+    "market_cap_billions": 294.0,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CSX": {
+    "market_cap": 67449540608,
+    "market_cap_billions": 67.45,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CTAS": {
+    "market_cap": 78264590336,
+    "market_cap_billions": 78.26,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CTSH": {
+    "market_cap": 42343927808,
+    "market_cap_billions": 42.34,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CVS": {
+    "market_cap": 100704075776,
+    "market_cap_billions": 100.7,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "CVX": {
+    "market_cap": 336958914560,
+    "market_cap_billions": 336.96,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "D": {
+    "market_cap": 51448274944,
+    "market_cap_billions": 51.45,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "DD": {
+    "market_cap": 17969852416,
+    "market_cap_billions": 17.97,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "DE": {
+    "market_cap": 138495098880,
+    "market_cap_billions": 138.5,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "DG": {
+    "market_cap": 33226942464,
+    "market_cap_billions": 33.23,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "DHR": {
+    "market_cap": 170384474112,
+    "market_cap_billions": 170.38,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "DIS": {
+    "market_cap": 204119425024,
+    "market_cap_billions": 204.12,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "DLTR": {
+    "market_cap": 28614647808,
+    "market_cap_billions": 28.61,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "DOV": {
+    "market_cap": 28025886720,
+    "market_cap_billions": 28.03,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "DOW": {
+    "market_cap": 20086286336,
+    "market_cap_billions": 20.09,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "DTE": {
+    "market_cap": 27819139072,
+    "market_cap_billions": 27.82,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "DUK": {
+    "market_cap": 92292833280,
+    "market_cap_billions": 92.29,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "EBAY": {
+    "market_cap": 43149938688,
+    "market_cap_billions": 43.15,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ECL": {
+    "market_cap": 78181203968,
+    "market_cap_billions": 78.18,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ED": {
+    "market_cap": 36624138240,
+    "market_cap_billions": 36.62,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "EIX": {
+    "market_cap": 23713472512,
+    "market_cap_billions": 23.71,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "EMN": {
+    "market_cap": 7956738048,
+    "market_cap_billions": 7.96,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "EMR": {
+    "market_cap": 83305046016,
+    "market_cap_billions": 83.31,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ETFC": {
+    "market_cap": null,
+    "market_cap_billions": null,
+    "tier_name": "unknown",
+    "tier_code": 3
+  },
+  "ETN": {
+    "market_cap": 128912809984,
+    "market_cap_billions": 128.91,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ETR": {
+    "market_cap": 42502627328,
+    "market_cap_billions": 42.5,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "EVRG": {
+    "market_cap": 17325916160,
+    "market_cap_billions": 17.33,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "EW": {
+    "market_cap": 48788013056,
+    "market_cap_billions": 48.79,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "EXC": {
+    "market_cap": 44035444736,
+    "market_cap_billions": 44.04,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "EXPD": {
+    "market_cap": 22016260096,
+    "market_cap_billions": 22.02,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "EXPE": {
+    "market_cap": 35971543040,
+    "market_cap_billions": 35.97,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "FAST": {
+    "market_cap": 48699674624,
+    "market_cap_billions": 48.7,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "FDX": {
+    "market_cap": 73983827968,
+    "market_cap_billions": 73.98,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "FE": {
+    "market_cap": 26659264512,
+    "market_cap_billions": 26.66,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "FLS": {
+    "market_cap": 9828285440,
+    "market_cap_billions": 9.83,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "FMC": {
+    "market_cap": 1891289856,
+    "market_cap_billions": 1.89,
+    "tier_name": "small_cap",
+    "tier_code": 0
+  },
+  "FTNT": {
+    "market_cap": 58535063552,
+    "market_cap_billions": 58.54,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "GD": {
+    "market_cap": 98864087040,
+    "market_cap_billions": 98.86,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "GE": {
+    "market_cap": 338152914944,
+    "market_cap_billions": 338.15,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "GILD": {
+    "market_cap": 153946914816,
+    "market_cap_billions": 153.95,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "GM": {
+    "market_cap": 77337288704,
+    "market_cap_billions": 77.34,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "GOOGL": {
+    "market_cap": 4067734847488,
+    "market_cap_billions": 4067.73,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "GS": {
+    "market_cap": 282338885632,
+    "market_cap_billions": 282.34,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "GWW": {
+    "market_cap": 50379309056,
+    "market_cap_billions": 50.38,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "HAS": {
+    "market_cap": 11987588096,
+    "market_cap_billions": 11.99,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "HCA": {
+    "market_cap": 112045449216,
+    "market_cap_billions": 112.05,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "HD": {
+    "market_cap": 374262562816,
+    "market_cap_billions": 374.26,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "HLT": {
+    "market_cap": 70588702720,
+    "market_cap_billions": 70.59,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "HOLX": {
+    "market_cap": 16765608960,
+    "market_cap_billions": 16.77,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "HON": {
+    "market_cap": 143561195520,
+    "market_cap_billions": 143.56,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "HSIC": {
+    "market_cap": 9247928320,
+    "market_cap_billions": 9.25,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "HUM": {
+    "market_cap": 32971661312,
+    "market_cap_billions": 32.97,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "HWM": {
+    "market_cap": 88650620928,
+    "market_cap_billions": 88.65,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ICE": {
+    "market_cap": 98994855936,
+    "market_cap_billions": 98.99,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "IDXX": {
+    "market_cap": 56841736192,
+    "market_cap_billions": 56.84,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "IEX": {
+    "market_cap": 14345239552,
+    "market_cap_billions": 14.35,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "IFF": {
+    "market_cap": 17986228224,
+    "market_cap_billions": 17.99,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ILMN": {
+    "market_cap": 22128189440,
+    "market_cap_billions": 22.13,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "INTU": {
+    "market_cap": 157741432832,
+    "market_cap_billions": 157.74,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "IP": {
+    "market_cap": 22621161472,
+    "market_cap_billions": 22.62,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "IREN": {
+    "market_cap": 17362708480,
+    "market_cap_billions": 17.36,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ISRG": {
+    "market_cap": 196000628736,
+    "market_cap_billions": 196.0,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ITW": {
+    "market_cap": 75466440704,
+    "market_cap_billions": 75.47,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "JCI": {
+    "market_cap": 73376243712,
+    "market_cap_billions": 73.38,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "JNJ": {
+    "market_cap": 526551449600,
+    "market_cap_billions": 526.55,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "JPM": {
+    "market_cap": 838102876160,
+    "market_cap_billions": 838.1,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "KLAC": {
+    "market_cap": 188901457920,
+    "market_cap_billions": 188.9,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "KMX": {
+    "market_cap": 6872347648,
+    "market_cap_billions": 6.87,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "KO": {
+    "market_cap": 307453984768,
+    "market_cap_billions": 307.45,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "LEN": {
+    "market_cap": 29979803648,
+    "market_cap_billions": 29.98,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "LH": {
+    "market_cap": 21772199936,
+    "market_cap_billions": 21.77,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "LIN": {
+    "market_cap": 206310817792,
+    "market_cap_billions": 206.31,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "LLY": {
+    "market_cap": 962158133248,
+    "market_cap_billions": 962.16,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "LMT": {
+    "market_cap": 133705441280,
+    "market_cap_billions": 133.71,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "LOW": {
+    "market_cap": 154233618432,
+    "market_cap_billions": 154.23,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "LRCX": {
+    "market_cap": 263290929152,
+    "market_cap_billions": 263.29,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "LVS": {
+    "market_cap": 41118572544,
+    "market_cap_billions": 41.12,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "LYB": {
+    "market_cap": 16737393664,
+    "market_cap_billions": 16.74,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MAR": {
+    "market_cap": 86779633664,
+    "market_cap_billions": 86.78,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MAS": {
+    "market_cap": 14670109696,
+    "market_cap_billions": 14.67,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MCD": {
+    "market_cap": 219882930176,
+    "market_cap_billions": 219.88,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MDT": {
+    "market_cap": 126645510144,
+    "market_cap_billions": 126.65,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MET": {
+    "market_cap": 52304297984,
+    "market_cap_billions": 52.3,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "META": {
+    "market_cap": 1551435169792,
+    "market_cap_billions": 1551.44,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MGM": {
+    "market_cap": 9411356672,
+    "market_cap_billions": 9.41,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "MLM": {
+    "market_cap": 38398164992,
+    "market_cap_billions": 38.4,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MOS": {
+    "market_cap": 8773153792,
+    "market_cap_billions": 8.77,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "MRK": {
+    "market_cap": 277278916608,
+    "market_cap_billions": 277.28,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MS": {
+    "market_cap": 288585580544,
+    "market_cap_billions": 288.59,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MSFT": {
+    "market_cap": 3414647898112,
+    "market_cap_billions": 3414.65,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MTD": {
+    "market_cap": 30601111552,
+    "market_cap_billions": 30.6,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "MU": {
+    "market_cap": 375188520960,
+    "market_cap_billions": 375.19,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NEE": {
+    "market_cap": 170732339200,
+    "market_cap_billions": 170.73,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NEM": {
+    "market_cap": 125388029952,
+    "market_cap_billions": 125.39,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NFLX": {
+    "market_cap": 375214997504,
+    "market_cap_billions": 375.21,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NI": {
+    "market_cap": 20495702016,
+    "market_cap_billions": 20.5,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NKE": {
+    "market_cap": 97068736512,
+    "market_cap_billions": 97.07,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NLSN": {
+    "market_cap": null,
+    "market_cap_billions": null,
+    "tier_name": "unknown",
+    "tier_code": 3
+  },
+  "NOC": {
+    "market_cap": 93518528512,
+    "market_cap_billions": 93.52,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NOW": {
+    "market_cap": 142032797696,
+    "market_cap_billions": 142.03,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NRG": {
+    "market_cap": 28981737472,
+    "market_cap_billions": 28.98,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NSC": {
+    "market_cap": 64257597440,
+    "market_cap_billions": 64.26,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NUE": {
+    "market_cap": 39430057984,
+    "market_cap_billions": 39.43,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NVDA": {
+    "market_cap": 4458909532160,
+    "market_cap_billions": 4458.91,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "NWL": {
+    "market_cap": 1769023872,
+    "market_cap_billions": 1.77,
+    "tier_name": "small_cap",
+    "tier_code": 0
+  },
+  "ODFL": {
+    "market_cap": 36468375552,
+    "market_cap_billions": 36.47,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ORCL": {
+    "market_cap": 556266684416,
+    "market_cap_billions": 556.27,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ORLY": {
+    "market_cap": 80389988352,
+    "market_cap_billions": 80.39,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "OTIS": {
+    "market_cap": 35303145472,
+    "market_cap_billions": 35.3,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "OXY": {
+    "market_cap": 43664527360,
+    "market_cap_billions": 43.66,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PANW": {
+    "market_cap": 130592817152,
+    "market_cap_billions": 130.59,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PCAR": {
+    "market_cap": 62499319808,
+    "market_cap_billions": 62.5,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PEG": {
+    "market_cap": 39388241920,
+    "market_cap_billions": 39.39,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PFE": {
+    "market_cap": 145440407552,
+    "market_cap_billions": 145.44,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PG": {
+    "market_cap": 342530064384,
+    "market_cap_billions": 342.53,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PGR": {
+    "market_cap": 120464097280,
+    "market_cap_billions": 120.46,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PH": {
+    "market_cap": 118471827456,
+    "market_cap_billions": 118.47,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PKG": {
+    "market_cap": 19791734784,
+    "market_cap_billions": 19.79,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PKI": {
+    "market_cap": null,
+    "market_cap_billions": null,
+    "tier_name": "unknown",
+    "tier_code": 3
+  },
+  "PLD": {
+    "market_cap": 122805510144,
+    "market_cap_billions": 122.81,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PNR": {
+    "market_cap": 17061965824,
+    "market_cap_billions": 17.06,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PNW": {
+    "market_cap": 11047424000,
+    "market_cap_billions": 11.05,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "POOL": {
+    "market_cap": 9901960192,
+    "market_cap_billions": 9.9,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "PPG": {
+    "market_cap": 24504248320,
+    "market_cap_billions": 24.5,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PPL": {
+    "market_cap": 26282932224,
+    "market_cap_billions": 26.28,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PRU": {
+    "market_cap": 41427202048,
+    "market_cap_billions": 41.43,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PWR": {
+    "market_cap": 65174081536,
+    "market_cap_billions": 65.17,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "PYPL": {
+    "market_cap": 55087120384,
+    "market_cap_billions": 55.09,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "QCOM": {
+    "market_cap": 177538662400,
+    "market_cap_billions": 177.54,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "RHI": {
+    "market_cap": 2899552000,
+    "market_cap_billions": 2.9,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "RMD": {
+    "market_cap": 37879713792,
+    "market_cap_billions": 37.88,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ROK": {
+    "market_cap": 46908248064,
+    "market_cap_billions": 46.91,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ROL": {
+    "market_cap": 29908318208,
+    "market_cap_billions": 29.91,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ROP": {
+    "market_cap": 45659799552,
+    "market_cap_billions": 45.66,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ROST": {
+    "market_cap": 62388154368,
+    "market_cap_billions": 62.39,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "RSG": {
+    "market_cap": 65871290368,
+    "market_cap_billions": 65.87,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SBUX": {
+    "market_cap": 103646666752,
+    "market_cap_billions": 103.65,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SCHW": {
+    "market_cap": 185007144960,
+    "market_cap_billions": 185.01,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SEE": {
+    "market_cap": 6152747520,
+    "market_cap_billions": 6.15,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "SHW": {
+    "market_cap": 88351260672,
+    "market_cap_billions": 88.35,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SIVB": {
+    "market_cap": null,
+    "market_cap_billions": null,
+    "tier_name": "unknown",
+    "tier_code": 3
+  },
+  "SLB": {
+    "market_cap": 70169591808,
+    "market_cap_billions": 70.17,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SNA": {
+    "market_cap": 18905049088,
+    "market_cap_billions": 18.91,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SNPS": {
+    "market_cap": 96680738816,
+    "market_cap_billions": 96.68,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SO": {
+    "market_cap": 97359691776,
+    "market_cap_billions": 97.36,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SPGI": {
+    "market_cap": 166388498432,
+    "market_cap_billions": 166.39,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SRE": {
+    "market_cap": 59602878464,
+    "market_cap_billions": 59.6,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "STE": {
+    "market_cap": 26026143744,
+    "market_cap_billions": 26.03,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SWK": {
+    "market_cap": 12977810432,
+    "market_cap_billions": 12.98,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "SYK": {
+    "market_cap": 137439248384,
+    "market_cap_billions": 137.44,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TFC": {
+    "market_cap": 64252555264,
+    "market_cap_billions": 64.25,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TFX": {
+    "market_cap": 4554233856,
+    "market_cap_billions": 4.55,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "TGT": {
+    "market_cap": 49902112768,
+    "market_cap_billions": 49.9,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TJX": {
+    "market_cap": 172650201088,
+    "market_cap_billions": 172.65,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TMO": {
+    "market_cap": 233626550272,
+    "market_cap_billions": 233.63,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TROW": {
+    "market_cap": 23307393024,
+    "market_cap_billions": 23.31,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TRV": {
+    "market_cap": 61403000832,
+    "market_cap_billions": 61.4,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TSCO": {
+    "market_cap": 27033126912,
+    "market_cap_billions": 27.03,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TSLA": {
+    "market_cap": 1460699791360,
+    "market_cap_billions": 1460.7,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TT": {
+    "market_cap": 85855322112,
+    "market_cap_billions": 85.86,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TXN": {
+    "market_cap": 175872573440,
+    "market_cap_billions": 175.87,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "TXT": {
+    "market_cap": 16781592576,
+    "market_cap_billions": 16.78,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ULTA": {
+    "market_cap": 29765947392,
+    "market_cap_billions": 29.77,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "UNH": {
+    "market_cap": 303419686912,
+    "market_cap_billions": 303.42,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "UNP": {
+    "market_cap": 134730563584,
+    "market_cap_billions": 134.73,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "UPS": {
+    "market_cap": 91116617728,
+    "market_cap_billions": 91.12,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "USB": {
+    "market_cap": 83256131584,
+    "market_cap_billions": 83.26,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "V": {
+    "market_cap": 635264303104,
+    "market_cap_billions": 635.26,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "VFC": {
+    "market_cap": 7529266688,
+    "market_cap_billions": 7.53,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "VMC": {
+    "market_cap": 39438434304,
+    "market_cap_billions": 39.44,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "VRTX": {
+    "market_cap": 115255287808,
+    "market_cap_billions": 115.26,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "VTRS": {
+    "market_cap": 15181243392,
+    "market_cap_billions": 15.18,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "WAB": {
+    "market_cap": 38767960064,
+    "market_cap_billions": 38.77,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "WEC": {
+    "market_cap": 34829254656,
+    "market_cap_billions": 34.83,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "WFC": {
+    "market_cap": 285907124224,
+    "market_cap_billions": 285.91,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "WHR": {
+    "market_cap": 4786672128,
+    "market_cap_billions": 4.79,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  },
+  "WMT": {
+    "market_cap": 957061070848,
+    "market_cap_billions": 957.06,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "WYNN": {
+    "market_cap": 12152776704,
+    "market_cap_billions": 12.15,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "XEL": {
+    "market_cap": 45075329024,
+    "market_cap_billions": 45.08,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "XOM": {
+    "market_cap": 555074781184,
+    "market_cap_billions": 555.07,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "XYL": {
+    "market_cap": 34107578368,
+    "market_cap_billions": 34.11,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ZBH": {
+    "market_cap": 17685721088,
+    "market_cap_billions": 17.69,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ZBRA": {
+    "market_cap": 13347361792,
+    "market_cap_billions": 13.35,
+    "tier_name": "large_cap",
+    "tier_code": 2
+  },
+  "ZION": {
+    "market_cap": 8679817216,
+    "market_cap_billions": 8.68,
+    "tier_name": "mid_cap",
+    "tier_code": 1
+  }
+}

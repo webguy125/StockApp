@@ -13,14 +13,11 @@ from datetime import datetime, timedelta
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from backend.turbomode.overnight_scanner import OvernightScanner
-from backend.turbomode.core_symbols import get_all_core_symbols, get_symbol_metadata
+# Scanner imports only needed for /all_live endpoint (lazy loaded)
+scanner = None
 
 # Create Flask Blueprint
 predictions_bp = Blueprint('predictions', __name__, url_prefix='/turbomode/predictions')
-
-# Initialize scanner
-scanner = None
 
 # Cache for predictions (refreshes every 5 minutes)
 predictions_cache = {
@@ -50,10 +47,12 @@ def cache_predictions(data):
 
 
 def init_scanner():
-    """Initialize scanner with models loaded"""
+    """Initialize scanner with models loaded (lazy imports)"""
     global scanner
     if scanner is None:
         print("[PREDICTIONS API] Initializing overnight scanner...")
+        # Lazy import to avoid import errors at module load time
+        from backend.turbomode.core_engine.overnight_scanner import OvernightScanner
         scanner = OvernightScanner()
         scanner._load_models()
         print("[PREDICTIONS API] Scanner ready")
@@ -62,10 +61,10 @@ def init_scanner():
 @predictions_bp.route('/all', methods=['GET'])
 def get_all_predictions():
     """
-    FAST VERSION: Get predictions from pre-generated file
+    Get predictions from database (scanner saves signals to turbomode.db)
 
-    The overnight scanner saves all 80 predictions to all_predictions.json
-    This endpoint just reads that file - loads in <1 second!
+    This reads directly from the database that the scanner writes to,
+    so it automatically shows the latest scanner results!
 
     Returns:
         JSON with predictions array containing:
@@ -74,34 +73,67 @@ def get_all_predictions():
         - confidence: Confidence level (0.0 - 1.0)
         - current_price: Current stock price
         - sector: Sector classification
-        - market_cap_category: 'large_cap', 'mid_cap', or 'small_cap'
     """
     import json
+    from datetime import datetime
+
+    # Import database class
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    from backend.turbomode.database_schema import TurboModeDB
 
     try:
-        # Read from pre-generated predictions file (scanner saves to turbomode/data/)
-        predictions_file = os.path.join(os.path.dirname(__file__), 'data', 'all_predictions.json')
+        # Connect to database
+        db_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'turbomode.db')
+        db = TurboModeDB(db_path=db_path)
 
-        if not os.path.exists(predictions_file):
-            return jsonify({
-                'error': 'Predictions file not found. Run the overnight scanner first.',
-                'help': 'Run: python backend/turbomode/overnight_scanner.py'
-            }), 404
+        # Get all active signals from database
+        signals = db.get_active_signals(limit=500)  # Get all signals
 
-        print(f"[PREDICTIONS API] Reading from {predictions_file}")
-        with open(predictions_file, 'r') as f:
-            data = json.load(f)
+        # Convert to predictions format
+        predictions = []
+        buy_count = 0
+        sell_count = 0
+        hold_count = 0
 
-        # Add cache indicator and total count
-        data['cached'] = True
-        data['source'] = 'pre_generated_file'
-        data['success'] = True
+        for signal in signals:
+            pred_type = signal['signal_type'].upper()  # BUY or SELL
 
-        # Calculate total if not present
-        if 'total' not in data and 'predictions' in data:
-            data['total'] = len(data['predictions'])
+            # For "All Predictions" page, we want to show everything
+            # The scanner only saves BUY/SELL signals, so we'll show those
+            prediction_entry = {
+                'symbol': signal['symbol'],
+                'sector': signal.get('sector', 'unknown'),
+                'prediction': pred_type,
+                'confidence': round(signal['confidence'], 4),
+                'prob_buy': round(signal['confidence'], 4) if pred_type == 'BUY' else 0.0,
+                'prob_sell': round(signal['confidence'], 4) if pred_type == 'SELL' else 0.0,
+                'prob_hold': 0.0,
+                'current_price': round(signal['entry_price'], 2)
+            }
 
-        print(f"[PREDICTIONS API] Loaded {data.get('total', len(data.get('predictions', [])))} predictions (generated at {data.get('timestamp', 'unknown')})")
+            predictions.append(prediction_entry)
+
+            if pred_type == 'BUY':
+                buy_count += 1
+            elif pred_type == 'SELL':
+                sell_count += 1
+
+        # Build response
+        data = {
+            'timestamp': datetime.now().isoformat(),
+            'total': len(predictions),
+            'statistics': {
+                'buy_count': buy_count,
+                'sell_count': sell_count,
+                'hold_count': hold_count
+            },
+            'predictions': predictions,
+            'cached': False,
+            'source': 'database',
+            'success': True
+        }
+
+        print(f"[PREDICTIONS API] Loaded {len(predictions)} predictions from database ({buy_count} BUY, {sell_count} SELL)")
 
         return jsonify(data)
 
@@ -129,7 +161,8 @@ def get_all_predictions_live():
         print("[PREDICTIONS API] Generating LIVE predictions for all 80 stocks (may take 2-3 minutes)...")
         start_time = time.time()
 
-        # Get all curated symbols
+        # Get all curated symbols (lazy import)
+        from backend.turbomode.core_symbols import get_all_core_symbols, get_symbol_metadata
         symbols = get_all_core_symbols()
 
         predictions = []
@@ -243,7 +276,8 @@ def get_symbol_prediction(symbol):
         # Get prediction
         pred = scanner.get_prediction(features)
 
-        # Get metadata
+        # Get metadata (lazy import)
+        from backend.turbomode.core_symbols import get_symbol_metadata
         metadata = get_symbol_metadata(symbol)
 
         return jsonify({

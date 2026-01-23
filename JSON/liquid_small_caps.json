@@ -1,0 +1,353 @@
+[
+  {
+    "symbol": "SMPL",
+    "market_cap": 1994032640,
+    "market_cap_billions": 1.994,
+    "avg_volume": 1965432,
+    "sector": "Consumer Defensive",
+    "industry": "Packaged Foods",
+    "valid": true
+  },
+  {
+    "symbol": "SGRY",
+    "market_cap": 1993156736,
+    "market_cap_billions": 1.993,
+    "avg_volume": 1844220,
+    "sector": "Healthcare",
+    "industry": "Medical Care Facilities",
+    "valid": true
+  },
+  {
+    "symbol": "WERN",
+    "market_cap": 1979785216,
+    "market_cap_billions": 1.98,
+    "avg_volume": 1131500,
+    "sector": "Industrials",
+    "industry": "Trucking",
+    "valid": true
+  },
+  {
+    "symbol": "UNIT",
+    "market_cap": 1907985152,
+    "market_cap_billions": 1.908,
+    "avg_volume": 2632600,
+    "sector": "Real Estate",
+    "industry": "REIT - Specialty",
+    "valid": true
+  },
+  {
+    "symbol": "IMAX",
+    "market_cap": 1886728704,
+    "market_cap_billions": 1.887,
+    "avg_volume": 1423938,
+    "sector": "Communication Services",
+    "industry": "Entertainment",
+    "valid": true
+  },
+  {
+    "symbol": "ATRC",
+    "market_cap": 1857923840,
+    "market_cap_billions": 1.858,
+    "avg_volume": 529975,
+    "sector": "Healthcare",
+    "industry": "Medical Instruments & Supplies",
+    "valid": true
+  },
+  {
+    "symbol": "ESRT",
+    "market_cap": 1829421824,
+    "market_cap_billions": 1.829,
+    "avg_volume": 1545982,
+    "sector": "Real Estate",
+    "industry": "REIT - Diversified",
+    "valid": true
+  },
+  {
+    "symbol": "DK",
+    "market_cap": 1813595136,
+    "market_cap_billions": 1.814,
+    "avg_volume": 1380027,
+    "sector": "Energy",
+    "industry": "Oil & Gas Refining & Marketing",
+    "valid": true
+  },
+  {
+    "symbol": "WLY",
+    "market_cap": 1625105536,
+    "market_cap_billions": 1.625,
+    "avg_volume": 553152,
+    "sector": "Communication Services",
+    "industry": "Publishing",
+    "valid": true
+  },
+  {
+    "symbol": "TRIP",
+    "market_cap": 1610996864,
+    "market_cap_billions": 1.611,
+    "avg_volume": 2332258,
+    "sector": "Consumer Cyclical",
+    "industry": "Travel Services",
+    "valid": true
+  },
+  {
+    "symbol": "ALEX",
+    "market_cap": 1511193344,
+    "market_cap_billions": 1.511,
+    "avg_volume": 871101,
+    "sector": "Real Estate",
+    "industry": "REIT - Retail",
+    "valid": true
+  },
+  {
+    "symbol": "ARLO",
+    "market_cap": 1476472320,
+    "market_cap_billions": 1.476,
+    "avg_volume": 1240641,
+    "sector": "Industrials",
+    "industry": "Building Products & Equipment",
+    "valid": true
+  },
+  {
+    "symbol": "BCRX",
+    "market_cap": 1428810880,
+    "market_cap_billions": 1.429,
+    "avg_volume": 4709030,
+    "sector": "Healthcare",
+    "industry": "Drug Manufacturers - Specialty & Generic",
+    "valid": true
+  },
+  {
+    "symbol": "TNDM",
+    "market_cap": 1415035264,
+    "market_cap_billions": 1.415,
+    "avg_volume": 1929196,
+    "sector": "Healthcare",
+    "industry": "Medical Devices",
+    "valid": true
+  },
+  {
+    "symbol": "CRI",
+    "market_cap": 1340552576,
+    "market_cap_billions": 1.341,
+    "avg_volume": 1139153,
+    "sector": "Consumer Cyclical",
+    "industry": "Apparel Retail",
+    "valid": true
+  },
+  {
+    "symbol": "VMEO",
+    "market_cap": 1313694336,
+    "market_cap_billions": 1.314,
+    "avg_volume": 2363011,
+    "sector": "Technology",
+    "industry": "Software - Application",
+    "valid": true
+  },
+  {
+    "symbol": "COHU",
+    "market_cap": 1312529408,
+    "market_cap_billions": 1.313,
+    "avg_volume": 669372,
+    "sector": "Technology",
+    "industry": "Semiconductor Equipment & Materials",
+    "valid": true
+  },
+  {
+    "symbol": "CCOI",
+    "market_cap": 1152842752,
+    "market_cap_billions": 1.153,
+    "avg_volume": 1569022,
+    "sector": "Communication Services",
+    "industry": "Telecom Services",
+    "valid": true
+  },
+  {
+    "symbol": "HLX",
+    "market_cap": 1081044736,
+    "market_cap_billions": 1.081,
+    "avg_volume": 1588246,
+    "sector": "Energy",
+    "industry": "Oil & Gas Equipment & Services",
+    "valid": true
+  },
+  {
+    "symbol": "PDM",
+    "market_cap": 1075846656,
+    "market_cap_billions": 1.076,
+    "avg_volume": 749732,
+    "sector": "Real Estate",
+    "industry": "REIT - Office",
+    "valid": true
+  },
+  {
+    "symbol": "ACHC",
+    "market_cap": 1060911168,
+    "market_cap_billions": 1.061,
+    "avg_volume": 2801003,
+    "sector": "Healthcare",
+    "industry": "Medical Care Facilities",
+    "valid": true
+  },
+  {
+    "symbol": "GO",
+    "market_cap": 934266496,
+    "market_cap_billions": 0.934,
+    "avg_volume": 2766425,
+    "sector": "Consumer Defensive",
+    "industry": "Grocery Stores",
+    "valid": true
+  },
+  {
+    "symbol": "EPC",
+    "market_cap": 877309760,
+    "market_cap_billions": 0.877,
+    "avg_volume": 709193,
+    "sector": "Consumer Defensive",
+    "industry": "Household & Personal Products",
+    "valid": true
+  },
+  {
+    "symbol": "NX",
+    "market_cap": 828076928,
+    "market_cap_billions": 0.828,
+    "avg_volume": 778045,
+    "sector": "Industrials",
+    "industry": "Building Products & Equipment",
+    "valid": true
+  },
+  {
+    "symbol": "AMC",
+    "market_cap": 795062464,
+    "market_cap_billions": 0.795,
+    "avg_volume": 25756085,
+    "sector": "Communication Services",
+    "industry": "Entertainment",
+    "valid": true
+  },
+  {
+    "symbol": "VTLE",
+    "market_cap": 693443072,
+    "market_cap_billions": 0.693,
+    "avg_volume": 609477,
+    "sector": "Energy",
+    "industry": "Oil & Gas E&P",
+    "valid": true
+  },
+  {
+    "symbol": "GOGO",
+    "market_cap": 647855040,
+    "market_cap_billions": 0.648,
+    "avg_volume": 2595261,
+    "sector": "Communication Services",
+    "industry": "Telecom Services",
+    "valid": true
+  },
+  {
+    "symbol": "PLAY",
+    "market_cap": 637076480,
+    "market_cap_billions": 0.637,
+    "avg_volume": 1432364,
+    "sector": "Communication Services",
+    "industry": "Entertainment",
+    "valid": true
+  },
+  {
+    "symbol": "WOLF",
+    "market_cap": 504643776,
+    "market_cap_billions": 0.505,
+    "avg_volume": 1630787,
+    "sector": "Technology",
+    "industry": "Semiconductors",
+    "valid": true
+  },
+  {
+    "symbol": "GTN",
+    "market_cap": 479127872,
+    "market_cap_billions": 0.479,
+    "avg_volume": 1146940,
+    "sector": "Communication Services",
+    "industry": "Broadcasting",
+    "valid": true
+  },
+  {
+    "symbol": "DBI",
+    "market_cap": 362839840,
+    "market_cap_billions": 0.363,
+    "avg_volume": 1109545,
+    "sector": "Consumer Cyclical",
+    "industry": "Footwear & Accessories",
+    "valid": true
+  },
+  {
+    "symbol": "WTI",
+    "market_cap": 281188928,
+    "market_cap_billions": 0.281,
+    "avg_volume": 1389940,
+    "sector": "Energy",
+    "industry": "Oil & Gas E&P",
+    "valid": true
+  },
+  {
+    "symbol": "DOMO",
+    "market_cap": 279213920,
+    "market_cap_billions": 0.279,
+    "avg_volume": 761382,
+    "sector": "Technology",
+    "industry": "Software - Application",
+    "valid": true
+  },
+  {
+    "symbol": "OMI",
+    "market_cap": 216570448,
+    "market_cap_billions": 0.217,
+    "avg_volume": 2027328,
+    "sector": "Healthcare",
+    "industry": "Medical Distribution",
+    "valid": true
+  },
+  {
+    "symbol": "REI",
+    "market_cap": 201628160,
+    "market_cap_billions": 0.202,
+    "avg_volume": 1639222,
+    "sector": "Energy",
+    "industry": "Oil & Gas E&P",
+    "valid": true
+  },
+  {
+    "symbol": "HAIN",
+    "market_cap": 105057968,
+    "market_cap_billions": 0.105,
+    "avg_volume": 1815411,
+    "sector": "Consumer Defensive",
+    "industry": "Packaged Foods",
+    "valid": true
+  },
+  {
+    "symbol": "PLCE",
+    "market_cap": 96873680,
+    "market_cap_billions": 0.097,
+    "avg_volume": 619683,
+    "sector": "Consumer Cyclical",
+    "industry": "Apparel Manufacturing",
+    "valid": true
+  },
+  {
+    "symbol": "BTAI",
+    "market_cap": 43520288,
+    "market_cap_billions": 0.044,
+    "avg_volume": 651683,
+    "sector": "Healthcare",
+    "industry": "Drug Manufacturers - Specialty & Generic",
+    "valid": true
+  },
+  {
+    "symbol": "IRBT",
+    "market_cap": 14843741,
+    "market_cap_billions": 0.015,
+    "avg_volume": 21724804,
+    "sector": "Consumer Cyclical",
+    "industry": "Furnishings, Fixtures & Appliances",
+    "valid": true
+  }
+]

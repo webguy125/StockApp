@@ -14,7 +14,7 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from master_market_data.symbol_normalizer import (
+from backend.turbomode.core_engine.symbol_normalizer import (
     is_canonical,
     to_canonical,
     from_canonical,

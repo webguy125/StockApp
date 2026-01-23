@@ -1,18 +1,18 @@
 {
-  "timestamp": "2026-01-12T00:02:32.282065",
+  "timestamp": "2026-01-23T00:02:27.615430",
   "agent": "fusion_agent",
-  "total_symbols": 14,
+  "total_symbols": 13,
   "recommendations": {
     "strong_buy": 1,
     "buy": 0,
     "hold": 2,
-    "sell": 2,
+    "sell": 1,
     "strong_sell": 9
   },
   "top_opportunities": [
     {
       "symbol": "XOM",
-      "timestamp": "2026-01-12T00:02:32.123744",
+      "timestamp": "2026-01-23T00:02:27.556722",
       "agent": "fusion_agent",
       "total_score": 87.3076923076923,
       "confidence": 0.9499999999999998,
@@ -23,7 +23,7 @@
         "💰"
       ],
       "emoji_string": "📈✅💰",
-      "shorthand": "XOM | 📈✅💰 | 87 | 0.95 | 2026-01-12",
+      "shorthand": "XOM | 📈✅💰 | 87 | 0.95 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 95,
@@ -46,7 +46,7 @@
     },
     {
       "symbol": "CVX",
-      "timestamp": "2026-01-12T00:02:32.187997",
+      "timestamp": "2026-01-23T00:02:27.604748",
       "agent": "fusion_agent",
       "total_score": 46.15384615384615,
       "confidence": 0.7615384615384616,
@@ -57,7 +57,7 @@
         "💸"
       ],
       "emoji_string": "➖✅💸",
-      "shorthand": "CVX | ➖✅💸 | 46 | 0.76 | 2026-01-12",
+      "shorthand": "CVX | ➖✅💸 | 46 | 0.76 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 50,
@@ -80,7 +80,7 @@
     },
     {
       "symbol": "AMD",
-      "timestamp": "2026-01-12T00:02:32.149010",
+      "timestamp": "2026-01-23T00:02:27.427536",
       "agent": "fusion_agent",
       "total_score": 40.0,
       "confidence": 0.7,
@@ -91,7 +91,7 @@
         "💰"
       ],
       "emoji_string": "📈❌💰",
-      "shorthand": "AMD | 📈❌💰 | 40 | 0.70 | 2026-01-12",
+      "shorthand": "AMD | 📈❌💰 | 40 | 0.70 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 40,
@@ -113,42 +113,8 @@
       }
     },
     {
-      "symbol": "LTC-USD",
-      "timestamp": "2026-01-12T00:02:32.012326",
-      "agent": "fusion_agent",
-      "total_score": 27.461538461538463,
-      "confidence": 0.5746153846153845,
-      "recommendation": "sell",
-      "emojis": [
-        "📉",
-        "❌",
-        "💰"
-      ],
-      "emoji_string": "📉❌💰",
-      "shorthand": "LTC-USD | 📉❌💰 | 27 | 0.57 | 2026-01-12",
-      "weighted_scores": {
-        "indicators_agent": {
-          "score": 4,
-          "confidence": 0.33999999999999997,
-          "weight": 0.4,
-          "contribution": 1.6
-        },
-        "volume_agent": {
-          "score": 65,
-          "confidence": 0.95,
-          "weight": 0.25,
-          "contribution": 16.25
-        }
-      },
-      "metadata": {
-        "total_weight_used": 0.65,
-        "agents_contributing": 2,
-        "signals_collected": 2
-      }
-    },
-    {
       "symbol": "META",
-      "timestamp": "2026-01-12T00:02:32.222818",
+      "timestamp": "2026-01-23T00:02:27.463527",
       "agent": "fusion_agent",
       "total_score": 20.69230769230769,
       "confidence": 0.5069230769230769,
@@ -159,179 +125,7 @@
         "💸"
       ],
       "emoji_string": "📉❌💸",
-      "shorthand": "META | 📉❌💸 | 20 | 0.51 | 2026-01-12",
-      "weighted_scores": {
-        "indicators_agent": {
-          "score": 18,
-          "confidence": 0.48,
-          "weight": 0.4,
-          "contribution": 7.2
-        },
-        "volume_agent": {
-          "score": 25,
-          "confidence": 0.55,
-          "weight": 0.25,
-          "contribution": 6.25
-        }
-      },
-      "metadata": {
-        "total_weight_used": 0.65,
-        "agents_contributing": 2,
-        "signals_collected": 2
-      }
-    }
-  ],
-  "all_fusions": [
-    {
-      "symbol": "XOM",
-      "timestamp": "2026-01-12T00:02:32.123744",
-      "agent": "fusion_agent",
-      "total_score": 87.3076923076923,
-      "confidence": 0.9499999999999998,
-      "recommendation": "strong_buy",
-      "emojis": [
-        "📈",
-        "✅",
-        "💰"
-      ],
-      "emoji_string": "📈✅💰",
-      "shorthand": "XOM | 📈✅💰 | 87 | 0.95 | 2026-01-12",
-      "weighted_scores": {
-        "indicators_agent": {
-          "score": 95,
-          "confidence": 0.95,
-          "weight": 0.4,
-          "contribution": 38.0
-        },
-        "volume_agent": {
-          "score": 75,
-          "confidence": 0.95,
-          "weight": 0.25,
-          "contribution": 18.75
-        }
-      },
-      "metadata": {
-        "total_weight_used": 0.65,
-        "agents_contributing": 2,
-        "signals_collected": 2
-      }
-    },
-    {
-      "symbol": "CVX",
-      "timestamp": "2026-01-12T00:02:32.187997",
-      "agent": "fusion_agent",
-      "total_score": 46.15384615384615,
-      "confidence": 0.7615384615384616,
-      "recommendation": "hold",
-      "emojis": [
-        "➖",
-        "✅",
-        "💸"
-      ],
-      "emoji_string": "➖✅💸",
-      "shorthand": "CVX | ➖✅💸 | 46 | 0.76 | 2026-01-12",
-      "weighted_scores": {
-        "indicators_agent": {
-          "score": 50,
-          "confidence": 0.8,
-          "weight": 0.4,
-          "contribution": 20.0
-        },
-        "volume_agent": {
-          "score": 40,
-          "confidence": 0.7,
-          "weight": 0.25,
-          "contribution": 10.0
-        }
-      },
-      "metadata": {
-        "total_weight_used": 0.65,
-        "agents_contributing": 2,
-        "signals_collected": 2
-      }
-    },
-    {
-      "symbol": "AMD",
-      "timestamp": "2026-01-12T00:02:32.149010",
-      "agent": "fusion_agent",
-      "total_score": 40.0,
-      "confidence": 0.7,
-      "recommendation": "hold",
-      "emojis": [
-        "📈",
-        "❌",
-        "💰"
-      ],
-      "emoji_string": "📈❌💰",
-      "shorthand": "AMD | 📈❌💰 | 40 | 0.70 | 2026-01-12",
-      "weighted_scores": {
-        "indicators_agent": {
-          "score": 40,
-          "confidence": 0.7,
-          "weight": 0.4,
-          "contribution": 16.0
-        },
-        "volume_agent": {
-          "score": 40,
-          "confidence": 0.7,
-          "weight": 0.25,
-          "contribution": 10.0
-        }
-      },
-      "metadata": {
-        "total_weight_used": 0.65,
-        "agents_contributing": 2,
-        "signals_collected": 2
-      }
-    },
-    {
-      "symbol": "LTC-USD",
-      "timestamp": "2026-01-12T00:02:32.012326",
-      "agent": "fusion_agent",
-      "total_score": 27.461538461538463,
-      "confidence": 0.5746153846153845,
-      "recommendation": "sell",
-      "emojis": [
-        "📉",
-        "❌",
-        "💰"
-      ],
-      "emoji_string": "📉❌💰",
-      "shorthand": "LTC-USD | 📉❌💰 | 27 | 0.57 | 2026-01-12",
-      "weighted_scores": {
-        "indicators_agent": {
-          "score": 4,
-          "confidence": 0.33999999999999997,
-          "weight": 0.4,
-          "contribution": 1.6
-        },
-        "volume_agent": {
-          "score": 65,
-          "confidence": 0.95,
-          "weight": 0.25,
-          "contribution": 16.25
-        }
-      },
-      "metadata": {
-        "total_weight_used": 0.65,
-        "agents_contributing": 2,
-        "signals_collected": 2
-      }
-    },
-    {
-      "symbol": "META",
-      "timestamp": "2026-01-12T00:02:32.222818",
-      "agent": "fusion_agent",
-      "total_score": 20.69230769230769,
-      "confidence": 0.5069230769230769,
-      "recommendation": "sell",
-      "emojis": [
-        "📉",
-        "❌",
-        "💸"
-      ],
-      "emoji_string": "📉❌💸",
-      "shorthand": "META | 📉❌💸 | 20 | 0.51 | 2026-01-12",
+      "shorthand": "META | 📉❌💸 | 20 | 0.51 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 18,
@@ -353,11 +147,11 @@
       }
     },
     {
-      "symbol": "BTC-USD",
-      "timestamp": "2026-01-12T00:02:31.834130",
+      "symbol": "GE",
+      "timestamp": "2026-01-23T00:02:27.505533",
       "agent": "fusion_agent",
-      "total_score": 14.923076923076922,
-      "confidence": 0.44923076923076927,
+      "total_score": 9.384615384615383,
+      "confidence": 0.39384615384615385,
       "recommendation": "strong_sell",
       "emojis": [
         "📉",
@@ -365,13 +159,13 @@
         "💸"
       ],
       "emoji_string": "📉❌💸",
-      "shorthand": "BTC-USD | 📉❌💸 | 14 | 0.45 | 2026-01-12",
+      "shorthand": "GE | 📉❌💸 | 9 | 0.39 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
-          "score": 18,
-          "confidence": 0.48,
+          "score": 9,
+          "confidence": 0.39,
           "weight": 0.4,
-          "contribution": 7.2
+          "contribution": 3.6
         },
         "volume_agent": {
           "score": 10,
@@ -385,10 +179,148 @@
         "agents_contributing": 2,
         "signals_collected": 2
       }
+    }
+  ],
+  "all_fusions": [
+    {
+      "symbol": "XOM",
+      "timestamp": "2026-01-23T00:02:27.556722",
+      "agent": "fusion_agent",
+      "total_score": 87.3076923076923,
+      "confidence": 0.9499999999999998,
+      "recommendation": "strong_buy",
+      "emojis": [
+        "📈",
+        "✅",
+        "💰"
+      ],
+      "emoji_string": "📈✅💰",
+      "shorthand": "XOM | 📈✅💰 | 87 | 0.95 | 2026-01-23",
+      "weighted_scores": {
+        "indicators_agent": {
+          "score": 95,
+          "confidence": 0.95,
+          "weight": 0.4,
+          "contribution": 38.0
+        },
+        "volume_agent": {
+          "score": 75,
+          "confidence": 0.95,
+          "weight": 0.25,
+          "contribution": 18.75
+        }
+      },
+      "metadata": {
+        "total_weight_used": 0.65,
+        "agents_contributing": 2,
+        "signals_collected": 2
+      }
+    },
+    {
+      "symbol": "CVX",
+      "timestamp": "2026-01-23T00:02:27.604748",
+      "agent": "fusion_agent",
+      "total_score": 46.15384615384615,
+      "confidence": 0.7615384615384616,
+      "recommendation": "hold",
+      "emojis": [
+        "➖",
+        "✅",
+        "💸"
+      ],
+      "emoji_string": "➖✅💸",
+      "shorthand": "CVX | ➖✅💸 | 46 | 0.76 | 2026-01-23",
+      "weighted_scores": {
+        "indicators_agent": {
+          "score": 50,
+          "confidence": 0.8,
+          "weight": 0.4,
+          "contribution": 20.0
+        },
+        "volume_agent": {
+          "score": 40,
+          "confidence": 0.7,
+          "weight": 0.25,
+          "contribution": 10.0
+        }
+      },
+      "metadata": {
+        "total_weight_used": 0.65,
+        "agents_contributing": 2,
+        "signals_collected": 2
+      }
+    },
+    {
+      "symbol": "AMD",
+      "timestamp": "2026-01-23T00:02:27.427536",
+      "agent": "fusion_agent",
+      "total_score": 40.0,
+      "confidence": 0.7,
+      "recommendation": "hold",
+      "emojis": [
+        "📈",
+        "❌",
+        "💰"
+      ],
+      "emoji_string": "📈❌💰",
+      "shorthand": "AMD | 📈❌💰 | 40 | 0.70 | 2026-01-23",
+      "weighted_scores": {
+        "indicators_agent": {
+          "score": 40,
+          "confidence": 0.7,
+          "weight": 0.4,
+          "contribution": 16.0
+        },
+        "volume_agent": {
+          "score": 40,
+          "confidence": 0.7,
+          "weight": 0.25,
+          "contribution": 10.0
+        }
+      },
+      "metadata": {
+        "total_weight_used": 0.65,
+        "agents_contributing": 2,
+        "signals_collected": 2
+      }
+    },
+    {
+      "symbol": "META",
+      "timestamp": "2026-01-23T00:02:27.463527",
+      "agent": "fusion_agent",
+      "total_score": 20.69230769230769,
+      "confidence": 0.5069230769230769,
+      "recommendation": "sell",
+      "emojis": [
+        "📉",
+        "❌",
+        "💸"
+      ],
+      "emoji_string": "📉❌💸",
+      "shorthand": "META | 📉❌💸 | 20 | 0.51 | 2026-01-23",
+      "weighted_scores": {
+        "indicators_agent": {
+          "score": 18,
+          "confidence": 0.48,
+          "weight": 0.4,
+          "contribution": 7.2
+        },
+        "volume_agent": {
+          "score": 25,
+          "confidence": 0.55,
+          "weight": 0.25,
+          "contribution": 6.25
+        }
+      },
+      "metadata": {
+        "total_weight_used": 0.65,
+        "agents_contributing": 2,
+        "signals_collected": 2
+      }
     },
     {
       "symbol": "GE",
-      "timestamp": "2026-01-12T00:02:32.262800",
+      "timestamp": "2026-01-23T00:02:27.505533",
       "agent": "fusion_agent",
       "total_score": 9.384615384615383,
       "confidence": 0.39384615384615385,
@@ -399,7 +331,7 @@
         "💸"
       ],
       "emoji_string": "📉❌💸",
-      "shorthand": "GE | 📉❌💸 | 9 | 0.39 | 2026-01-12",
+      "shorthand": "GE | 📉❌💸 | 9 | 0.39 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 9,
@@ -422,7 +354,7 @@
     },
     {
       "symbol": "ETH-USD",
-      "timestamp": "2026-01-12T00:02:31.861350",
+      "timestamp": "2026-01-23T00:02:27.175608",
       "agent": "fusion_agent",
       "total_score": 6.307692307692307,
       "confidence": 0.363076923076923,
@@ -433,7 +365,41 @@
         "💸"
       ],
       "emoji_string": "📉❌💸",
-      "shorthand": "ETH-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+      "shorthand": "ETH-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
+      "weighted_scores": {
+        "indicators_agent": {
+          "score": 4,
+          "confidence": 0.33999999999999997,
+          "weight": 0.4,
+          "contribution": 1.6
+        },
+        "volume_agent": {
+          "score": 10,
+          "confidence": 0.4,
+          "weight": 0.25,
+          "contribution": 2.5
+        }
+      },
+      "metadata": {
+        "total_weight_used": 0.65,
+        "agents_contributing": 2,
+        "signals_collected": 2
+      }
+    },
+    {
+      "symbol": "XRP-USD",
+      "timestamp": "2026-01-23T00:02:27.201525",
+      "agent": "fusion_agent",
+      "total_score": 6.307692307692307,
+      "confidence": 0.363076923076923,
+      "recommendation": "strong_sell",
+      "emojis": [
+        "📉",
+        "❌",
+        "💸"
+      ],
+      "emoji_string": "📉❌💸",
+      "shorthand": "XRP-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 4,
@@ -456,7 +422,7 @@
     },
     {
       "symbol": "SOL-USD",
-      "timestamp": "2026-01-12T00:02:31.887728",
+      "timestamp": "2026-01-23T00:02:27.234593",
       "agent": "fusion_agent",
       "total_score": 6.307692307692307,
       "confidence": 0.363076923076923,
@@ -467,41 +433,7 @@
         "💸"
       ],
       "emoji_string": "📉❌💸",
-      "shorthand": "SOL-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
-      "weighted_scores": {
-        "indicators_agent": {
-          "score": 4,
-          "confidence": 0.33999999999999997,
-          "weight": 0.4,
-          "contribution": 1.6
-        },
-        "volume_agent": {
-          "score": 10,
-          "confidence": 0.4,
-          "weight": 0.25,
-          "contribution": 2.5
-        }
-      },
-      "metadata": {
-        "total_weight_used": 0.65,
-        "agents_contributing": 2,
-        "signals_collected": 2
-      }
-    },
-    {
-      "symbol": "SOL-USD",
-      "timestamp": "2026-01-12T00:02:31.921411",
-      "agent": "fusion_agent",
-      "total_score": 6.307692307692307,
-      "confidence": 0.363076923076923,
-      "recommendation": "strong_sell",
-      "emojis": [
-        "📉",
-        "❌",
-        "💸"
-      ],
-      "emoji_string": "📉❌💸",
-      "shorthand": "SOL-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+      "shorthand": "SOL-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 4,
@@ -524,7 +456,7 @@
     },
     {
       "symbol": "DOGE-USD",
-      "timestamp": "2026-01-12T00:02:31.953936",
+      "timestamp": "2026-01-23T00:02:27.297717",
       "agent": "fusion_agent",
       "total_score": 6.307692307692307,
       "confidence": 0.363076923076923,
@@ -535,7 +467,41 @@
         "💸"
       ],
       "emoji_string": "📉❌💸",
-      "shorthand": "DOGE-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+      "shorthand": "DOGE-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
+      "weighted_scores": {
+        "indicators_agent": {
+          "score": 4,
+          "confidence": 0.33999999999999997,
+          "weight": 0.4,
+          "contribution": 1.6
+        },
+        "volume_agent": {
+          "score": 10,
+          "confidence": 0.4,
+          "weight": 0.25,
+          "contribution": 2.5
+        }
+      },
+      "metadata": {
+        "total_weight_used": 0.65,
+        "agents_contributing": 2,
+        "signals_collected": 2
+      }
+    },
+    {
+      "symbol": "SOL-USD",
+      "timestamp": "2026-01-23T00:02:27.300477",
+      "agent": "fusion_agent",
+      "total_score": 6.307692307692307,
+      "confidence": 0.363076923076923,
+      "recommendation": "strong_sell",
+      "emojis": [
+        "📉",
+        "❌",
+        "💸"
+      ],
+      "emoji_string": "📉❌💸",
+      "shorthand": "SOL-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 4,
@@ -558,7 +524,7 @@
     },
     {
       "symbol": "ADA-USD",
-      "timestamp": "2026-01-12T00:02:31.983961",
+      "timestamp": "2026-01-23T00:02:27.334363",
       "agent": "fusion_agent",
       "total_score": 6.307692307692307,
       "confidence": 0.363076923076923,
@@ -569,7 +535,7 @@
         "💸"
       ],
       "emoji_string": "📉❌💸",
-      "shorthand": "ADA-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+      "shorthand": "ADA-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 4,
@@ -592,7 +558,7 @@
     },
     {
       "symbol": "AVAX-USD",
-      "timestamp": "2026-01-12T00:02:32.043410",
+      "timestamp": "2026-01-23T00:02:27.364902",
       "agent": "fusion_agent",
       "total_score": 6.307692307692307,
       "confidence": 0.363076923076923,
@@ -603,7 +569,7 @@
         "💸"
       ],
       "emoji_string": "📉❌💸",
-      "shorthand": "AVAX-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+      "shorthand": "AVAX-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 4,
@@ -626,7 +592,7 @@
     },
     {
       "symbol": "LINK-USD",
-      "timestamp": "2026-01-12T00:02:32.070817",
+      "timestamp": "2026-01-23T00:02:27.395458",
       "agent": "fusion_agent",
       "total_score": 6.307692307692307,
       "confidence": 0.363076923076923,
@@ -637,7 +603,7 @@
         "💸"
       ],
       "emoji_string": "📉❌💸",
-      "shorthand": "LINK-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+      "shorthand": "LINK-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
       "weighted_scores": {
         "indicators_agent": {
           "score": 4,
@@ -663,7 +629,7 @@
     "strong_buy": [
       {
         "symbol": "XOM",
-        "timestamp": "2026-01-12T00:02:32.123744",
+        "timestamp": "2026-01-23T00:02:27.556722",
         "agent": "fusion_agent",
         "total_score": 87.3076923076923,
         "confidence": 0.9499999999999998,
@@ -674,7 +640,7 @@
           "💰"
         ],
         "emoji_string": "📈✅💰",
-        "shorthand": "XOM | 📈✅💰 | 87 | 0.95 | 2026-01-12",
+        "shorthand": "XOM | 📈✅💰 | 87 | 0.95 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 95,
@@ -700,7 +666,7 @@
     "hold": [
       {
         "symbol": "CVX",
-        "timestamp": "2026-01-12T00:02:32.187997",
+        "timestamp": "2026-01-23T00:02:27.604748",
         "agent": "fusion_agent",
         "total_score": 46.15384615384615,
         "confidence": 0.7615384615384616,
@@ -711,7 +677,7 @@
           "💸"
         ],
         "emoji_string": "➖✅💸",
-        "shorthand": "CVX | ➖✅💸 | 46 | 0.76 | 2026-01-12",
+        "shorthand": "CVX | ➖✅💸 | 46 | 0.76 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 50,
@@ -734,7 +700,7 @@
       },
       {
         "symbol": "AMD",
-        "timestamp": "2026-01-12T00:02:32.149010",
+        "timestamp": "2026-01-23T00:02:27.427536",
         "agent": "fusion_agent",
         "total_score": 40.0,
         "confidence": 0.7,
@@ -745,7 +711,7 @@
           "💰"
         ],
         "emoji_string": "📈❌💰",
-        "shorthand": "AMD | 📈❌💰 | 40 | 0.70 | 2026-01-12",
+        "shorthand": "AMD | 📈❌💰 | 40 | 0.70 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 40,
@@ -769,42 +735,8 @@
     ],
     "sell": [
       {
-        "symbol": "LTC-USD",
-        "timestamp": "2026-01-12T00:02:32.012326",
-        "agent": "fusion_agent",
-        "total_score": 27.461538461538463,
-        "confidence": 0.5746153846153845,
-        "recommendation": "sell",
-        "emojis": [
-          "📉",
-          "❌",
-          "💰"
-        ],
-        "emoji_string": "📉❌💰",
-        "shorthand": "LTC-USD | 📉❌💰 | 27 | 0.57 | 2026-01-12",
-        "weighted_scores": {
-          "indicators_agent": {
-            "score": 4,
-            "confidence": 0.33999999999999997,
-            "weight": 0.4,
-            "contribution": 1.6
-          },
-          "volume_agent": {
-            "score": 65,
-            "confidence": 0.95,
-            "weight": 0.25,
-            "contribution": 16.25
-          }
-        },
-        "metadata": {
-          "total_weight_used": 0.65,
-          "agents_contributing": 2,
-          "signals_collected": 2
-        }
-      },
-      {
         "symbol": "META",
-        "timestamp": "2026-01-12T00:02:32.222818",
+        "timestamp": "2026-01-23T00:02:27.463527",
         "agent": "fusion_agent",
         "total_score": 20.69230769230769,
         "confidence": 0.5069230769230769,
@@ -815,7 +747,7 @@
           "💸"
         ],
         "emoji_string": "📉❌💸",
-        "shorthand": "META | 📉❌💸 | 20 | 0.51 | 2026-01-12",
+        "shorthand": "META | 📉❌💸 | 20 | 0.51 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 18,
@@ -839,42 +771,8 @@
     ],
     "strong_sell": [
       {
-        "symbol": "BTC-USD",
-        "timestamp": "2026-01-12T00:02:31.834130",
-        "agent": "fusion_agent",
-        "total_score": 14.923076923076922,
-        "confidence": 0.44923076923076927,
-        "recommendation": "strong_sell",
-        "emojis": [
-          "📉",
-          "❌",
-          "💸"
-        ],
-        "emoji_string": "📉❌💸",
-        "shorthand": "BTC-USD | 📉❌💸 | 14 | 0.45 | 2026-01-12",
-        "weighted_scores": {
-          "indicators_agent": {
-            "score": 18,
-            "confidence": 0.48,
-            "weight": 0.4,
-            "contribution": 7.2
-          },
-          "volume_agent": {
-            "score": 10,
-            "confidence": 0.4,
-            "weight": 0.25,
-            "contribution": 2.5
-          }
-        },
-        "metadata": {
-          "total_weight_used": 0.65,
-          "agents_contributing": 2,
-          "signals_collected": 2
-        }
-      },
-      {
         "symbol": "GE",
-        "timestamp": "2026-01-12T00:02:32.262800",
+        "timestamp": "2026-01-23T00:02:27.505533",
         "agent": "fusion_agent",
         "total_score": 9.384615384615383,
         "confidence": 0.39384615384615385,
@@ -885,7 +783,7 @@
           "💸"
         ],
         "emoji_string": "📉❌💸",
-        "shorthand": "GE | 📉❌💸 | 9 | 0.39 | 2026-01-12",
+        "shorthand": "GE | 📉❌💸 | 9 | 0.39 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 9,
@@ -908,7 +806,7 @@
       },
       {
         "symbol": "ETH-USD",
-        "timestamp": "2026-01-12T00:02:31.861350",
+        "timestamp": "2026-01-23T00:02:27.175608",
         "agent": "fusion_agent",
         "total_score": 6.307692307692307,
         "confidence": 0.363076923076923,
@@ -919,7 +817,41 @@
           "💸"
         ],
         "emoji_string": "📉❌💸",
-        "shorthand": "ETH-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+        "shorthand": "ETH-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
+        "weighted_scores": {
+          "indicators_agent": {
+            "score": 4,
+            "confidence": 0.33999999999999997,
+            "weight": 0.4,
+            "contribution": 1.6
+          },
+          "volume_agent": {
+            "score": 10,
+            "confidence": 0.4,
+            "weight": 0.25,
+            "contribution": 2.5
+          }
+        },
+        "metadata": {
+          "total_weight_used": 0.65,
+          "agents_contributing": 2,
+          "signals_collected": 2
+        }
+      },
+      {
+        "symbol": "XRP-USD",
+        "timestamp": "2026-01-23T00:02:27.201525",
+        "agent": "fusion_agent",
+        "total_score": 6.307692307692307,
+        "confidence": 0.363076923076923,
+        "recommendation": "strong_sell",
+        "emojis": [
+          "📉",
+          "❌",
+          "💸"
+        ],
+        "emoji_string": "📉❌💸",
+        "shorthand": "XRP-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 4,
@@ -942,7 +874,7 @@
       },
       {
         "symbol": "SOL-USD",
-        "timestamp": "2026-01-12T00:02:31.887728",
+        "timestamp": "2026-01-23T00:02:27.234593",
         "agent": "fusion_agent",
         "total_score": 6.307692307692307,
         "confidence": 0.363076923076923,
@@ -953,41 +885,7 @@
           "💸"
         ],
         "emoji_string": "📉❌💸",
-        "shorthand": "SOL-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
-        "weighted_scores": {
-          "indicators_agent": {
-            "score": 4,
-            "confidence": 0.33999999999999997,
-            "weight": 0.4,
-            "contribution": 1.6
-          },
-          "volume_agent": {
-            "score": 10,
-            "confidence": 0.4,
-            "weight": 0.25,
-            "contribution": 2.5
-          }
-        },
-        "metadata": {
-          "total_weight_used": 0.65,
-          "agents_contributing": 2,
-          "signals_collected": 2
-        }
-      },
-      {
-        "symbol": "SOL-USD",
-        "timestamp": "2026-01-12T00:02:31.921411",
-        "agent": "fusion_agent",
-        "total_score": 6.307692307692307,
-        "confidence": 0.363076923076923,
-        "recommendation": "strong_sell",
-        "emojis": [
-          "📉",
-          "❌",
-          "💸"
-        ],
-        "emoji_string": "📉❌💸",
-        "shorthand": "SOL-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+        "shorthand": "SOL-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 4,
@@ -1010,7 +908,7 @@
       },
       {
         "symbol": "DOGE-USD",
-        "timestamp": "2026-01-12T00:02:31.953936",
+        "timestamp": "2026-01-23T00:02:27.297717",
         "agent": "fusion_agent",
         "total_score": 6.307692307692307,
         "confidence": 0.363076923076923,
@@ -1021,7 +919,41 @@
           "💸"
         ],
         "emoji_string": "📉❌💸",
-        "shorthand": "DOGE-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+        "shorthand": "DOGE-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
+        "weighted_scores": {
+          "indicators_agent": {
+            "score": 4,
+            "confidence": 0.33999999999999997,
+            "weight": 0.4,
+            "contribution": 1.6
+          },
+          "volume_agent": {
+            "score": 10,
+            "confidence": 0.4,
+            "weight": 0.25,
+            "contribution": 2.5
+          }
+        },
+        "metadata": {
+          "total_weight_used": 0.65,
+          "agents_contributing": 2,
+          "signals_collected": 2
+        }
+      },
+      {
+        "symbol": "SOL-USD",
+        "timestamp": "2026-01-23T00:02:27.300477",
+        "agent": "fusion_agent",
+        "total_score": 6.307692307692307,
+        "confidence": 0.363076923076923,
+        "recommendation": "strong_sell",
+        "emojis": [
+          "📉",
+          "❌",
+          "💸"
+        ],
+        "emoji_string": "📉❌💸",
+        "shorthand": "SOL-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 4,
@@ -1044,7 +976,7 @@
       },
       {
         "symbol": "ADA-USD",
-        "timestamp": "2026-01-12T00:02:31.983961",
+        "timestamp": "2026-01-23T00:02:27.334363",
         "agent": "fusion_agent",
         "total_score": 6.307692307692307,
         "confidence": 0.363076923076923,
@@ -1055,7 +987,7 @@
           "💸"
         ],
         "emoji_string": "📉❌💸",
-        "shorthand": "ADA-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+        "shorthand": "ADA-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 4,
@@ -1078,7 +1010,7 @@
       },
       {
         "symbol": "AVAX-USD",
-        "timestamp": "2026-01-12T00:02:32.043410",
+        "timestamp": "2026-01-23T00:02:27.364902",
         "agent": "fusion_agent",
         "total_score": 6.307692307692307,
         "confidence": 0.363076923076923,
@@ -1089,7 +1021,7 @@
           "💸"
         ],
         "emoji_string": "📉❌💸",
-        "shorthand": "AVAX-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+        "shorthand": "AVAX-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 4,
@@ -1112,7 +1044,7 @@
       },
       {
         "symbol": "LINK-USD",
-        "timestamp": "2026-01-12T00:02:32.070817",
+        "timestamp": "2026-01-23T00:02:27.395458",
         "agent": "fusion_agent",
         "total_score": 6.307692307692307,
         "confidence": 0.363076923076923,
@@ -1123,7 +1055,7 @@
           "💸"
         ],
         "emoji_string": "📉❌💸",
-        "shorthand": "LINK-USD | 📉❌💸 | 6 | 0.36 | 2026-01-12",
+        "shorthand": "LINK-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
         "weighted_scores": {
           "indicators_agent": {
             "score": 4,

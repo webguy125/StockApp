@@ -9,7 +9,22 @@
       "Bash(git add session_files/ backend/turbomode/training_sample_generator.py backend/turbomode/automated_retrainer.py backend/turbomode/turbomode_training_loader.py backend/turbomode/turbomode_vectorized_feature_engine.py backend/turbomode/feature_list.py backend/turbomode/core_symbols.py backend/turbomode/paths.py)",
       "Bash(git commit -m \"feat: Add supporting infrastructure and documentation\n\n- Add session notes (Jan 2-12, 2026) documenting all changes\n- Add training sample generator for outcome-based retraining\n- Add automated retrainer for monthly model updates\n- Add turbomode training loader for data pipeline\n- Add vectorized feature engine (179 features)\n- Add feature list and core symbols configuration\n- Add paths module for consistent file references\n- Document complete TurboMode architecture and schedule\")",
       "Bash(git add -A)",
-      "Bash(git commit -m \"chore: Clean up old code and add utility scripts\n\n- Remove deprecated backend/advanced_ml directory (moved to backend/turbomode)\n- Remove deprecated backend/ml directory (old pivot/RSI models)\n- Remove old model files (turbomode_models_old_3class)\n- Add utility scripts for database inspection and testing\n- Add documentation files (architecture, implementation progress)\n- Add master_market_data integration (separate data pipeline)\n- Update API server and frontend configurations\n- Clean up catboost training artifacts\")"
+      "Bash(git commit -m \"chore: Clean up old code and add utility scripts\n\n- Remove deprecated backend/advanced_ml directory (moved to backend/turbomode)\n- Remove deprecated backend/ml directory (old pivot/RSI models)\n- Remove old model files (turbomode_models_old_3class)\n- Add utility scripts for database inspection and testing\n- Add documentation files (architecture, implementation progress)\n- Add master_market_data integration (separate data pipeline)\n- Update API server and frontend configurations\n- Clean up catboost training artifacts\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr :5000)",
+      "Bash(python backend/api_server.py)",
+      "Bash(findstr LISTENING)",
+      "Bash(cp -f \"C:\\StockApp\\backend\\turbomode\\backend\\data\\turbomode_models\\xgboost_gblinear\"/* \"C:\\StockApp\\backend\\turbomode\\models\\trained\\xgboost_gblinear\")",
+      "Bash(mv \"C:\\StockApp\\backend\\turbomode\\models\\random_forest_model.py\" \"C:\\StockApp\\backend\\turbomode\\training_files/\")",
+      "Bash(mv \"C:\\StockApp\\backend\\turbomode\\models\\meta_learner.py\" \"C:\\StockApp\\backend\\turbomode\\training_files/\")",
+      "Bash(mv \"C:\\StockApp\\backend\\turbomode\\models\\lightgbm_model.py\" \"C:\\StockApp\\backend\\turbomode\\training_files/\")",
+      "Bash(mv \"C:\\StockApp\\backend\\turbomode\\models\\tc_nn_model.py\" \"C:\\StockApp\\backend\\turbomode\\training_files/\")",
+      "Bash(mv \"C:\\StockApp\\backend\\turbomode\\models\\xgboost_approx_model.py\" \"C:\\StockApp\\backend\\turbomode\\training_files/\")",
+      "Bash(mv \"C:\\StockApp\\backend\\turbomode\\test_production_scanner.py\" \"C:\\StockApp\\backend\\turbomode\\scanner_files/\")",
+      "Bash(mv \"C:\\StockApp\\backend\\turbomode\\test_scanner_verbose.py\" \"C:\\StockApp\\backend\\turbomode\\scanner_files/\")",
+      "Bash(mv \"C:\\StockApp\\backend\\turbomode\\test_phase2_scanner.py\" \"C:\\StockApp\\backend\\turbomode\\scanner_files/\")",
+      "Bash(mv \"C:\\StockApp\\backend\\turbomode\\test_scanner_quick_5pct.py\" \"C:\\StockApp\\backend\\turbomode\\scanner_files/\")",
+      "Bash(mv \"C:\\StockApp\\backend\\turbomode\\test_scanner_dual_threshold.py\" \"C:\\StockApp\\backend\\turbomode\\scanner_files/\")"
     ],
     "deny": [],
     "ask": []

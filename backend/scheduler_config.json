@@ -2,7 +2,7 @@
   "version": "1.0",
   "description": "TurboMode Phase 2 - Unified Scheduler Configuration",
   "global_settings": {
-    "timezone": "America/New_York",
+    "timezone": "America/Chicago",
     "max_concurrent_jobs": 1,
     "missed_job_grace_time": 3600,
     "job_defaults": {
@@ -54,9 +54,9 @@
       "enabled": true,
       "schedule": {
         "type": "cron",
-        "hour": 23,
+        "hour": 0,
         "minute": 0,
-        "day_of_week": "mon-sun"
+        "day_of_week": "sun"
       },
       "responsibilities": [
         "Load symbols from Master Market Data DB.",
@@ -100,9 +100,9 @@
       "enabled": true,
       "schedule": {
         "type": "cron",
-        "hour": 0,
-        "minute": 0,
-        "day_of_week": "mon-sun"
+        "hour": 23,
+        "minute": 5,
+        "day_of_week": "sat"
       },
       "responsibilities": [
         "Use Master Market Data DB to generate updated backtest datasets.",
@@ -122,9 +122,9 @@
       "enabled": true,
       "schedule": {
         "type": "cron",
-        "hour": 0,
-        "minute": 30,
-        "day_of_week": "mon-sun"
+        "hour": 23,
+        "minute": 10,
+        "day_of_week": "sat"
       },
       "responsibilities": [
         "Compare today's feature distributions to historical baselines.",
@@ -145,9 +145,9 @@
       "enabled": true,
       "schedule": {
         "type": "cron",
-        "hour": 2,
+        "hour": 23,
         "minute": 0,
-        "day_of_week": "sun"
+        "day_of_week": "sat"
       },
       "responsibilities": [
         "VACUUM Master Market Data DB.",

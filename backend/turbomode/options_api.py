@@ -588,10 +588,16 @@ class OptionsAnalyzer:
                     else:
                         expirations.append(f"{exp[:4]}-{exp[4:6]}-{exp[6:8]}")
 
-                # Get historical data for volatility calculation
-                hist_data = HYBRID_FETCHER.get_stock_data(symbol, period='1mo', interval='1d')
+                # Get historical data for volatility calculation (request 2mo to ensure 20+ trading days)
+                hist_data = HYBRID_FETCHER.get_stock_data(symbol, period='2mo', interval='1d')
                 if hist_data is None or len(hist_data) < 20:
-                    return {'error': 'Insufficient historical data'}
+                    # Fallback to yfinance if IBKR data is insufficient
+                    print(f"[OPTIONS API] IBKR data insufficient for {symbol} (got {len(hist_data) if hist_data is not None else 0} rows), falling back to yfinance")
+                    ticker = yf.Ticker(symbol)
+                    hist_data = ticker.history(period='2mo')
+                    if hist_data is None or len(hist_data) < 20:
+                        print(f"[OPTIONS API ERROR] Both IBKR and yfinance insufficient: got {len(hist_data) if hist_data is not None else 0} rows")
+                        return {'error': 'Insufficient historical data'}
 
                 # Create ticker for fallback signal generation
                 ticker = yf.Ticker(symbol)
@@ -611,7 +617,8 @@ class OptionsAnalyzer:
                 if not expirations:
                     return {'error': 'No options available for this symbol'}
 
-                hist_data = ticker.history(period='1mo')
+                # Request 2 months to ensure 20+ trading days
+                hist_data = ticker.history(period='2mo')
 
             # Get TurboOptions prediction (or generate fallback for non-Top-30 stocks)
             turbomode_pred = self.get_turbomode_prediction(symbol)
@@ -719,7 +726,9 @@ class OptionsAnalyzer:
                     'gamma': greeks_data['gamma'],
                     'theta': greeks_data['theta'],
                     'vega': greeks_data['vega'],
-                    'rho': greeks_data['rho']
+                    'rho': greeks_data['rho'],
+                    'expiration': best_expiration,
+                    'dte': dte
                 }
 
                 # Calculate Hybrid Score (Rules 40% + ML 60%)
@@ -749,8 +758,19 @@ class OptionsAnalyzer:
 
             # Calculate profit targets
             entry_price = (recommended['bid'] + recommended['ask']) / 2
-            if entry_price <= 0:
+
+            # Check for NaN or invalid price
+            if np.isnan(entry_price) or entry_price <= 0:
                 entry_price = recommended['last']
+
+            # If last price is also NaN or invalid, use a reasonable estimate
+            if np.isnan(entry_price) or entry_price <= 0:
+                # Estimate: 5% of strike price for options (reasonable approximation)
+                entry_price = recommended['strike'] * 0.05
+
+            # Final sanity check - ensure entry_price is valid before calculations
+            if np.isnan(entry_price) or entry_price <= 0:
+                return {'error': f'Unable to determine valid entry price for {symbol} options'}
 
             take_profit_price = entry_price * (1 + WIN_THRESHOLD_PCT)
             stop_loss_price = entry_price * (1 + LOSS_THRESHOLD_PCT)

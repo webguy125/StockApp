@@ -13,8 +13,7 @@ import os
 import sys
 
 # Import canonical symbol normalizer (strict mode)
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'master_market_data'))
-from symbol_normalizer import validate_and_normalize, is_canonical
+from backend.turbomode.core_engine.symbol_normalizer import validate_and_normalize, is_canonical
 
 
 class AdaptiveStockRanker:
