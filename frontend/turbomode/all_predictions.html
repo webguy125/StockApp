@@ -590,6 +590,8 @@
     <script>
         let allPredictions = [];
         let filteredPredictions = [];
+        let currentSortColumn = 'symbol';
+        let currentSortDirection = 'asc';
 
         async function loadPredictions() {
             const loadingContainer = document.getElementById('loadingContainer');
@@ -643,9 +645,9 @@
         }
 
         function updateStats() {
-            const buyCount = allPredictions.filter(p => p.prediction === 'buy').length;
-            const sellCount = allPredictions.filter(p => p.prediction === 'sell').length;
-            const holdCount = allPredictions.filter(p => p.prediction === 'hold').length;
+            const buyCount = allPredictions.filter(p => p.prediction.toLowerCase() === 'buy').length;
+            const sellCount = allPredictions.filter(p => p.prediction.toLowerCase() === 'sell').length;
+            const holdCount = allPredictions.filter(p => p.prediction.toLowerCase() === 'hold').length;
             const thresholdCount = allPredictions.filter(p => p.confidence >= 0.65).length;
 
             document.getElementById('totalCount').textContent = allPredictions.length;
@@ -662,8 +664,8 @@
             const searchTerm = document.getElementById('searchBox').value.toLowerCase();
 
             filteredPredictions = allPredictions.filter(pred => {
-                // Prediction filter
-                if (predictionFilter !== 'all' && pred.prediction !== predictionFilter) {
+                // Prediction filter (case-insensitive)
+                if (predictionFilter !== 'all' && pred.prediction.toLowerCase() !== predictionFilter) {
                     return false;
                 }
 
@@ -700,20 +702,26 @@
                 return;
             }
 
+            // Generate sort indicators
+            const getSortIndicator = (column) => {
+                if (currentSortColumn !== column) return ' ⇅';
+                return currentSortDirection === 'asc' ? ' ▲' : ' ▼';
+            };
+
             // Create compact table view for 235 stocks
             let html = `
                 <div class="predictions-table">
                     <table>
                         <thead>
                             <tr>
-                                <th onclick="sortTable('symbol')">Symbol ▼</th>
-                                <th onclick="sortTable('prediction')">Signal</th>
-                                <th onclick="sortTable('confidence')">Confidence</th>
-                                <th onclick="sortTable('current_price')">Current Price</th>
+                                <th onclick="sortTable('symbol')">Symbol${getSortIndicator('symbol')}</th>
+                                <th onclick="sortTable('prediction')">Signal${getSortIndicator('prediction')}</th>
+                                <th onclick="sortTable('confidence')">Confidence${getSortIndicator('confidence')}</th>
+                                <th onclick="sortTable('current_price')">Current Price${getSortIndicator('current_price')}</th>
                                 <th>Entry Range</th>
                                 <th>Target</th>
                                 <th>Stop Loss</th>
-                                <th onclick="sortTable('sector')">Sector</th>
+                                <th onclick="sortTable('sector')">Sector${getSortIndicator('sector')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -728,14 +736,15 @@
                 const entryMin = entryPrice * 0.98;
                 const entryMax = entryPrice * 1.02;
 
-                // Calculate Stop Loss and Take Profit based on prediction type
+                // Calculate Stop Loss and Take Profit based on prediction type (case-insensitive)
+                const predictionType = pred.prediction.toLowerCase();
                 let stopPrice, targetPrice, stopPct, targetPct;
-                if (pred.prediction === 'buy') {
+                if (predictionType === 'buy') {
                     stopPrice = entryPrice * 0.93;  // 7% stop loss
                     targetPrice = entryPrice * 1.12;  // 12% take profit
                     stopPct = -7;
                     targetPct = 12;
-                } else if (pred.prediction === 'sell') {
+                } else if (predictionType === 'sell') {
                     stopPrice = entryPrice * 1.07;  // 7% stop loss (price goes up)
                     targetPrice = entryPrice * 0.88;  // 12% take profit (price goes down)
                     stopPct = 7;
@@ -752,7 +761,7 @@
                 let riskLevel = '';
                 let riskColor = '';
 
-                if (pred.prediction === 'buy') {
+                if (predictionType === 'buy') {
                     if (pred.confidence >= 0.95) {
                         aiAnalysisPoints = [
                             '🎯 Exceptionally strong conviction - highest confidence tier',
@@ -781,7 +790,7 @@
                         riskLevel = 'Medium-High Risk';
                         riskColor = '#f59e0b';
                     }
-                } else if (pred.prediction === 'sell') {
+                } else if (predictionType === 'sell') {
                     if (pred.confidence >= 0.95) {
                         aiAnalysisPoints = [
                             '⚠️ Strong downside indicators detected',
@@ -842,7 +851,7 @@
                     <tr>
                         <td class="symbol-cell">${pred.symbol}</td>
                         <td class="prediction-cell">
-                            <span class="prediction-badge prediction-${pred.prediction}">${pred.prediction.toUpperCase()}</span>
+                            <span class="prediction-badge prediction-${predictionType}">${predictionType.toUpperCase()}</span>
                         </td>
                         <td class="confidence-cell">
                             ${confidencePercent}%
@@ -875,18 +884,31 @@
         }
 
         function sortTable(column) {
+            // Toggle sort direction if clicking the same column
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+
             filteredPredictions.sort((a, b) => {
                 let valA = a[column];
                 let valB = b[column];
 
+                // Handle string comparisons (case-insensitive)
                 if (typeof valA === 'string') {
                     valA = valA.toLowerCase();
                     valB = valB.toLowerCase();
                 }
 
-                if (valA < valB) return -1;
-                if (valA > valB) return 1;
-                return 0;
+                // Compare values
+                let comparison = 0;
+                if (valA < valB) comparison = -1;
+                if (valA > valB) comparison = 1;
+
+                // Apply sort direction
+                return currentSortDirection === 'asc' ? comparison : -comparison;
             });
 
             displayPredictions();
