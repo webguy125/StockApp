@@ -108,7 +108,12 @@ def get_all_predictions():
                 'prob_buy': round(signal['confidence'], 4) if pred_type == 'BUY' else 0.0,
                 'prob_sell': round(signal['confidence'], 4) if pred_type == 'SELL' else 0.0,
                 'prob_hold': 0.0,
-                'current_price': round(signal['entry_price'], 2)
+                # NEW FIELDS: Distinguish between entry price and current price
+                'entry_price': round(signal['entry_price'], 2),
+                'current_price': round(signal.get('current_price', signal['entry_price']), 2),
+                'signal_timestamp': signal.get('signal_timestamp', signal.get('created_at')),
+                'age_days': signal.get('age_days', 0),
+                'days_remaining': max(0, 14 - signal.get('age_days', 0))
             }
 
             predictions.append(prediction_entry)

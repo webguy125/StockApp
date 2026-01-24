@@ -54,27 +54,33 @@ class TurboModeDB:
                 signal_type TEXT NOT NULL,  -- 'BUY' or 'SELL'
                 confidence REAL NOT NULL,   -- Model confidence (0.0 - 1.0)
 
-                -- Entry data
+                -- Entry data (FIXED - never changes unless signal flips)
                 entry_date TEXT NOT NULL,   -- ISO format: YYYY-MM-DD
                 entry_price REAL NOT NULL,
+                entry_min REAL,
+                entry_max REAL,
+                signal_timestamp TEXT NOT NULL,  -- When signal was created
 
-                -- Targets
-                target_price REAL NOT NULL,  -- +10% for BUY, -10% for SELL
-                stop_price REAL NOT NULL,    -- -5% for BUY, +5% for SELL
+                -- Current data (UPDATED each scan)
+                current_price REAL NOT NULL,
+
+                -- Targets (based on entry_price)
+                target_price REAL NOT NULL,  -- +12% for BUY, -12% for SELL
+                stop_price REAL NOT NULL,    -- -7% for BUY, +7% for SELL
 
                 -- Classifications
                 market_cap TEXT NOT NULL,    -- 'large_cap', 'mid_cap', 'small_cap'
                 sector TEXT NOT NULL,        -- GICS sector name
 
-                -- Lifecycle
-                age_days INTEGER DEFAULT 0,  -- Days since entry
+                -- Lifecycle (UPDATED each scan)
+                age_days INTEGER DEFAULT 0,  -- Days since signal_timestamp
                 status TEXT DEFAULT 'ACTIVE', -- 'ACTIVE', 'TARGET_HIT', 'STOP_HIT', 'EXPIRED'
 
                 -- Metadata
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
 
-                UNIQUE(symbol, signal_type)  -- One BUY and one SELL max per symbol
+                UNIQUE(symbol)  -- Only one signal per symbol (allows flipping BUY<->SELL)
             )
         """)
 
@@ -159,9 +165,14 @@ class TurboModeDB:
     # ACTIVE SIGNALS
     # =========================================================================
 
-    def add_signal(self, signal: Dict[str, Any]) -> bool:
+    def add_or_update_signal(self, signal: Dict[str, Any], current_price: float) -> str:
         """
-        Add new signal to active_signals table
+        Add new signal OR update existing signal with proper flipping logic
+
+        SIGNAL LIFECYCLE RULES:
+        1. If no existing signal: CREATE new signal
+        2. If existing signal with SAME type (BUY->BUY): UPDATE current_price and confidence only
+        3. If existing signal with DIFFERENT type (BUY->SELL): FLIP signal (reset entry_price, timestamp)
 
         Args:
             signal: Dictionary with keys:
@@ -169,59 +180,132 @@ class TurboModeDB:
                 - signal_type: 'BUY' or 'SELL'
                 - confidence: float (0.0 - 1.0)
                 - entry_date: str (YYYY-MM-DD)
-                - entry_price: float
-                - entry_min: float (optional, defaults to entry_price * 0.98)
-                - entry_max: float (optional, defaults to entry_price * 1.02)
+                - entry_price: float (price at signal generation)
                 - target_price: float
                 - stop_price: float
                 - market_cap: 'large_cap', 'mid_cap', or 'small_cap'
                 - sector: str (GICS sector name)
+            current_price: Current market price for this symbol
 
         Returns:
-            True if successful, False if signal already exists
+            'CREATED', 'UPDATED', or 'FLIPPED'
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
         now = datetime.now().isoformat()
+        symbol = signal['symbol']
+        new_signal_type = signal['signal_type']
+
+        # Check if signal already exists
+        cursor.execute("""
+            SELECT signal_type, signal_timestamp FROM active_signals
+            WHERE symbol = ? AND status = 'ACTIVE'
+        """, (symbol,))
+
+        existing = cursor.fetchone()
 
         # Default entry range to ±2% if not provided
         entry_min = signal.get('entry_min', signal['entry_price'] * 0.98)
         entry_max = signal.get('entry_max', signal['entry_price'] * 1.02)
 
-        try:
+        if not existing:
+            # CREATE: No existing signal
             cursor.execute("""
                 INSERT INTO active_signals
                 (symbol, signal_type, confidence, entry_date, entry_price, entry_min, entry_max,
-                 target_price, stop_price, market_cap, sector, age_days,
-                 status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 signal_timestamp, current_price, target_price, stop_price, market_cap, sector,
+                 age_days, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                signal['symbol'],
-                signal['signal_type'],
+                symbol,
+                new_signal_type,
                 signal['confidence'],
                 signal['entry_date'],
                 signal['entry_price'],
                 entry_min,
                 entry_max,
+                now,  # signal_timestamp
+                current_price,
                 signal['target_price'],
                 signal['stop_price'],
                 signal['market_cap'],
                 signal['sector'],
                 0,  # age_days
                 'ACTIVE',
-                now,
-                now
+                now,  # created_at
+                now   # updated_at
             ))
 
             conn.commit()
             conn.close()
-            return True
+            return 'CREATED'
 
-        except sqlite3.IntegrityError:
-            # Signal already exists (UNIQUE constraint)
-            conn.close()
-            return False
+        else:
+            existing_signal_type = existing[0]
+
+            if existing_signal_type == new_signal_type:
+                # UPDATE: Same signal type, just update current_price and confidence
+                cursor.execute("""
+                    UPDATE active_signals
+                    SET confidence = ?,
+                        current_price = ?,
+                        updated_at = ?
+                    WHERE symbol = ? AND status = 'ACTIVE'
+                """, (signal['confidence'], current_price, now, symbol))
+
+                conn.commit()
+                conn.close()
+                return 'UPDATED'
+
+            else:
+                # FLIP: Signal changed direction (BUY->SELL or SELL->BUY)
+                # Reset entry_price, signal_timestamp, age_days
+                cursor.execute("""
+                    UPDATE active_signals
+                    SET signal_type = ?,
+                        confidence = ?,
+                        entry_date = ?,
+                        entry_price = ?,
+                        entry_min = ?,
+                        entry_max = ?,
+                        signal_timestamp = ?,
+                        current_price = ?,
+                        target_price = ?,
+                        stop_price = ?,
+                        age_days = 0,
+                        updated_at = ?
+                    WHERE symbol = ? AND status = 'ACTIVE'
+                """, (
+                    new_signal_type,
+                    signal['confidence'],
+                    signal['entry_date'],
+                    signal['entry_price'],
+                    entry_min,
+                    entry_max,
+                    now,  # Reset signal_timestamp
+                    current_price,
+                    signal['target_price'],
+                    signal['stop_price'],
+                    now,  # updated_at
+                    symbol
+                ))
+
+                conn.commit()
+                conn.close()
+                return 'FLIPPED'
+
+    def add_signal(self, signal: Dict[str, Any]) -> bool:
+        """
+        DEPRECATED: Use add_or_update_signal() instead
+        Kept for backward compatibility with existing code
+
+        Returns:
+            True if successful
+        """
+        current_price = signal.get('entry_price')  # Fallback to entry_price
+        result = self.add_or_update_signal(signal, current_price)
+        return result in ['CREATED', 'UPDATED', 'FLIPPED']
 
     def get_active_signals(self, market_cap: Optional[str] = None,
                           signal_type: Optional[str] = None,
@@ -260,6 +344,31 @@ class TurboModeDB:
         conn.close()
 
         return [dict(row) for row in rows]
+
+    def update_current_price(self, symbol: str, current_price: float) -> bool:
+        """
+        Update current_price for an existing signal (called during scans)
+
+        Args:
+            symbol: Stock symbol
+            current_price: Current market price
+
+        Returns:
+            True if successful
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE active_signals
+            SET current_price = ?,
+                updated_at = ?
+            WHERE symbol = ? AND status = 'ACTIVE'
+        """, (current_price, datetime.now().isoformat(), symbol))
+
+        conn.commit()
+        conn.close()
+        return True
 
     def get_active_symbols(self) -> List[str]:
         """
@@ -459,15 +568,16 @@ class TurboModeDB:
 
     def update_signal_age(self):
         """
-        Update age_days for all active signals
+        Update age_days for all active signals based on signal_timestamp
         Called daily by scanner before generating new signals
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
+        # Update age_days from signal_timestamp (not entry_date)
         cursor.execute("""
             UPDATE active_signals
-            SET age_days = CAST((julianday('now') - julianday(entry_date)) AS INTEGER),
+            SET age_days = CAST((julianday('now') - julianday(signal_timestamp)) AS INTEGER),
                 updated_at = ?
             WHERE status = 'ACTIVE'
         """, (datetime.now().isoformat(),))
