@@ -857,7 +857,15 @@
                             ${confidencePercent}%
                             <span class="threshold-indicator ${pred.confidence >= 0.65 ? 'threshold-met' : 'threshold-not-met'}"></span>
                         </td>
-                        <td class="price-cell">$${entryPrice.toFixed(2)}</td>
+                        <td class="price-cell">
+                            <div style="font-weight: 600;">$${pred.current_price ? pred.current_price.toFixed(2) : entryPrice.toFixed(2)}</div>
+                            ${pred.current_price && pred.current_price !== pred.entry_price ? `
+                            <div style="font-size: 0.75em; color: #6b7280;">Entry: $${pred.entry_price.toFixed(2)}</div>
+                            <div style="font-size: 0.75em; font-weight: 600; color: ${((pred.current_price - pred.entry_price) / pred.entry_price) >= 0 ? '#059669' : '#dc2626'};">
+                                ${((pred.current_price - pred.entry_price) / pred.entry_price * 100).toFixed(1)}%
+                            </div>
+                            ` : `<div style="font-size: 0.75em; color: #6b7280;">${pred.age_days || 0} days old</div>`}
+                        </td>
                         <td class="price-cell">
                             <div style="font-size: 0.85em; color: #6b7280;">Low: $${entryMin.toFixed(2)}</div>
                             <div style="font-size: 0.85em; color: #6b7280;">High: $${entryMax.toFixed(2)}</div>

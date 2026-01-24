@@ -66,7 +66,8 @@ def get_current_rankings():
             cursor = conn.cursor()
 
             cursor.execute("""
-                SELECT entry_price, entry_min, entry_max, target_price, stop_price, confidence, signal_type
+                SELECT entry_price, current_price, entry_min, entry_max, target_price, stop_price,
+                       confidence, signal_type, signal_timestamp, age_days
                 FROM active_signals
                 WHERE symbol = ? AND status = 'ACTIVE'
                 ORDER BY confidence DESC
@@ -80,12 +81,16 @@ def get_current_rankings():
             stock_with_prices = stock.copy()
             if signal:
                 stock_with_prices['entry_price'] = signal['entry_price']
+                stock_with_prices['current_price'] = signal['current_price']
                 stock_with_prices['entry_min'] = signal['entry_min']
                 stock_with_prices['entry_max'] = signal['entry_max']
                 stock_with_prices['target_price'] = signal['target_price']
                 stock_with_prices['stop_price'] = signal['stop_price']
                 stock_with_prices['signal_confidence'] = signal['confidence']
                 stock_with_prices['signal_type'] = signal['signal_type']
+                stock_with_prices['signal_timestamp'] = signal['signal_timestamp']
+                stock_with_prices['age_days'] = signal['age_days']
+                stock_with_prices['days_remaining'] = max(0, 14 - signal['age_days'])
                 stock_with_prices['has_signal'] = True
             else:
                 stock_with_prices['has_signal'] = False

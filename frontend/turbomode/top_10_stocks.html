@@ -587,8 +587,32 @@
                                 </div>
                             </div>
 
-                            <div style="font-size: 1.1em; font-weight: 700; color: #1e3c72; margin-bottom: 10px;">
-                                $${stock.entry_price.toFixed(2)}
+                            <!-- Price Display with Entry vs Current -->
+                            <div style="margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <div style="font-size: 0.8em; color: #6b7280;">Entry Price:</div>
+                                    <div style="font-size: 1.1em; font-weight: 700; color: #667eea;">$${stock.entry_price.toFixed(2)}</div>
+                                </div>
+                                ${stock.current_price && stock.current_price !== stock.entry_price ? `
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <div style="font-size: 0.8em; color: #6b7280;">Current Price:</div>
+                                    <div style="font-size: 1.1em; font-weight: 700; color: #1e3c72;">$${stock.current_price.toFixed(2)}</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <div style="font-size: 0.75em; color: #6b7280;">P/L Since Entry:</div>
+                                    <div style="font-size: 0.9em; font-weight: 600; color: ${((stock.current_price - stock.entry_price) / stock.entry_price) >= 0 ? '#059669' : '#dc2626'};">
+                                        ${((stock.current_price - stock.entry_price) / stock.entry_price * 100).toFixed(1)}%
+                                    </div>
+                                </div>
+                                ` : ''}
+                                ${stock.age_days !== undefined ? `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.05);">
+                                    <div style="font-size: 0.75em; color: #6b7280;">Signal Age:</div>
+                                    <div style="font-size: 0.85em; font-weight: 600; color: ${stock.days_remaining <= 3 ? '#ef4444' : '#6b7280'};">
+                                        ${stock.age_days} days old ${stock.days_remaining !== undefined ? `(${stock.days_remaining} remaining)` : ''}
+                                    </div>
+                                </div>
+                                ` : ''}
                             </div>
 
                             <!-- Header Row -->

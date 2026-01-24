@@ -782,21 +782,47 @@ class ProductionScanner:
         buy_signals = buy_signals[:max_signals_per_type]
         sell_signals = sell_signals[:max_signals_per_type]
 
-        # Save to database
+        # Save to database with signal flipping support
         logger.info(f"\n[STEP 5] Saving signals to database...")
         saved_buy = 0
         saved_sell = 0
+        flipped_signals = 0
+        updated_signals = 0
+        new_signals = 0
 
         for signal in buy_signals:
-            if self.db.add_signal(signal):
+            current_price = signal['entry_price']  # This is the current market price
+            result = self.db.add_or_update_signal(signal, current_price)
+
+            if result == 'CREATED':
+                new_signals += 1
                 saved_buy += 1
+            elif result == 'UPDATED':
+                updated_signals += 1
+                saved_buy += 1
+            elif result == 'FLIPPED':
+                flipped_signals += 1
+                saved_buy += 1
+                logger.info(f"  [FLIP] {signal['symbol']}: Signal flipped to BUY")
 
         for signal in sell_signals:
-            if self.db.add_signal(signal):
-                saved_sell += 1
+            current_price = signal['entry_price']  # This is the current market price
+            result = self.db.add_or_update_signal(signal, current_price)
 
-        logger.info(f"  BUY: {saved_buy} saved")
+            if result == 'CREATED':
+                new_signals += 1
+                saved_sell += 1
+            elif result == 'UPDATED':
+                updated_signals += 1
+                saved_sell += 1
+            elif result == 'FLIPPED':
+                flipped_signals += 1
+                saved_sell += 1
+                logger.info(f"  [FLIP] {signal['symbol']}: Signal flipped to SELL")
+
+        logger.info(f"  BUY: {saved_buy} saved ({new_signals} new)")
         logger.info(f"  SELL: {saved_sell} saved")
+        logger.info(f"  Total: {new_signals} new, {updated_signals} updated, {flipped_signals} flipped")
 
         # Print active positions
         logger.info(f"\n[STEP 6] Active positions summary...")
