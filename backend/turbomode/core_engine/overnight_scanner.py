@@ -755,6 +755,7 @@ class ProductionScanner:
 
         buy_signals = []
         sell_signals = []
+        hold_signals = []
         scanned = 0
         failed = 0
         current_prices = {}  # Track all scanned symbols and their current prices
@@ -762,7 +763,7 @@ class ProductionScanner:
         for i, symbol in enumerate(all_symbols, 1):
             if i % 50 == 0:
                 logger.info(f"  Progress: {i}/{len(all_symbols)} ({i/len(all_symbols)*100:.1f}%) - "
-                           f"BUY: {len(buy_signals)}, SELL: {len(sell_signals)}")
+                           f"BUY: {len(buy_signals)}, SELL: {len(sell_signals)}, HOLD: {len(hold_signals)}")
 
             # Try to get current price first (for updating existing signals)
             try:
@@ -782,22 +783,27 @@ class ProductionScanner:
 
             if signal['signal_type'] == 'BUY':
                 buy_signals.append(signal)
-            else:
+            elif signal['signal_type'] == 'SELL':
                 sell_signals.append(signal)
+            elif signal['signal_type'] == 'HOLD':
+                hold_signals.append(signal)
 
         logger.info(f"\n[STEP 4] Scan complete!")
         logger.info(f"  Scanned: {scanned}/{len(all_symbols)}")
         logger.info(f"  Failed: {failed}")
         logger.info(f"  BUY signals: {len(buy_signals)}")
         logger.info(f"  SELL signals: {len(sell_signals)}")
+        logger.info(f"  HOLD signals: {len(hold_signals)}")
 
         # Sort by confidence
         buy_signals.sort(key=lambda x: x['confidence'], reverse=True)
         sell_signals.sort(key=lambda x: x['confidence'], reverse=True)
+        hold_signals.sort(key=lambda x: x['confidence'], reverse=True)
 
         # Limit to top N
         buy_signals = buy_signals[:max_signals_per_type]
         sell_signals = sell_signals[:max_signals_per_type]
+        hold_signals = hold_signals[:max_signals_per_type]
 
         # Update current prices for ALL existing active signals (before saving new signals)
         logger.info(f"\n[STEP 4.5] Updating current prices for existing signals...")
@@ -811,6 +817,7 @@ class ProductionScanner:
         logger.info(f"\n[STEP 5] Saving signals to database...")
         saved_buy = 0
         saved_sell = 0
+        saved_hold = 0
         flipped_signals = 0
         updated_signals = 0
         new_signals = 0
@@ -845,8 +852,24 @@ class ProductionScanner:
                 saved_sell += 1
                 logger.info(f"  [FLIP] {signal['symbol']}: Signal flipped to SELL")
 
-        logger.info(f"  BUY: {saved_buy} saved ({new_signals} new)")
+        for signal in hold_signals:
+            current_price = signal['entry_price']  # This is the current market price
+            result = self.db.add_or_update_signal(signal, current_price)
+
+            if result == 'CREATED':
+                new_signals += 1
+                saved_hold += 1
+            elif result == 'UPDATED':
+                updated_signals += 1
+                saved_hold += 1
+            elif result == 'FLIPPED':
+                flipped_signals += 1
+                saved_hold += 1
+                logger.info(f"  [FLIP] {signal['symbol']}: Signal flipped to HOLD")
+
+        logger.info(f"  BUY: {saved_buy} saved")
         logger.info(f"  SELL: {saved_sell} saved")
+        logger.info(f"  HOLD: {saved_hold} saved")
         logger.info(f"  Total: {new_signals} new, {updated_signals} updated, {flipped_signals} flipped")
 
         # Print active positions
@@ -865,13 +888,16 @@ class ProductionScanner:
         return {
             'buy_signals': buy_signals,
             'sell_signals': sell_signals,
+            'hold_signals': hold_signals,
             'stats': {
                 'total_scanned': scanned,
                 'total_failed': failed,
                 'buy_count': len(buy_signals),
                 'sell_count': len(sell_signals),
+                'hold_count': len(hold_signals),
                 'saved_buy': saved_buy,
                 'saved_sell': saved_sell,
+                'saved_hold': saved_hold,
                 'active_positions': len(active_positions)
             }
         }
