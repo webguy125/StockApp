@@ -49,8 +49,16 @@ import logging
 # Import Master Market Data DB API (read-only, shared data source)
 from master_market_data.market_data_api import get_market_data_api
 
-# Import scanning symbols (208 stocks) for signal generation
-from backend.turbomode.core_engine.scanning_symbols import get_scanning_symbols
+# Import CORE_230 symbol universe (230 stocks) for signal generation
+import json
+from pathlib import Path
+
+def get_scanning_symbols():
+    """Load CORE_230 symbols from canonical config"""
+    core_230_path = Path('C:/StockApp/config/symbols/CORE_230.json')
+    with open(core_230_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return [entry['symbol'] for entry in data]
 
 # Import database
 from turbomode.database_schema import TurboModeDB
@@ -72,8 +80,8 @@ from backend.turbomode.core_engine.position_manager import PositionManager
 # Import feature engine
 from backend.turbomode.core_engine.turbomode_vectorized_feature_engine import TurboModeVectorizedFeatureEngine
 
-# Import sector metadata
-from backend.turbomode.core_engine.scanning_symbols import get_symbol_metadata
+# Import symbol metadata (sector, market_cap, etc.)
+from backend.turbomode.core_engine.training_symbols import get_symbol_metadata
 
 # Import News Engine (Phase 2)
 from backend.turbomode.core_engine.news_engine import NewsEngine, RiskLevel
@@ -749,11 +757,20 @@ class ProductionScanner:
         sell_signals = []
         scanned = 0
         failed = 0
+        current_prices = {}  # Track all scanned symbols and their current prices
 
         for i, symbol in enumerate(all_symbols, 1):
             if i % 50 == 0:
                 logger.info(f"  Progress: {i}/{len(all_symbols)} ({i/len(all_symbols)*100:.1f}%) - "
                            f"BUY: {len(buy_signals)}, SELL: {len(sell_signals)}")
+
+            # Try to get current price first (for updating existing signals)
+            try:
+                price = self.get_current_price(symbol)
+                if price is not None:
+                    current_prices[symbol] = price
+            except Exception:
+                pass
 
             signal = self.scan_symbol(symbol)
 
@@ -781,6 +798,14 @@ class ProductionScanner:
         # Limit to top N
         buy_signals = buy_signals[:max_signals_per_type]
         sell_signals = sell_signals[:max_signals_per_type]
+
+        # Update current prices for ALL existing active signals (before saving new signals)
+        logger.info(f"\n[STEP 4.5] Updating current prices for existing signals...")
+        updated_prices = 0
+        for symbol, current_price in current_prices.items():
+            if self.db.update_current_price(symbol, current_price):
+                updated_prices += 1
+        logger.info(f"  Updated current prices for {updated_prices} symbols")
 
         # Save to database with signal flipping support
         logger.info(f"\n[STEP 5] Saving signals to database...")
