@@ -58,7 +58,7 @@ def get_scanning_symbols():
     core_230_path = Path('C:/StockApp/config/symbols/CORE_230.json')
     with open(core_230_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    return [entry['symbol'] for entry in data]
+    return [entry['ticker'] for entry in data]
 
 # Import database
 from turbomode.database_schema import TurboModeDB
@@ -85,6 +85,9 @@ from backend.turbomode.core_engine.training_symbols import get_symbol_metadata
 
 # Import News Engine (Phase 2)
 from backend.turbomode.core_engine.news_engine import NewsEngine, RiskLevel
+
+# Import Signal Closer (real-time exit logic)
+from backend.turbomode.core_engine.signal_closer import SignalCloser
 
 # Setup logging
 logging.basicConfig(
@@ -193,7 +196,7 @@ class ProductionScanner:
             Latest close price, or None if failed
         """
         try:
-            df = self.market_data_api.get_candles(symbol, timeframe='1d', days_back=5)
+            df = self.market_data_api.get_candles(symbol, timeframe='1d')
             if df is None or df.empty:
                 return None
             return float(df['close'].iloc[-1])
@@ -306,32 +309,29 @@ class ProductionScanner:
             argmax_labels = ['SELL', 'HOLD', 'BUY']
             print(f"[RAW_MODEL] {symbol}: BUY={result['prob_buy']:.3f}, SELL={result['prob_sell']:.3f}, HOLD={result['prob_hold']:.3f}, ARGMAX={argmax_labels[argmax_idx]}")
 
-            # DIAGNOSTIC: Synthetic SELL override test for one symbol
-            print(f"[DEBUG] Checking synthetic override: symbol={repr(symbol)}, type={type(symbol)}, equals_AAPL={symbol == 'AAPL'}")
-            if symbol == "AAPL":
-                print(f"[SYNTHETIC_SELL] Overriding {symbol} -> BUY=0.10, SELL=0.75, HOLD=0.15")
-                result['prob_buy'] = 0.10
-                result['prob_sell'] = 0.75
-                result['prob_hold'] = 0.15
-                result['signal'] = 'SELL'
-                result['confidence'] = 0.75
-
             # UNIFIED BIASING: Apply three-tier sentiment adjustment (global + sector + symbol)
             adjusted_buy, adjusted_sell = self.news_engine.apply_directional_bias(
                 symbol, sector, result['prob_buy'], result['prob_sell']
             )
             result['prob_buy'] = adjusted_buy
             result['prob_sell'] = adjusted_sell
-            # Recalculate signal after biasing
-            if adjusted_buy > adjusted_sell and adjusted_buy > result['prob_hold']:
-                result['signal'] = 'BUY'
-                result['confidence'] = adjusted_buy
-            elif adjusted_sell > adjusted_buy and adjusted_sell > result['prob_hold']:
-                result['signal'] = 'SELL'
-                result['confidence'] = adjusted_sell
-            else:
+            # Neutrality-band signal decision (HOLD as true neutral regime)
+            # Compute model output volatility
+            model_std = np.std([adjusted_buy, adjusted_sell, result['prob_hold']])
+            neutrality_band = 0.5 * model_std
+
+            # HOLD only when BUY and SELL are genuinely close (within neutrality band)
+            if abs(adjusted_buy - adjusted_sell) < neutrality_band:
                 result['signal'] = 'HOLD'
                 result['confidence'] = result['prob_hold']
+            # BUY breakout: BUY strictly greater than SELL, outside band
+            elif adjusted_buy > adjusted_sell:
+                result['signal'] = 'BUY'
+                result['confidence'] = adjusted_buy
+            # SELL breakout: SELL at least as large as BUY, outside band
+            else:
+                result['signal'] = 'SELL'
+                result['confidence'] = adjusted_sell
 
             return result
 
@@ -388,6 +388,8 @@ class ProductionScanner:
             logger.info(f"[ENTRY SIGNAL] {symbol} SELL @ {prediction['prob_sell']:.2%} "
                        f"(threshold: {effective_threshold:.2%}, source: {prediction.get('threshold_source', 'unknown')})")
             return 'SELL'
+        elif prediction['signal'] == 'HOLD' and prediction['prob_hold'] >= effective_threshold:
+            return 'HOLD'
         else:
             return None
 
@@ -731,6 +733,20 @@ class ProductionScanner:
         logger.info("=" * 80)
         logger.info(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("Architecture: Single-model-per-sector (1d/5% only)")
+
+        # STEP -1: Close any active signals that meet exit conditions
+        logger.info("\n[STEP -1] Checking for signals to close...")
+        try:
+            signal_closer = SignalCloser(db_path=self.db.db_path)
+            close_result = signal_closer.close_signals()
+            logger.info(f"  Closed {close_result['total_closed']} signals")
+            if close_result['total_closed'] > 0:
+                logger.info(f"    Target hits: {close_result['target_hits']}")
+                logger.info(f"    Stop hits: {close_result['stop_hits']}")
+                logger.info(f"    Time exits: {close_result['time_exits']}")
+        except Exception as e:
+            logger.error(f"  Failed to close signals: {e}")
+            logger.info("  Continuing with scan...")
 
         # Phase 2: Update news risk state
         logger.info("\n[STEP 0] Updating news risk state...")
