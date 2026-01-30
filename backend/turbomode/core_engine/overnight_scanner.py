@@ -644,6 +644,22 @@ class ProductionScanner:
             # Calculate ATR
             atr = calculate_atr(df, period=14)
 
+            # Get metadata for adaptive SL/TP calculation
+            metadata = get_symbol_metadata(symbol)
+            sector = metadata.get('sector', 'unknown')
+
+            # Calculate adaptive SL/TP (will be used in signal dict later)
+            from backend.turbomode.core_engine.adaptive_sltp import calculate_adaptive_sltp
+            sltp = calculate_adaptive_sltp(
+                entry_price=current_price,
+                atr=atr,
+                sector=sector,
+                confidence=0.5,  # Placeholder, will be updated with actual confidence
+                horizon='1d',
+                position_type='long',
+                reward_ratio=2.5
+            )
+
             # Extract features
             features = self.extract_features(df, symbol)
             if features is None:
@@ -654,6 +670,17 @@ class ProductionScanner:
             prediction = self.get_prediction(symbol, features)
             if prediction is None:
                 return None
+
+            # Update sltp with actual prediction confidence
+            sltp = calculate_adaptive_sltp(
+                entry_price=current_price,
+                atr=atr,
+                sector=sector,
+                confidence=prediction['confidence'],
+                horizon='1d',
+                position_type='long' if prediction['signal'] == 'BUY' else 'short',
+                reward_ratio=2.5
+            )
 
             # Check if we have an existing position
             position = self.position_manager.get_position(symbol)
@@ -670,10 +697,6 @@ class ProductionScanner:
                 return None  # Position managed, don't generate new signal
 
             else:
-                # Get metadata for entry checks
-                metadata = get_symbol_metadata(symbol)
-                sector = metadata.get('sector', 'unknown')
-
                 # Phase 2: Check for entry signal with news awareness
                 signal_type = self.check_entry_signal(symbol, sector, prediction)
 
@@ -701,13 +724,17 @@ class ProductionScanner:
                     'entry_price': current_price,
                     'entry_min': current_price * 0.98,  # ±2% tolerance
                     'entry_max': current_price * 1.02,
-                    'target_price': self.position_manager.get_position(symbol)['target_price'],
-                    'stop_price': self.position_manager.get_position(symbol)['stop_price'],
+                    'target_price': sltp.get('target_price'),
+                    'stop_price': sltp.get('stop_price'),
                     'market_cap': metadata.get('market_cap_category', 'unknown'),
                     'sector': sector,
                     'prob_buy': prediction['prob_buy'],
                     'prob_sell': prediction['prob_sell'],
                     'atr': atr,
+                    'sector_volatility_multiplier': sltp.get('sector_multiplier'),
+                    'confidence_modifier': sltp.get('confidence_modifier'),
+                    'stop_pct': sltp.get('stop_pct'),
+                    'target_pct': sltp.get('target_pct'),
                     'threshold_source': prediction.get('threshold_source', 'unknown'),
                     'news_risk_symbol': news_risk.get('symbol_risk', 'NONE'),
                     'news_risk_sector': news_risk.get('sector_risk', 'NONE'),

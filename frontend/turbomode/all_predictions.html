@@ -547,6 +547,10 @@
                     <div class="stat-label">Above Threshold (65%)</div>
                     <div class="stat-value" id="thresholdCount">-</div>
                 </div>
+                <div class="stat-box">
+                    <div class="stat-label">Closed Trades</div>
+                    <div class="stat-value" id="closed-trade-summary">-</div>
+                </div>
             </div>
         </header>
 
@@ -650,11 +654,23 @@
             const holdCount = allPredictions.filter(p => p.prediction.toLowerCase() === 'hold').length;
             const thresholdCount = allPredictions.filter(p => p.confidence >= 0.65).length;
 
+            let closedTotal = 0;
+            let closedWinners = 0;
+            let closedLosers = 0;
+            allPredictions.forEach(pred => {
+                if (pred.closed === true) {
+                    closedTotal++;
+                    if (pred.pnl >= 0) { closedWinners++; }
+                    else { closedLosers++; }
+                }
+            });
+
             document.getElementById('totalCount').textContent = allPredictions.length;
             document.getElementById('buyCount').textContent = buyCount;
             document.getElementById('sellCount').textContent = sellCount;
             document.getElementById('holdCount').textContent = holdCount;
             document.getElementById('thresholdCount').textContent = thresholdCount;
+            document.getElementById('closed-trade-summary').textContent = `${closedTotal} total, ${closedWinners} winners, ${closedLosers} losers`;
         }
 
         function applyFilters() {
@@ -736,25 +752,16 @@
                 const entryMin = entryPrice * 0.98;
                 const entryMax = entryPrice * 1.02;
 
-                // Calculate Stop Loss and Take Profit based on prediction type (case-insensitive)
+                // Get prediction type for styling and AI analysis
                 const predictionType = pred.prediction.toLowerCase();
-                let stopPrice, targetPrice, stopPct, targetPct;
-                if (predictionType === 'buy') {
-                    stopPrice = entryPrice * 0.93;  // 7% stop loss
-                    targetPrice = entryPrice * 1.12;  // 12% take profit
-                    stopPct = -7;
-                    targetPct = 12;
-                } else if (predictionType === 'sell') {
-                    stopPrice = entryPrice * 1.07;  // 7% stop loss (price goes up)
-                    targetPrice = entryPrice * 0.88;  // 12% take profit (price goes down)
-                    stopPct = 7;
-                    targetPct = -12;
-                } else {  // hold
-                    stopPrice = entryPrice * 0.95;  // 5% stop
-                    targetPrice = entryPrice * 1.05;  // 5% target
-                    stopPct = -5;
-                    targetPct = 5;
-                }
+
+                // Use adaptive Stop Loss and Take Profit from API (calculated by adaptive_sltp.py)
+                const stopPrice = pred.stop_price || entryPrice;
+                const targetPrice = pred.target_price || entryPrice;
+
+                // Calculate percentages from adaptive prices
+                const stopPct = entryPrice > 0 ? ((stopPrice - entryPrice) / entryPrice * 100) : 0;
+                const targetPct = entryPrice > 0 ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
 
                 // Generate AI analysis points based on confidence
                 let aiAnalysisPoints = [];
@@ -861,8 +868,18 @@
                             <div style="font-weight: 600;">$${pred.current_price ? pred.current_price.toFixed(2) : entryPrice.toFixed(2)}</div>
                             ${pred.current_price && pred.current_price !== pred.entry_price ? `
                             <div style="font-size: 0.75em; color: #6b7280;">Entry: $${pred.entry_price.toFixed(2)}</div>
-                            <div style="font-size: 0.75em; font-weight: 600; color: ${((pred.current_price - pred.entry_price) / pred.entry_price) >= 0 ? '#059669' : '#dc2626'};">
-                                ${((pred.current_price - pred.entry_price) / pred.entry_price * 100).toFixed(1)}%
+                            <div style="font-size: 0.75em; font-weight: 600; color: ${(() => {
+                                const pnl = pred.prediction === 'SELL'
+                                    ? (pred.entry_price - pred.current_price) / pred.entry_price
+                                    : (pred.current_price - pred.entry_price) / pred.entry_price;
+                                return pnl >= 0 ? '#059669' : '#dc2626';
+                            })()};">
+                                ${(() => {
+                                    const pnl = pred.prediction === 'SELL'
+                                        ? (pred.entry_price - pred.current_price) / pred.entry_price * 100
+                                        : (pred.current_price - pred.entry_price) / pred.entry_price * 100;
+                                    return pnl.toFixed(1);
+                                })()}%
                             </div>
                             ` : `<div style="font-size: 0.75em; color: #6b7280;">${pred.age_days || 0} days old</div>`}
                         </td>
@@ -872,11 +889,11 @@
                         </td>
                         <td class="price-cell" style="color: #059669;">
                             $${targetPrice.toFixed(2)}
-                            <div style="font-size: 0.8em; color: #6b7280;">(${targetPct >= 0 ? '+' : ''}${targetPct}%)</div>
+                            <div style="font-size: 0.8em; color: #6b7280;">(${targetPct >= 0 ? '+' : ''}${targetPct.toFixed(2)}%)</div>
                         </td>
                         <td class="price-cell" style="color: #dc2626;">
                             $${stopPrice.toFixed(2)}
-                            <div style="font-size: 0.8em; color: #6b7280;">(${stopPct >= 0 ? '+' : ''}${stopPct}%)</div>
+                            <div style="font-size: 0.8em; color: #6b7280;">(${stopPct >= 0 ? '+' : ''}${stopPct.toFixed(2)}%)</div>
                         </td>
                         <td class="sector-cell">${pred.sector.replace(/_/g, ' ')}</td>
                     </tr>

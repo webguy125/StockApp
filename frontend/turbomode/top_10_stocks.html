@@ -488,7 +488,7 @@
                                 if (latestPred && stock.has_signal) {
                                     // Update with latest confidence from predictions
                                     stock.signal_confidence = latestPred.confidence;
-                                    console.log(`Updated ${stock.symbol} confidence: ${(latestPred.confidence * 100).toFixed(1)}%`);
+                                    console.log(`Updated ${stock.symbol} confidence: ${(latestPred.confidence * 100).toFixed(2)}%`);
                                 }
                             });
                         }
@@ -560,15 +560,15 @@
                         <div class="stats-grid">
                             <div class="stat-item">
                                 <div class="stat-label">30d Win Rate</div>
-                                <div class="stat-value">${(stock.win_rate_30d * 100).toFixed(1)}%</div>
+                                <div class="stat-value">${(stock.win_rate_30d * 100).toFixed(2)}%</div>
                             </div>
                             <div class="stat-item">
                                 <div class="stat-label">60d Win Rate</div>
-                                <div class="stat-value">${(stock.win_rate_60d * 100).toFixed(1)}%</div>
+                                <div class="stat-value">${(stock.win_rate_60d * 100).toFixed(2)}%</div>
                             </div>
                             <div class="stat-item">
                                 <div class="stat-label">90d Win Rate</div>
-                                <div class="stat-value">${(stock.win_rate_90d * 100).toFixed(1)}%</div>
+                                <div class="stat-value">${(stock.win_rate_90d * 100).toFixed(2)}%</div>
                             </div>
                             <div class="stat-item">
                                 <div class="stat-label">Signals/Year</div>
@@ -583,7 +583,7 @@
                                     Current ${stock.signal_type} Signal
                                 </div>
                                 <div style="font-size: 0.85em; font-weight: 700; color: #1e3c72; background: rgba(255,255,255,0.8); padding: 3px 10px; border-radius: 12px;">
-                                    ${(stock.signal_confidence * 100).toFixed(1)}%
+                                    ${(stock.signal_confidence * 100).toFixed(2)}%
                                 </div>
                             </div>
 
@@ -600,8 +600,18 @@
                                 </div>
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                                     <div style="font-size: 0.75em; color: #6b7280;">P/L Since Entry:</div>
-                                    <div style="font-size: 0.9em; font-weight: 600; color: ${((stock.current_price - stock.entry_price) / stock.entry_price) >= 0 ? '#059669' : '#dc2626'};">
-                                        ${((stock.current_price - stock.entry_price) / stock.entry_price * 100).toFixed(1)}%
+                                    <div style="font-size: 0.9em; font-weight: 600; color: ${(() => {
+                                        const pnl = stock.signal_type === 'SELL'
+                                            ? (stock.entry_price - stock.current_price) / stock.entry_price
+                                            : (stock.current_price - stock.entry_price) / stock.entry_price;
+                                        return pnl >= 0 ? '#059669' : '#dc2626';
+                                    })()};">
+                                        ${(() => {
+                                            const pnl = stock.signal_type === 'SELL'
+                                                ? (stock.entry_price - stock.current_price) / stock.entry_price * 100
+                                                : (stock.current_price - stock.entry_price) / stock.entry_price * 100;
+                                            return pnl.toFixed(1);
+                                        })()}%
                                     </div>
                                 </div>
                                 ` : ''}
@@ -618,8 +628,8 @@
                             <!-- Header Row -->
                             <div style="display: grid; grid-template-columns: 85px 1fr 1fr; gap: 8px; margin-bottom: 6px; font-size: 0.7em; color: #6b7280; padding-left: 5px;">
                                 <div></div>
-                                <div style="text-align: center;">Target: +${(((stock.target_price - stock.entry_price) / stock.entry_price) * 100).toFixed(1)}%</div>
-                                <div style="text-align: center;">Stop: ${(((stock.stop_price - stock.entry_price) / stock.entry_price) * 100).toFixed(1)}%</div>
+                                <div style="text-align: center;">Target: +${(((stock.target_price - stock.entry_price) / stock.entry_price) * 100).toFixed(2)}%</div>
+                                <div style="text-align: center;">Stop: ${(((stock.stop_price - stock.entry_price) / stock.entry_price) * 100).toFixed(2)}%</div>
                             </div>
 
                             <!-- High Row -->

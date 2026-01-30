@@ -340,37 +340,86 @@
                             <tr>
                                 <th>Rank</th>
                                 <th>Symbol</th>
-                                <th>Sector</th>
+                                <th>Signal</th>
                                 <th>Confidence</th>
-                                <th>Age</th>
-                                <th>Entry Price</th>
-                                <th>Target (+10%)</th>
-                                <th>Stop (-5%)</th>
+                                <th style="text-align: right;">Current</th>
+                                <th style="text-align: right;">Entry</th>
+                                <th style="text-align: right;">P&L</th>
+                                <th style="text-align: right;">Entry Range</th>
+                                <th style="text-align: right;">Target</th>
+                                <th style="text-align: right;">Stop Loss</th>
+                                <th>Sector</th>
+                                <th style="text-align: center;">Age</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${signals.map((signal, index) => createSignalRow(signal, index + 1)).join('')}
+                            ${signals.map((signal, index) => createSignalRow(signal, index + 1, tab)).join('')}
                         </tbody>
                     </table>
                 </div>
             `;
         }
 
-        function createSignalRow(signal, rank) {
+        function createSignalRow(signal, rank, signalType) {
             const confidence = (signal.confidence * 100).toFixed(1);
             const ageClass = signal.age_color || 'hot';
             const ageDays = signal.age_days || 0;
 
+            const predType = signal.signal_type ? signal.signal_type.toLowerCase() : signalType.toLowerCase();
+            const entryPrice = signal.entry_price || signal.current_price;
+            const currentPrice = signal.current_price || entryPrice;
+            const entryMin = entryPrice * 0.98;
+            const entryMax = entryPrice * 1.02;
+
+            // Use adaptive Stop Loss and Take Profit from API
+            const stopPrice = signal.stop_price || entryPrice;
+            const targetPrice = signal.target_price || entryPrice;
+            const stopPct = entryPrice > 0 ? ((stopPrice - entryPrice) / entryPrice * 100) : 0;
+            const targetPct = entryPrice > 0 ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
+
+            // Calculate P&L
+            let pnl = 0;
+            let pnlClass = '';
+            let showPnL = false;
+
+            if (currentPrice && entryPrice && currentPrice !== entryPrice) {
+                showPnL = true;
+                pnl = predType === 'sell'
+                    ? (entryPrice - currentPrice) / entryPrice * 100
+                    : (currentPrice - entryPrice) / entryPrice * 100;
+                pnlClass = pnl >= 0 ? 'target' : 'stop';
+            }
+
+            const signalBadge = predType === 'buy'
+                ? '<span style="background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 12px; font-size: 0.8em; font-weight: 600;">BUY</span>'
+                : predType === 'sell'
+                ? '<span style="background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 12px; font-size: 0.8em; font-weight: 600;">SELL</span>'
+                : '<span style="background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 12px; font-size: 0.8em; font-weight: 600;">HOLD</span>';
+
             return `
-                <tr>
+                <tr onclick="window.location.href='/turbomode/options.html?symbol=${signal.symbol}';" style="cursor: pointer;">
                     <td><strong>${rank}</strong></td>
                     <td class="symbol">${signal.symbol}</td>
-                    <td class="sector">${signal.sector}</td>
+                    <td style="text-align: center;">${signalBadge}</td>
                     <td><span class="confidence">${confidence}%</span></td>
-                    <td><span class="age-badge age-${ageClass}">${ageDays} day${ageDays !== 1 ? 's' : ''}</span></td>
-                    <td class="price">$${parseFloat(signal.entry_price).toFixed(2)}</td>
-                    <td class="target">$${parseFloat(signal.target_price).toFixed(2)}</td>
-                    <td class="stop">$${parseFloat(signal.stop_price).toFixed(2)}</td>
+                    <td class="price" style="text-align: right;">$${currentPrice.toFixed(2)}</td>
+                    <td class="price" style="text-align: right;">${entryPrice ? `$${entryPrice.toFixed(2)}` : '-'}</td>
+                    <td style="text-align: right;">
+                        ${showPnL ? `<span class="${pnlClass}">${pnl >= 0 ? '+' : ''}${pnl.toFixed(1)}%</span>` : '-'}
+                    </td>
+                    <td style="text-align: right; font-size: 0.85em; color: #6b7280;">
+                        $${entryMin.toFixed(2)} - $${entryMax.toFixed(2)}
+                    </td>
+                    <td class="target" style="text-align: right;">
+                        $${targetPrice.toFixed(2)}
+                        <div style="font-size: 0.8em; color: #6b7280;">(${targetPct >= 0 ? '+' : ''}${targetPct.toFixed(2)}%)</div>
+                    </td>
+                    <td class="stop" style="text-align: right;">
+                        $${stopPrice.toFixed(2)}
+                        <div style="font-size: 0.8em; color: #6b7280;">(${stopPct >= 0 ? '+' : ''}${stopPct.toFixed(2)}%)</div>
+                    </td>
+                    <td class="sector">${signal.sector}</td>
+                    <td style="text-align: center;"><span class="age-badge age-${ageClass}">${ageDays}d</span></td>
                 </tr>
             `;
         }

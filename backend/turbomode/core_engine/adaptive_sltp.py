@@ -162,6 +162,10 @@ def calculate_adaptive_sltp(
         r2_price = entry_price - 2 * stop_distance  # +2R
         r3_price = entry_price - 3 * stop_distance  # +3R
 
+    # Calculate percentages for database storage
+    stop_pct = ((stop_price - entry_price) / entry_price) if entry_price > 0 else 0
+    target_pct = ((target_price - entry_price) / entry_price) if entry_price > 0 else 0
+
     return {
         'stop_price': stop_price,
         'target_price': target_price,
@@ -170,6 +174,10 @@ def calculate_adaptive_sltp(
         'r1_price': r1_price,
         'r2_price': r2_price,
         'r3_price': r3_price,
+        'sector_multiplier': sector_mult,
+        'confidence_modifier': conf_mod,
+        'stop_pct': stop_pct,
+        'target_pct': target_pct,
     }
 
 

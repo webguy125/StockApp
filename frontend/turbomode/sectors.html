@@ -103,6 +103,145 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
 
+        .sector-card.expanded {
+            grid-column: 1 / -1;
+        }
+
+        .stocks-list {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #e5e7eb;
+            display: none;
+        }
+
+        .stocks-list.expanded {
+            display: block;
+        }
+
+        .stocks-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .stocks-table thead {
+            background: #f3f4f6;
+            border-bottom: 2px solid #d1d5db;
+        }
+
+        .stocks-table th {
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85em;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stocks-table th:nth-child(1) { width: 8%; }  /* Symbol */
+        .stocks-table th:nth-child(2) { width: 8%; text-align: center; }  /* Signal */
+        .stocks-table th:nth-child(3) { width: 8%; text-align: center; }  /* Confidence */
+        .stocks-table th:nth-child(4) { width: 10%; text-align: right; }  /* Current Price */
+        .stocks-table th:nth-child(5) { width: 10%; text-align: right; }  /* Entry Price */
+        .stocks-table th:nth-child(6) { width: 8%; text-align: right; }  /* P&L */
+        .stocks-table th:nth-child(7) { width: 12%; text-align: right; }  /* Entry Range */
+        .stocks-table th:nth-child(8) { width: 10%; text-align: right; }  /* Target */
+        .stocks-table th:nth-child(9) { width: 10%; text-align: right; }  /* Stop Loss */
+        .stocks-table th:nth-child(10) { width: 8%; text-align: center; }  /* Age */
+
+        .stocks-table tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .stocks-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .stocks-table td {
+            padding: 12px;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .stock-symbol {
+            font-weight: 700;
+            color: #1e3c72;
+        }
+
+        .stock-signal {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .stock-signal.buy {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .stock-signal.sell {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .stock-signal.hold {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .stock-confidence {
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        .stock-price {
+            font-weight: 600;
+            color: #1e3c72;
+            text-align: right;
+        }
+
+        .price-detail {
+            font-size: 0.8em;
+            color: #6b7280;
+        }
+
+        .pnl-positive {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .pnl-negative {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .age-badge {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: 600;
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .expand-toggle {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .sector-header {
+            cursor: pointer;
+        }
+
         .sector-card.bullish {
             border-left: 5px solid #10b981;
         }
@@ -304,6 +443,9 @@
             });
         });
 
+        // Store all active signals for stock list display
+        let allActiveSignals = [];
+
         // Fetch sector data
         async function loadSectors() {
             try {
@@ -312,6 +454,13 @@
 
                 if (!data.success) {
                     throw new Error(data.error || 'Failed to load sectors');
+                }
+
+                // Fetch all active signals for stock lists
+                const signalsResponse = await fetch(`${API_BASE}/turbomode/predictions/all`);
+                const signalsData = await signalsResponse.json();
+                if (signalsData.success) {
+                    allActiveSignals = signalsData.predictions;
                 }
 
                 // Render bullish sectors
@@ -356,40 +505,167 @@
             const buyConf = (sector.avg_buy_confidence * 100).toFixed(1);
             const sellConf = (sector.avg_sell_confidence * 100).toFixed(1);
 
+            // Get all stocks in this sector
+            const sectorStocks = allActiveSignals.filter(s => s.sector === sector.sector);
+
+            // Sort by confidence descending
+            sectorStocks.sort((a, b) => b.confidence - a.confidence);
+
+            const sectorId = sector.sector.replace(/\s+/g, '-');
+
+            const stocksListHTML = sectorStocks.length > 0 ? `
+                <div class="stocks-list" id="stocks-${sectorId}">
+                    <div style="font-weight: 700; margin-bottom: 10px; color: #1e3c72;">
+                        Stocks in this sector (${sectorStocks.length}):
+                    </div>
+                    <table class="stocks-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th style="text-align: center;">Signal</th>
+                                <th style="text-align: center;">Confidence</th>
+                                <th style="text-align: right;">Current</th>
+                                <th style="text-align: right;">Entry</th>
+                                <th style="text-align: right;">P&L</th>
+                                <th style="text-align: right;">Entry Range</th>
+                                <th style="text-align: right;">Target</th>
+                                <th style="text-align: right;">Stop Loss</th>
+                                <th style="text-align: center;">Age</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sectorStocks.map(stock => {
+                                const predType = stock.prediction.toLowerCase();
+                                const entryPrice = stock.entry_price || stock.current_price;
+                                const entryMin = entryPrice * 0.98;
+                                const entryMax = entryPrice * 1.02;
+
+                                // Use adaptive Stop Loss and Take Profit from API
+                                const stopPrice = stock.stop_price || entryPrice;
+                                const targetPrice = stock.target_price || entryPrice;
+                                const stopPct = entryPrice > 0 ? ((stopPrice - entryPrice) / entryPrice * 100) : 0;
+                                const targetPct = entryPrice > 0 ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
+
+                                // Calculate P&L
+                                let pnl = 0;
+                                let pnlClass = '';
+                                let showPnL = false;
+
+                                if (stock.current_price && stock.entry_price && stock.current_price !== stock.entry_price) {
+                                    showPnL = true;
+                                    pnl = predType === 'sell'
+                                        ? (stock.entry_price - stock.current_price) / stock.entry_price * 100
+                                        : (stock.current_price - stock.entry_price) / stock.entry_price * 100;
+                                    pnlClass = pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+                                }
+
+                                return `
+                                    <tr onclick="goToOptionsPage('${stock.symbol}');">
+                                        <td class="stock-symbol">${stock.symbol}</td>
+                                        <td style="text-align: center;">
+                                            <span class="stock-signal ${predType}">${stock.prediction}</span>
+                                        </td>
+                                        <td style="text-align: center;" class="stock-confidence">
+                                            ${(stock.confidence * 100).toFixed(1)}%
+                                        </td>
+                                        <td class="stock-price">
+                                            $${stock.current_price ? stock.current_price.toFixed(2) : entryPrice.toFixed(2)}
+                                        </td>
+                                        <td class="stock-price">
+                                            ${stock.entry_price ? `$${stock.entry_price.toFixed(2)}` : '-'}
+                                        </td>
+                                        <td style="text-align: right;">
+                                            ${showPnL ? `<span class="${pnlClass}">${pnl >= 0 ? '+' : ''}${pnl.toFixed(1)}%</span>` : '-'}
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <div class="price-detail">$${entryMin.toFixed(2)} - $${entryMax.toFixed(2)}</div>
+                                        </td>
+                                        <td style="text-align: right; color: #059669;">
+                                            <div style="font-weight: 600;">$${(stock.target_price || targetPrice).toFixed(2)}</div>
+                                            <div class="price-detail">(${targetPct >= 0 ? '+' : ''}${targetPct.toFixed(2)}%)</div>
+                                        </td>
+                                        <td style="text-align: right; color: #dc2626;">
+                                            <div style="font-weight: 600;">$${(stock.stop_price || stopPrice).toFixed(2)}</div>
+                                            <div class="price-detail">(${stopPct >= 0 ? '+' : ''}${stopPct.toFixed(2)}%)</div>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="age-badge">${stock.age_days || 0}d</span>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="expand-toggle">Click card header to collapse • Click row to view options</div>
+            ` : '';
+
             return `
-                <div class="sector-card ${sentiment}">
-                    <div class="sector-name">
-                        ${sector.sector}
-                        <span class="sentiment-badge ${sentiment}">${sector.sentiment}</span>
+                <div class="sector-card ${sentiment}" id="card-${sectorId}">
+                    <div class="sector-header" onclick="toggleStockList('${sectorId}')">
+                        <div class="sector-name">
+                            ${sector.sector}
+                            <span class="sentiment-badge ${sentiment}">${sector.sentiment}</span>
+                        </div>
+
+                        <div class="stats-row">
+                            <span class="stat-label">BUY Signals</span>
+                            <span class="stat-value buy">${sector.total_buy_signals}</span>
+                        </div>
+
+                        <div class="stats-row">
+                            <span class="stat-label">SELL Signals</span>
+                            <span class="stat-value sell">${sector.total_sell_signals}</span>
+                        </div>
+
+                        <div class="stats-row">
+                            <span class="stat-label">Avg BUY Confidence</span>
+                            <span class="stat-value">${buyConf}%</span>
+                        </div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${buyConf}%"></div>
+                        </div>
+
+                        <div class="stats-row" style="margin-top: 10px;">
+                            <span class="stat-label">Avg SELL Confidence</span>
+                            <span class="stat-value">${sellConf}%</span>
+                        </div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill sell" style="width: ${sellConf}%"></div>
+                        </div>
                     </div>
 
-                    <div class="stats-row">
-                        <span class="stat-label">BUY Signals</span>
-                        <span class="stat-value buy">${sector.total_buy_signals}</span>
-                    </div>
-
-                    <div class="stats-row">
-                        <span class="stat-label">SELL Signals</span>
-                        <span class="stat-value sell">${sector.total_sell_signals}</span>
-                    </div>
-
-                    <div class="stats-row">
-                        <span class="stat-label">Avg BUY Confidence</span>
-                        <span class="stat-value">${buyConf}%</span>
-                    </div>
-                    <div class="confidence-bar">
-                        <div class="confidence-fill" style="width: ${buyConf}%"></div>
-                    </div>
-
-                    <div class="stats-row" style="margin-top: 10px;">
-                        <span class="stat-label">Avg SELL Confidence</span>
-                        <span class="stat-value">${sellConf}%</span>
-                    </div>
-                    <div class="confidence-bar">
-                        <div class="confidence-fill sell" style="width: ${sellConf}%"></div>
-                    </div>
+                    ${stocksListHTML}
                 </div>
             `;
+        }
+
+        function toggleStockList(sectorId) {
+            const stocksList = document.getElementById(`stocks-${sectorId}`);
+            const card = document.getElementById(`card-${sectorId}`);
+
+            if (stocksList && card) {
+                const isExpanding = !stocksList.classList.contains('expanded');
+
+                // Collapse all other cards first
+                document.querySelectorAll('.stocks-list.expanded').forEach(list => {
+                    list.classList.remove('expanded');
+                });
+                document.querySelectorAll('.sector-card.expanded').forEach(c => {
+                    c.classList.remove('expanded');
+                });
+
+                // Toggle this card
+                if (isExpanding) {
+                    stocksList.classList.add('expanded');
+                    card.classList.add('expanded');
+                }
+            }
+        }
+
+        function goToOptionsPage(symbol) {
+            // Navigate to options page for the stock
+            window.location.href = `/turbomode/options.html?symbol=${symbol}`;
         }
 
         function showError(tab, message) {

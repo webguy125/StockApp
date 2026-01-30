@@ -7,6 +7,10 @@ import sqlite3
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 import os
+import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TurboModeDB:
@@ -67,6 +71,13 @@ class TurboModeDB:
                 -- Targets (based on entry_price)
                 target_price REAL NOT NULL,  -- +12% for BUY, -12% for SELL
                 stop_price REAL NOT NULL,    -- -7% for BUY, +7% for SELL
+
+                -- Adaptive SL/TP fields (calculated by adaptive_sltp.py)
+                atr REAL,                           -- 14-period Average True Range
+                sector_volatility_multiplier REAL,  -- Sector-specific volatility adjustment
+                confidence_modifier REAL,           -- Confidence-based stop width (0.8-1.2)
+                stop_pct REAL,                      -- Calculated stop loss percentage
+                target_pct REAL,                    -- Calculated take profit percentage
 
                 -- Classifications
                 market_cap TEXT NOT NULL,    -- 'large_cap', 'mid_cap', 'small_cap'
@@ -159,7 +170,36 @@ class TurboModeDB:
         conn.commit()
         conn.close()
 
+        # Run migrations for existing databases
+        self._run_migrations()
+
         print(f"[OK] TurboMode database initialized: {self.db_path}")
+
+    def _run_migrations(self):
+        """Run database migrations for schema updates"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        # Migration: Add adaptive SL/TP columns to active_signals (2026-01-29)
+        # Check if columns exist
+        cursor.execute("PRAGMA table_info(active_signals)")
+        columns = [row[1] for row in cursor.fetchall()]
+
+        if 'atr' not in columns:
+            logger.info("Running migration: Adding adaptive SL/TP columns to active_signals")
+            try:
+                cursor.execute("ALTER TABLE active_signals ADD COLUMN atr REAL")
+                cursor.execute("ALTER TABLE active_signals ADD COLUMN sector_volatility_multiplier REAL")
+                cursor.execute("ALTER TABLE active_signals ADD COLUMN confidence_modifier REAL")
+                cursor.execute("ALTER TABLE active_signals ADD COLUMN stop_pct REAL")
+                cursor.execute("ALTER TABLE active_signals ADD COLUMN target_pct REAL")
+                conn.commit()
+                logger.info("[OK] Migration completed: Adaptive SL/TP columns added")
+            except Exception as e:
+                logger.error(f"Migration failed: {e}")
+                conn.rollback()
+
+        conn.close()
 
     # =========================================================================
     # ACTIVE SIGNALS
@@ -214,9 +254,10 @@ class TurboModeDB:
             cursor.execute("""
                 INSERT INTO active_signals
                 (symbol, signal_type, confidence, entry_date, entry_price, entry_min, entry_max,
-                 signal_timestamp, current_price, target_price, stop_price, market_cap, sector,
-                 age_days, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 signal_timestamp, current_price, target_price, stop_price,
+                 atr, sector_volatility_multiplier, confidence_modifier, stop_pct, target_pct,
+                 market_cap, sector, age_days, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 symbol,
                 new_signal_type,
@@ -229,6 +270,11 @@ class TurboModeDB:
                 current_price,
                 signal['target_price'],
                 signal['stop_price'],
+                signal.get('atr'),
+                signal.get('sector_volatility_multiplier'),
+                signal.get('confidence_modifier'),
+                signal.get('stop_pct'),
+                signal.get('target_pct'),
                 signal['market_cap'],
                 signal['sector'],
                 0,  # age_days
@@ -245,20 +291,130 @@ class TurboModeDB:
             existing_signal_type = existing[0]
 
             if existing_signal_type == new_signal_type:
-                # UPDATE: Same signal type, just update current_price and confidence
+                # UPDATE: Same signal type, update current_price, confidence, and adaptive fields
                 cursor.execute("""
                     UPDATE active_signals
                     SET confidence = ?,
                         current_price = ?,
+                        atr = ?,
+                        sector_volatility_multiplier = ?,
+                        confidence_modifier = ?,
+                        stop_pct = ?,
+                        target_pct = ?,
                         updated_at = ?
                     WHERE symbol = ? AND status = 'ACTIVE'
-                """, (signal['confidence'], current_price, now, symbol))
+                """, (signal['confidence'], current_price,
+                      signal.get('atr'), signal.get('sector_volatility_multiplier'),
+                      signal.get('confidence_modifier'), signal.get('stop_pct'),
+                      signal.get('target_pct'), now, symbol))
 
                 conn.commit()
                 conn.close()
                 return 'UPDATED'
 
             else:
+                # HOLD EXIT LOGIC: Check if neutrality band has broken
+                if existing_signal_type == 'HOLD':
+                    # Get probability data from signal dict
+                    prob_buy = signal.get('prob_buy', 0.0)
+                    prob_sell = signal.get('prob_sell', 0.0)
+                    prob_hold = signal.get('prob_hold', 0.0)
+
+                    # Recompute neutrality band
+                    model_std = np.std([prob_buy, prob_sell, prob_hold])
+                    neutrality_band = 0.5 * model_std
+
+                    # Check if neutrality has broken
+                    if abs(prob_buy - prob_sell) >= neutrality_band:
+                        # Exit HOLD and transition to directional regime
+                        if prob_buy > prob_sell:
+                            new_signal_type = 'BUY'
+                            logger.info(f"[HOLD EXIT] {symbol}: Neutrality broken, transitioning HOLD -> BUY")
+                        else:
+                            new_signal_type = 'SELL'
+                            logger.info(f"[HOLD EXIT] {symbol}: Neutrality broken, transitioning HOLD -> SELL")
+
+                        # Update signal type but preserve entry_price (HOLD exit, not full flip)
+                        entry_min = signal.get('entry_min', signal['entry_price'] * 0.98)
+                        entry_max = signal.get('entry_max', signal['entry_price'] * 1.02)
+
+                        cursor.execute("""
+                            UPDATE active_signals
+                            SET signal_type = ?,
+                                confidence = ?,
+                                current_price = ?,
+                                target_price = ?,
+                                stop_price = ?,
+                                atr = ?,
+                                sector_volatility_multiplier = ?,
+                                confidence_modifier = ?,
+                                stop_pct = ?,
+                                target_pct = ?,
+                                updated_at = ?
+                            WHERE symbol = ? AND status = 'ACTIVE'
+                        """, (
+                            new_signal_type,
+                            signal['confidence'],
+                            current_price,
+                            signal['target_price'],
+                            signal['stop_price'],
+                            signal.get('atr'),
+                            signal.get('sector_volatility_multiplier'),
+                            signal.get('confidence_modifier'),
+                            signal.get('stop_pct'),
+                            signal.get('target_pct'),
+                            now,
+                            symbol
+                        ))
+
+                        conn.commit()
+                        conn.close()
+                        return 'HOLD_EXITED'
+
+                # HYBRID RATIO REVERSAL MODE (R = 1.30)
+                # Determine current vs new direction confidence
+                current_conf = signal.get('current_confidence', None)
+                new_conf = signal['confidence']
+
+                # If current_conf is not provided by caller, fetch it from DB
+                if current_conf is None:
+                    cursor.execute("""
+                        SELECT confidence FROM active_signals
+                        WHERE symbol = ? AND status = 'ACTIVE'
+                    """, (symbol,))
+                    row = cursor.fetchone()
+                    if row is not None:
+                        current_conf = row[0]
+
+                # Safety fallback
+                if current_conf is None or current_conf <= 0:
+                    current_conf = 0.0001
+
+                # Compute ratio: new_direction_confidence / current_direction_confidence
+                ratio = new_conf / current_conf
+
+                # If ratio < 1.30, DO NOT FLIP — treat as UPDATE instead
+                if ratio < 1.30:
+                    cursor.execute("""
+                        UPDATE active_signals
+                        SET confidence = ?,
+                            current_price = ?,
+                            atr = ?,
+                            sector_volatility_multiplier = ?,
+                            confidence_modifier = ?,
+                            stop_pct = ?,
+                            target_pct = ?,
+                            updated_at = ?
+                        WHERE symbol = ? AND status = 'ACTIVE'
+                    """, (new_conf, current_price,
+                          signal.get('atr'), signal.get('sector_volatility_multiplier'),
+                          signal.get('confidence_modifier'), signal.get('stop_pct'),
+                          signal.get('target_pct'), now, symbol))
+
+                    conn.commit()
+                    conn.close()
+                    return 'UPDATED'
+
                 # FLIP: Signal changed direction (BUY->SELL or SELL->BUY)
                 # Reset entry_price, signal_timestamp, age_days
                 cursor.execute("""
@@ -273,6 +429,11 @@ class TurboModeDB:
                         current_price = ?,
                         target_price = ?,
                         stop_price = ?,
+                        atr = ?,
+                        sector_volatility_multiplier = ?,
+                        confidence_modifier = ?,
+                        stop_pct = ?,
+                        target_pct = ?,
                         age_days = 0,
                         updated_at = ?
                     WHERE symbol = ? AND status = 'ACTIVE'
@@ -287,6 +448,11 @@ class TurboModeDB:
                     current_price,
                     signal['target_price'],
                     signal['stop_price'],
+                    signal.get('atr'),
+                    signal.get('sector_volatility_multiplier'),
+                    signal.get('confidence_modifier'),
+                    signal.get('stop_pct'),
+                    signal.get('target_pct'),
                     now,  # updated_at
                     symbol
                 ))
