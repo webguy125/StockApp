@@ -106,43 +106,31 @@ def run_ingestion() -> Dict[str, Any]:
     task_logger.info("=" * 80)
 
     try:
-        # Import ingestion module
-        from backend.turbomode.core_engine.ingest_via_ibkr import IBKRMarketDataIngestion
+        # Import unified ingestion module
+        from backend.turbomode.core_engine.ingest_master_market_data import run_full_ingestion
         from backend.turbomode.core_engine.training_symbols import get_training_symbols, CRYPTO_SYMBOLS
         from backend.turbomode.core_engine.scanning_symbols import get_scanning_symbols
 
-        # Initialize ingestion
-        ingestion = IBKRMarketDataIngestion()
+        # Unified ingestion does not use a class
+        # Call run_full_ingestion() directly - uses CORE_230 internally
 
-        # Get all symbols: training (40) + scanning (208) + crypto (3)
-        # Deduplicate since some training symbols are also in scanning list
-        training_symbols = get_training_symbols()
-        scanning_symbols = get_scanning_symbols()
-        all_stock_symbols = list(set(training_symbols + scanning_symbols))
-        all_symbols = sorted(all_stock_symbols + CRYPTO_SYMBOLS)
+        task_logger.info(f"Running unified ingestion (CORE_230 symbols, 5d period)...")
 
-        task_logger.info(f"Ingesting {len(all_symbols)} symbols...")
-
-        # Run ingestion (5 days to catch up on any missed data)
-        results = ingestion.ingest_multiple_symbols(
-            all_symbols,
-            period='5d',
-            timeframe='1d'
-        )
+        # Run ingestion (5 days to catch up on any missed data - incremental updates)
+        # Note: For full refresh, use period='10y' or full_refresh=True
+        results = run_full_ingestion(period='5d')
 
         # Log results
         task_logger.info(f"[SUCCESS] Task {task_id} completed")
-        task_logger.info(f"  Symbols processed: {results['total_symbols']}")
-        task_logger.info(f"  Successful: {results['successful']}")
-        task_logger.info(f"  Failed: {results['failed']}")
-        task_logger.info(f"  Total candles: {results['total_candles']:,}")
+        task_logger.info(f"  Unified ingestion complete (CORE_230: 230 symbols)")
+        task_logger.info(f"  Data updated: master_market_data/master_market_data.db")
 
         # Update state
         job_state['last_runs'][task_id] = datetime.now().isoformat()
         job_state['last_results'][task_id] = {
             'status': 'success',
-            'symbols_processed': results['total_symbols'],
-            'candles_ingested': results['total_candles']
+            'symbols_processed': results.get('total_symbols', 0) if results else 0,
+            'candles_ingested': results.get('total_candles', 0) if results else 0
         }
 
         task_logger.info("=" * 80)
@@ -193,37 +181,32 @@ def run_orchestrator() -> Dict[str, Any]:
     # Get task-specific logger
     task_logger = logger_manager.get_task_logger(task_id, task_config['name'])
 
-    task_task_logger.info("=" * 80)
+    task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
     task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
 
     try:
-        # Import Fast Mode training script
-        import subprocess
-        training_script = os.path.join(current_dir, 'turbomode', 'core_engine', 'train_all_sectors_fastmode_orchestrator.py')
+        # Import 14-day optimized training orchestrator
+        from backend.turbomode.core_engine.train_all_sectors_optimized_orchestrator import train_all_sectors_optimized
 
-        task_logger.info("Running Fast Mode training for all sectors...")
-        task_logger.info(f"Training script: {training_script}")
+        task_logger.info("Running 14-day optimized training for all sectors...")
+        task_logger.info("Architecture: 11 sectors × 6 models (5 base + 1 meta-learner) = 66 models")
+        task_logger.info("Label source: 14-day outcomes from trades table (±5% thresholds)")
 
-        # Run Fast Mode training script (11 sectors × 3 horizons = 33 model sets)
-        result = subprocess.run(
-            [sys.executable, training_script],
-            capture_output=True,
-            text=True,
-            timeout=7200  # 2 hour timeout
-        )
+        # Run 14-day optimized training (66 models total)
+        results = train_all_sectors_optimized()
 
-        if result.returncode == 0:
-            task_logger.info(f"[SUCCESS] Task {task_id} completed - Fast Mode training")
-            task_logger.info("Training output:")
-            task_logger.info(result.stdout)
+        if results:
+            task_logger.info(f"[SUCCESS] Task {task_id} completed - 14-day optimized training")
+            task_logger.info(f"Trained {len(results)} sectors successfully")
 
             job_state['last_runs'][task_id] = datetime.now().isoformat()
             job_state['last_results'][task_id] = {
                 'status': 'success',
-                'training_type': 'fast_mode',
-                'model_sets': 33  # 11 sectors × 3 horizons
+                'training_type': '14day_optimized',
+                'total_models': 66,
+                'sectors_trained': len(results)
             }
 
             task_logger.info("=" * 80)
@@ -231,11 +214,12 @@ def run_orchestrator() -> Dict[str, Any]:
             return {
                 'success': True,
                 'task_id': task_id,
-                'training_type': 'fast_mode',
-                'model_sets': 33
+                'training_type': '14day_optimized',
+                'total_models': 66,
+                'sectors_trained': len(results)
             }
         else:
-            raise Exception(f"Training failed with return code {result.returncode}: {result.stderr}")
+            raise Exception("Training returned no results - check logs")
 
     except Exception as e:
         task_logger.error(f"[ERROR] Task {task_id} failed: {e}")
@@ -275,7 +259,7 @@ def run_overnight_scanner() -> Dict[str, Any]:
     # Get task-specific logger
     task_logger = logger_manager.get_task_logger(task_id, task_config['name'])
 
-    task_task_logger.info("=" * 80)
+    task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
     task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
@@ -286,8 +270,8 @@ def run_overnight_scanner() -> Dict[str, Any]:
         from backend.turbomode.core_engine.scanning_symbols import get_scanning_symbols
         from backend.turbomode.paths import TURBOMODE_DB
 
-        # Initialize scanner (defaults to 1d horizon)
-        scanner = ProductionScanner(horizon='1d')
+        # Initialize scanner (14-day swing trading architecture)
+        scanner = ProductionScanner()
 
         # Get all scanning symbols (208 stocks)
         symbols = get_scanning_symbols()
@@ -357,34 +341,42 @@ def run_backtest_generator() -> Dict[str, Any]:
     # Get task-specific logger
     task_logger = logger_manager.get_task_logger(task_id, task_config['name'])
 
-    task_task_logger.info("=" * 80)
+    task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
     task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
 
     try:
-        # Import backtest generator
-        from backend.turbomode.core_engine.backtest_generator import BacktestGenerator
+        # Import 14-day backtest engine (aligned with 14-day swing trading)
+        from backend.turbomode.core_engine.turbomode_backtest import TurboModeBacktest
         from backend.turbomode.core_engine.training_symbols import get_training_symbols
 
-        # Initialize backtest generator
-        generator = BacktestGenerator(lookback_days=90)
+        # Initialize 14-day backtest engine
+        backtest = TurboModeBacktest()
 
-        # Get training symbols (40 stocks) for backtesting
+        # Get training symbols for backtesting
         symbols = get_training_symbols()
 
-        task_logger.info(f"Generating backtest for {len(symbols)} symbols...")
+        task_logger.info(f"Generating 14-day backtest samples for {len(symbols)} symbols...")
+        task_logger.info("Configuration: 14-day holding period, ±5% thresholds")
 
-        # Run backtest
-        run_id = generator.run_full_backtest(symbols)
+        # Run backtest for all symbols
+        total_samples = 0
+        for symbol in symbols:
+            result = backtest.generate_backtest_samples(
+                symbol=symbol,
+                lookback_days=3650,  # 10 years of data
+                incremental=True  # Only process new data
+            )
+            total_samples += result['total_samples']
 
-        if run_id:
-            task_logger.info(f"[SUCCESS] Task {task_id} completed - Backtest Run ID: {run_id}")
+        if total_samples > 0:
+            task_logger.info(f"[SUCCESS] Task {task_id} completed - Generated {total_samples:,} samples")
 
             job_state['last_runs'][task_id] = datetime.now().isoformat()
             job_state['last_results'][task_id] = {
                 'status': 'success',
-                'backtest_run_id': run_id
+                'total_samples': total_samples
             }
 
             task_logger.info("=" * 80)
@@ -392,10 +384,10 @@ def run_backtest_generator() -> Dict[str, Any]:
             return {
                 'success': True,
                 'task_id': task_id,
-                'backtest_run_id': run_id
+                'total_samples': total_samples
             }
         else:
-            raise Exception("Backtest generator returned None - check logs")
+            raise Exception("No backtest samples generated - check logs")
 
     except Exception as e:
         task_logger.error(f"[ERROR] Task {task_id} failed: {e}")
@@ -415,12 +407,92 @@ def run_backtest_generator() -> Dict[str, Any]:
 
 
 # ============================================================================
-# TASK 5: DRIFT MONITORING SYSTEM
+# TASK 5: ADAPTIVE STOCK RANKING
+# ============================================================================
+
+def run_adaptive_ranking() -> Dict[str, Any]:
+    """
+    TASK 5: Adaptive Stock Ranking
+
+    Calculates risk-adjusted win rates from backtest data.
+    Applies directional fallback logic.
+    Generates composite scores and top 10 rankings.
+    Saves results to stock_rankings.json.
+
+    Returns:
+        Dictionary with ranking results
+    """
+    task_id = 5
+    task_config = get_task_config(task_id)
+
+    # Get task-specific logger
+    task_logger = logger_manager.get_task_logger(task_id, task_config['name'])
+
+    task_logger.info("=" * 80)
+    task_logger.info(f"TASK {task_id}: {task_config['name']}")
+    task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    task_logger.info("=" * 80)
+
+    try:
+        # Import adaptive stock ranker
+        from backend.turbomode.adaptive_stock_ranker import AdaptiveStockRanker
+
+        # Initialize ranker
+        ranker = AdaptiveStockRanker()
+
+        task_logger.info("Running adaptive stock ranking analysis...")
+        task_logger.info("Configuration: WIN_FRACTION = 3.0, risk-adjusted win rates")
+
+        # Run analysis
+        results = ranker.run_analysis()
+
+        if results:
+            top_10_symbols = [s['symbol'] for s in results['top_10']]
+            task_logger.info(f"[SUCCESS] Task {task_id} completed")
+            task_logger.info(f"Top 10 symbols: {top_10_symbols}")
+
+            job_state['last_runs'][task_id] = datetime.now().isoformat()
+            job_state['last_results'][task_id] = {
+                'status': 'success',
+                'top_10_count': len(results['top_10']),
+                'total_stocks_analyzed': len(results['all_stats'])
+            }
+
+            task_logger.info("=" * 80)
+
+            return {
+                'success': True,
+                'task_id': task_id,
+                'top_10_symbols': top_10_symbols,
+                'total_analyzed': len(results['all_stats'])
+            }
+        else:
+            raise Exception("Ranking analysis returned None - check logs")
+
+    except Exception as e:
+        task_logger.error(f"[ERROR] Task {task_id} failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+        job_state['errors'][task_id] = {
+            'timestamp': datetime.now().isoformat(),
+            'error': str(e)
+        }
+
+        return {
+            'success': False,
+            'task_id': task_id,
+            'error': str(e)
+        }
+
+
+# ============================================================================
+# TASK 6: DRIFT MONITORING SYSTEM
 # ============================================================================
 
 def run_drift_monitor() -> Dict[str, Any]:
     """
-    TASK 5: Drift Monitoring System
+    TASK 6: Drift Monitoring System
 
     Compares today's feature distributions to historical baselines.
     Detects regime shifts and logs drift events.
@@ -430,13 +502,13 @@ def run_drift_monitor() -> Dict[str, Any]:
     Returns:
         Dictionary with drift monitoring results
     """
-    task_id = 5
+    task_id = 6
     task_config = get_task_config(task_id)
 
     # Get task-specific logger
     task_logger = logger_manager.get_task_logger(task_id, task_config['name'])
 
-    task_task_logger.info("=" * 80)
+    task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
     task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
@@ -536,12 +608,12 @@ def run_drift_monitor() -> Dict[str, Any]:
 
 
 # ============================================================================
-# TASK 6: WEEKLY MAINTENANCE
+# TASK 7: WEEKLY MAINTENANCE
 # ============================================================================
 
 def run_weekly_maintenance() -> Dict[str, Any]:
     """
-    TASK 6: Weekly Maintenance
+    TASK 7: Weekly Maintenance
 
     VACUUMs Master Market Data DB.
     VACUUMs TurboMode.db.
@@ -551,13 +623,13 @@ def run_weekly_maintenance() -> Dict[str, Any]:
     Returns:
         Dictionary with maintenance results
     """
-    task_id = 6
+    task_id = 7
     task_config = get_task_config(task_id)
 
     # Get task-specific logger
     task_logger = logger_manager.get_task_logger(task_id, task_config['name'])
 
-    task_task_logger.info("=" * 80)
+    task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
     task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
@@ -701,8 +773,9 @@ TASK_FUNCTIONS = {
     2: run_orchestrator,
     3: run_overnight_scanner,
     4: run_backtest_generator,
-    5: run_drift_monitor,
-    6: run_weekly_maintenance
+    5: run_adaptive_ranking,
+    6: run_drift_monitor,
+    7: run_weekly_maintenance
 }
 
 
