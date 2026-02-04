@@ -1,0 +1,191 @@
+{
+  "audit_timestamp": "2026-01-24T15:00:00",
+  "audit_scope": "Scheduler ingestion (ingest_via_ibkr.py)",
+  "status": "FAIL",
+
+  "db_paths": {
+    "expected": "C:/StockApp/master_market_data/master_market_data.db",
+    "found": [
+      {
+        "file": "backend/turbomode/core_engine/ingest_via_ibkr.py",
+        "line": 12,
+        "path": "master_market_data/market_data.db",
+        "severity": "CRITICAL",
+        "issue": "Inherits from MarketDataIngestion which uses market_data.db"
+      }
+    ],
+    "validation": "FAIL - USES market_data.db NOT master_market_data.db"
+  },
+
+  "schema_issues": {
+    "validation": "PASS",
+    "details": "Uses candles table (inherited from MarketDataIngestion) - consistent with schema"
+  },
+
+  "symbol_universe_issues": {
+    "expected": "CORE_230",
+    "found": {
+      "scheduler": {
+        "file": "backend/unified_scheduler.py",
+        "lines": "111-122",
+        "imports": "get_training_symbols(), get_scanning_symbols(), CRYPTO_SYMBOLS",
+        "symbols_used": "training (40) + scanning (208) + crypto (3) = ~251 symbols",
+        "severity": "CRITICAL",
+        "issue": "DOES NOT USE CORE_230"
+      },
+      "standalone_script": {
+        "file": "backend/turbomode/core_engine/ingest_via_ibkr.py",
+        "lines": "293-294",
+        "imports": "get_training_symbols() + CRYPTO_SYMBOLS",
+        "symbols_used": "training (230) + crypto (3) = 233 symbols",
+        "severity": "CRITICAL",
+        "issue": "DOES NOT USE CORE_230, uses deprecated training_symbols"
+      }
+    },
+    "validation": "FAIL - NEITHER scheduler nor script uses CORE_230"
+  },
+
+  "ohlcv_issues": {
+    "validation": "PARTIAL PASS",
+    "found_logic": {
+      "file": "backend/turbomode/core_engine/ingest_via_ibkr.py",
+      "function": "ingest_candles()",
+      "lines": "106-150",
+      "features": {
+        "data_source": "HybridDataFetcher (IBKR or yfinance fallback)",
+        "incremental_updates": "NO - always fetches full period",
+        "full_history": "YES - period parameter (default 10y)",
+        "gap_handling": "NO - no gap detection",
+        "error_handling": "YES - logs errors per candle"
+      }
+    },
+    "issues": [
+      {
+        "severity": "HIGH",
+        "issue": "NO INCREMENTAL UPDATE LOGIC",
+        "details": "Does not check latest candle date, always fetches full period",
+        "line": 111
+      },
+      {
+        "severity": "MEDIUM",
+        "issue": "Scheduler uses period='5d' but script ignores incremental logic",
+        "details": "Scheduler line 127-130 passes period='5d' but ingest_candles() doesn't use it incrementally"
+      }
+    ]
+  },
+
+  "fundamentals_issues": {
+    "validation": "PASS",
+    "found_logic": {
+      "file": "backend/turbomode/core_engine/ingest_via_ibkr.py",
+      "function": "ingest_fundamentals()",
+      "lines": "152-223",
+      "features": "Uses HybridDataFetcher, ingests 36 fundamental fields"
+    },
+    "issues": []
+  },
+
+  "corporate_actions_issues": {
+    "validation": "PASS",
+    "found_logic": {
+      "file": "backend/turbomode/core_engine/ingest_via_ibkr.py",
+      "function": "ingest_splits_and_dividends()",
+      "lines": "225-280",
+      "features": "Uses HybridDataFetcher for splits and dividends"
+    },
+    "issues": []
+  },
+
+  "sector_mapping_issues": {
+    "validation": "FAIL",
+    "issues": [
+      {
+        "severity": "HIGH",
+        "issue": "sector_mappings table NOT populated",
+        "details": "Metadata goes to symbol_metadata table only (line 69-94)"
+      }
+    ]
+  },
+
+  "error_handling_issues": {
+    "validation": "PASS",
+    "found_features": [
+      "Per-symbol error logging (inherited from parent)",
+      "Per-candle error logging (line 140)",
+      "Hybrid fetcher automatic fallback to yfinance"
+    ],
+    "issues": []
+  },
+
+  "contamination_risks": {
+    "validation": "CRITICAL",
+    "issues": [
+      {
+        "severity": "CRITICAL",
+        "issue": "SCHEDULER AND PIPELINE USE DIFFERENT INGESTION PATHS",
+        "details": {
+          "scheduler": "backend.turbomode.core_engine.ingest_via_ibkr.IBKRMarketDataIngestion",
+          "pipeline_stage_0": "master_market_data.ingestion_runner.run_full_ingestion() [DOES NOT EXIST]"
+        }
+      },
+      {
+        "severity": "CRITICAL",
+        "issue": "SCHEDULER USES DEPRECATED SYMBOL LISTS",
+        "file": "backend/unified_scheduler.py",
+        "lines": "111-122",
+        "symbols": "training_symbols (40) + scanning_symbols (208) + CRYPTO_SYMBOLS (3) = 251",
+        "expected": "CORE_230 (230 stocks)"
+      },
+      {
+        "severity": "HIGH",
+        "issue": "STANDALONE SCRIPT USES DIFFERENT SYMBOL LIST",
+        "file": "backend/turbomode/core_engine/ingest_via_ibkr.py",
+        "lines": "293-294",
+        "symbols": "training_symbols (230) + CRYPTO_SYMBOLS (3) = 233",
+        "note": "Different from scheduler (251 symbols)"
+      },
+      {
+        "severity": "HIGH",
+        "issue": "NO INCREMENTAL UPDATE LOGIC",
+        "details": "Scheduler passes period='5d' but ingestion always fetches full period, wasting API calls"
+      },
+      {
+        "severity": "MEDIUM",
+        "issue": "Inherits from MarketDataIngestion which uses yfinance directly",
+        "risk": "If IBKR fails, falls back to parent class yfinance methods which may have different behavior"
+      }
+    ]
+  },
+
+  "dependencies": {
+    "parent_class": "backend.turbomode.core_engine.ingest_market_data.MarketDataIngestion",
+    "data_fetcher": "backend.turbomode.core_engine.hybrid_data_fetcher.HybridDataFetcher",
+    "symbol_lists": [
+      "backend.turbomode.core_engine.training_symbols.get_training_symbols()",
+      "backend.turbomode.core_engine.scanning_symbols.get_scanning_symbols()",
+      "backend.turbomode.core_engine.training_symbols.CRYPTO_SYMBOLS"
+    ]
+  },
+
+  "files_audited": [
+    "C:/StockApp/backend/turbomode/core_engine/ingest_via_ibkr.py",
+    "C:/StockApp/backend/unified_scheduler.py (Task 1 ingestion)"
+  ],
+
+  "critical_findings": [
+    "CRITICAL: Scheduler uses ingest_via_ibkr.py but pipeline Stage 0 calls non-existent ingestion_runner.py",
+    "CRITICAL: Scheduler uses DEPRECATED symbol lists (training_symbols 40 + scanning_symbols 208 = 251) NOT CORE_230",
+    "CRITICAL: Standalone script uses training_symbols (230) which differs from scheduler (251)",
+    "CRITICAL: THREE DIFFERENT symbol universes in use (230, 233, 251)",
+    "HIGH: NO incremental update logic - always fetches full period despite period='5d' parameter",
+    "HIGH: sector_mappings table not populated"
+  ],
+
+  "recommendations": [
+    "IMMEDIATE: Align ALL ingestion to use CORE_230",
+    "IMMEDIATE: Fix pipeline Stage 0 to use same ingestion path as scheduler",
+    "HIGH: Add incremental update logic to respect period parameter",
+    "HIGH: Populate sector_mappings table",
+    "MEDIUM: Consolidate symbol lists (remove training_symbols, scanning_symbols, use CORE_230 everywhere)"
+  ]
+}

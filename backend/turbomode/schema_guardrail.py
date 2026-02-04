@@ -411,7 +411,7 @@ def restore_canonical_schema(db_path: str) -> Dict[str, any]:
     Returns:
         Restoration report dictionary
     """
-    from turbomode.database_schema import TurboModeDB
+    from backend.turbomode.database_schema import TurboModeDB
 
     print()
     print("=" * 80)

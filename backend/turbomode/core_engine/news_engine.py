@@ -319,9 +319,9 @@ class NewsEngine:
             'max_risk_source': source
         }
 
-    def apply_directional_bias(self, symbol: str, sector: str, prob_buy: float, prob_sell: float) -> Tuple[float, float]:
+    def apply_directional_bias(self, symbol: str, sector: str, prob_buy: float, prob_sell: float, prob_hold: float) -> Tuple[float, float, float]:
         """
-        Apply three-tier directional biasing to BUY/SELL probabilities.
+        Apply three-tier directional biasing to BUY/SELL/HOLD probabilities (Option A).
 
         UNIFIED BIASING SYSTEM:
         - Global sentiment (weak ±0.05): Macro economic/market bias
@@ -335,9 +335,10 @@ class NewsEngine:
             sector: Sector name
             prob_buy: Original BUY probability from model
             prob_sell: Original SELL probability from model
+            prob_hold: Original HOLD probability from model
 
         Returns:
-            (adjusted_prob_buy, adjusted_prob_sell) after applying ALL sentiment biases
+            (adjusted_prob_buy, adjusted_prob_sell, adjusted_prob_hold) after applying ALL sentiment biases
         """
         # Initialize cumulative bias (positive = bullish, negative = bearish)
         cumulative_bias = 0.0
@@ -372,18 +373,41 @@ class NewsEngine:
 
         # Apply cumulative bias to probabilities
         if cumulative_bias != 0.0:
-            adjusted_buy = max(0.0, min(1.0, prob_buy + cumulative_bias))
-            adjusted_sell = max(0.0, min(1.0, prob_sell - cumulative_bias))
+            # === MULTIPLICATIVE PROBABILITY BIASING (Option C) ===
+            # cumulative_bias is a signed float, e.g. +0.05 for bullish, -0.05 for bearish
+
+            k = cumulative_bias
+
+            # BUY increases with positive bias, decreases with negative bias
+            adjusted_buy = prob_buy * (1.0 + k)
+
+            # SELL decreases with positive bias, increases with negative bias
+            adjusted_sell = prob_sell * (1.0 - k)
+
+            # HOLD remains the neutral baseline (Option C requirement)
+            adjusted_hold = prob_hold
+
+            # Prevent negative values (should not occur with multiplicative scaling, but safe)
+            adjusted_buy = max(0.0, adjusted_buy)
+            adjusted_sell = max(0.0, adjusted_sell)
+            adjusted_hold = max(0.0, adjusted_hold)
+
+            # Renormalize to preserve probability distribution
+            total = adjusted_buy + adjusted_sell + adjusted_hold
+            if total > 0:
+                adjusted_buy /= total
+                adjusted_sell /= total
+                adjusted_hold /= total
 
             bias_str = " + ".join(bias_components)
             logger.info(
                 f"[UNIFIED BIAS] {symbol} ({sector}): {bias_str} = {cumulative_bias:+.3f} "
-                f"(BUY {prob_buy:.3f}->{adjusted_buy:.3f}, SELL {prob_sell:.3f}->{adjusted_sell:.3f})"
+                f"(BUY {prob_buy:.3f}->{adjusted_buy:.3f}, SELL {prob_sell:.3f}->{adjusted_sell:.3f}, HOLD {prob_hold:.3f}->{adjusted_hold:.3f})"
             )
-            return adjusted_buy, adjusted_sell
+            return adjusted_buy, adjusted_sell, adjusted_hold
 
         # Default: neutral, no bias
-        return prob_buy, prob_sell
+        return prob_buy, prob_sell, prob_hold
 
     def reset(self):
         """Reset all risk levels to NONE."""

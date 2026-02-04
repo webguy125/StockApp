@@ -1,0 +1,290 @@
+{
+  "name": "Real-Time Risk Governor",
+  "version": "3.0.0",
+  "description": "Canonical v3.0.0 specification for Real-Time Risk Governor. Defines 3-state risk management system with exact thresholds, formulas, and actions.",
+
+  "states": {
+    "list": ["NORMAL", "CAUTION", "CRITICAL"],
+    "description": {
+      "NORMAL": "Normal market conditions, full trading enabled",
+      "CAUTION": "Elevated risk detected, tightened stops but entries allowed",
+      "CRITICAL": "Critical risk level, entries frozen, deleveraging active"
+    }
+  },
+
+  "derived_metrics": {
+    "volatility_ratio": {
+      "formula": "realized_vol_1min_annualized / realized_vol_20d_annualized",
+      "description": "Ratio of 1-minute realized volatility to 20-day baseline volatility",
+      "components": {
+        "realized_vol_1min_annualized": "std_dev(1-min returns) * sqrt(252 * 390)",
+        "realized_vol_20d_annualized": "std_dev(daily returns over 20 days) * sqrt(252)"
+      }
+    },
+    "confidence_collapse_pct": {
+      "formula": "(baseline_confidence_20d - avg_confidence) / baseline_confidence_20d",
+      "description": "Percentage collapse in model confidence vs 20-day baseline",
+      "components": {
+        "baseline_confidence_20d": "mean(confidence over past 20 days)",
+        "avg_confidence": "mean(confidence across active positions)"
+      }
+    },
+    "avg_spread_pct": {
+      "formula": "mean((ask - bid) / ((ask + bid) / 2))",
+      "description": "Average bid-ask spread across active symbols as fraction of mid-price",
+      "note": "Use MEAN spread, not MAX spread"
+    },
+    "intraday_drawdown_pct": {
+      "formula": "(peak_equity_today - current_equity) / peak_equity_today",
+      "description": "Intraday drawdown from today's peak equity",
+      "note": "Reset peak_equity_today at market open each day"
+    }
+  },
+
+  "thresholds": {
+    "NORMAL_to_CAUTION": {
+      "logic": "at_least_2_of_4_within_time_window",
+      "time_window_seconds": 600,
+      "conditions": {
+        "volatility_ratio": 1.8,
+        "confidence_collapse_pct": 0.20,
+        "avg_spread_pct": 0.004,
+        "intraday_drawdown_pct": 0.03
+      }
+    },
+    "CAUTION_to_CRITICAL": {
+      "logic": "at_least_2_of_4_within_time_window",
+      "time_window_seconds": 300,
+      "conditions": {
+        "volatility_ratio": 2.4,
+        "confidence_collapse_pct": 0.35,
+        "avg_spread_pct": 0.008,
+        "intraday_drawdown_pct": 0.06
+      }
+    },
+    "CRITICAL_to_CAUTION": {
+      "logic": "all_metrics_below_critical_thresholds_for_duration",
+      "duration_seconds": 3600,
+      "conditions": "all metrics < CRITICAL thresholds"
+    },
+    "CAUTION_to_NORMAL": {
+      "logic": "all_metrics_at_recovery_levels_for_duration",
+      "duration_seconds": 1800,
+      "conditions": {
+        "volatility_ratio": 1.5,
+        "confidence_collapse_pct": 0.15,
+        "avg_spread_pct": 0.003,
+        "intraday_drawdown_pct": 0.02
+      }
+    }
+  },
+
+  "actions": {
+    "NORMAL": {
+      "freeze_new_entries": false,
+      "tighten_exits": false,
+      "force_deleveraging": false,
+      "confidence_penalty_active": false,
+      "confidence_penalty_factor": null,
+      "description": "Standard trading operations"
+    },
+    "CAUTION": {
+      "freeze_new_entries": false,
+      "tighten_exits": true,
+      "tighten_exits_atr_multiplier": 0.8,
+      "force_deleveraging": false,
+      "confidence_penalty_active": false,
+      "confidence_penalty_factor": null,
+      "description": "Tighten stops to 0.8x ATR, but allow new entries"
+    },
+    "CRITICAL": {
+      "freeze_new_entries": true,
+      "tighten_exits": true,
+      "tighten_exits_atr_multiplier": 0.5,
+      "force_deleveraging": true,
+      "deleveraging_notional_reduction_pct": 0.30,
+      "confidence_penalty_active": true,
+      "confidence_penalty_factor": 0.60,
+      "description": "Freeze entries, tighten stops to 0.5x ATR, reduce notional by 30%, apply 0.60 confidence penalty"
+    }
+  },
+
+  "database": {
+    "path": "backend/data/turbomode.db",
+    "tables": {
+      "global_risk_state": {
+        "description": "Single-row table (id=1) with current portfolio risk state",
+        "fields": {
+          "id": "INTEGER PRIMARY KEY CHECK (id = 1)",
+          "current_state": "TEXT NOT NULL CHECK (current_state IN ('NORMAL', 'CAUTION', 'CRITICAL'))",
+          "previous_state": "TEXT",
+          "freeze_new_entries": "INTEGER NOT NULL DEFAULT 0",
+          "tighten_exits": "INTEGER NOT NULL DEFAULT 0",
+          "force_deleveraging": "INTEGER NOT NULL DEFAULT 0",
+          "confidence_penalty_active": "INTEGER NOT NULL DEFAULT 0",
+          "confidence_penalty_factor": "REAL",
+          "reason": "TEXT",
+          "details": "TEXT",
+          "entered_at": "TEXT NOT NULL",
+          "updated_at": "TEXT NOT NULL"
+        }
+      },
+      "symbol_risk_flags": {
+        "description": "Per-symbol risk flags (volatility spikes, confidence drops)",
+        "fields": {
+          "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+          "symbol": "TEXT NOT NULL",
+          "risk_level": "TEXT NOT NULL CHECK (risk_level IN ('NORMAL', 'CAUTION', 'CRITICAL'))",
+          "reason": "TEXT NOT NULL",
+          "details": "TEXT",
+          "flagged_at": "TEXT NOT NULL",
+          "cleared_at": "TEXT"
+        },
+        "indexes": [
+          "CREATE INDEX IF NOT EXISTS idx_symbol_risk_flags ON symbol_risk_flags(symbol, flagged_at DESC)"
+        ]
+      },
+      "risk_events": {
+        "description": "Append-only audit log of all state transitions and risk events",
+        "fields": {
+          "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+          "event_type": "TEXT NOT NULL",
+          "payload": "TEXT NOT NULL",
+          "created_at": "TEXT NOT NULL"
+        },
+        "indexes": [
+          "CREATE INDEX IF NOT EXISTS idx_risk_events_created ON risk_events(created_at DESC)"
+        ]
+      }
+    }
+  },
+
+  "websocket_events": {
+    "outbound": [
+      {
+        "event": "risk_state_change",
+        "payload": {
+          "timestamp": "ISO8601",
+          "old_state": "NORMAL|CAUTION|CRITICAL",
+          "new_state": "NORMAL|CAUTION|CRITICAL",
+          "reason": "string",
+          "metrics": {
+            "volatility_ratio": "float",
+            "confidence_collapse_pct": "float",
+            "avg_spread_pct": "float",
+            "intraday_drawdown_pct": "float"
+          },
+          "actions": {
+            "freeze_new_entries": "boolean",
+            "tighten_exits": "boolean",
+            "force_deleveraging": "boolean",
+            "confidence_penalty_active": "boolean"
+          }
+        }
+      },
+      {
+        "event": "position_alert",
+        "payload": {
+          "symbol": "string",
+          "alert_type": "volatility_spike|confidence_drop|spread_widening",
+          "current_value": "float",
+          "threshold": "float",
+          "timestamp": "ISO8601"
+        }
+      },
+      {
+        "event": "portfolio_alert",
+        "payload": {
+          "alert_type": "drawdown_warning|deleveraging_triggered|recovery_started",
+          "metric": "string",
+          "current_value": "float",
+          "threshold": "float",
+          "timestamp": "ISO8601"
+        }
+      }
+    ]
+  },
+
+  "runtime": {
+    "process_type": "daemon",
+    "loop_interval_seconds": 5,
+    "runs_during": "market_hours",
+    "priority": "high",
+    "restart_on_failure": true
+  },
+
+  "integration_points": {
+    "step1_realtime_price_feed": {
+      "module": "risk_governor_market_data.py",
+      "functions": [
+        "load_realtime_prices(symbols)",
+        "load_realtime_spreads(symbols)",
+        "load_realtime_volume(symbols)",
+        "load_realtime_bars(symbols, lookback_days)",
+        "compute_realized_vol_1m_annualized(symbol)",
+        "compute_realized_vol_20d_baseline(symbol)",
+        "compute_volatility_ratio(symbol, prices)",
+        "compute_avg_spread_pct(symbols)",
+        "compute_volume_spike_factor_5m(symbol)",
+        "compute_atr_14(symbol)"
+      ]
+    },
+    "step2_micro_scanner_confidence": {
+      "module": "TBD",
+      "functions": [
+        "get_micro_scanner_data(symbols)",
+        "compute_confidence_collapse_pct(symbol)"
+      ]
+    },
+    "step3_portfolio_state": {
+      "module": "TBD",
+      "functions": [
+        "get_portfolio_state()",
+        "compute_portfolio_drawdown()"
+      ]
+    },
+    "step4_news_risk_hints": {
+      "module": "TBD",
+      "functions": [
+        "get_news_engine_data(symbols)"
+      ]
+    },
+    "step5_websocket_events": {
+      "module": "TBD",
+      "functions": [
+        "emit_state_change(event_data)",
+        "emit_position_alert(event_data)",
+        "emit_portfolio_alert(event_data)"
+      ]
+    }
+  },
+
+  "validation": {
+    "post_promotion_checklist": [
+      "Confirm v1.0.0 JSON is archived and no longer referenced",
+      "Confirm v3.0.0 JSON exists at backend/turbomode/real_time_risk_governor_v3.json",
+      "Confirm v3.0.0 JSON overwrote backend/turbomode/real_time_risk_governor.json",
+      "Verify daemon loads v3.0.0 JSON (not v1.0.0)",
+      "Run compliance test suite (10 tests)",
+      "Verify no v1.0.0 references remain in daemon code"
+    ],
+    "compliance_tests": [
+      "Test 1: NORMAL->CAUTION requires 2 of 4 metrics >= threshold within 10 min",
+      "Test 2: CAUTION->CRITICAL requires 2 of 4 metrics >= threshold within 5 min",
+      "Test 3: CAUTION state has freeze_new_entries=false",
+      "Test 4: CAUTION state has tighten_exits_atr_multiplier=0.8",
+      "Test 5: CRITICAL state has freeze_new_entries=true",
+      "Test 6: CRITICAL state has tighten_exits_atr_multiplier=0.5",
+      "Test 7: CRITICAL state has confidence_penalty_factor=0.60",
+      "Test 8: CRITICAL state has deleveraging_notional_reduction_pct=0.30",
+      "Test 9: CRITICAL->CAUTION requires 60 min stability",
+      "Test 10: CAUTION->NORMAL requires 30 min stability"
+    ]
+  },
+
+  "notes": {
+    "version_history": "v3.0.0 promoted on 2026-01-25, replaces v1.0.0",
+    "canonical_status": "This is the canonical specification. All code must align to this JSON.",
+    "modification_policy": "Do not modify thresholds, formulas, or logic without explicit user approval"
+  }
+}

@@ -109,7 +109,10 @@ def calculate_adaptive_sltp(
     confidence: float,
     horizon: str,
     position_type: str,
-    reward_ratio: float = DEFAULT_REWARD_RATIO
+    reward_ratio: float = DEFAULT_REWARD_RATIO,
+    prob_buy: float = None,
+    prob_sell: float = None,
+    prob_hold: float = None
 ) -> Dict[str, float]:
     """
     Calculate adaptive stop loss and take profit levels.
@@ -120,8 +123,11 @@ def calculate_adaptive_sltp(
         sector: Sector name
         confidence: Model confidence (prob_buy for long, prob_sell for short)
         horizon: "1d", "2d", or "5d"
-        position_type: "long" or "short"
+        position_type: "long", "short", or "neutral"
         reward_ratio: Target distance / stop distance (default: 2.5)
+        prob_buy: Model BUY probability (required for position_type="neutral")
+        prob_sell: Model SELL probability (required for position_type="neutral")
+        prob_hold: Model HOLD probability (required for position_type="neutral")
 
     Returns:
         Dictionary with:
@@ -132,7 +138,51 @@ def calculate_adaptive_sltp(
             - r1_price: +1R price level
             - r2_price: +2R price level
             - r3_price: +3R price level
+
+        For position_type="neutral" (HOLD / Iron Condor):
+            - stop_upper: Upper band (sell call strike)
+            - stop_lower: Lower band (sell put strike)
+            - target_price: None
+            - stop_pct: None
+            - target_pct: None
+            - reward_ratio: None
     """
+    # NEUTRAL position type (HOLD / Iron Condor) - symmetric bands
+    if position_type == 'neutral':
+        # Use neutrality-band logic from scanner (EXACT formula reuse)
+        if prob_buy is None or prob_sell is None or prob_hold is None:
+            raise ValueError("position_type='neutral' requires prob_buy, prob_sell, prob_hold")
+
+        # Compute model output volatility (same as overnight_scanner.py:320)
+        model_std = np.std([prob_buy, prob_sell, prob_hold])
+        # Neutrality band width (same as overnight_scanner.py:321)
+        neutrality_band = 0.5 * model_std
+
+        # Calculate symmetric bands around entry price
+        # Upper band = sell call strike zone
+        # Lower band = sell put strike zone
+        stop_upper = entry_price + (entry_price * neutrality_band)
+        stop_lower = entry_price - (entry_price * neutrality_band)
+
+        return {
+            'position_type': 'neutral',
+            'stop_upper': stop_upper,
+            'stop_lower': stop_lower,
+            'stop_price': None,
+            'target_price': None,
+            'stop_distance': None,
+            'target_distance': None,
+            'r1_price': None,
+            'r2_price': None,
+            'r3_price': None,
+            'sector_multiplier': None,
+            'confidence_modifier': None,
+            'stop_pct': None,
+            'target_pct': None,
+            'reward_ratio': None,
+        }
+
+    # DIRECTIONAL position types (long/short) - existing behavior unchanged
     # Get sector volatility multiplier
     sector_mult = SECTOR_VOLATILITY.get(sector, 1.0)
 
@@ -155,12 +205,14 @@ def calculate_adaptive_sltp(
         r1_price = entry_price + stop_distance  # +1R
         r2_price = entry_price + 2 * stop_distance  # +2R
         r3_price = entry_price + 3 * stop_distance  # +3R
-    else:  # short
+    elif position_type == 'short':
         stop_price = entry_price + stop_distance
         target_price = entry_price - target_distance
         r1_price = entry_price - stop_distance  # +1R (profit for short)
         r2_price = entry_price - 2 * stop_distance  # +2R
         r3_price = entry_price - 3 * stop_distance  # +3R
+    else:
+        raise ValueError(f"Invalid position_type: {position_type}. Must be 'long', 'short', or 'neutral'")
 
     # Calculate percentages for database storage
     stop_pct = ((stop_price - entry_price) / entry_price) if entry_price > 0 else 0

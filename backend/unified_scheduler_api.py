@@ -128,13 +128,33 @@ SCHEDULER_STATUS_HTML = """
             color: #1f2937;
         }
 
+        .copy-btn {
+            background: rgba(102, 126, 234, 0.1);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: scale(1.1);
+        }
+
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+
         .job-info {
             margin-top: 15px;
         }
 
         .info-row {
             display: flex;
-            justify-content: space-between;
+            gap: 10px;
             padding: 10px 0;
             border-bottom: 1px solid #f3f4f6;
         }
@@ -156,6 +176,27 @@ SCHEDULER_STATUS_HTML = """
 
         .next-run {
             color: #10b981;
+        }
+
+        .countdown {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .countdown-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .countdown-time {
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
         }
 
         .last-run {
@@ -417,6 +458,10 @@ SCHEDULER_STATUS_HTML = """
                 {% if status.running %}RUNNING{% else %}STOPPED{% endif %}
             </span>
             <p style="color: #6b7280; margin-top: 10px;">Version: {{ status.version }}</p>
+            <p style="color: #667eea; margin-top: 10px;">
+                <a href="/scheduler/history" style="color: #667eea; text-decoration: none; font-weight: 500; margin-right: 20px;">📊 Task Execution History</a>
+                <a href="/turbomode/performance_dashboard.html" style="color: #667eea; text-decoration: none; font-weight: 500;">💰 Performance Dashboard</a>
+            </p>
         </div>
 
         {% set last_task_info = get_last_execution_info(status) %}
@@ -451,14 +496,22 @@ SCHEDULER_STATUS_HTML = """
             <div class="job-card">
                 <div class="job-header">
                     <div class="job-id">{{ job.id.replace('task_', '') }}</div>
-                    <div class="job-name">{{ job.name }}</div>
+                    <div class="job-name">
+                        {% if '|' in job.name %}
+                            {{ job.name.split('|')[0] }}<br>
+                            <span style="font-size: 14px; color: #667eea;">{{ job.name.split('|')[1] }}</span>
+                        {% else %}
+                            {{ job.name }}
+                        {% endif %}
+                    </div>
+                    <button class="copy-btn" onclick="copyTaskCommand('{{ job.id }}', '{{ job.name }}', event)" title="Copy script path">📋</button>
                 </div>
                 <div class="job-info">
                     <div class="info-row">
                         <span class="info-label">Next Run:</span>
-                        <span class="info-value next-run">
+                        <span class="info-value next-run" data-timestamp="{{ job.next_run if job.next_run else '' }}">
                             {% if job.next_run %}
-                                {{ job.next_run.split('T')[0] }} {{ job.next_run.split('T')[1].split('.')[0] if 'T' in job.next_run else job.next_run }}
+                                Loading...
                             {% else %}
                                 Not scheduled
                             {% endif %}
@@ -490,6 +543,12 @@ SCHEDULER_STATUS_HTML = """
                     </div>
                     {% endif %}
                 </div>
+                {% if job.next_run %}
+                <div class="countdown" id="countdown-{{ job.id }}" data-next-run="{{ job.next_run }}">
+                    <div class="countdown-label">Next run in</div>
+                    <div class="countdown-time">--:--:--</div>
+                </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -499,59 +558,40 @@ SCHEDULER_STATUS_HTML = """
         </div>
         {% endif %}
 
-        <div class="controls">
-            <h2>Scheduler Controls</h2>
-            <button class="btn btn-refresh" onclick="location.reload()">Refresh Status</button>
-            <button class="btn btn-start" onclick="controlScheduler('start')">Start Scheduler</button>
-            <button class="btn btn-stop" onclick="controlScheduler('stop')">Stop Scheduler</button>
-        </div>
-
-        <div class="controls" style="margin-top: 20px;">
-            <h2>Manual Task Execution</h2>
-            <p style="color: #6b7280; margin-bottom: 15px; font-size: 14px;">Click any button to manually trigger a task and view live output</p>
-            <button class="btn btn-task" onclick="runTask(1, 'Master Market Data Ingestion')">▶ Run Task 1: Ingestion</button>
-            <button class="btn btn-task" onclick="runTask(2, 'TurboMode Training')">▶ Run Task 2: Training</button>
-            <button class="btn btn-task" onclick="runTask(3, 'Overnight Scanner')">▶ Run Task 3: Scanner</button>
-            <button class="btn btn-task" onclick="runTask(4, 'Backtest Generator')">▶ Run Task 4: Backtest</button>
-            <button class="btn btn-task" onclick="runTask(5, 'Adaptive Ranking')">▶ Run Task 5: Ranking</button>
-            <button class="btn btn-task" onclick="runTask(6, 'Drift Monitor')">▶ Run Task 6: Drift</button>
-            <button class="btn btn-task" onclick="runTask(7, 'Weekly Maintenance')">▶ Run Task 7: Maintenance</button>
-        </div>
-
-        <!-- Live Output Modal -->
-        <div id="outputModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 id="modalTitle">Task Execution</h2>
-                    <span class="close" onclick="closeModal()">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <div id="taskStatus" class="task-status">Starting...</div>
-                    <div id="outputContent" class="output-content"></div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-refresh" onclick="closeModal()">Close</button>
-                </div>
-            </div>
-        </div>
-
         <div class="timestamp">
             Last updated: {{ now() }}
         </div>
     </div>
 
     <script>
-        function controlScheduler(action) {
-            fetch('/scheduler/' + action, {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message || data.error);
-                location.reload();
-            })
-            .catch(error => {
-                alert('Error: ' + error);
+        function copyTaskCommand(taskId, taskName, event) {
+            // Map task IDs to script paths
+            const scriptMap = {
+                '1': 'C:\\StockApp\\backend\\turbomode\\core_engine\\ingest_master_market_data.py',
+                '2': 'C:\\StockApp\\backend\\turbomode\\core_engine\\train_all_sectors_fastmode_orchestrator.py',
+                '3': 'C:\\StockApp\\backend\\turbomode\\core_engine\\overnight_scanner.py',
+                '3A': 'C:\\StockApp\\backend\\turbomode\\core_engine\\overnight_scanner.py',
+                '3B': 'C:\\StockApp\\backend\\turbomode\\core_engine\\overnight_scanner.py',
+                '3C': 'C:\\StockApp\\backend\\turbomode\\core_engine\\overnight_scanner.py',
+                '4': 'C:\\StockApp\\backend\\turbomode\\core_engine\\generate_backtest_data.py',
+                '5': 'C:\\StockApp\\backend\\turbomode\\adaptive_stock_ranker.py',
+                '6': 'No script path (runs inline)',
+                '7': 'No script path (runs inline)'
+            };
+
+            const cleanTaskId = taskId.replace('task_', '');
+            const path = scriptMap[cleanTaskId] || 'Unknown task';
+
+            navigator.clipboard.writeText(path).then(() => {
+                // Show a brief confirmation
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 1000);
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
             });
         }
 
@@ -654,6 +694,128 @@ SCHEDULER_STATUS_HTML = """
                 modal.style.display = 'none';
             }
         }
+
+        // Format timestamp strings to human-friendly format
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return '';
+            // Format as "Month Day, Time"
+            const date = new Date(timestamp);
+            const month = date.toLocaleDateString('en-US', { month: 'long' });
+            const day = date.getDate();
+            const time = date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            return `${month} ${day}, ${time}`;
+        }
+
+        // Format all next-run timestamps on page load
+        document.querySelectorAll('.next-run').forEach(elem => {
+            const timestamp = elem.getAttribute('data-timestamp');
+            if (timestamp && elem.textContent === 'Loading...') {
+                elem.textContent = formatTimestamp(timestamp);
+            }
+        });
+
+        // Countdown timer logic
+        function updateCountdowns() {
+            const countdowns = document.querySelectorAll('.countdown');
+
+            countdowns.forEach(countdown => {
+                const nextRunStr = countdown.getAttribute('data-next-run');
+                if (!nextRunStr) return;
+
+                // Parse the next run time (ISO format)
+                const nextRun = new Date(nextRunStr);
+                const now = new Date();
+                const diff = nextRun - now;
+
+                const timeDisplay = countdown.querySelector('.countdown-time');
+
+                if (diff <= 0) {
+                    // Task should be running or just finished
+                    timeDisplay.textContent = 'Running...';
+                    timeDisplay.style.color = '#fbbf24';
+                } else {
+                    // Calculate hours, minutes, seconds
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                    // Format as HH:MM:SS
+                    const hoursStr = String(hours).padStart(2, '0');
+                    const minutesStr = String(minutes).padStart(2, '0');
+                    const secondsStr = String(seconds).padStart(2, '0');
+
+                    timeDisplay.textContent = `${hoursStr}:${minutesStr}:${secondsStr}`;
+                    timeDisplay.style.color = 'white';
+                }
+            });
+        }
+
+        // Update countdowns every second
+        setInterval(updateCountdowns, 1000);
+        updateCountdowns(); // Run immediately on load
+
+        // AJAX refresh to update next_run times without page reload
+        function refreshSchedulerData() {
+            fetch('/scheduler/status?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    // Update next_run times for each job
+                    data.jobs.forEach(job => {
+                        const countdown = document.getElementById('countdown-' + job.id);
+                        if (countdown && job.next_run) {
+                            countdown.setAttribute('data-next-run', job.next_run);
+                        }
+
+                        // Update "Next Run" display
+                        const nextRunElement = document.querySelector(`#countdown-${job.id}`).closest('.job-card').querySelector('.next-run');
+                        if (nextRunElement && job.next_run) {
+                            nextRunElement.textContent = formatTimestamp(job.next_run);
+                            nextRunElement.setAttribute('data-timestamp', job.next_run);
+                        }
+                    });
+
+                    // Update last run times and status
+                    data.jobs.forEach(job => {
+                        const taskId = job.id.replace('task_', '');
+                        const taskIdInt = parseInt(taskId) || taskId;
+                        const jobCard = document.querySelector(`#countdown-${job.id}`).closest('.job-card');
+
+                        // Update last run if it exists in the data
+                        if (data.last_runs && data.last_runs[taskIdInt]) {
+                            const lastRunElement = jobCard.querySelector('.last-run');
+                            if (lastRunElement) {
+                                const parts = data.last_runs[taskIdInt].split('T');
+                                const datePart = parts[0];
+                                const timePart = parts[1] ? parts[1].split('.')[0] : '';
+                                lastRunElement.textContent = `${datePart} ${timePart}`;
+                            }
+                        }
+                    });
+
+                    // Update timestamp
+                    const timestampElement = document.querySelector('.timestamp');
+                    if (timestampElement) {
+                        const now = new Date();
+                        const formatted = now.getFullYear() + '-' +
+                            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                            String(now.getDate()).padStart(2, '0') + ' ' +
+                            String(now.getHours()).padStart(2, '0') + ':' +
+                            String(now.getMinutes()).padStart(2, '0') + ':' +
+                            String(now.getSeconds()).padStart(2, '0');
+                        timestampElement.textContent = 'Last updated: ' + formatted;
+                    }
+                })
+                .catch(err => {
+                    console.error('Failed to refresh scheduler data:', err);
+                });
+        }
+
+        // Auto-refresh data every 10 seconds via AJAX
+        setInterval(refreshSchedulerData, 10000);
     </script>
 </body>
 </html>
@@ -1035,6 +1197,222 @@ def init_unified_scheduler_api(app):
                 'success': False,
                 'error': str(e)
             }), 500
+
+    @app.route('/scheduler/history', methods=['GET'])
+    def scheduler_history():
+        """
+        GET /scheduler/history
+
+        Display task execution history in human-friendly format
+        """
+        from backend.unified_scheduler import load_execution_history
+        from flask import render_template_string
+
+        history = load_execution_history()
+
+        # Sort by timestamp descending (most recent first)
+        history_sorted = sorted(history, key=lambda x: x['timestamp'], reverse=True)
+
+        # Limit to last 100 executions
+        history_sorted = history_sorted[:100]
+
+        html = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Execution History</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .history-table {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f3f4f6;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-timeout {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .task-id {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .duration {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .error-text {
+            color: #dc2626;
+            font-size: 12px;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .timestamp {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .no-history {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Task Execution History</h1>
+            <p style="color: #6b7280; margin-top: 10px;">Last 100 task executions (30-day retention)</p>
+            <a href="/scheduler/status" class="back-link">← Back to Scheduler Status</a>
+        </div>
+
+        <div class="history-table">
+            {% if history %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Task ID</th>
+                        <th>Task Name</th>
+                        <th>Status</th>
+                        <th>Timestamp</th>
+                        <th>Duration</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in history %}
+                    <tr>
+                        <td class="task-id">{{ entry.task_id }}</td>
+                        <td>{{ entry.task_name }}</td>
+                        <td>
+                            <span class="status-badge status-{{ entry.status }}">
+                                {{ entry.status.upper() }}
+                            </span>
+                        </td>
+                        <td class="timestamp">
+                            {{ entry.timestamp.split('T')[0] }} {{ entry.timestamp.split('T')[1].split('.')[0] }}
+                        </td>
+                        <td class="duration">
+                            {% if entry.duration_seconds %}
+                                {{ "%.1f"|format(entry.duration_seconds) }}s
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="error-text" title="{{ entry.error or '' }}">
+                            {{ entry.error or '-' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="no-history">
+                <p>No execution history available</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+        """
+
+        return render_template_string(html, history=history_sorted)
 
     # ========================================================================
     # SCHEDULER AUTO-START ON FLASK INIT

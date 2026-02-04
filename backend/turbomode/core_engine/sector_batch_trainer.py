@@ -10,14 +10,14 @@ Multi-Model Ensemble for Directional Stock/Options Trading
 
 ARCHITECTURE:
 - Trains ONE ensemble per sector (5 base models + 1 MetaLearner)
-- Uses label_14d_swing (14-day horizon, ±3% threshold)
+- Uses label_14d_swing (14-day horizon, ±5% threshold)
 - Model directory: models/<sector>/*.pkl
 - Total models: 66 (6 per sector × 11 sectors)
 
 LABEL SEMANTICS (14-Day Swing):
-- 0 = SELL: 14-day return <= -3% (bearish swing)
-- 1 = HOLD: 14-day return between -3% and +3% (no edge)
-- 2 = BUY: 14-day return >= +3% (bullish swing)
+- 0 = SELL: 14-day return <= -5% (bearish swing)
+- 1 = HOLD: 14-day return between -5% and +5% (no edge)
+- 2 = BUY: 14-day return >= +5% (bullish swing)
 
 PERFORMANCE:
 - Training time: ~2-3 hours for all 11 sectors
@@ -55,13 +55,13 @@ def compute_labels_14d_swing(trades: List[Dict], ohlcv_data: Dict) -> Dict:
 
     **SWING TRADE LABEL CONFIGURATION:**
     - Horizon: 14 trading days (2-3 weeks)
-    - Thresholds: ±3% return over 14 days
+    - Thresholds: ±5% return over 14 days
     - Method: Close-to-close return (not intraday TP/DD)
 
     **LABEL SEMANTICS:**
-    - 0 = SELL: 14-day return <= -3% (bearish swing)
-    - 1 = HOLD: 14-day return between -3% and +3% (no edge)
-    - 2 = BUY: 14-day return >= +3% (bullish swing)
+    - 0 = SELL: 14-day return <= -5% (bearish swing)
+    - 1 = HOLD: 14-day return between -5% and +5% (no edge)
+    - 2 = BUY: 14-day return >= +5% (bullish swing)
 
     Args:
         trades: List of trade dicts with id, symbol, entry_date, entry_price
@@ -73,8 +73,8 @@ def compute_labels_14d_swing(trades: List[Dict], ohlcv_data: Dict) -> Dict:
     """
     # Swing trade configuration
     horizon_days = 14
-    buy_threshold = 0.03   # +3% over 14 days → BUY
-    sell_threshold = -0.03  # -3% over 14 days → SELL
+    buy_threshold = 0.05   # +5% over 14 days → BUY
+    sell_threshold = -0.05  # -5% over 14 days → SELL
 
     # Pre-process OHLCV data to numpy arrays
     price_data = {}
@@ -275,12 +275,13 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
 
     placeholders = ','.join(['?'] * len(sector_symbols))
     query = f"""
-        SELECT id, symbol, entry_date, entry_price, entry_features_json
+        SELECT id, symbol, entry_date, entry_price, entry_features_json, outcome
         FROM trades
         WHERE trade_type = 'backtest'
         AND entry_features_json IS NOT NULL
         AND entry_date IS NOT NULL
         AND entry_price IS NOT NULL
+        AND outcome IS NOT NULL
         AND symbol IN ({placeholders})
     """
 
@@ -294,13 +295,16 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
 
     logger.info(f"[DATA] Loaded {len(rows):,} trades for sector")
 
-    # Parse features ONCE (shared across all horizons)
+    # Parse features and outcomes (labels are pre-computed in trades table)
     feature_list = []
-    trade_list = []
+    labels_dict = {}
     id_list = []
 
+    # Outcome mapping: 'sell' -> 0, 'hold' -> 1, 'buy' -> 2
+    outcome_map = {'sell': 0, 'hold': 1, 'buy': 2}
+
     for row in rows:
-        trade_id, symbol, entry_date, entry_price, features_json = row
+        trade_id, symbol, entry_date, entry_price, features_json, outcome = row
 
         try:
             # Parse features JSON
@@ -312,13 +316,13 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
                 logger.error(f"[ERROR] Expected 179 features, got {len(feature_values)} for trade {trade_id}")
                 continue
 
+            # Map outcome string to label integer
+            if outcome not in outcome_map:
+                logger.error(f"[ERROR] Invalid outcome '{outcome}' for trade {trade_id}")
+                continue
+
             feature_list.append(feature_values)
-            trade_list.append({
-                "id": trade_id,
-                "symbol": symbol,
-                "entry_date": entry_date,
-                "entry_price": entry_price
-            })
+            labels_dict[trade_id] = outcome_map[outcome]
             id_list.append(trade_id)
 
         except Exception as e:
@@ -329,19 +333,18 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
     X_features = np.array(feature_list, dtype=np.float32)
 
     parse_time = time.time() - start_time
-    logger.info(f"[PARSE] Features parsed in {parse_time:.2f}s ({len(X_features):,} samples)")
+    logger.info(f"[PARSE] Features and labels parsed in {parse_time:.2f}s ({len(X_features):,} samples)")
 
-    # Load OHLCV data for all trades (14 day horizon for swing trading)
-    ohlcv_start = time.time()
-    ohlcv_data = load_ohlcv_for_trades(CANONICAL_DB_PATH, trade_list, horizon_days=14)
-    ohlcv_time = time.time() - ohlcv_start
-    logger.info(f"[OHLCV] Loaded in {ohlcv_time:.2f}s")
+    # Log label distribution
+    label_counts = {0: 0, 1: 0, 2: 0}
+    for label in labels_dict.values():
+        label_counts[label] += 1
 
-    # Compute labels (14d/3% swing trade labels)
-    label_start = time.time()
-    labels_dict = compute_labels_14d_swing(trade_list, ohlcv_data)
-    label_time = time.time() - label_start
-    logger.info(f"[LABELS] label_14d_swing computed in {label_time:.2f}s")
+    total = sum(label_counts.values())
+    if total > 0:
+        logger.info(f"[LABELS] Distribution: SELL={label_counts[0]:,} ({label_counts[0]/total*100:.1f}%), "
+                   f"HOLD={label_counts[1]:,} ({label_counts[1]/total*100:.1f}%), "
+                   f"BUY={label_counts[2]:,} ({label_counts[2]/total*100:.1f}%)")
 
     total_time = time.time() - start_time
     logger.info(f"[TOTAL] Sector data loaded in {total_time:.2f}s")

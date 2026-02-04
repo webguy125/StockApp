@@ -1,6 +1,6 @@
 {
   "symbol": "DOT-USD",
-  "timestamp": "2026-01-21T00:02:42.435782",
+  "timestamp": "2026-02-02T00:02:35.915717",
   "agent": "fusion_agent",
   "total_score": 21.69230769230769,
   "confidence": 0.5169230769230768,
@@ -11,7 +11,7 @@
     "💰"
   ],
   "emoji_string": "📉❌💰",
-  "shorthand": "DOT-USD | 📉❌💰 | 21 | 0.52 | 2026-01-21",
+  "shorthand": "DOT-USD | 📉❌💰 | 21 | 0.52 | 2026-02-02",
   "weighted_scores": {
     "indicators_agent": {
       "score": 4,

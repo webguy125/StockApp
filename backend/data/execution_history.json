@@ -1,0 +1,290 @@
+[
+  {
+    "task_id": 7,
+    "task_name": "Weekly Maintenance",
+    "timestamp": "2026-02-02T22:40:16.777818",
+    "status": "success",
+    "duration_seconds": 41.586523,
+    "error": null
+  },
+  {
+    "task_id": 3,
+    "task_name": "Overnight Scanner",
+    "timestamp": "2026-02-03T00:35:10.878722",
+    "status": "success",
+    "duration_seconds": 94.423609,
+    "error": null
+  },
+  {
+    "task_id": 3,
+    "task_name": "Overnight Scanner",
+    "timestamp": "2026-02-03T11:02:40.809880",
+    "status": "success",
+    "duration_seconds": 160.802307,
+    "error": null
+  },
+  {
+    "task_id": 3,
+    "task_name": "Overnight Scanner",
+    "timestamp": "2026-02-03T11:12:29.396384",
+    "status": "success",
+    "duration_seconds": 149.383351,
+    "error": null
+  },
+  {
+    "task_id": 3,
+    "task_name": "Overnight Scanner",
+    "timestamp": "2026-02-03T11:21:46.582431",
+    "status": "success",
+    "duration_seconds": 106.575017,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Intraday Scanner \u00e2\u20ac\u201d 10AM-2PM",
+    "timestamp": "2026-02-03T12:31:29.810561",
+    "status": "success",
+    "duration_seconds": 89.79486608505249,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Intraday Scanner \u00e2\u20ac\u201d 10AM-2PM",
+    "timestamp": "2026-02-03T12:41:45.677257",
+    "status": "success",
+    "duration_seconds": 105.66058778762817,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Intraday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T13:01:29.272473",
+    "status": "success",
+    "duration_seconds": 89.26283478736877,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T13:11:46.438483",
+    "status": "success",
+    "duration_seconds": 106.43127512931824,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T13:21:37.675864",
+    "status": "success",
+    "duration_seconds": 97.65552425384521,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T13:31:39.584985",
+    "status": "success",
+    "duration_seconds": 99.56652450561523,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T13:41:39.824508",
+    "status": "success",
+    "duration_seconds": 99.81693720817566,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T13:51:40.857900",
+    "status": "success",
+    "duration_seconds": 100.84524178504944,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T14:01:44.783462",
+    "status": "success",
+    "duration_seconds": 104.7727198600769,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:04:47.972311",
+    "status": "success",
+    "duration_seconds": 107.96222424507141,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:07:47.759688",
+    "status": "success",
+    "duration_seconds": 107.74158048629761,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:11:06.851964",
+    "status": "success",
+    "duration_seconds": 126.84023833274841,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T14:12:19.140987",
+    "status": "success",
+    "duration_seconds": 139.12724804878235,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:13:55.717514",
+    "status": "success",
+    "duration_seconds": 115.70049238204956,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:17:07.045293",
+    "status": "success",
+    "duration_seconds": 127.03634333610535,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:19:57.899072",
+    "status": "success",
+    "duration_seconds": 117.88911819458008,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T14:22:16.551113",
+    "status": "success",
+    "duration_seconds": 136.5391800403595,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:23:30.705242",
+    "status": "success",
+    "duration_seconds": 150.69017362594604,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:26:04.350119",
+    "status": "success",
+    "duration_seconds": 124.33078622817993,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:29:09.481916",
+    "status": "success",
+    "duration_seconds": 129.46436667442322,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T14:32:30.864641",
+    "status": "success",
+    "duration_seconds": 150.85552978515625,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:32:31.168587",
+    "status": "success",
+    "duration_seconds": 151.1443691253662,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:34:50.792384",
+    "status": "success",
+    "duration_seconds": 110.78230023384094,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:37:49.774628",
+    "status": "success",
+    "duration_seconds": 109.75529909133911,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:40:56.030390",
+    "status": "success",
+    "duration_seconds": 116.01638841629028,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-03T14:42:00.628567",
+    "status": "success",
+    "duration_seconds": 120.61546230316162,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:43:49.377186",
+    "status": "success",
+    "duration_seconds": 109.36733961105347,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:46:43.057756",
+    "status": "success",
+    "duration_seconds": 103.04660558700562,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:52:41.658902",
+    "status": "success",
+    "duration_seconds": 101.64348125457764,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:55:39.943825",
+    "status": "success",
+    "duration_seconds": 99.93843054771423,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-03T14:58:35.723932",
+    "status": "success",
+    "duration_seconds": 95.71731686592102,
+    "error": null
+  }
+]

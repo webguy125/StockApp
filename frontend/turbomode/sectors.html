@@ -313,23 +313,25 @@
             color: #ef4444;
         }
 
-        .confidence-bar {
-            width: 100%;
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 5px;
+        /* Confidence bars removed - replaced with commentary */
+        .sector-commentary {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9fafb;
+            border-left: 3px solid #6366f1;
+            border-radius: 8px;
+            color: #374151;
+            font-size: 0.95em;
+            line-height: 1.6;
         }
 
-        .confidence-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-            transition: width 0.5s ease;
-        }
-
-        .confidence-fill.sell {
-            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        .sector-commentary-label {
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .loading {
@@ -397,26 +399,15 @@
             <div class="subtitle">S&P 500 Sector Sentiment Analysis</div>
         </header>
 
-        <div class="nav-tabs">
-            <button class="tab-button active" data-tab="bullish">🐂 Bullish Sectors</button>
-            <button class="tab-button" data-tab="bearish">🐻 Bearish Sectors</button>
-            <button class="tab-button" data-tab="all">📈 All Sectors</button>
-        </div>
+        <div class="sector-filter-tabs nav-tabs">
+            <button class="filter-tab tab-button" data-filter="bullish">🐂 Bullish Sectors</button>
+            <button class="filter-tab tab-button" data-filter="bearish">🐻 Bearish Sectors</button>
+            <button class="filter-tab tab-button" data-filter="neutral">😐 Neutral Sectors</button>
+            <button class="filter-tab tab-button active" data-filter="all">📈 All Sectors</button>
+        </div> <!-- end tabs -->
 
-        <div id="bullish-tab" class="tab-content active">
-            <div id="bullish-loading" class="loading">Loading bullish sectors...</div>
-            <div id="bullish-content" class="sectors-grid"></div>
-        </div>
-
-        <div id="bearish-tab" class="tab-content">
-            <div id="bearish-loading" class="loading">Loading bearish sectors...</div>
-            <div id="bearish-content" class="sectors-grid"></div>
-        </div>
-
-        <div id="all-tab" class="tab-content">
-            <div id="all-loading" class="loading">Loading all sectors...</div>
-            <div id="all-content" class="sectors-grid"></div>
-        </div>
+        <div id="sectors-loading" class="loading">Loading sectors...</div>
+        <div id="sectors-content" class="sectors-grid"></div>
 
         <div style="text-align: center; margin-top: 30px;">
             <a href="../" class="back-link">← Back to Main Page</a>
@@ -426,25 +417,29 @@
     <script>
         const API_BASE = 'http://127.0.0.1:5000';
 
-        // Tab switching
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const tabName = button.dataset.tab;
-
-                // Update active states
-                tabButtons.forEach(b => b.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-
-                button.classList.add('active');
-                document.getElementById(`${tabName}-tab`).classList.add('active');
-            });
-        });
-
         // Store all active signals for stock list display
         let allActiveSignals = [];
+
+        // Filter logic
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const filter = tab.getAttribute('data-filter');
+
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                document.querySelectorAll('.sector-card').forEach(card => {
+                    const sentiment = card.getAttribute('data-sentiment');
+
+                    if (filter === 'all' || sentiment === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+        // End filter logic
 
         // Fetch sector data
         async function loadSectors() {
@@ -463,34 +458,26 @@
                     allActiveSignals = signalsData.predictions;
                 }
 
-                // Render bullish sectors
-                renderSectors('bullish', data.bullish);
-
-                // Render bearish sectors
-                renderSectors('bearish', data.bearish);
-
-                // Render all sectors
+                // Render all sectors in one grid
                 const allSectors = [...data.bullish, ...data.bearish, ...data.neutral];
-                renderSectors('all', allSectors);
+                renderSectors(allSectors);
 
             } catch (error) {
                 console.error('Error loading sectors:', error);
-                showError('bullish', error.message);
-                showError('bearish', error.message);
-                showError('all', error.message);
+                showError(error.message);
             }
         }
 
-        function renderSectors(tab, sectors) {
-            const loading = document.getElementById(`${tab}-loading`);
-            const content = document.getElementById(`${tab}-content`);
+        function renderSectors(sectors) {
+            const loading = document.getElementById('sectors-loading');
+            const content = document.getElementById('sectors-content');
 
             loading.style.display = 'none';
 
             if (sectors.length === 0) {
                 content.innerHTML = `
                     <div class="empty-state">
-                        <h2>No ${tab} sectors found</h2>
+                        <h2>No sectors found</h2>
                         <p>Run a scan to generate sector data</p>
                     </div>
                 `;
@@ -504,6 +491,7 @@
             const sentiment = sector.sentiment.toLowerCase();
             const buyConf = (sector.avg_buy_confidence * 100).toFixed(1);
             const sellConf = (sector.avg_sell_confidence * 100).toFixed(1);
+            const commentary = sector.commentary || 'No commentary available.';
 
             // Get all stocks in this sector
             const sectorStocks = allActiveSignals.filter(s => s.sector === sector.sector);
@@ -540,11 +528,24 @@
                                 const entryMin = entryPrice * 0.98;
                                 const entryMax = entryPrice * 1.02;
 
-                                // Use adaptive Stop Loss and Take Profit from API
-                                const stopPrice = stock.stop_price || entryPrice;
-                                const targetPrice = stock.target_price || entryPrice;
-                                const stopPct = entryPrice > 0 ? ((stopPrice - entryPrice) / entryPrice * 100) : 0;
-                                const targetPct = entryPrice > 0 ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
+                                // HOLD signals use Iron Condor bands, BUY/SELL use directional SL/TP
+                                const predictionType = stock.prediction.toLowerCase();
+                                const isHold = (predictionType === 'hold');
+                                let stopPrice, targetPrice, stopPct, targetPct;
+
+                                if (isHold) {
+                                    const stopUpper = stock.stop_upper || entryPrice;
+                                    const stopLower = stock.stop_lower || entryPrice;
+                                    stopPrice = stopLower;
+                                    targetPrice = stopUpper;
+                                    stopPct = entryPrice > 0 ? ((stopLower - entryPrice) / entryPrice * 100) : 0;
+                                    targetPct = entryPrice > 0 ? ((stopUpper - entryPrice) / entryPrice * 100) : 0;
+                                } else {
+                                    stopPrice = stock.stop_price || entryPrice;
+                                    targetPrice = stock.target_price || entryPrice;
+                                    stopPct = entryPrice > 0 ? ((stopPrice - entryPrice) / entryPrice * 100) : 0;
+                                    targetPct = entryPrice > 0 ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
+                                }
 
                                 // Calculate P&L
                                 let pnl = 0;
@@ -601,7 +602,7 @@
             ` : '';
 
             return `
-                <div class="sector-card ${sentiment}" id="card-${sectorId}">
+                <div class="sector-card ${sentiment}" id="card-${sectorId}" data-sentiment="${sentiment}">
                     <div class="sector-header" onclick="toggleStockList('${sectorId}')">
                         <div class="sector-name">
                             ${sector.sector}
@@ -622,17 +623,22 @@
                             <span class="stat-label">Avg BUY Confidence</span>
                             <span class="stat-value">${buyConf}%</span>
                         </div>
-                        <div class="confidence-bar">
-                            <div class="confidence-fill" style="width: ${buyConf}%"></div>
-                        </div>
 
-                        <div class="stats-row" style="margin-top: 10px;">
+                        <div class="stats-row">
                             <span class="stat-label">Avg SELL Confidence</span>
                             <span class="stat-value">${sellConf}%</span>
                         </div>
-                        <div class="confidence-bar">
-                            <div class="confidence-fill sell" style="width: ${sellConf}%"></div>
+
+                        <div class="stats-row">
+                            <span class="stat-label">HOLD Signals</span>
+                            <span class="stat-value">${sector.total_hold_signals}</span>
                         </div>
+                    </div>
+
+                    <!-- Dynamic Commentary Block -->
+                    <div class="sector-commentary">
+                        <div class="sector-commentary-label">Analysis</div>
+                        ${commentary}
                     </div>
 
                     ${stocksListHTML}
@@ -668,9 +674,9 @@
             window.location.href = `/turbomode/options.html?symbol=${symbol}`;
         }
 
-        function showError(tab, message) {
-            const loading = document.getElementById(`${tab}-loading`);
-            const content = document.getElementById(`${tab}-content`);
+        function showError(message) {
+            const loading = document.getElementById('sectors-loading');
+            const content = document.getElementById('sectors-content');
 
             loading.style.display = 'none';
             content.innerHTML = `

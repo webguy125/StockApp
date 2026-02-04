@@ -95,7 +95,7 @@ TRAINING_SYMBOLS = {
         'small_cap': [
             'COHU',
             'DOMO',
-            'VMEO',
+            'YALA',
             'WOLF',
         ]
     },

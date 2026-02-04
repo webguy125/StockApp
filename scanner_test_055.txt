@@ -1,0 +1,1608 @@
+INFO:__main__:Database path: C:\StockApp\backend\data\turbomode.db
+INFO:__main__:Position state file: C:\StockApp\backend\data\position_state.json
+INFO:__main__:Architecture: Single-model-per-sector (1d/5% only)
+INFO:market_data_api:[OK] MarketDataAPI initialized (read_only=True)
+INFO:__main__:Connected to Master Market Data DB (read-only)
+INFO:vectorized_engine:[CPU] Using NumPy for vectorized feature computation
+INFO:__main__:Initialized feature engine (179 features)
+INFO:__main__:Entry threshold: 0.55
+INFO:__main__:Exit threshold (hysteresis): 0.70
+INFO:__main__:Persistence required: 3 consecutive signals
+INFO:backend.turbomode.news_feed_client:[NEWS FEED CLIENT] Initialized
+INFO:backend.turbomode.news_feed_client:  Max headlines per feed: 100
+INFO:backend.turbomode.news_feed_client:  Timeout: 10s
+INFO:backend.turbomode.core_engine.news_engine:[NEWS ENGINE] Initialized with RSS feed client
+INFO:backend.turbomode.core_engine.news_engine:  Sector blocking: True
+INFO:backend.turbomode.core_engine.news_engine:  Global blocking: True
+INFO:__main__:News Engine initialized
+INFO:__main__:Production scanner initialized (Fast Mode + News-Aware)
+INFO:__main__:================================================================================
+INFO:__main__:TURBOMODE PRODUCTION SCANNER (FAST MODE + NEWS-AWARE)
+INFO:__main__:================================================================================
+INFO:__main__:Start Time: 2026-01-31 21:01:38
+INFO:__main__:Architecture: Single-model-per-sector (1d/5% only)
+INFO:__main__:
+[STEP -1] Checking for signals to close...
+INFO:backend.turbomode.core_engine.signal_closer:Checking 0 active signals for exit conditions...
+INFO:backend.turbomode.core_engine.signal_closer:
+Signal Closer Summary:
+INFO:backend.turbomode.core_engine.signal_closer:  Total closed: 0
+INFO:backend.turbomode.core_engine.signal_closer:  Target hits: 0
+INFO:backend.turbomode.core_engine.signal_closer:  Stop hits: 0
+INFO:backend.turbomode.core_engine.signal_closer:  Time exits: 0
+INFO:backend.turbomode.core_engine.signal_closer:  Failed: 0
+INFO:__main__:  Closed 0 signals
+INFO:__main__:
+[STEP 0] Updating news risk state...
+INFO:backend.turbomode.core_engine.news_engine:[NEWS UPDATE] Starting news risk update...
+INFO:backend.turbomode.news_feed_client:[RSS FETCH] Fetching from 8 feeds...
+WARNING:backend.turbomode.news_feed_client:Malformed feed: https://www.reuters.com/rssFeed/businessNews - text/html;charset=utf-8 is not an XML media type
+WARNING:backend.turbomode.news_feed_client:Malformed feed: https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&owner=exclude&count=100&output=atom - <unknown>:51:124: mismatched tag
+WARNING:backend.turbomode.news_feed_client:Malformed feed: https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=10-K&owner=exclude&count=100&output=atom - <unknown>:51:124: mismatched tag
+WARNING:backend.turbomode.news_feed_client:Malformed feed: https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=10-Q&owner=exclude&count=100&output=atom - <unknown>:51:124: mismatched tag
+WARNING:backend.turbomode.news_feed_client:Malformed feed: https://www.federalreserve.gov/feeds/press_all.xml - document declared as us-ascii, but parsed as utf-8
+INFO:backend.turbomode.news_feed_client:[RSS FETCH] Complete: 8 success, 0 errors, 80 total headlines in 1.45s
+INFO:backend.turbomode.core_engine.news_engine:[NEWS HIGH/SECTOR] 'Is 'America First' starting to backfire as Washington's allies go it alone?' (keyword: tariffs)
+INFO:backend.turbomode.core_engine.news_engine:[NEWS HIGH/GLOBAL] 'Here is what caused the wild swings in our 34-stock portfolio last week' (keyword: ppi)
+INFO:backend.turbomode.core_engine.news_engine:[NEWS HIGH/SYMBOL] 'Amazon wraps controversial week ahead of 'Melania' premier, fourth-quarter earnings' (keyword: layoffs)
+INFO:backend.turbomode.core_engine.news_engine:[NEWS HIGH/GLOBAL] 'A luxury ‘phobia’ is gripping these consumers. It’s a red flag for brands like Chanel and Gucci.' (keyword: ppi)
+INFO:backend.turbomode.core_engine.news_engine:[NEWS] Global risk changed: NONE -> HIGH
+INFO:backend.turbomode.core_engine.news_engine:[NEWS] Symbol risk changed for CEO: NONE -> MEDIUM
+INFO:backend.turbomode.core_engine.news_engine:[NEWS] Symbol risk changed for VICI: NONE -> MEDIUM
+INFO:backend.turbomode.core_engine.news_engine:[NEWS] Symbol risk changed for BMO: NONE -> MEDIUM
+INFO:backend.turbomode.core_engine.news_engine:[GLOBAL SENTIMENT] Bullish (keyword: bull market)
+INFO:backend.turbomode.core_engine.news_engine:[GLOBAL SENTIMENT] Bearish (keyword: risk-off)
+INFO:backend.turbomode.core_engine.news_engine:[GLOBAL SENTIMENT] Bullish (keyword: all-time high)
+INFO:backend.turbomode.core_engine.news_engine:[NEWS] Global sentiment changed: neutral -> bullish
+INFO:backend.turbomode.core_engine.news_engine:[NEWS UPDATE] Complete - Processed 80 headlines
+INFO:backend.turbomode.core_engine.news_engine:  Global risk: HIGH
+INFO:backend.turbomode.core_engine.news_engine:  Global sentiment: bullish
+INFO:backend.turbomode.core_engine.news_engine:  Sector risks: 0 sectors updated
+INFO:backend.turbomode.core_engine.news_engine:  Sector sentiments: 0 sectors with directional bias
+INFO:backend.turbomode.core_engine.news_engine:  Symbol risks: 3 symbols updated
+INFO:backend.turbomode.core_engine.news_engine:  Symbol sentiments: 0 symbols with directional bias
+INFO:__main__:
+[STEP 1] Updating existing signal ages...
+INFO:__main__:  Expired 0 signals
+INFO:__main__:
+[STEP 2] Loading symbol list...
+INFO:__main__:  Total symbols: 233
+INFO:__main__:
+[STEP 3] Scanning 233 symbols with Fast Mode...
+INFO:vectorized_engine:[GPU] Extracted 179 features for 505 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for materials...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for materials
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] A (materials): global_bullish(+0.05) = +0.050 (BUY 0.109->0.114, SELL 0.035->0.033, HOLD 0.856->0.853)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for technology...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for technology
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AAPL (technology): global_bullish(+0.05) = +0.050 (BUY 0.484->0.499, SELL 0.090->0.084, HOLD 0.426->0.417)
+INFO:__main__:[ENTRY CHECK] AAPL: signal=BUY, prob_buy=0.499, prob_sell=0.084, prob_hold=0.417, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] AAPL: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for healthcare...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for healthcare
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ABBV (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.262->0.272, SELL 0.047->0.044, HOLD 0.692->0.684)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ABT (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.125->0.131, SELL 0.047->0.045, HOLD 0.827->0.824)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ACHC (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.615->0.627, SELL 0.042->0.038, HOLD 0.344->0.334)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ADBE (technology): global_bullish(+0.05) = +0.050 (BUY 0.876->0.882, SELL 0.011->0.010, HOLD 0.113->0.108)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ADI (technology): global_bullish(+0.05) = +0.050 (BUY 0.109->0.116, SELL 0.389->0.375, HOLD 0.502->0.509)
+INFO:__main__:[ENTRY CHECK] ADI: signal=SELL, prob_buy=0.116, prob_sell=0.375, prob_hold=0.509, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] ADI: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ADSK (technology): global_bullish(+0.05) = +0.050 (BUY 0.854->0.861, SELL 0.017->0.015, HOLD 0.129->0.124)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for utilities...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for utilities
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AEP (utilities): global_bullish(+0.05) = +0.050 (BUY 0.021->0.022, SELL 0.012->0.012, HOLD 0.967->0.967)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for financials...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for financials
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AIG (financials): global_bullish(+0.05) = +0.050 (BUY 0.738->0.748, SELL 0.015->0.014, HOLD 0.247->0.239)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for real_estate...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for real_estate
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ALEX (real_estate): global_bullish(+0.05) = +0.050 (BUY 0.056->0.059, SELL 0.042->0.040, HOLD 0.902->0.901)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ALL (financials): global_bullish(+0.05) = +0.050 (BUY 0.438->0.451, SELL 0.029->0.027, HOLD 0.533->0.522)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ALNY (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.087->0.091, SELL 0.080->0.076, HOLD 0.834->0.833)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AMAT (technology): global_bullish(+0.05) = +0.050 (BUY 0.053->0.058, SELL 0.683->0.670, HOLD 0.264->0.273)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for communication_services...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for communication_services
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AMC (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.048->0.053, SELL 0.761->0.750, HOLD 0.190->0.197)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AMD (technology): global_bullish(+0.05) = +0.050 (BUY 0.327->0.340, SELL 0.102->0.095, HOLD 0.571->0.565)
+INFO:__main__:[ENTRY CHECK] AMD: signal=BUY, prob_buy=0.340, prob_sell=0.095, prob_hold=0.565, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] AMD: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AMGN (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.110->0.115, SELL 0.064->0.061, HOLD 0.826->0.824)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AMT (real_estate): global_bullish(+0.05) = +0.050 (BUY 0.183->0.192, SELL 0.129->0.123, HOLD 0.688->0.686)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for consumer_discretionary...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for consumer_discretionary
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AMZN (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.262->0.272, SELL 0.081->0.076, HOLD 0.657->0.651)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ANET (technology): global_bullish(+0.05) = +0.050 (BUY 0.383->0.399, SELL 0.242->0.228, HOLD 0.375->0.372)
+INFO:__main__:[ENTRY CHECK] ANET: signal=BUY, prob_buy=0.399, prob_sell=0.228, prob_hold=0.372, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] ANET: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] APD (materials): global_bullish(+0.05) = +0.050 (BUY 0.525->0.538, SELL 0.020->0.019, HOLD 0.455->0.443)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for industrials...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for industrials
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ARLO (industrials): global_bullish(+0.05) = +0.050 (BUY 0.393->0.405, SELL 0.026->0.024, HOLD 0.581->0.571)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ATRC (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.203->0.213, SELL 0.187->0.177, HOLD 0.610->0.609)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AVGO (technology): global_bullish(+0.05) = +0.050 (BUY 0.698->0.710, SELL 0.056->0.052, HOLD 0.246->0.238)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] AXP (financials): global_bullish(+0.05) = +0.050 (BUY 0.564->0.577, SELL 0.026->0.024, HOLD 0.410->0.399)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] BAC (financials): global_bullish(+0.05) = +0.050 (BUY 0.117->0.122, SELL 0.049->0.047, HOLD 0.834->0.831)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] BCRX (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.267->0.278, SELL 0.124->0.117, HOLD 0.610->0.605)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] BDX (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.544->0.557, SELL 0.056->0.052, HOLD 0.400->0.391)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] BK (financials): global_bullish(+0.05) = +0.050 (BUY 0.182->0.190, SELL 0.063->0.059, HOLD 0.755->0.751)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] BLK (financials): global_bullish(+0.05) = +0.050 (BUY 0.013->0.014, SELL 0.095->0.091, HOLD 0.892->0.895)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] BMY (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.189->0.198, SELL 0.185->0.176, HOLD 0.626->0.626)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 499 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] BRK-B (financials): global_bullish(+0.05) = +0.050 (BUY 0.211->0.220, SELL 0.052->0.049, HOLD 0.736->0.730)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] BTAI (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.997->0.997, SELL 0.000->0.000, HOLD 0.003->0.003)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 728 dates (canonical order)
+WARNING:__main__:Unknown sector for BTC-USD, skipping
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] C (financials): global_bullish(+0.05) = +0.050 (BUY 0.196->0.205, SELL 0.064->0.060, HOLD 0.740->0.735)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CAH (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.150->0.157, SELL 0.059->0.056, HOLD 0.791->0.787)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CARR (industrials): global_bullish(+0.05) = +0.050 (BUY 0.240->0.249, SELL 0.053->0.050, HOLD 0.708->0.701)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CAT (industrials): global_bullish(+0.05) = +0.050 (BUY 0.165->0.173, SELL 0.122->0.115, HOLD 0.713->0.712)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CCL (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.156->0.165, SELL 0.242->0.231, HOLD 0.601->0.604)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CCOI (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.324->0.340, SELL 0.335->0.319, HOLD 0.341->0.341)
+INFO:__main__:[ENTRY CHECK] CCOI: signal=BUY, prob_buy=0.340, prob_sell=0.319, prob_hold=0.341, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] CCOI: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CDNS (technology): global_bullish(+0.05) = +0.050 (BUY 0.261->0.271, SELL 0.071->0.067, HOLD 0.668->0.662)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CI (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.604->0.619, SELL 0.099->0.091, HOLD 0.297->0.290)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CME (financials): global_bullish(+0.05) = +0.050 (BUY 0.176->0.183, SELL 0.043->0.041, HOLD 0.781->0.776)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CMG (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.048->0.052, SELL 0.846->0.837, HOLD 0.106->0.110)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CMI (industrials): global_bullish(+0.05) = +0.050 (BUY 0.055->0.057, SELL 0.035->0.033, HOLD 0.910->0.910)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] COF (financials): global_bullish(+0.05) = +0.050 (BUY 0.888->0.894, SELL 0.028->0.026, HOLD 0.084->0.080)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] COHU (technology): global_bullish(+0.05) = +0.050 (BUY 0.151->0.160, SELL 0.261->0.249, HOLD 0.588->0.591)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for consumer_staples...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for consumer_staples
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] COST (consumer_staples): global_bullish(+0.05) = +0.050 (BUY 0.158->0.165, SELL 0.022->0.021, HOLD 0.820->0.814)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CRI (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.788->0.799, SELL 0.069->0.063, HOLD 0.143->0.138)
+INFO:__main__:  Progress: 50/233 (21.5%) - BUY: 0, SELL: 0, HOLD: 0
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CRM (technology): global_bullish(+0.05) = +0.050 (BUY 0.721->0.731, SELL 0.019->0.018, HOLD 0.260->0.251)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CRWD (technology): global_bullish(+0.05) = +0.050 (BUY 0.029->0.030, SELL 0.182->0.174, HOLD 0.790->0.796)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CSCO (technology): global_bullish(+0.05) = +0.050 (BUY 0.185->0.193, SELL 0.044->0.041, HOLD 0.771->0.766)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CSX (industrials): global_bullish(+0.05) = +0.050 (BUY 0.281->0.293, SELL 0.125->0.117, HOLD 0.594->0.589)
+INFO:__main__:[ENTRY CHECK] CSX: signal=BUY, prob_buy=0.293, prob_sell=0.117, prob_hold=0.589, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] CSX: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CTAS (industrials): global_bullish(+0.05) = +0.050 (BUY 0.207->0.216, SELL 0.123->0.117, HOLD 0.670->0.667)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CTSH (technology): global_bullish(+0.05) = +0.050 (BUY 0.201->0.210, SELL 0.098->0.093, HOLD 0.701->0.697)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CVS (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.108->0.114, SELL 0.063->0.059, HOLD 0.829->0.827)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+INFO:backend.turbomode.core_engine.model_loader:[LOADER] Loading ensemble models for energy...
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded lightgbm_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded catboost_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_hist_gpu
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded xgb_linear
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded random_forest
+INFO:backend.turbomode.core_engine.model_loader:  \u2713 Loaded meta_learner
+INFO:backend.turbomode.core_engine.model_loader:[SUCCESS] All 6 models loaded for energy
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] CVX (energy): global_bullish(+0.05) = +0.050 (BUY 0.070->0.076, SELL 0.531->0.516, HOLD 0.399->0.408)
+INFO:__main__:[ENTRY CHECK] CVX: signal=SELL, prob_buy=0.076, prob_sell=0.516, prob_hold=0.408, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] CVX: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] D (utilities): global_bullish(+0.05) = +0.050 (BUY 0.153->0.160, SELL 0.027->0.026, HOLD 0.819->0.814)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] DBI (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.827->0.834, SELL 0.010->0.009, HOLD 0.163->0.157)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] DDOG (technology): global_bullish(+0.05) = +0.050 (BUY 0.788->0.798, SELL 0.043->0.039, HOLD 0.169->0.163)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] DE (industrials): global_bullish(+0.05) = +0.050 (BUY 0.550->0.568, SELL 0.204->0.191, HOLD 0.246->0.242)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] DG (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.193->0.201, SELL 0.013->0.012, HOLD 0.794->0.787)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] DHR (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.215->0.225, SELL 0.098->0.093, HOLD 0.686->0.682)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] DIS (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.245->0.256, SELL 0.084->0.080, HOLD 0.670->0.665)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 504 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] DK (energy): global_bullish(+0.05) = +0.050 (BUY 0.042->0.045, SELL 0.457->0.443, HOLD 0.502->0.512)
+INFO:__main__:[ENTRY CHECK] DK: signal=SELL, prob_buy=0.045, prob_sell=0.443, prob_hold=0.512, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] DK: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] DLR (real_estate): global_bullish(+0.05) = +0.050 (BUY 0.104->0.110, SELL 0.260->0.249, HOLD 0.636->0.641)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] DOMO (technology): global_bullish(+0.05) = +0.050 (BUY 0.002->0.002, SELL 0.953->0.951, HOLD 0.045->0.047)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] DUK (utilities): global_bullish(+0.05) = +0.050 (BUY 0.025->0.026, SELL 0.026->0.025, HOLD 0.949->0.949)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] EBAY (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.167->0.175, SELL 0.180->0.171, HOLD 0.653->0.654)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ECL (materials): global_bullish(+0.05) = +0.050 (BUY 0.154->0.161, SELL 0.048->0.046, HOLD 0.798->0.793)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ED (utilities): global_bullish(+0.05) = +0.050 (BUY 0.052->0.055, SELL 0.034->0.032, HOLD 0.914->0.913)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] EMR (industrials): global_bullish(+0.05) = +0.050 (BUY 0.123->0.129, SELL 0.107->0.102, HOLD 0.770->0.770)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] EPC (consumer_staples): global_bullish(+0.05) = +0.050 (BUY 0.035->0.038, SELL 0.608->0.594, HOLD 0.357->0.368)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] EQT (energy): global_bullish(+0.05) = +0.050 (BUY 0.007->0.008, SELL 0.898->0.892, HOLD 0.095->0.100)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ESRT (real_estate): global_bullish(+0.05) = +0.050 (BUY 0.024->0.026, SELL 0.281->0.270, HOLD 0.695->0.704)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 728 dates (canonical order)
+WARNING:__main__:Unknown sector for ETH-USD, skipping
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ETN (industrials): global_bullish(+0.05) = +0.050 (BUY 0.871->0.877, SELL 0.018->0.016, HOLD 0.111->0.106)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ETR (utilities): global_bullish(+0.05) = +0.050 (BUY 0.066->0.069, SELL 0.086->0.082, HOLD 0.848->0.849)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] EW (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.123->0.128, SELL 0.064->0.060, HOLD 0.814->0.811)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] EXC (utilities): global_bullish(+0.05) = +0.050 (BUY 0.053->0.056, SELL 0.026->0.024, HOLD 0.921->0.920)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] EXPE (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.278->0.291, SELL 0.227->0.215, HOLD 0.495->0.494)
+INFO:__main__:[ENTRY CHECK] EXPE: signal=BUY, prob_buy=0.291, prob_sell=0.215, prob_hold=0.494, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] EXPE: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] EXR (real_estate): global_bullish(+0.05) = +0.050 (BUY 0.825->0.833, SELL 0.006->0.005, HOLD 0.169->0.162)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] FANG (energy): global_bullish(+0.05) = +0.050 (BUY 0.039->0.042, SELL 0.743->0.731, HOLD 0.219->0.226)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] FAST (industrials): global_bullish(+0.05) = +0.050 (BUY 0.133->0.139, SELL 0.123->0.116, HOLD 0.745->0.744)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] FCX (materials): global_bullish(+0.05) = +0.050 (BUY 0.006->0.007, SELL 0.902->0.897, HOLD 0.092->0.096)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] FDX (industrials): global_bullish(+0.05) = +0.050 (BUY 0.084->0.088, SELL 0.069->0.065, HOLD 0.847->0.846)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] FTNT (technology): global_bullish(+0.05) = +0.050 (BUY 0.468->0.481, SELL 0.064->0.060, HOLD 0.468->0.459)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] GD (industrials): global_bullish(+0.05) = +0.050 (BUY 0.344->0.356, SELL 0.055->0.052, HOLD 0.601->0.592)
+INFO:__main__:[ENTRY CHECK] GD: signal=BUY, prob_buy=0.356, prob_sell=0.052, prob_hold=0.592, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] GD: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] GE (industrials): global_bullish(+0.05) = +0.050 (BUY 0.104->0.109, SELL 0.073->0.070, HOLD 0.823->0.822)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] GILD (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.118->0.124, SELL 0.144->0.137, HOLD 0.738->0.739)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] GM (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.100->0.105, SELL 0.107->0.102, HOLD 0.793->0.793)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] GO (consumer_staples): global_bullish(+0.05) = +0.050 (BUY 0.944->0.947, SELL 0.002->0.002, HOLD 0.054->0.052)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] GOGO (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.879->0.885, SELL 0.016->0.014, HOLD 0.105->0.101)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] GOOGL (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.930->0.933, SELL 0.004->0.004, HOLD 0.066->0.063)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] GS (financials): global_bullish(+0.05) = +0.050 (BUY 0.986->0.987, SELL 0.001->0.001, HOLD 0.013->0.013)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] GTN (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.183->0.195, SELL 0.429->0.413, HOLD 0.388->0.392)
+INFO:__main__:[ENTRY CHECK] GTN: signal=SELL, prob_buy=0.195, prob_sell=0.413, prob_hold=0.392, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] GTN: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] GWW (industrials): global_bullish(+0.05) = +0.050 (BUY 0.063->0.066, SELL 0.058->0.055, HOLD 0.879->0.879)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] HAIN (consumer_staples): global_bullish(+0.05) = +0.050 (BUY 0.513->0.526, SELL 0.022->0.020, HOLD 0.465->0.454)
+INFO:__main__:  Progress: 100/233 (42.9%) - BUY: 0, SELL: 0, HOLD: 0
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] HCA (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.254->0.263, SELL 0.033->0.031, HOLD 0.713->0.706)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] HD (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.974->0.976, SELL 0.004->0.004, HOLD 0.022->0.021)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] HLT (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.172->0.181, SELL 0.105->0.100, HOLD 0.722->0.720)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] HLX (energy): global_bullish(+0.05) = +0.050 (BUY 0.070->0.075, SELL 0.513->0.498, HOLD 0.417->0.426)
+INFO:__main__:[ENTRY CHECK] HLX: signal=SELL, prob_buy=0.075, prob_sell=0.498, prob_hold=0.426, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] HLX: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] HON (industrials): global_bullish(+0.05) = +0.050 (BUY 0.125->0.131, SELL 0.085->0.080, HOLD 0.790->0.788)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] HSY (consumer_staples): global_bullish(+0.05) = +0.050 (BUY 0.116->0.122, SELL 0.037->0.035, HOLD 0.846->0.843)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] HUM (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.640->0.657, SELL 0.201->0.187, HOLD 0.160->0.156)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] HWM (industrials): global_bullish(+0.05) = +0.050 (BUY 0.195->0.204, SELL 0.169->0.161, HOLD 0.636->0.635)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ICE (financials): global_bullish(+0.05) = +0.050 (BUY 0.371->0.383, SELL 0.041->0.038, HOLD 0.588->0.579)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] IDXX (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.182->0.190, SELL 0.068->0.064, HOLD 0.750->0.746)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] IMAX (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.641->0.653, SELL 0.028->0.026, HOLD 0.331->0.321)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] INTU (technology): global_bullish(+0.05) = +0.050 (BUY 0.709->0.720, SELL 0.031->0.028, HOLD 0.260->0.251)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 498 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] IRBT (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.855->0.862, SELL 0.024->0.021, HOLD 0.122->0.117)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ISRG (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.162->0.170, SELL 0.047->0.045, HOLD 0.790->0.786)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ITW (industrials): global_bullish(+0.05) = +0.050 (BUY 0.109->0.114, SELL 0.105->0.100, HOLD 0.786->0.786)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] JCI (industrials): global_bullish(+0.05) = +0.050 (BUY 0.215->0.224, SELL 0.076->0.072, HOLD 0.709->0.704)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] JNJ (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.071->0.076, SELL 0.409->0.395, HOLD 0.520->0.529)
+INFO:__main__:[ENTRY CHECK] JNJ: signal=SELL, prob_buy=0.076, prob_sell=0.395, prob_hold=0.529, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] JNJ: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] JPM (financials): global_bullish(+0.05) = +0.050 (BUY 0.490->0.503, SELL 0.030->0.027, HOLD 0.481->0.470)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] KLAC (technology): global_bullish(+0.05) = +0.050 (BUY 0.612->0.625, SELL 0.056->0.051, HOLD 0.333->0.324)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] KO (consumer_staples): global_bullish(+0.05) = +0.050 (BUY 0.036->0.038, SELL 0.045->0.043, HOLD 0.919->0.920)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] LEN (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.469->0.483, SELL 0.097->0.091, HOLD 0.434->0.426)
+INFO:__main__:[ENTRY CHECK] LEN: signal=BUY, prob_buy=0.483, prob_sell=0.091, prob_hold=0.426, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] LEN: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 504 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] LIN (materials): global_bullish(+0.05) = +0.050 (BUY 0.049->0.051, SELL 0.034->0.032, HOLD 0.917->0.917)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] LLY (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.682->0.696, SELL 0.094->0.086, HOLD 0.224->0.218)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] LMT (industrials): global_bullish(+0.05) = +0.050 (BUY 0.018->0.019, SELL 0.062->0.059, HOLD 0.920->0.922)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] LOW (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.644->0.657, SELL 0.052->0.048, HOLD 0.304->0.295)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] LRCX (technology): global_bullish(+0.05) = +0.050 (BUY 0.039->0.041, SELL 0.418->0.405, HOLD 0.543->0.554)
+INFO:__main__:[ENTRY CHECK] LRCX: signal=SELL, prob_buy=0.041, prob_sell=0.405, prob_hold=0.554, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] LRCX: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] LVS (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.674->0.686, SELL 0.045->0.042, HOLD 0.281->0.272)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MAR (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.069->0.072, SELL 0.036->0.035, HOLD 0.895->0.893)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MCD (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.055->0.058, SELL 0.066->0.063, HOLD 0.879->0.879)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MDB (technology): global_bullish(+0.05) = +0.050 (BUY 0.083->0.090, SELL 0.767->0.755, HOLD 0.150->0.155)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MDT (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.261->0.272, SELL 0.086->0.081, HOLD 0.653->0.647)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MET (financials): global_bullish(+0.05) = +0.050 (BUY 0.746->0.756, SELL 0.019->0.017, HOLD 0.235->0.227)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] META (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.118->0.124, SELL 0.236->0.226, HOLD 0.646->0.650)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MLM (materials): global_bullish(+0.05) = +0.050 (BUY 0.049->0.051, SELL 0.032->0.030, HOLD 0.920->0.919)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MRK (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.116->0.122, SELL 0.075->0.071, HOLD 0.809->0.807)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MS (financials): global_bullish(+0.05) = +0.050 (BUY 0.230->0.239, SELL 0.031->0.030, HOLD 0.739->0.731)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MSFT (technology): global_bullish(+0.05) = +0.050 (BUY 0.352->0.365, SELL 0.087->0.081, HOLD 0.562->0.554)
+INFO:__main__:[ENTRY CHECK] MSFT: signal=BUY, prob_buy=0.365, prob_sell=0.081, prob_hold=0.554, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] MSFT: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MTD (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.418->0.431, SELL 0.039->0.036, HOLD 0.543->0.533)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] MU (technology): global_bullish(+0.05) = +0.050 (BUY 0.071->0.075, SELL 0.057->0.054, HOLD 0.871->0.871)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NEE (utilities): global_bullish(+0.05) = +0.050 (BUY 0.055->0.058, SELL 0.043->0.040, HOLD 0.902->0.902)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NEM (materials): global_bullish(+0.05) = +0.050 (BUY 0.147->0.157, SELL 0.487->0.471, HOLD 0.365->0.372)
+INFO:__main__:[ENTRY CHECK] NEM: signal=SELL, prob_buy=0.157, prob_sell=0.471, prob_hold=0.372, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] NEM: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NET (technology): global_bullish(+0.05) = +0.050 (BUY 0.861->0.867, SELL 0.020->0.018, HOLD 0.119->0.115)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NFLX (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.724->0.735, SELL 0.035->0.032, HOLD 0.242->0.234)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NKE (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.494->0.508, SELL 0.095->0.088, HOLD 0.411->0.403)
+INFO:__main__:[ENTRY CHECK] NKE: signal=BUY, prob_buy=0.508, prob_sell=0.088, prob_hold=0.403, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] NKE: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NOC (industrials): global_bullish(+0.05) = +0.050 (BUY 0.023->0.025, SELL 0.026->0.025, HOLD 0.950->0.950)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NOW (technology): global_bullish(+0.05) = +0.050 (BUY 0.752->0.763, SELL 0.050->0.046, HOLD 0.198->0.191)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NSC (industrials): global_bullish(+0.05) = +0.050 (BUY 0.486->0.498, SELL 0.030->0.027, HOLD 0.485->0.474)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NTRA (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.569->0.583, SELL 0.056->0.051, HOLD 0.375->0.366)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NUE (materials): global_bullish(+0.05) = +0.050 (BUY 0.076->0.079, SELL 0.039->0.037, HOLD 0.885->0.884)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NVDA (technology): global_bullish(+0.05) = +0.050 (BUY 0.036->0.038, SELL 0.147->0.140, HOLD 0.817->0.822)
+INFO:__main__:  Progress: 150/233 (64.4%) - BUY: 0, SELL: 0, HOLD: 0
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] NX (industrials): global_bullish(+0.05) = +0.050 (BUY 0.084->0.090, SELL 0.505->0.490, HOLD 0.411->0.420)
+INFO:__main__:[ENTRY CHECK] NX: signal=SELL, prob_buy=0.090, prob_sell=0.490, prob_hold=0.420, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] NX: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 434 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ODFL (industrials): global_bullish(+0.05) = +0.050 (BUY 0.691->0.702, SELL 0.021->0.019, HOLD 0.288->0.279)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 498 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] OMI (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.972->0.974, SELL 0.008->0.007, HOLD 0.020->0.019)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ORCL (technology): global_bullish(+0.05) = +0.050 (BUY 0.848->0.855, SELL 0.014->0.013, HOLD 0.138->0.132)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ORLY (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.299->0.310, SELL 0.075->0.071, HOLD 0.626->0.619)
+INFO:__main__:[ENTRY CHECK] ORLY: signal=BUY, prob_buy=0.310, prob_sell=0.071, prob_hold=0.619, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] ORLY: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] OTIS (industrials): global_bullish(+0.05) = +0.050 (BUY 0.228->0.237, SELL 0.020->0.019, HOLD 0.752->0.744)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] OXY (energy): global_bullish(+0.05) = +0.050 (BUY 0.046->0.049, SELL 0.529->0.515, HOLD 0.425->0.436)
+INFO:__main__:[ENTRY CHECK] OXY: signal=SELL, prob_buy=0.049, prob_sell=0.515, prob_hold=0.436, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] OXY: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PANW (technology): global_bullish(+0.05) = +0.050 (BUY 0.146->0.153, SELL 0.087->0.083, HOLD 0.767->0.765)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PCAR (industrials): global_bullish(+0.05) = +0.050 (BUY 0.063->0.067, SELL 0.091->0.087, HOLD 0.845->0.847)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PDM (real_estate): global_bullish(+0.05) = +0.050 (BUY 0.024->0.026, SELL 0.065->0.062, HOLD 0.910->0.912)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PEG (utilities): global_bullish(+0.05) = +0.050 (BUY 0.058->0.060, SELL 0.042->0.040, HOLD 0.901->0.900)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PFE (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.024->0.026, SELL 0.462->0.448, HOLD 0.514->0.525)
+INFO:__main__:[ENTRY CHECK] PFE: signal=SELL, prob_buy=0.026, prob_sell=0.448, prob_hold=0.525, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] PFE: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PG (consumer_staples): global_bullish(+0.05) = +0.050 (BUY 0.211->0.219, SELL 0.033->0.031, HOLD 0.756->0.749)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PGR (financials): global_bullish(+0.05) = +0.050 (BUY 0.164->0.177, SELL 0.730->0.713, HOLD 0.106->0.109)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PH (industrials): global_bullish(+0.05) = +0.050 (BUY 0.156->0.162, SELL 0.035->0.033, HOLD 0.809->0.804)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PLAY (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.916->0.921, SELL 0.017->0.016, HOLD 0.066->0.064)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PLCE (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.904->0.909, SELL 0.016->0.015, HOLD 0.080->0.076)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PLD (real_estate): global_bullish(+0.05) = +0.050 (BUY 0.027->0.028, SELL 0.050->0.047, HOLD 0.923->0.924)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PLTR (technology): global_bullish(+0.05) = +0.050 (BUY 0.304->0.315, SELL 0.035->0.033, HOLD 0.661->0.652)
+INFO:__main__:[ENTRY CHECK] PLTR: signal=BUY, prob_buy=0.315, prob_sell=0.033, prob_hold=0.652, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] PLTR: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PRU (financials): global_bullish(+0.05) = +0.050 (BUY 0.313->0.324, SELL 0.070->0.065, HOLD 0.618->0.610)
+INFO:__main__:[ENTRY CHECK] PRU: signal=BUY, prob_buy=0.324, prob_sell=0.065, prob_hold=0.610, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] PRU: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PSA (real_estate): global_bullish(+0.05) = +0.050 (BUY 0.065->0.069, SELL 0.202->0.194, HOLD 0.732->0.737)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PWR (industrials): global_bullish(+0.05) = +0.050 (BUY 0.043->0.045, SELL 0.049->0.047, HOLD 0.908->0.908)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] PYPL (financials): global_bullish(+0.05) = +0.050 (BUY 0.197->0.206, SELL 0.173->0.164, HOLD 0.631->0.630)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] QCOM (technology): global_bullish(+0.05) = +0.050 (BUY 0.371->0.385, SELL 0.105->0.098, HOLD 0.524->0.517)
+INFO:__main__:[ENTRY CHECK] QCOM: signal=BUY, prob_buy=0.385, prob_sell=0.098, prob_hold=0.517, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] QCOM: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] RCL (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.341->0.354, SELL 0.124->0.116, HOLD 0.536->0.530)
+INFO:__main__:[ENTRY CHECK] RCL: signal=BUY, prob_buy=0.354, prob_sell=0.116, prob_hold=0.530, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] RCL: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] REI (energy): global_bullish(+0.05) = +0.050 (BUY 0.900->0.905, SELL 0.034->0.031, HOLD 0.067->0.064)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] RMD (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.079->0.085, SELL 0.521->0.506, HOLD 0.400->0.409)
+INFO:__main__:[ENTRY CHECK] RMD: signal=SELL, prob_buy=0.085, prob_sell=0.506, prob_hold=0.409, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] RMD: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ROK (industrials): global_bullish(+0.05) = +0.050 (BUY 0.055->0.058, SELL 0.134->0.128, HOLD 0.811->0.815)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ROL (industrials): global_bullish(+0.05) = +0.050 (BUY 0.047->0.049, SELL 0.070->0.067, HOLD 0.883->0.884)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ROP (industrials): global_bullish(+0.05) = +0.050 (BUY 0.987->0.988, SELL 0.001->0.000, HOLD 0.013->0.012)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ROST (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.087->0.091, SELL 0.069->0.066, HOLD 0.844->0.843)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] RSG (industrials): global_bullish(+0.05) = +0.050 (BUY 0.362->0.373, SELL 0.017->0.016, HOLD 0.621->0.610)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SBUX (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.222->0.232, SELL 0.056->0.053, HOLD 0.721->0.715)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SCHW (financials): global_bullish(+0.05) = +0.050 (BUY 0.048->0.051, SELL 0.043->0.040, HOLD 0.909->0.909)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SGRY (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.277->0.293, SELL 0.429->0.411, HOLD 0.294->0.296)
+INFO:__main__:[ENTRY CHECK] SGRY: signal=SELL, prob_buy=0.293, prob_sell=0.411, prob_hold=0.296, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] SGRY: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SHW (materials): global_bullish(+0.05) = +0.050 (BUY 0.355->0.366, SELL 0.020->0.019, HOLD 0.625->0.615)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SLB (energy): global_bullish(+0.05) = +0.050 (BUY 0.063->0.066, SELL 0.146->0.139, HOLD 0.791->0.794)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SMPL (consumer_staples): global_bullish(+0.05) = +0.050 (BUY 0.003->0.003, SELL 0.879->0.873, HOLD 0.118->0.123)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SNOW (technology): global_bullish(+0.05) = +0.050 (BUY 0.418->0.432, SELL 0.108->0.101, HOLD 0.474->0.467)
+INFO:__main__:[ENTRY CHECK] SNOW: signal=BUY, prob_buy=0.432, prob_sell=0.101, prob_hold=0.467, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] SNOW: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SNPS (technology): global_bullish(+0.05) = +0.050 (BUY 0.051->0.054, SELL 0.162->0.155, HOLD 0.787->0.791)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SO (utilities): global_bullish(+0.05) = +0.050 (BUY 0.195->0.203, SELL 0.042->0.040, HOLD 0.763->0.757)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SOFI (financials): global_bullish(+0.05) = +0.050 (BUY 0.470->0.482, SELL 0.022->0.021, HOLD 0.508->0.497)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 728 dates (canonical order)
+WARNING:__main__:Unknown sector for SOL-USD, skipping
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SPGI (financials): global_bullish(+0.05) = +0.050 (BUY 0.061->0.065, SELL 0.347->0.334, HOLD 0.592->0.600)
+INFO:__main__:[ENTRY CHECK] SPGI: signal=SELL, prob_buy=0.065, prob_sell=0.334, prob_hold=0.600, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] SPGI: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SRE (utilities): global_bullish(+0.05) = +0.050 (BUY 0.074->0.078, SELL 0.026->0.025, HOLD 0.900->0.898)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] SYK (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.042->0.044, SELL 0.042->0.040, HOLD 0.916->0.916)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] TFC (financials): global_bullish(+0.05) = +0.050 (BUY 0.132->0.139, SELL 0.237->0.227, HOLD 0.631->0.634)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] TGT (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.459->0.473, SELL 0.081->0.075, HOLD 0.461->0.452)
+INFO:__main__:[ENTRY CHECK] TGT: signal=BUY, prob_buy=0.473, prob_sell=0.075, prob_hold=0.452, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] TGT: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] TJX (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.148->0.155, SELL 0.147->0.139, HOLD 0.705->0.705)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] TMO (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.458->0.473, SELL 0.100->0.094, HOLD 0.441->0.433)
+INFO:__main__:[ENTRY CHECK] TMO: signal=BUY, prob_buy=0.473, prob_sell=0.094, prob_hold=0.433, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] TMO: Failed threshold check
+INFO:__main__:  Progress: 200/233 (85.8%) - BUY: 0, SELL: 0, HOLD: 0
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] TNDM (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.535->0.549, SELL 0.053->0.049, HOLD 0.412->0.402)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] TRIP (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.456->0.470, SELL 0.101->0.094, HOLD 0.443->0.436)
+INFO:__main__:[ENTRY CHECK] TRIP: signal=BUY, prob_buy=0.470, prob_sell=0.094, prob_hold=0.436, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] TRIP: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] TRV (financials): global_bullish(+0.05) = +0.050 (BUY 0.413->0.426, SELL 0.041->0.038, HOLD 0.545->0.535)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] TSLA (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.375->0.395, SELL 0.458->0.437, HOLD 0.168->0.168)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] TT (industrials): global_bullish(+0.05) = +0.050 (BUY 0.077->0.081, SELL 0.087->0.083, HOLD 0.836->0.836)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] TXN (technology): global_bullish(+0.05) = +0.050 (BUY 0.331->0.346, SELL 0.253->0.239, HOLD 0.416->0.414)
+INFO:__main__:[ENTRY CHECK] TXN: signal=BUY, prob_buy=0.346, prob_sell=0.239, prob_hold=0.414, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] TXN: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ULTA (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.802->0.815, SELL 0.135->0.124, HOLD 0.063->0.061)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] UNH (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.303->0.320, SELL 0.437->0.418, HOLD 0.260->0.262)
+INFO:__main__:[ENTRY CHECK] UNH: signal=SELL, prob_buy=0.320, prob_sell=0.418, prob_hold=0.262, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] UNH: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] UNIT (real_estate): global_bullish(+0.05) = +0.050 (BUY 0.038->0.041, SELL 0.379->0.366, HOLD 0.583->0.593)
+INFO:__main__:[ENTRY CHECK] UNIT: signal=SELL, prob_buy=0.041, prob_sell=0.366, prob_hold=0.593, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] UNIT: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] UNP (industrials): global_bullish(+0.05) = +0.050 (BUY 0.234->0.244, SELL 0.130->0.123, HOLD 0.636->0.633)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] UPS (industrials): global_bullish(+0.05) = +0.050 (BUY 0.655->0.667, SELL 0.047->0.044, HOLD 0.298->0.289)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] URI (industrials): global_bullish(+0.05) = +0.050 (BUY 0.549->0.564, SELL 0.103->0.096, HOLD 0.348->0.340)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] USB (financials): global_bullish(+0.05) = +0.050 (BUY 0.040->0.042, SELL 0.358->0.346, HOLD 0.602->0.612)
+INFO:__main__:[ENTRY CHECK] USB: signal=SELL, prob_buy=0.042, prob_sell=0.346, prob_hold=0.612, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] USB: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] V (financials): global_bullish(+0.05) = +0.050 (BUY 0.086->0.090, SELL 0.035->0.033, HOLD 0.879->0.877)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] VEEV (healthcare): global_bullish(+0.05) = +0.050 (BUY 0.784->0.796, SELL 0.078->0.072, HOLD 0.137->0.132)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] VLO (energy): global_bullish(+0.05) = +0.050 (BUY 0.079->0.084, SELL 0.529->0.514, HOLD 0.392->0.401)
+INFO:__main__:[ENTRY CHECK] VLO: signal=SELL, prob_buy=0.084, prob_sell=0.514, prob_hold=0.401, threshold=0.550
+INFO:__main__:[ENTRY REJECTED] VLO: Failed threshold check
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] VMC (materials): global_bullish(+0.05) = +0.050 (BUY 0.065->0.068, SELL 0.030->0.029, HOLD 0.905->0.904)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] VRTX (technology): global_bullish(+0.05) = +0.050 (BUY 0.040->0.043, SELL 0.750->0.738, HOLD 0.211->0.218)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 468 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] VTLE (energy): global_bullish(+0.05) = +0.050 (BUY 0.018->0.019, SELL 0.905->0.900, HOLD 0.077->0.081)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] VTR (real_estate): global_bullish(+0.05) = +0.050 (BUY 0.087->0.091, SELL 0.038->0.036, HOLD 0.876->0.874)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] WAB (industrials): global_bullish(+0.05) = +0.050 (BUY 0.097->0.102, SELL 0.092->0.088, HOLD 0.811->0.810)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] WBD (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.050->0.052, SELL 0.064->0.061, HOLD 0.886->0.887)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] WEC (utilities): global_bullish(+0.05) = +0.050 (BUY 0.060->0.062, SELL 0.028->0.027, HOLD 0.913->0.911)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] WERN (industrials): global_bullish(+0.05) = +0.050 (BUY 0.201->0.209, SELL 0.032->0.030, HOLD 0.767->0.761)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] WFC (financials): global_bullish(+0.05) = +0.050 (BUY 0.118->0.123, SELL 0.048->0.045, HOLD 0.835->0.832)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] WLY (communication_services): global_bullish(+0.05) = +0.050 (BUY 0.114->0.119, SELL 0.071->0.068, HOLD 0.815->0.813)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] WMT (consumer_discretionary): global_bullish(+0.05) = +0.050 (BUY 0.190->0.198, SELL 0.050->0.047, HOLD 0.761->0.755)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] WTI (energy): global_bullish(+0.05) = +0.050 (BUY 0.814->0.824, SELL 0.060->0.055, HOLD 0.126->0.121)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] XEL (utilities): global_bullish(+0.05) = +0.050 (BUY 0.036->0.038, SELL 0.022->0.021, HOLD 0.942->0.941)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] XOM (energy): global_bullish(+0.05) = +0.050 (BUY 0.094->0.099, SELL 0.118->0.112, HOLD 0.788->0.789)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] XYL (industrials): global_bullish(+0.05) = +0.050 (BUY 0.628->0.641, SELL 0.060->0.056, HOLD 0.312->0.303)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] YALA (technology): global_bullish(+0.05) = +0.050 (BUY 0.058->0.061, SELL 0.201->0.192, HOLD 0.741->0.746)
+INFO:vectorized_engine:[GPU] Extracted 179 features for 500 dates (canonical order)
+C:\Users\webgu\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\utils\validation.py:2749: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+INFO:backend.turbomode.core_engine.news_engine:[UNIFIED BIAS] ZS (technology): global_bullish(+0.05) = +0.050 (BUY 0.123->0.129, SELL 0.179->0.171, HOLD 0.698->0.700)
+INFO:__main__:
+[STEP 4] Scan complete!
+INFO:__main__:  Scanned: 0/233
+INFO:__main__:  Failed: 233
+INFO:__main__:  BUY signals: 0
+INFO:__main__:  SELL signals: 0
+INFO:__main__:  HOLD signals: 0
+INFO:__main__:
+[STEP 4.5] Updating current prices for existing signals...
+INFO:__main__:  Updated current prices for 233 symbols
+INFO:__main__:
+[STEP 5] Saving signals to database...
+INFO:__main__:  BUY: 0 saved
+INFO:__main__:  SELL: 0 saved
+INFO:__main__:  HOLD: 0 saved
+INFO:__main__:  Total: 0 new, 0 updated, 0 flipped
+INFO:__main__:
+[STEP 6] Active positions summary...
+INFO:__main__:  Active positions: 190
+INFO:__main__:    A: SHORT @ $132.42 (stop: $135.68, target: $120.79)
+INFO:__main__:    ABBV: SHORT @ $221.62 (stop: $225.58, target: $207.48)
+INFO:__main__:    ABT: SHORT @ $105.79 (stop: $108.68, target: $95.46)
+INFO:__main__:    ADBE: LONG @ $289.56 (stop: $280.25, target: $322.81)
+INFO:__main__:    ADSK: LONG @ $254.50 (stop: $246.04, target: $284.71)
+INFO:__main__:    AEP: SHORT @ $119.16 (stop: $120.50, target: $114.36)
+INFO:__main__:    AIG: LONG @ $73.38 (stop: $72.14, target: $77.79)
+INFO:__main__:    ALL: LONG @ $197.46 (stop: $193.10, target: $213.05)
+INFO:__main__:    AMAT: SHORT @ $337.73 (stop: $350.31, target: $292.81)
+INFO:__main__:    AMGN: SHORT @ $345.49 (stop: $352.53, target: $320.35)
+INFO:__main__:    AMT: SHORT @ $178.74 (stop: $181.60, target: $168.53)
+INFO:__main__:    AMZN: SHORT @ $239.90 (stop: $244.41, target: $223.81)
+INFO:__main__:    APD: LONG @ $255.76 (stop: $251.29, target: $271.72)
+INFO:__main__:    AVGO: LONG @ $328.95 (stop: $317.69, target: $369.17)
+INFO:__main__:    AXP: LONG @ $358.07 (stop: $351.66, target: $380.95)
+INFO:__main__:    BAC: SHORT @ $52.82 (stop: $53.79, target: $49.36)
+INFO:__main__:    BDX: LONG @ $200.56 (stop: $196.92, target: $213.55)
+INFO:__main__:    BK: SHORT @ $119.93 (stop: $121.73, target: $113.50)
+INFO:__main__:    BLK: SHORT @ $1121.64 (stop: $1147.28, target: $1030.06)
+INFO:__main__:    BMY: SHORT @ $55.11 (stop: $55.93, target: $52.17)
+INFO:__main__:    BRK-B: SHORT @ $474.31 (stop: $478.98, target: $457.64)
+INFO:__main__:    C: SHORT @ $114.50 (stop: $117.25, target: $104.69)
+INFO:__main__:    CAH: SHORT @ $210.64 (stop: $214.51, target: $196.83)
+INFO:__main__:    CAT: SHORT @ $666.08 (stop: $679.07, target: $619.69)
+INFO:__main__:    CCL: SHORT @ $30.79 (stop: $31.51, target: $28.22)
+INFO:__main__:    CDNS: SHORT @ $300.97 (stop: $311.01, target: $265.13)
+INFO:__main__:    CI: LONG @ $271.80 (stop: $267.01, target: $288.90)
+INFO:__main__:    CME: SHORT @ $291.05 (stop: $295.33, target: $275.76)
+INFO:__main__:    CMG: SHORT @ $38.97 (stop: $40.21, target: $34.56)
+INFO:__main__:    CMI: SHORT @ $582.20 (stop: $592.71, target: $544.68)
+INFO:__main__:    COF: LONG @ $219.06 (stop: $211.53, target: $245.94)
+INFO:__main__:    COST: LONG @ $953.81 (stop: $941.46, target: $997.90)
+INFO:__main__:    CRM: LONG @ $212.74 (stop: $205.63, target: $238.14)
+INFO:__main__:    CSCO: SHORT @ $78.40 (stop: $79.93, target: $72.93)
+INFO:__main__:    CTAS: SHORT @ $189.21 (stop: $191.40, target: $181.40)
+INFO:__main__:    CTSH: SHORT @ $82.24 (stop: $84.03, target: $75.86)
+INFO:__main__:    CVS: SHORT @ $74.25 (stop: $76.73, target: $65.38)
+INFO:__main__:    D: SHORT @ $60.66 (stop: $61.38, target: $58.08)
+INFO:__main__:    DE: LONG @ $524.74 (stop: $517.02, target: $552.32)
+INFO:__main__:    DG: SHORT @ $142.16 (stop: $146.17, target: $127.84)
+INFO:__main__:    DHR: SHORT @ $220.34 (stop: $224.97, target: $203.79)
+INFO:__main__:    DIS: SHORT @ $110.83 (stop: $112.49, target: $104.90)
+INFO:__main__:    DUK: SHORT @ $120.62 (stop: $121.76, target: $116.57)
+INFO:__main__:    EBAY: SHORT @ $94.57 (stop: $96.44, target: $87.89)
+INFO:__main__:    ECL: SHORT @ $280.00 (stop: $283.40, target: $267.87)
+INFO:__main__:    ED: SHORT @ $105.43 (stop: $106.71, target: $100.86)
+INFO:__main__:    EMR: SHORT @ $150.14 (stop: $152.52, target: $141.63)
+INFO:__main__:    ETN: LONG @ $353.05 (stop: $346.09, target: $377.92)
+INFO:__main__:    ETR: SHORT @ $96.04 (stop: $97.21, target: $91.87)
+INFO:__main__:    EW: SHORT @ $80.77 (stop: $82.43, target: $74.85)
+INFO:__main__:    EXC: SHORT @ $44.55 (stop: $45.03, target: $42.83)
+INFO:__main__:    FAST: SHORT @ $43.41 (stop: $44.23, target: $40.47)
+INFO:__main__:    FDX: SHORT @ $318.02 (stop: $323.52, target: $298.39)
+INFO:__main__:    FTNT: LONG @ $80.87 (stop: $79.01, target: $87.51)
+INFO:__main__:    GE: SHORT @ $296.19 (stop: $303.34, target: $270.65)
+INFO:__main__:    GILD: SHORT @ $139.09 (stop: $142.21, target: $127.96)
+INFO:__main__:    GM: SHORT @ $86.08 (stop: $88.30, target: $78.14)
+INFO:__main__:    GOOGL: LONG @ $333.81 (stop: $326.44, target: $360.12)
+INFO:__main__:    GS: LONG @ $932.06 (stop: $909.71, target: $1011.87)
+INFO:__main__:    GWW: SHORT @ $1079.34 (stop: $1095.87, target: $1020.31)
+INFO:__main__:    HCA: SHORT @ $485.00 (stop: $496.00, target: $445.72)
+INFO:__main__:    HD: LONG @ $372.23 (stop: $364.17, target: $401.01)
+INFO:__main__:    HLT: SHORT @ $298.90 (stop: $303.86, target: $281.19)
+INFO:__main__:    HON: SHORT @ $226.40 (stop: $229.87, target: $214.00)
+INFO:__main__:    HUM: LONG @ $195.00 (stop: $186.35, target: $225.89)
+INFO:__main__:    HWM: SHORT @ $209.63 (stop: $213.60, target: $195.45)
+INFO:__main__:    ICE: LONG @ $174.45 (stop: $172.04, target: $183.04)
+INFO:__main__:    IDXX: SHORT @ $676.96 (stop: $689.94, target: $630.60)
+INFO:__main__:    INTU: LONG @ $494.79 (stop: $474.34, target: $567.84)
+INFO:__main__:    ISRG: SHORT @ $504.81 (stop: $517.58, target: $459.19)
+INFO:__main__:    ITW: SHORT @ $259.91 (stop: $263.19, target: $248.19)
+INFO:__main__:    JCI: SHORT @ $120.53 (stop: $122.13, target: $114.80)
+INFO:__main__:    JPM: LONG @ $305.12 (stop: $299.31, target: $325.89)
+INFO:__main__:    KLAC: LONG @ $1660.12 (stop: $1605.69, target: $1854.53)
+INFO:__main__:    KO: SHORT @ $73.74 (stop: $74.57, target: $70.76)
+INFO:__main__:    LIN: SHORT @ $450.30 (stop: $455.89, target: $430.32)
+INFO:__main__:    LLY: LONG @ $1025.27 (stop: $1002.66, target: $1106.01)
+INFO:__main__:    LMT: SHORT @ $627.63 (stop: $642.83, target: $573.34)
+INFO:__main__:    LOW: LONG @ $267.52 (stop: $262.40, target: $285.79)
+INFO:__main__:    LVS: LONG @ $52.98 (stop: $51.26, target: $59.13)
+INFO:__main__:    MAR: SHORT @ $317.73 (stop: $325.01, target: $291.72)
+INFO:__main__:    MCD: SHORT @ $316.23 (stop: $320.40, target: $301.34)
+INFO:__main__:    MDT: SHORT @ $100.41 (stop: $101.88, target: $95.16)
+INFO:__main__:    MET: LONG @ $77.25 (stop: $76.06, target: $81.50)
+INFO:__main__:    META: SHORT @ $730.69 (stop: $746.42, target: $674.53)
+INFO:__main__:    MLM: SHORT @ $649.05 (stop: $662.95, target: $599.39)
+INFO:__main__:    MRK: SHORT @ $109.13 (stop: $111.19, target: $101.76)
+INFO:__main__:    MS: SHORT @ $180.66 (stop: $184.35, target: $167.47)
+INFO:__main__:    MTD: LONG @ $1379.93 (stop: $1350.36, target: $1485.52)
+INFO:__main__:    MU: SHORT @ $433.13 (stop: $455.19, target: $354.36)
+INFO:__main__:    NEE: SHORT @ $88.05 (stop: $89.23, target: $83.83)
+INFO:__main__:    NFLX: LONG @ $82.66 (stop: $80.88, target: $89.01)
+INFO:__main__:    NOC: SHORT @ $689.88 (stop: $707.70, target: $626.22)
+INFO:__main__:    NOW: LONG @ $113.31 (stop: $108.13, target: $131.81)
+INFO:__main__:    NSC: LONG @ $288.14 (stop: $283.75, target: $303.80)
+INFO:__main__:    NUE: SHORT @ $178.33 (stop: $182.61, target: $163.03)
+INFO:__main__:    NVDA: SHORT @ $189.46 (stop: $194.51, target: $171.44)
+INFO:__main__:    ODFL: LONG @ $172.76 (stop: $169.69, target: $183.73)
+INFO:__main__:    ORCL: LONG @ $164.31 (stop: $155.45, target: $195.96)
+INFO:__main__:    OTIS: LONG @ $86.63 (stop: $85.06, target: $92.24)
+INFO:__main__:    PANW: SHORT @ $172.88 (stop: $178.28, target: $153.61)
+INFO:__main__:    PCAR: SHORT @ $122.90 (stop: $125.16, target: $114.82)
+INFO:__main__:    PEG: SHORT @ $81.20 (stop: $82.20, target: $77.62)
+INFO:__main__:    PG: SHORT @ $149.51 (stop: $151.02, target: $144.12)
+INFO:__main__:    PGR: SHORT @ $206.80 (stop: $212.12, target: $187.81)
+INFO:__main__:    PH: SHORT @ $951.34 (stop: $965.96, target: $899.13)
+INFO:__main__:    PLD: SHORT @ $129.21 (stop: $131.30, target: $121.74)
+INFO:__main__:    PWR: SHORT @ $484.43 (stop: $498.28, target: $434.96)
+INFO:__main__:    PYPL: SHORT @ $53.03 (stop: $53.95, target: $49.73)
+INFO:__main__:    ROK: SHORT @ $425.32 (stop: $432.44, target: $399.88)
+INFO:__main__:    ROL: SHORT @ $62.56 (stop: $63.32, target: $59.84)
+INFO:__main__:    ROP: LONG @ $356.76 (stop: $346.02, target: $395.10)
+INFO:__main__:    ROST: SHORT @ $185.80 (stop: $188.89, target: $174.77)
+INFO:__main__:    RSG: LONG @ $215.51 (stop: $213.17, target: $223.87)
+INFO:__main__:    SBUX: SHORT @ $93.62 (stop: $96.10, target: $84.77)
+INFO:__main__:    SCHW: SHORT @ $103.43 (stop: $105.62, target: $95.61)
+INFO:__main__:    SHW: LONG @ $352.31 (stop: $345.81, target: $375.54)
+INFO:__main__:    SLB: SHORT @ $49.12 (stop: $50.48, target: $44.28)
+INFO:__main__:    SNPS: SHORT @ $480.81 (stop: $498.53, target: $417.53)
+INFO:__main__:    SO: SHORT @ $88.78 (stop: $89.58, target: $85.92)
+INFO:__main__:    SRE: SHORT @ $86.34 (stop: $87.67, target: $81.60)
+INFO:__main__:    SYK: SHORT @ $352.87 (stop: $359.20, target: $330.27)
+INFO:__main__:    TFC: SHORT @ $50.80 (stop: $51.60, target: $47.94)
+INFO:__main__:    TJX: SHORT @ $146.16 (stop: $148.31, target: $138.47)
+INFO:__main__:    TRV: LONG @ $283.17 (stop: $279.00, target: $298.07)
+INFO:__main__:    TSLA: SHORT @ $421.64 (stop: $431.06, target: $387.98)
+INFO:__main__:    TT: SHORT @ $425.23 (stop: $433.64, target: $395.19)
+INFO:__main__:    ULTA: LONG @ $633.34 (stop: $619.98, target: $681.06)
+INFO:__main__:    UNP: SHORT @ $230.68 (stop: $234.00, target: $218.83)
+INFO:__main__:    UPS: LONG @ $106.27 (stop: $104.56, target: $112.36)
+INFO:__main__:    V: SHORT @ $330.25 (stop: $336.41, target: $308.24)
+INFO:__main__:    VMC: SHORT @ $297.86 (stop: $304.00, target: $275.92)
+INFO:__main__:    VRTX: SHORT @ $475.64 (stop: $487.69, target: $432.59)
+INFO:__main__:    WAB: SHORT @ $231.17 (stop: $234.48, target: $219.35)
+INFO:__main__:    WEC: SHORT @ $109.90 (stop: $110.97, target: $106.09)
+INFO:__main__:    WFC: SHORT @ $89.45 (stop: $91.36, target: $82.62)
+INFO:__main__:    WMT: SHORT @ $117.22 (stop: $119.47, target: $109.19)
+INFO:__main__:    XEL: SHORT @ $75.84 (stop: $76.69, target: $72.82)
+INFO:__main__:    XOM: SHORT @ $140.14 (stop: $142.53, target: $131.60)
+INFO:__main__:    XYL: LONG @ $135.99 (stop: $133.77, target: $143.91)
+INFO:__main__:    ACHC: LONG @ $13.05 (stop: $12.30, target: $15.73)
+INFO:__main__:    ALNY: SHORT @ $346.89 (stop: $359.53, target: $301.73)
+INFO:__main__:    AMC: SHORT @ $1.44 (stop: $1.53, target: $1.08)
+INFO:__main__:    BTAI: LONG @ $1.63 (stop: $1.52, target: $2.03)
+INFO:__main__:    CRI: LONG @ $33.51 (stop: $31.81, target: $39.56)
+INFO:__main__:    CRWD: SHORT @ $440.83 (stop: $458.06, target: $379.28)
+INFO:__main__:    DBI: LONG @ $6.18 (stop: $5.68, target: $7.96)
+INFO:__main__:    DDOG: LONG @ $129.00 (stop: $123.17, target: $149.81)
+INFO:__main__:    DOMO: SHORT @ $6.01 (stop: $6.54, target: $4.13)
+INFO:__main__:    EPC: SHORT @ $18.91 (stop: $19.25, target: $17.68)
+INFO:__main__:    GO: LONG @ $9.41 (stop: $9.10, target: $10.53)
+INFO:__main__:    GOGO: LONG @ $4.58 (stop: $4.39, target: $5.28)
+INFO:__main__:    IRBT: LONG @ $0.05 (stop: $0.01, target: $0.21)
+INFO:__main__:    OMI: LONG @ $2.12 (stop: $1.92, target: $2.82)
+INFO:__main__:    PLAY: LONG @ $19.23 (stop: $18.22, target: $22.82)
+INFO:__main__:    REI: LONG @ $1.14 (stop: $1.08, target: $1.33)
+INFO:__main__:    SMPL: SHORT @ $18.90 (stop: $19.48, target: $16.82)
+INFO:__main__:    SOFI: LONG @ $24.47 (stop: $23.57, target: $27.67)
+INFO:__main__:    ARLO: LONG @ $12.88 (stop: $12.45, target: $14.39)
+INFO:__main__:    PLCE: LONG @ $4.10 (stop: $3.84, target: $5.04)
+INFO:__main__:    WTI: LONG @ $2.19 (stop: $2.09, target: $2.58)
+INFO:__main__:    BCRX: SHORT @ $6.78 (stop: $7.03, target: $5.88)
+INFO:__main__:    NET: LONG @ $178.75 (stop: $167.54, target: $218.80)
+INFO:__main__:    VEEV: LONG @ $206.64 (stop: $200.84, target: $227.35)
+INFO:__main__:    EQT: SHORT @ $56.40 (stop: $58.47, target: $49.00)
+INFO:__main__:    FANG: SHORT @ $164.69 (stop: $169.16, target: $148.73)
+INFO:__main__:    FCX: SHORT @ $65.42 (stop: $67.62, target: $57.57)
+INFO:__main__:    IMAX: LONG @ $34.07 (stop: $33.27, target: $36.92)
+INFO:__main__:    MDB: SHORT @ $371.13 (stop: $390.63, target: $301.47)
+INFO:__main__:    NTRA: LONG @ $229.99 (stop: $223.91, target: $251.72)
+INFO:__main__:    VTLE: SHORT @ $17.92 (stop: $18.60, target: $15.49)
+INFO:__main__:    ALEX: SHORT @ $20.72 (stop: $20.77, target: $20.55)
+INFO:__main__:    ATRC: SHORT @ $36.97 (stop: $38.43, target: $31.77)
+INFO:__main__:    CARR: SHORT @ $59.51 (stop: $60.57, target: $55.73)
+INFO:__main__:    EXR: LONG @ $138.10 (stop: $135.84, target: $146.17)
+INFO:__main__:    HSY: SHORT @ $193.60 (stop: $196.99, target: $181.49)
+INFO:__main__:    PDM: SHORT @ $8.11 (stop: $8.26, target: $7.56)
+INFO:__main__:    VTR: SHORT @ $76.60 (stop: $77.71, target: $72.64)
+INFO:__main__:    WBD: SHORT @ $27.80 (stop: $28.29, target: $26.04)
+INFO:__main__:    WERN: SHORT @ $34.77 (stop: $35.57, target: $31.90)
+INFO:__main__:    WLY: SHORT @ $31.12 (stop: $31.81, target: $28.66)
+INFO:__main__:    PSA: SHORT @ $275.75 (stop: $280.12, target: $260.15)
+INFO:__main__:    YALA: SHORT @ $7.04 (stop: $7.27, target: $6.21)
+INFO:__main__:    ZS: SHORT @ $200.87 (stop: $208.11, target: $175.02)
+INFO:__main__:    DLR: SHORT @ $166.62 (stop: $169.11, target: $157.73)
+INFO:__main__:    COHU: SHORT @ $29.08 (stop: $30.16, target: $25.22)
+INFO:__main__:    ESRT: SHORT @ $6.59 (stop: $6.73, target: $6.08)
+INFO:__main__:    HAIN: LONG @ $1.24 (stop: $1.17, target: $1.48)
+INFO:__main__:    TNDM: LONG @ $19.41 (stop: $18.52, target: $22.57)
+INFO:__main__:    URI: LONG @ $764.34 (stop: $743.41, target: $839.08)
+INFO:__main__:
+================================================================================
+INFO:__main__:SCAN COMPLETE
+INFO:__main__:================================================================================
+INFO:__main__:End Time: 2026-01-31 21:02:40
+INFO:__main__:
+[OK] Production scan complete!
+INFO:__main__:BUY signals: 0
+INFO:__main__:SELL signals: 0
+INFO:__main__:Active positions: 190
+[OK] TurboMode database initialized: C:\StockApp\backend\data\turbomode.db
+[OK] Loaded 222 positions from C:\StockApp\backend\data\position_state.json
+[POSITION_MANAGER] Initialized with state file: C:\StockApp\backend\data\position_state.json
+[POSITION_MANAGER] Loaded 222 existing positions
+[RAW_MODEL] A: BUY=0.109, SELL=0.035, HOLD=0.856, ARGMAX=HOLD
+[RAW_MODEL] AAPL: BUY=0.484, SELL=0.090, HOLD=0.426, ARGMAX=BUY
+[RAW_MODEL] ABBV: BUY=0.262, SELL=0.047, HOLD=0.692, ARGMAX=HOLD
+[RAW_MODEL] ABT: BUY=0.125, SELL=0.047, HOLD=0.827, ARGMAX=HOLD
+[RAW_MODEL] ACHC: BUY=0.615, SELL=0.042, HOLD=0.344, ARGMAX=BUY
+[RAW_MODEL] ADBE: BUY=0.876, SELL=0.011, HOLD=0.113, ARGMAX=BUY
+[RAW_MODEL] ADI: BUY=0.109, SELL=0.389, HOLD=0.502, ARGMAX=HOLD
+[RAW_MODEL] ADSK: BUY=0.854, SELL=0.017, HOLD=0.129, ARGMAX=BUY
+[RAW_MODEL] AEP: BUY=0.021, SELL=0.012, HOLD=0.967, ARGMAX=HOLD
+[RAW_MODEL] AIG: BUY=0.738, SELL=0.015, HOLD=0.247, ARGMAX=BUY
+[RAW_MODEL] ALEX: BUY=0.056, SELL=0.042, HOLD=0.902, ARGMAX=HOLD
+[RAW_MODEL] ALL: BUY=0.438, SELL=0.029, HOLD=0.533, ARGMAX=HOLD
+[RAW_MODEL] ALNY: BUY=0.087, SELL=0.080, HOLD=0.834, ARGMAX=HOLD
+[RAW_MODEL] AMAT: BUY=0.053, SELL=0.683, HOLD=0.264, ARGMAX=SELL
+[RAW_MODEL] AMC: BUY=0.048, SELL=0.761, HOLD=0.190, ARGMAX=SELL
+[RAW_MODEL] AMD: BUY=0.327, SELL=0.102, HOLD=0.571, ARGMAX=HOLD
+[RAW_MODEL] AMGN: BUY=0.110, SELL=0.064, HOLD=0.826, ARGMAX=HOLD
+[RAW_MODEL] AMT: BUY=0.183, SELL=0.129, HOLD=0.688, ARGMAX=HOLD
+[RAW_MODEL] AMZN: BUY=0.262, SELL=0.081, HOLD=0.657, ARGMAX=HOLD
+[RAW_MODEL] ANET: BUY=0.383, SELL=0.242, HOLD=0.375, ARGMAX=BUY
+[RAW_MODEL] APD: BUY=0.525, SELL=0.020, HOLD=0.455, ARGMAX=BUY
+[RAW_MODEL] ARLO: BUY=0.393, SELL=0.026, HOLD=0.581, ARGMAX=HOLD
+[RAW_MODEL] ATRC: BUY=0.203, SELL=0.187, HOLD=0.610, ARGMAX=HOLD
+[RAW_MODEL] AVGO: BUY=0.698, SELL=0.056, HOLD=0.246, ARGMAX=BUY
+[RAW_MODEL] AXP: BUY=0.564, SELL=0.026, HOLD=0.410, ARGMAX=BUY
+[RAW_MODEL] BAC: BUY=0.117, SELL=0.049, HOLD=0.834, ARGMAX=HOLD
+[RAW_MODEL] BCRX: BUY=0.267, SELL=0.124, HOLD=0.610, ARGMAX=HOLD
+[RAW_MODEL] BDX: BUY=0.544, SELL=0.056, HOLD=0.400, ARGMAX=BUY
+[RAW_MODEL] BK: BUY=0.182, SELL=0.063, HOLD=0.755, ARGMAX=HOLD
+[RAW_MODEL] BLK: BUY=0.013, SELL=0.095, HOLD=0.892, ARGMAX=HOLD
+[RAW_MODEL] BMY: BUY=0.189, SELL=0.185, HOLD=0.626, ARGMAX=HOLD
+[RAW_MODEL] BRK-B: BUY=0.211, SELL=0.052, HOLD=0.736, ARGMAX=HOLD
+[RAW_MODEL] BTAI: BUY=0.997, SELL=0.000, HOLD=0.003, ARGMAX=BUY
+[RAW_MODEL] C: BUY=0.196, SELL=0.064, HOLD=0.740, ARGMAX=HOLD
+[RAW_MODEL] CAH: BUY=0.150, SELL=0.059, HOLD=0.791, ARGMAX=HOLD
+[RAW_MODEL] CARR: BUY=0.240, SELL=0.053, HOLD=0.708, ARGMAX=HOLD
+[RAW_MODEL] CAT: BUY=0.165, SELL=0.122, HOLD=0.713, ARGMAX=HOLD
+[RAW_MODEL] CCL: BUY=0.156, SELL=0.242, HOLD=0.601, ARGMAX=HOLD
+[RAW_MODEL] CCOI: BUY=0.324, SELL=0.335, HOLD=0.341, ARGMAX=HOLD
+[RAW_MODEL] CDNS: BUY=0.261, SELL=0.071, HOLD=0.668, ARGMAX=HOLD
+[RAW_MODEL] CI: BUY=0.604, SELL=0.099, HOLD=0.297, ARGMAX=BUY
+[RAW_MODEL] CME: BUY=0.176, SELL=0.043, HOLD=0.781, ARGMAX=HOLD
+[RAW_MODEL] CMG: BUY=0.048, SELL=0.846, HOLD=0.106, ARGMAX=SELL
+[RAW_MODEL] CMI: BUY=0.055, SELL=0.035, HOLD=0.910, ARGMAX=HOLD
+[RAW_MODEL] COF: BUY=0.888, SELL=0.028, HOLD=0.084, ARGMAX=BUY
+[RAW_MODEL] COHU: BUY=0.151, SELL=0.261, HOLD=0.588, ARGMAX=HOLD
+[RAW_MODEL] COST: BUY=0.158, SELL=0.022, HOLD=0.820, ARGMAX=HOLD
+[RAW_MODEL] CRI: BUY=0.788, SELL=0.069, HOLD=0.143, ARGMAX=BUY
+[RAW_MODEL] CRM: BUY=0.721, SELL=0.019, HOLD=0.260, ARGMAX=BUY
+[RAW_MODEL] CRWD: BUY=0.029, SELL=0.182, HOLD=0.790, ARGMAX=HOLD
+[RAW_MODEL] CSCO: BUY=0.185, SELL=0.044, HOLD=0.771, ARGMAX=HOLD
+[RAW_MODEL] CSX: BUY=0.281, SELL=0.125, HOLD=0.594, ARGMAX=HOLD
+[RAW_MODEL] CTAS: BUY=0.207, SELL=0.123, HOLD=0.670, ARGMAX=HOLD
+[RAW_MODEL] CTSH: BUY=0.201, SELL=0.098, HOLD=0.701, ARGMAX=HOLD
+[RAW_MODEL] CVS: BUY=0.108, SELL=0.063, HOLD=0.829, ARGMAX=HOLD
+[RAW_MODEL] CVX: BUY=0.070, SELL=0.531, HOLD=0.399, ARGMAX=SELL
+[RAW_MODEL] D: BUY=0.153, SELL=0.027, HOLD=0.819, ARGMAX=HOLD
+[RAW_MODEL] DBI: BUY=0.827, SELL=0.010, HOLD=0.163, ARGMAX=BUY
+[RAW_MODEL] DDOG: BUY=0.788, SELL=0.043, HOLD=0.169, ARGMAX=BUY
+[RAW_MODEL] DE: BUY=0.550, SELL=0.204, HOLD=0.246, ARGMAX=BUY
+[RAW_MODEL] DG: BUY=0.193, SELL=0.013, HOLD=0.794, ARGMAX=HOLD
+[RAW_MODEL] DHR: BUY=0.215, SELL=0.098, HOLD=0.686, ARGMAX=HOLD
+[RAW_MODEL] DIS: BUY=0.245, SELL=0.084, HOLD=0.670, ARGMAX=HOLD
+[RAW_MODEL] DK: BUY=0.042, SELL=0.457, HOLD=0.502, ARGMAX=HOLD
+[RAW_MODEL] DLR: BUY=0.104, SELL=0.260, HOLD=0.636, ARGMAX=HOLD
+[RAW_MODEL] DOMO: BUY=0.002, SELL=0.953, HOLD=0.045, ARGMAX=SELL
+[RAW_MODEL] DUK: BUY=0.025, SELL=0.026, HOLD=0.949, ARGMAX=HOLD
+[RAW_MODEL] EBAY: BUY=0.167, SELL=0.180, HOLD=0.653, ARGMAX=HOLD
+[RAW_MODEL] ECL: BUY=0.154, SELL=0.048, HOLD=0.798, ARGMAX=HOLD
+[RAW_MODEL] ED: BUY=0.052, SELL=0.034, HOLD=0.914, ARGMAX=HOLD
+[RAW_MODEL] EMR: BUY=0.123, SELL=0.107, HOLD=0.770, ARGMAX=HOLD
+[RAW_MODEL] EPC: BUY=0.035, SELL=0.608, HOLD=0.357, ARGMAX=SELL
+[RAW_MODEL] EQT: BUY=0.007, SELL=0.898, HOLD=0.095, ARGMAX=SELL
+[RAW_MODEL] ESRT: BUY=0.024, SELL=0.281, HOLD=0.695, ARGMAX=HOLD
+[RAW_MODEL] ETN: BUY=0.871, SELL=0.018, HOLD=0.111, ARGMAX=BUY
+[RAW_MODEL] ETR: BUY=0.066, SELL=0.086, HOLD=0.848, ARGMAX=HOLD
+[RAW_MODEL] EW: BUY=0.123, SELL=0.064, HOLD=0.814, ARGMAX=HOLD
+[RAW_MODEL] EXC: BUY=0.053, SELL=0.026, HOLD=0.921, ARGMAX=HOLD
+[RAW_MODEL] EXPE: BUY=0.278, SELL=0.227, HOLD=0.495, ARGMAX=HOLD
+[RAW_MODEL] EXR: BUY=0.825, SELL=0.006, HOLD=0.169, ARGMAX=BUY
+[RAW_MODEL] FANG: BUY=0.039, SELL=0.743, HOLD=0.219, ARGMAX=SELL
+[RAW_MODEL] FAST: BUY=0.133, SELL=0.123, HOLD=0.745, ARGMAX=HOLD
+[RAW_MODEL] FCX: BUY=0.006, SELL=0.902, HOLD=0.092, ARGMAX=SELL
+[RAW_MODEL] FDX: BUY=0.084, SELL=0.069, HOLD=0.847, ARGMAX=HOLD
+[RAW_MODEL] FTNT: BUY=0.468, SELL=0.064, HOLD=0.468, ARGMAX=HOLD
+[RAW_MODEL] GD: BUY=0.344, SELL=0.055, HOLD=0.601, ARGMAX=HOLD
+[RAW_MODEL] GE: BUY=0.104, SELL=0.073, HOLD=0.823, ARGMAX=HOLD
+[RAW_MODEL] GILD: BUY=0.118, SELL=0.144, HOLD=0.738, ARGMAX=HOLD
+[RAW_MODEL] GM: BUY=0.100, SELL=0.107, HOLD=0.793, ARGMAX=HOLD
+[RAW_MODEL] GO: BUY=0.944, SELL=0.002, HOLD=0.054, ARGMAX=BUY
+[RAW_MODEL] GOGO: BUY=0.879, SELL=0.016, HOLD=0.105, ARGMAX=BUY
+[RAW_MODEL] GOOGL: BUY=0.930, SELL=0.004, HOLD=0.066, ARGMAX=BUY
+[RAW_MODEL] GS: BUY=0.986, SELL=0.001, HOLD=0.013, ARGMAX=BUY
+[RAW_MODEL] GTN: BUY=0.183, SELL=0.429, HOLD=0.388, ARGMAX=SELL
+[RAW_MODEL] GWW: BUY=0.063, SELL=0.058, HOLD=0.879, ARGMAX=HOLD
+[RAW_MODEL] HAIN: BUY=0.513, SELL=0.022, HOLD=0.465, ARGMAX=BUY
+[RAW_MODEL] HCA: BUY=0.254, SELL=0.033, HOLD=0.713, ARGMAX=HOLD
+[RAW_MODEL] HD: BUY=0.974, SELL=0.004, HOLD=0.022, ARGMAX=BUY
+[RAW_MODEL] HLT: BUY=0.172, SELL=0.105, HOLD=0.722, ARGMAX=HOLD
+[RAW_MODEL] HLX: BUY=0.070, SELL=0.513, HOLD=0.417, ARGMAX=SELL
+[RAW_MODEL] HON: BUY=0.125, SELL=0.085, HOLD=0.790, ARGMAX=HOLD
+[RAW_MODEL] HSY: BUY=0.116, SELL=0.037, HOLD=0.846, ARGMAX=HOLD
+[RAW_MODEL] HUM: BUY=0.640, SELL=0.201, HOLD=0.160, ARGMAX=BUY
+[RAW_MODEL] HWM: BUY=0.195, SELL=0.169, HOLD=0.636, ARGMAX=HOLD
+[RAW_MODEL] ICE: BUY=0.371, SELL=0.041, HOLD=0.588, ARGMAX=HOLD
+[RAW_MODEL] IDXX: BUY=0.182, SELL=0.068, HOLD=0.750, ARGMAX=HOLD
+[RAW_MODEL] IMAX: BUY=0.641, SELL=0.028, HOLD=0.331, ARGMAX=BUY
+[RAW_MODEL] INTU: BUY=0.709, SELL=0.031, HOLD=0.260, ARGMAX=BUY
+[RAW_MODEL] IRBT: BUY=0.855, SELL=0.024, HOLD=0.122, ARGMAX=BUY
+[RAW_MODEL] ISRG: BUY=0.162, SELL=0.047, HOLD=0.790, ARGMAX=HOLD
+[RAW_MODEL] ITW: BUY=0.109, SELL=0.105, HOLD=0.786, ARGMAX=HOLD
+[RAW_MODEL] JCI: BUY=0.215, SELL=0.076, HOLD=0.709, ARGMAX=HOLD
+[RAW_MODEL] JNJ: BUY=0.071, SELL=0.409, HOLD=0.520, ARGMAX=HOLD
+[RAW_MODEL] JPM: BUY=0.490, SELL=0.030, HOLD=0.481, ARGMAX=BUY
+[RAW_MODEL] KLAC: BUY=0.612, SELL=0.056, HOLD=0.333, ARGMAX=BUY
+[RAW_MODEL] KO: BUY=0.036, SELL=0.045, HOLD=0.919, ARGMAX=HOLD
+[RAW_MODEL] LEN: BUY=0.469, SELL=0.097, HOLD=0.434, ARGMAX=BUY
+[RAW_MODEL] LIN: BUY=0.049, SELL=0.034, HOLD=0.917, ARGMAX=HOLD
+[RAW_MODEL] LLY: BUY=0.682, SELL=0.094, HOLD=0.224, ARGMAX=BUY
+[RAW_MODEL] LMT: BUY=0.018, SELL=0.062, HOLD=0.920, ARGMAX=HOLD
+[RAW_MODEL] LOW: BUY=0.644, SELL=0.052, HOLD=0.304, ARGMAX=BUY
+[RAW_MODEL] LRCX: BUY=0.039, SELL=0.418, HOLD=0.543, ARGMAX=HOLD
+[RAW_MODEL] LVS: BUY=0.674, SELL=0.045, HOLD=0.281, ARGMAX=BUY
+[RAW_MODEL] MAR: BUY=0.069, SELL=0.036, HOLD=0.895, ARGMAX=HOLD
+[RAW_MODEL] MCD: BUY=0.055, SELL=0.066, HOLD=0.879, ARGMAX=HOLD
+[RAW_MODEL] MDB: BUY=0.083, SELL=0.767, HOLD=0.150, ARGMAX=SELL
+[RAW_MODEL] MDT: BUY=0.261, SELL=0.086, HOLD=0.653, ARGMAX=HOLD
+[RAW_MODEL] MET: BUY=0.746, SELL=0.019, HOLD=0.235, ARGMAX=BUY
+[RAW_MODEL] META: BUY=0.118, SELL=0.236, HOLD=0.646, ARGMAX=HOLD
+[RAW_MODEL] MLM: BUY=0.049, SELL=0.032, HOLD=0.920, ARGMAX=HOLD
+[RAW_MODEL] MRK: BUY=0.116, SELL=0.075, HOLD=0.809, ARGMAX=HOLD
+[RAW_MODEL] MS: BUY=0.230, SELL=0.031, HOLD=0.739, ARGMAX=HOLD
+[RAW_MODEL] MSFT: BUY=0.352, SELL=0.087, HOLD=0.562, ARGMAX=HOLD
+[RAW_MODEL] MTD: BUY=0.418, SELL=0.039, HOLD=0.543, ARGMAX=HOLD
+[RAW_MODEL] MU: BUY=0.071, SELL=0.057, HOLD=0.871, ARGMAX=HOLD
+[RAW_MODEL] NEE: BUY=0.055, SELL=0.043, HOLD=0.902, ARGMAX=HOLD
+[RAW_MODEL] NEM: BUY=0.147, SELL=0.487, HOLD=0.365, ARGMAX=SELL
+[RAW_MODEL] NET: BUY=0.861, SELL=0.020, HOLD=0.119, ARGMAX=BUY
+[RAW_MODEL] NFLX: BUY=0.724, SELL=0.035, HOLD=0.242, ARGMAX=BUY
+[RAW_MODEL] NKE: BUY=0.494, SELL=0.095, HOLD=0.411, ARGMAX=BUY
+[RAW_MODEL] NOC: BUY=0.023, SELL=0.026, HOLD=0.950, ARGMAX=HOLD
+[RAW_MODEL] NOW: BUY=0.752, SELL=0.050, HOLD=0.198, ARGMAX=BUY
+[RAW_MODEL] NSC: BUY=0.486, SELL=0.030, HOLD=0.485, ARGMAX=BUY
+[RAW_MODEL] NTRA: BUY=0.569, SELL=0.056, HOLD=0.375, ARGMAX=BUY
+[RAW_MODEL] NUE: BUY=0.076, SELL=0.039, HOLD=0.885, ARGMAX=HOLD
+[RAW_MODEL] NVDA: BUY=0.036, SELL=0.147, HOLD=0.817, ARGMAX=HOLD
+[RAW_MODEL] NX: BUY=0.084, SELL=0.505, HOLD=0.411, ARGMAX=SELL
+[RAW_MODEL] ODFL: BUY=0.691, SELL=0.021, HOLD=0.288, ARGMAX=BUY
+[RAW_MODEL] OMI: BUY=0.972, SELL=0.008, HOLD=0.020, ARGMAX=BUY
+[RAW_MODEL] ORCL: BUY=0.848, SELL=0.014, HOLD=0.138, ARGMAX=BUY
+[RAW_MODEL] ORLY: BUY=0.299, SELL=0.075, HOLD=0.626, ARGMAX=HOLD
+[RAW_MODEL] OTIS: BUY=0.228, SELL=0.020, HOLD=0.752, ARGMAX=HOLD
+[RAW_MODEL] OXY: BUY=0.046, SELL=0.529, HOLD=0.425, ARGMAX=SELL
+[RAW_MODEL] PANW: BUY=0.146, SELL=0.087, HOLD=0.767, ARGMAX=HOLD
+[RAW_MODEL] PCAR: BUY=0.063, SELL=0.091, HOLD=0.845, ARGMAX=HOLD
+[RAW_MODEL] PDM: BUY=0.024, SELL=0.065, HOLD=0.910, ARGMAX=HOLD
+[RAW_MODEL] PEG: BUY=0.058, SELL=0.042, HOLD=0.901, ARGMAX=HOLD
+[RAW_MODEL] PFE: BUY=0.024, SELL=0.462, HOLD=0.514, ARGMAX=HOLD
+[RAW_MODEL] PG: BUY=0.211, SELL=0.033, HOLD=0.756, ARGMAX=HOLD
+[RAW_MODEL] PGR: BUY=0.164, SELL=0.730, HOLD=0.106, ARGMAX=SELL
+[RAW_MODEL] PH: BUY=0.156, SELL=0.035, HOLD=0.809, ARGMAX=HOLD
+[RAW_MODEL] PLAY: BUY=0.916, SELL=0.017, HOLD=0.066, ARGMAX=BUY
+[RAW_MODEL] PLCE: BUY=0.904, SELL=0.016, HOLD=0.080, ARGMAX=BUY
+[RAW_MODEL] PLD: BUY=0.027, SELL=0.050, HOLD=0.923, ARGMAX=HOLD
+[RAW_MODEL] PLTR: BUY=0.304, SELL=0.035, HOLD=0.661, ARGMAX=HOLD
+[RAW_MODEL] PRU: BUY=0.313, SELL=0.070, HOLD=0.618, ARGMAX=HOLD
+[RAW_MODEL] PSA: BUY=0.065, SELL=0.202, HOLD=0.732, ARGMAX=HOLD
+[RAW_MODEL] PWR: BUY=0.043, SELL=0.049, HOLD=0.908, ARGMAX=HOLD
+[RAW_MODEL] PYPL: BUY=0.197, SELL=0.173, HOLD=0.631, ARGMAX=HOLD
+[RAW_MODEL] QCOM: BUY=0.371, SELL=0.105, HOLD=0.524, ARGMAX=HOLD
+[RAW_MODEL] RCL: BUY=0.341, SELL=0.124, HOLD=0.536, ARGMAX=HOLD
+[RAW_MODEL] REI: BUY=0.900, SELL=0.034, HOLD=0.067, ARGMAX=BUY
+[RAW_MODEL] RMD: BUY=0.079, SELL=0.521, HOLD=0.400, ARGMAX=SELL
+[RAW_MODEL] ROK: BUY=0.055, SELL=0.134, HOLD=0.811, ARGMAX=HOLD
+[RAW_MODEL] ROL: BUY=0.047, SELL=0.070, HOLD=0.883, ARGMAX=HOLD
+[RAW_MODEL] ROP: BUY=0.987, SELL=0.001, HOLD=0.013, ARGMAX=BUY
+[RAW_MODEL] ROST: BUY=0.087, SELL=0.069, HOLD=0.844, ARGMAX=HOLD
+[RAW_MODEL] RSG: BUY=0.362, SELL=0.017, HOLD=0.621, ARGMAX=HOLD
+[RAW_MODEL] SBUX: BUY=0.222, SELL=0.056, HOLD=0.721, ARGMAX=HOLD
+[RAW_MODEL] SCHW: BUY=0.048, SELL=0.043, HOLD=0.909, ARGMAX=HOLD
+[RAW_MODEL] SGRY: BUY=0.277, SELL=0.429, HOLD=0.294, ARGMAX=SELL
+[RAW_MODEL] SHW: BUY=0.355, SELL=0.020, HOLD=0.625, ARGMAX=HOLD
+[RAW_MODEL] SLB: BUY=0.063, SELL=0.146, HOLD=0.791, ARGMAX=HOLD
+[RAW_MODEL] SMPL: BUY=0.003, SELL=0.879, HOLD=0.118, ARGMAX=SELL
+[RAW_MODEL] SNOW: BUY=0.418, SELL=0.108, HOLD=0.474, ARGMAX=HOLD
+[RAW_MODEL] SNPS: BUY=0.051, SELL=0.162, HOLD=0.787, ARGMAX=HOLD
+[RAW_MODEL] SO: BUY=0.195, SELL=0.042, HOLD=0.763, ARGMAX=HOLD
+[RAW_MODEL] SOFI: BUY=0.470, SELL=0.022, HOLD=0.508, ARGMAX=HOLD
+[RAW_MODEL] SPGI: BUY=0.061, SELL=0.347, HOLD=0.592, ARGMAX=HOLD
+[RAW_MODEL] SRE: BUY=0.074, SELL=0.026, HOLD=0.900, ARGMAX=HOLD
+[RAW_MODEL] SYK: BUY=0.042, SELL=0.042, HOLD=0.916, ARGMAX=HOLD
+[RAW_MODEL] TFC: BUY=0.132, SELL=0.237, HOLD=0.631, ARGMAX=HOLD
+[RAW_MODEL] TGT: BUY=0.459, SELL=0.081, HOLD=0.461, ARGMAX=HOLD
+[RAW_MODEL] TJX: BUY=0.148, SELL=0.147, HOLD=0.705, ARGMAX=HOLD
+[RAW_MODEL] TMO: BUY=0.458, SELL=0.100, HOLD=0.441, ARGMAX=BUY
+[RAW_MODEL] TNDM: BUY=0.535, SELL=0.053, HOLD=0.412, ARGMAX=BUY
+[RAW_MODEL] TRIP: BUY=0.456, SELL=0.101, HOLD=0.443, ARGMAX=BUY
+[RAW_MODEL] TRV: BUY=0.413, SELL=0.041, HOLD=0.545, ARGMAX=HOLD
+[RAW_MODEL] TSLA: BUY=0.375, SELL=0.458, HOLD=0.168, ARGMAX=SELL
+[RAW_MODEL] TT: BUY=0.077, SELL=0.087, HOLD=0.836, ARGMAX=HOLD
+[RAW_MODEL] TXN: BUY=0.331, SELL=0.253, HOLD=0.416, ARGMAX=HOLD
+[RAW_MODEL] ULTA: BUY=0.802, SELL=0.135, HOLD=0.063, ARGMAX=BUY
+[RAW_MODEL] UNH: BUY=0.303, SELL=0.437, HOLD=0.260, ARGMAX=SELL
+[RAW_MODEL] UNIT: BUY=0.038, SELL=0.379, HOLD=0.583, ARGMAX=HOLD
+[RAW_MODEL] UNP: BUY=0.234, SELL=0.130, HOLD=0.636, ARGMAX=HOLD
+[RAW_MODEL] UPS: BUY=0.655, SELL=0.047, HOLD=0.298, ARGMAX=BUY
+[RAW_MODEL] URI: BUY=0.549, SELL=0.103, HOLD=0.348, ARGMAX=BUY
+[RAW_MODEL] USB: BUY=0.040, SELL=0.358, HOLD=0.602, ARGMAX=HOLD
+[RAW_MODEL] V: BUY=0.086, SELL=0.035, HOLD=0.879, ARGMAX=HOLD
+[RAW_MODEL] VEEV: BUY=0.784, SELL=0.078, HOLD=0.137, ARGMAX=BUY
+[RAW_MODEL] VLO: BUY=0.079, SELL=0.529, HOLD=0.392, ARGMAX=SELL
+[RAW_MODEL] VMC: BUY=0.065, SELL=0.030, HOLD=0.905, ARGMAX=HOLD
+[RAW_MODEL] VRTX: BUY=0.040, SELL=0.750, HOLD=0.211, ARGMAX=SELL
+[RAW_MODEL] VTLE: BUY=0.018, SELL=0.905, HOLD=0.077, ARGMAX=SELL
+[RAW_MODEL] VTR: BUY=0.087, SELL=0.038, HOLD=0.876, ARGMAX=HOLD
+[RAW_MODEL] WAB: BUY=0.097, SELL=0.092, HOLD=0.811, ARGMAX=HOLD
+[RAW_MODEL] WBD: BUY=0.050, SELL=0.064, HOLD=0.886, ARGMAX=HOLD
+[RAW_MODEL] WEC: BUY=0.060, SELL=0.028, HOLD=0.913, ARGMAX=HOLD
+[RAW_MODEL] WERN: BUY=0.201, SELL=0.032, HOLD=0.767, ARGMAX=HOLD
+[RAW_MODEL] WFC: BUY=0.118, SELL=0.048, HOLD=0.835, ARGMAX=HOLD
+[RAW_MODEL] WLY: BUY=0.114, SELL=0.071, HOLD=0.815, ARGMAX=HOLD
+[RAW_MODEL] WMT: BUY=0.190, SELL=0.050, HOLD=0.761, ARGMAX=HOLD
+[RAW_MODEL] WTI: BUY=0.814, SELL=0.060, HOLD=0.126, ARGMAX=BUY
+[RAW_MODEL] XEL: BUY=0.036, SELL=0.022, HOLD=0.942, ARGMAX=HOLD
+[RAW_MODEL] XOM: BUY=0.094, SELL=0.118, HOLD=0.788, ARGMAX=HOLD
+[RAW_MODEL] XYL: BUY=0.628, SELL=0.060, HOLD=0.312, ARGMAX=BUY
+[RAW_MODEL] YALA: BUY=0.058, SELL=0.201, HOLD=0.741, ARGMAX=HOLD
+[RAW_MODEL] ZS: BUY=0.123, SELL=0.179, HOLD=0.698, ARGMAX=HOLD

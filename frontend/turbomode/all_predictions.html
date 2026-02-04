@@ -755,13 +755,29 @@
                 // Get prediction type for styling and AI analysis
                 const predictionType = pred.prediction.toLowerCase();
 
-                // Use adaptive Stop Loss and Take Profit from API (calculated by adaptive_sltp.py)
-                const stopPrice = pred.stop_price || entryPrice;
-                const targetPrice = pred.target_price || entryPrice;
+                // HOLD signals use Iron Condor bands, BUY/SELL use directional SL/TP
+                let stopPrice, targetPrice, stopPct, targetPct;
+                let stopUpper, stopLower, bandWidthPct;
+                let isHold = (predictionType === 'hold');
 
-                // Calculate percentages from adaptive prices
-                const stopPct = entryPrice > 0 ? ((stopPrice - entryPrice) / entryPrice * 100) : 0;
-                const targetPct = entryPrice > 0 ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
+                if (isHold) {
+                    // HOLD: Iron Condor symmetric bands
+                    stopUpper = pred.stop_upper || entryPrice;
+                    stopLower = pred.stop_lower || entryPrice;
+                    const bandWidth = stopUpper - stopLower;
+                    bandWidthPct = entryPrice > 0 ? (bandWidth / entryPrice * 100) : 0;
+                    // For display compatibility, set stop/target to band boundaries
+                    stopPrice = stopLower;
+                    targetPrice = stopUpper;
+                    stopPct = entryPrice > 0 ? ((stopLower - entryPrice) / entryPrice * 100) : 0;
+                    targetPct = entryPrice > 0 ? ((stopUpper - entryPrice) / entryPrice * 100) : 0;
+                } else {
+                    // BUY/SELL: Directional SL/TP from adaptive_sltp.py
+                    stopPrice = pred.stop_price || entryPrice;
+                    targetPrice = pred.target_price || entryPrice;
+                    stopPct = entryPrice > 0 ? ((stopPrice - entryPrice) / entryPrice * 100) : 0;
+                    targetPct = entryPrice > 0 ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
+                }
 
                 // Generate AI analysis points based on confidence
                 let aiAnalysisPoints = [];
@@ -826,27 +842,36 @@
                         riskLevel = 'Medium Risk';
                         riskColor = '#f59e0b';
                     }
-                } else {  // hold
+                } else {  // hold - Iron Condor setup
                     if (pred.confidence >= 0.95) {
                         aiAnalysisPoints = [
-                            '⚖️ Strong neutral signal from AI models',
-                            '📊 Market conditions suggest consolidation phase'
+                            'IRON CONDOR SETUP: High-probability neutral range detected',
+                            'Upper Band: $' + stopUpper.toFixed(2) + ' (sell call strike)',
+                            'Lower Band: $' + stopLower.toFixed(2) + ' (sell put strike)',
+                            'Band Width: ' + bandWidthPct.toFixed(2) + '% (ATR-based volatility)',
+                            'Expected to stay range-bound for 14 days',
+                            'Strategy: Sell premium on both sides, profit from theta decay'
                         ];
-                        riskLevel = 'Low Risk';
-                        riskColor = '#9ca3af';
+                        riskLevel = 'Options Strategy';
+                        riskColor = '#8b5cf6';
                     } else if (pred.confidence >= 0.85) {
                         aiAnalysisPoints = [
-                            '🔄 Mixed technical signals detected',
-                            '⏳ Waiting for clearer directional indicators'
+                            'IRON CONDOR: Neutral range identified',
+                            'Upper Band: $' + stopUpper.toFixed(2) + ', Lower Band: $' + stopLower.toFixed(2),
+                            'Band Width: ' + bandWidthPct.toFixed(2) + '%',
+                            'Moderate confidence in range stability',
+                            'Monitor for breakout signals'
                         ];
-                        riskLevel = 'Low Risk';
-                        riskColor = '#9ca3af';
+                        riskLevel = 'Options Strategy';
+                        riskColor = '#8b5cf6';
                     } else {
                         aiAnalysisPoints = [
-                            '❓ Uncertain market conditions',
-                            '⏸️ Maintaining neutral stance'
+                            'NEUTRAL RANGE: Iron Condor candidate',
+                            'Upper: $' + stopUpper.toFixed(2) + ', Lower: $' + stopLower.toFixed(2),
+                            'Lower confidence - wider protective bands recommended',
+                            'Maintaining neutral stance'
                         ];
-                        riskLevel = 'Low Risk';
+                        riskLevel = 'Options Strategy';
                         riskColor = '#9ca3af';
                     }
                 }

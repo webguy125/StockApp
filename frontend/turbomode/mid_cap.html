@@ -371,11 +371,24 @@
             const entryMin = entryPrice * 0.98;
             const entryMax = entryPrice * 1.02;
 
-            // Use adaptive Stop Loss and Take Profit from API
-            const stopPrice = signal.stop_price || entryPrice;
-            const targetPrice = signal.target_price || entryPrice;
-            const stopPct = entryPrice > 0 ? ((stopPrice - entryPrice) / entryPrice * 100) : 0;
-            const targetPct = entryPrice > 0 ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
+            // HOLD signals use Iron Condor bands, BUY/SELL use directional SL/TP
+            const predictionType = signal.prediction.toLowerCase();
+            const isHold = (predictionType === 'hold');
+            let stopPrice, targetPrice, stopPct, targetPct;
+
+            if (isHold) {
+                const stopUpper = signal.stop_upper || entryPrice;
+                const stopLower = signal.stop_lower || entryPrice;
+                stopPrice = stopLower;
+                targetPrice = stopUpper;
+                stopPct = entryPrice > 0 ? ((stopLower - entryPrice) / entryPrice * 100) : 0;
+                targetPct = entryPrice > 0 ? ((stopUpper - entryPrice) / entryPrice * 100) : 0;
+            } else {
+                stopPrice = signal.stop_price || entryPrice;
+                targetPrice = signal.target_price || entryPrice;
+                stopPct = entryPrice > 0 ? ((stopPrice - entryPrice) / entryPrice * 100) : 0;
+                targetPct = entryPrice > 0 ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
+            }
 
             // Calculate P&L
             let pnl = 0;

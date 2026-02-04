@@ -132,10 +132,10 @@ symbols = get_training_symbols()
 
 print(f"\n[TRAINING SET] Using {len(symbols)} carefully selected stocks")
 print("[INFO] Balanced across 11 GICS sectors and 3 market cap tiers")
-print("[INFO] Expected processing time: ~6-8 hours (10 years of data × 230 stocks)")
+print("[INFO] Expected processing time: ~5 minutes (10 years of data × 230 stocks)")
 print("[INFO] Expected output: ~800,000-1,000,000 high-quality training samples")
 print("[WHY] 10-year lookback captures multiple market cycles for robust models")
-print("[LABEL LOGIC] Canonical: +5% = BUY, -5% = SELL, else = HOLD (5-day holding period)")
+print("[LABEL LOGIC] Canonical: +5% = BUY, -5% = SELL, else = HOLD (14-day holding period)")
 
 # Initialize checkpoint manager
 checkpoint = CheckpointManager()
@@ -152,7 +152,7 @@ else:
     print(f"\nGenerating training data...")
     print(f"  Symbols: {len(symbols_to_process)} (of {len(symbols)} total)")
     print(f"  Years of history: 10")
-    print(f"  Hold period: 5 days")
+    print(f"  Hold period: 14 days")
     print(f"  Buy threshold: +5%")
     print(f"  Sell threshold: -5%")
 

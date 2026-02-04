@@ -1,6 +1,6 @@
 {
   "symbol": "BTC-USD",
-  "timestamp": "2026-01-21T00:02:42.165085",
+  "timestamp": "2026-02-02T00:02:35.619588",
   "agent": "fusion_agent",
   "total_score": 14.923076923076922,
   "confidence": 0.44923076923076927,
@@ -11,7 +11,7 @@
     "💸"
   ],
   "emoji_string": "📉❌💸",
-  "shorthand": "BTC-USD | 📉❌💸 | 14 | 0.45 | 2026-01-21",
+  "shorthand": "BTC-USD | 📉❌💸 | 14 | 0.45 | 2026-02-02",
   "weighted_scores": {
     "indicators_agent": {
       "score": 18,

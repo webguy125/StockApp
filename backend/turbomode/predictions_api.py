@@ -105,12 +105,21 @@ def get_all_predictions():
                 'confidence': signal['confidence'],
                 'current_price': signal['current_price'],
                 'entry_price': signal['entry_price'],
-                'target_price': signal['target_price'],
-                'stop_price': signal['stop_price'],
+
+                # Directional SL/TP (BUY/SELL) - may be None for HOLD
+                'target_price': signal.get('target_price'),
+                'stop_price': signal.get('stop_price'),
+
+                # Iron Condor symmetric bands for HOLD
+                'stop_upper': signal.get('stop_upper'),
+                'stop_lower': signal.get('stop_lower'),
+
                 'sector': signal['sector'],
                 'market_cap_category': signal['market_cap'],
                 'age_days': signal['age_days'],
                 'entry_date': signal['entry_date'],
+
+                # Adaptive SL/TP fields (None for HOLD)
                 'atr': signal.get('atr'),
                 'sector_volatility_multiplier': signal.get('sector_volatility_multiplier'),
                 'confidence_modifier': signal.get('confidence_modifier'),

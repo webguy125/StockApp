@@ -19,6 +19,24 @@ import os
 from datetime import datetime
 from typing import Optional
 
+
+class FlushingRotatingFileHandler(RotatingFileHandler):
+    """
+    RotatingFileHandler that flushes after every log write
+    Critical for live streaming to work properly
+    """
+    def _open(self):
+        """
+        Open the file with unbuffered mode for immediate writes
+        """
+        # Open with line buffering (buffering=1)
+        return open(self.baseFilename, self.mode, buffering=1, encoding=self.encoding)
+
+    def emit(self, record):
+        super().emit(record)
+        if self.stream:
+            self.stream.flush()
+
 # Log directory
 LOG_DIR = os.path.join(os.path.dirname(__file__), 'logs')
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -68,7 +86,8 @@ class SchedulerLogger:
         log_filename = self._sanitize_filename(f'task_{task_id}_{task_name}.log')
         log_path = os.path.join(LOG_DIR, log_filename)
 
-        file_handler = RotatingFileHandler(
+        # Use FlushingRotatingFileHandler for live streaming
+        file_handler = FlushingRotatingFileHandler(
             log_path,
             maxBytes=10 * 1024 * 1024,  # 10 MB
             backupCount=5,  # Keep last 5 rotated files
@@ -95,6 +114,34 @@ class SchedulerLogger:
 
         return logger
 
+    def get_task_log_path(self, task_id: int) -> Optional[str]:
+        """
+        Get the file path for a task's log file
+
+        Args:
+            task_id: Task ID (1-7)
+
+        Returns:
+            Log file path or None if not found
+        """
+        # Task names mapping
+        task_names = {
+            1: "Master_Market_Data_Ingestion",
+            2: "TurboMode_Training_Orchestrator",
+            3: "Overnight_Scanner",
+            4: "Backtest_Data_Generator",
+            5: "Adaptive_Stock_Ranking",
+            6: "Drift_Monitoring_System",
+            7: "Weekly_Maintenance"
+        }
+
+        task_name = task_names.get(task_id)
+        if not task_name:
+            return None
+
+        log_filename = self._sanitize_filename(f'task_{task_id}_{task_name}.log')
+        return os.path.join(LOG_DIR, log_filename)
+
     def get_scheduler_logger(self) -> logging.Logger:
         """
         Get the main scheduler logger
@@ -112,10 +159,10 @@ class SchedulerLogger:
         logger.setLevel(logging.INFO)
         logger.propagate = False
 
-        # Create file handler
+        # Create file handler with flushing
         log_path = os.path.join(LOG_DIR, 'scheduler.log')
 
-        file_handler = RotatingFileHandler(
+        file_handler = FlushingRotatingFileHandler(
             log_path,
             maxBytes=10 * 1024 * 1024,  # 10 MB
             backupCount=10,  # Keep more for scheduler logs
@@ -152,8 +199,8 @@ class SchedulerLogger:
         Returns:
             Sanitized filename
         """
-        # Replace spaces and special chars
-        return filename.lower().replace(' ', '_').replace('-', '_')
+        # Replace spaces and special chars (including pipe character)
+        return filename.lower().replace(' ', '_').replace('-', '_').replace('|', '_')
 
     def close_all(self):
         """Close all log handlers"""

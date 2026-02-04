@@ -113,7 +113,7 @@ class ProductionScanner:
     - Fast ensemble prediction per sector (6 models total)
     - Adaptive SL/TP based on ATR, confidence, and sector
     - Partial profit-taking at 1R (50%), 2R (25%), 3R (25%)
-    - Hysteresis: entry threshold 0.60, exit threshold 0.70
+    - Hysteresis: entry threshold 0.50, exit threshold 0.70
     - Persistence: N=3 consecutive opposite signals required for signal-based exit
     - Position state management with atomic persistence
     - Unified 3-Tier Directional Biasing (global + sector + symbol)
@@ -124,7 +124,7 @@ class ProductionScanner:
         self,
         db_path: str = None,
         position_state_file: str = None,
-        entry_threshold: float = 0.60,
+        entry_threshold: float = 0.50,
         exit_threshold: float = 0.70,
         persistence_required: int = 3
     ):
@@ -136,7 +136,7 @@ class ProductionScanner:
         Args:
             db_path: Path to TurboMode database
             position_state_file: Path to position state JSON file
-            entry_threshold: Minimum probability for opening new position (default: 0.60)
+            entry_threshold: Minimum probability for opening new position (default: 0.50)
             exit_threshold: Minimum probability for signal-based exit (default: 0.70)
             persistence_required: Consecutive opposite signals required for exit (default: 3)
         """
@@ -310,28 +310,45 @@ class ProductionScanner:
             print(f"[RAW_MODEL] {symbol}: BUY={result['prob_buy']:.3f}, SELL={result['prob_sell']:.3f}, HOLD={result['prob_hold']:.3f}, ARGMAX={argmax_labels[argmax_idx]}")
 
             # UNIFIED BIASING: Apply three-tier sentiment adjustment (global + sector + symbol)
-            adjusted_buy, adjusted_sell = self.news_engine.apply_directional_bias(
-                symbol, sector, result['prob_buy'], result['prob_sell']
+            # Option A: get all three biased probabilities
+            adjusted_buy, adjusted_sell, adjusted_hold = self.news_engine.apply_directional_bias(
+                symbol, sector, result['prob_buy'], result['prob_sell'], result['prob_hold']
             )
-            result['prob_buy'] = adjusted_buy
-            result['prob_sell'] = adjusted_sell
+
+            # Option A: renormalize all three biased probabilities together
+            prob_sum = adjusted_buy + adjusted_sell + adjusted_hold
+            if prob_sum > 0:
+                prob_buy = adjusted_buy / prob_sum
+                prob_sell = adjusted_sell / prob_sum
+                prob_hold = adjusted_hold / prob_sum
+            else:
+                # Fallback to original probabilities
+                prob_buy = result['prob_buy']
+                prob_sell = result['prob_sell']
+                prob_hold = result['prob_hold']
+
+            # Update result dict with final probabilities
+            result['prob_buy'] = prob_buy
+            result['prob_sell'] = prob_sell
+            result['prob_hold'] = prob_hold
+
             # Neutrality-band signal decision (HOLD as true neutral regime)
-            # Compute model output volatility
-            model_std = np.std([adjusted_buy, adjusted_sell, result['prob_hold']])
-            neutrality_band = 0.5 * model_std
+            # Compute model output volatility using consistent distribution
+            model_std = np.std([prob_buy, prob_sell, prob_hold])
+            neutrality_band = 1.5 * model_std  # Widened from 0.5x to 1.5x to allow more HOLD signals
 
             # HOLD only when BUY and SELL are genuinely close (within neutrality band)
-            if abs(adjusted_buy - adjusted_sell) < neutrality_band:
+            if abs(prob_buy - prob_sell) < neutrality_band:
                 result['signal'] = 'HOLD'
-                result['confidence'] = result['prob_hold']
+                result['confidence'] = prob_hold
             # BUY breakout: BUY strictly greater than SELL, outside band
-            elif adjusted_buy > adjusted_sell:
+            elif prob_buy > prob_sell:
                 result['signal'] = 'BUY'
-                result['confidence'] = adjusted_buy
+                result['confidence'] = prob_buy
             # SELL breakout: SELL at least as large as BUY, outside band
             else:
                 result['signal'] = 'SELL'
-                result['confidence'] = adjusted_sell
+                result['confidence'] = prob_sell
 
             return result
 
@@ -341,11 +358,12 @@ class ProductionScanner:
 
     def check_entry_signal(self, symbol: str, sector: str, prediction: Dict[str, Any]) -> Optional[str]:
         """
-        Phase 2: News-Aware Entry Signal Check
+        Phase 2: News-Aware Entry Signal Check (OPTION C REGIME ARCHITECTURE)
 
         Checks if prediction meets entry criteria with news risk gating:
+        - BUY/SELL: Probability threshold-based (0.60 default, 0.70 if global risk HIGH)
+        - HOLD: Band-based neutrality regime (no probability threshold)
         - Blocks entry if news risk is HIGH/CRITICAL
-        - Raises threshold from 0.60 to 0.70 if global risk is HIGH
         - Applies 10% model special handling
 
         Args:
@@ -354,7 +372,7 @@ class ProductionScanner:
             prediction: Prediction dictionary (with news_risk field)
 
         Returns:
-            'BUY', 'SELL', or None
+            'BUY', 'SELL', 'HOLD', or None
         """
         # Phase 2.1: Check if entry should be blocked by news risk
         should_block, block_reason = self.news_engine.should_block_entry(symbol, sector)
@@ -362,11 +380,11 @@ class ProductionScanner:
             logger.info(f"[ENTRY BLOCKED] {symbol}: {block_reason}")
             return None
 
-        # Phase 2.2: Determine effective entry threshold
-        effective_threshold = self.entry_threshold  # Default: 0.60
+        # Phase 2.2: Determine effective entry threshold (for BUY/SELL only)
+        effective_threshold = self.entry_threshold  # Default: 0.50
         if self.news_engine.should_raise_entry_threshold():
             effective_threshold = 0.70  # Raised threshold due to global HIGH risk
-            logger.info(f"[ENTRY THRESHOLD RAISED] {symbol}: 0.60 -> 0.70 (global risk HIGH)")
+            logger.info(f"[ENTRY THRESHOLD RAISED] {symbol}: 0.50 -> 0.70 (global risk HIGH)")
 
         # Phase 2.3: Check if 10% model fired (major-move detector)
         is_10pct_signal = prediction.get('threshold_source') == '10pct'
@@ -379,7 +397,12 @@ class ProductionScanner:
             # 10% model signals are treated as high-conviction during elevated news
             # Reduce persistence requirement to 1 (handled in open_new_position)
 
-        # Phase 2.5: Check signal against effective threshold
+        # Phase 2.5: T2/T3 OPTION C - Regime-specific entry logic
+        logger.info(f"[ENTRY CHECK] {symbol}: signal={prediction['signal']}, "
+                   f"prob_buy={prediction['prob_buy']:.3f}, prob_sell={prediction['prob_sell']:.3f}, "
+                   f"prob_hold={prediction.get('prob_hold', 0):.3f}, threshold={effective_threshold:.3f}")
+
+        # DIRECTIONAL REGIMES (BUY/SELL): Probability threshold-based
         if prediction['signal'] == 'BUY' and prediction['prob_buy'] >= effective_threshold:
             logger.info(f"[ENTRY SIGNAL] {symbol} BUY @ {prediction['prob_buy']:.2%} "
                        f"(threshold: {effective_threshold:.2%}, source: {prediction.get('threshold_source', 'unknown')})")
@@ -388,9 +411,12 @@ class ProductionScanner:
             logger.info(f"[ENTRY SIGNAL] {symbol} SELL @ {prediction['prob_sell']:.2%} "
                        f"(threshold: {effective_threshold:.2%}, source: {prediction.get('threshold_source', 'unknown')})")
             return 'SELL'
-        elif prediction['signal'] == 'HOLD' and prediction['prob_hold'] >= effective_threshold:
+        # NEUTRAL REGIME (HOLD): Band-based neutrality (no probability threshold)
+        elif prediction['signal'] == 'HOLD':
+            logger.info(f"[ENTRY SIGNAL] {symbol} HOLD (neutrality band regime, prob_hold={prediction['prob_hold']:.2%})")
             return 'HOLD'
         else:
+            logger.info(f"[ENTRY REJECTED] {symbol}: Failed threshold check")
             return None
 
     def check_exit_signal(self, symbol: str, prediction: Dict[str, Any], position: Dict) -> bool:
@@ -667,25 +693,55 @@ class ProductionScanner:
                 return None
 
             # Get prediction
-            prediction = self.get_prediction(symbol, features)
-            if prediction is None:
-                return None
+            try:
+                prediction = self.get_prediction(symbol, features)
+                if prediction is None:
+                    return None
+            except Exception as e:
+                logger.error(f"[PREDICTION ERROR] {symbol}: {type(e).__name__}: {e}")
+                import traceback
+                logger.error(f"[TRACEBACK] {traceback.format_exc()}")
+                raise
 
             # Update sltp with actual prediction confidence
-            sltp = calculate_adaptive_sltp(
-                entry_price=current_price,
-                atr=atr,
-                sector=sector,
-                confidence=prediction['confidence'],
-                horizon='1d',
-                position_type='long' if prediction['signal'] == 'BUY' else 'short',
-                reward_ratio=2.5
-            )
+            # Map signal to position_type: BUY→long, SELL→short, HOLD→neutral
+            if prediction['signal'] == 'BUY':
+                position_type = 'long'
+            elif prediction['signal'] == 'SELL':
+                position_type = 'short'
+            else:  # HOLD
+                position_type = 'neutral'
+
+            # For HOLD signals, pass model probabilities to calculate symmetric bands
+            if position_type == 'neutral':
+                sltp = calculate_adaptive_sltp(
+                    entry_price=current_price,
+                    atr=atr,
+                    sector=sector,
+                    confidence=prediction['confidence'],
+                    horizon='1d',
+                    position_type=position_type,
+                    reward_ratio=2.5,
+                    prob_buy=prediction['prob_buy'],
+                    prob_sell=prediction['prob_sell'],
+                    prob_hold=prediction['prob_hold']
+                )
+            else:
+                # BUY/SELL: directional SL/TP (existing behavior)
+                sltp = calculate_adaptive_sltp(
+                    entry_price=current_price,
+                    atr=atr,
+                    sector=sector,
+                    confidence=prediction['confidence'],
+                    horizon='1d',
+                    position_type=position_type,
+                    reward_ratio=2.5
+                )
 
             # Check if we have an existing position
             position = self.position_manager.get_position(symbol)
 
-            if position is not None:
+            if position is not None and position['position'] in ['long', 'short']:
                 # Manage existing position
                 logger.debug(f"{symbol}: Managing existing {position['position'].upper()} position")
                 self.manage_existing_position(symbol, position, current_price)
@@ -716,7 +772,9 @@ class ProductionScanner:
 
                 # Return signal for database storage with news risk info
                 news_risk = prediction.get('news_risk', {})
-                return {
+
+                # Build signal dictionary based on position_type
+                signal_dict = {
                     'symbol': symbol,
                     'signal_type': signal_type,
                     'confidence': prediction['confidence'],
@@ -724,22 +782,40 @@ class ProductionScanner:
                     'entry_price': current_price,
                     'entry_min': current_price * 0.98,  # ±2% tolerance
                     'entry_max': current_price * 1.02,
-                    'target_price': sltp.get('target_price'),
-                    'stop_price': sltp.get('stop_price'),
                     'market_cap': metadata.get('market_cap_category', 'unknown'),
                     'sector': sector,
                     'prob_buy': prediction['prob_buy'],
                     'prob_sell': prediction['prob_sell'],
                     'atr': atr,
-                    'sector_volatility_multiplier': sltp.get('sector_multiplier'),
-                    'confidence_modifier': sltp.get('confidence_modifier'),
-                    'stop_pct': sltp.get('stop_pct'),
-                    'target_pct': sltp.get('target_pct'),
                     'threshold_source': prediction.get('threshold_source', 'unknown'),
                     'news_risk_symbol': news_risk.get('symbol_risk', 'NONE'),
                     'news_risk_sector': news_risk.get('sector_risk', 'NONE'),
                     'news_risk_global': news_risk.get('global_risk', 'NONE')
                 }
+
+                # Add position-type-specific fields
+                if position_type == 'neutral':
+                    # HOLD: Iron Condor symmetric bands
+                    signal_dict['stop_upper'] = sltp.get('stop_upper')
+                    signal_dict['stop_lower'] = sltp.get('stop_lower')
+                    signal_dict['target_price'] = None
+                    signal_dict['stop_price'] = None
+                    signal_dict['sector_volatility_multiplier'] = None
+                    signal_dict['confidence_modifier'] = None
+                    signal_dict['stop_pct'] = None
+                    signal_dict['target_pct'] = None
+                else:
+                    # BUY/SELL: Directional SL/TP
+                    signal_dict['target_price'] = sltp.get('target_price')
+                    signal_dict['stop_price'] = sltp.get('stop_price')
+                    signal_dict['sector_volatility_multiplier'] = sltp.get('sector_multiplier')
+                    signal_dict['confidence_modifier'] = sltp.get('confidence_modifier')
+                    signal_dict['stop_pct'] = sltp.get('stop_pct')
+                    signal_dict['target_pct'] = sltp.get('target_pct')
+                    signal_dict['stop_upper'] = None
+                    signal_dict['stop_lower'] = None
+
+                return signal_dict
 
         except Exception as e:
             logger.error(f"Failed to scan {symbol}: {e}")

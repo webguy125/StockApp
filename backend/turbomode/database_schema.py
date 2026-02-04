@@ -46,16 +46,19 @@ class TurboModeDB:
         self._init_schema()
 
     def _init_schema(self):
-        """Create database tables if they don't exist"""
+        """Create database tables - DROP + CREATE for clean Option C schema"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        # Active signals table
+        # Active signals table - DROP + CREATE for NULL-friendly HOLD regime
+        # DISABLED: Preserves existing signals between scanner runs and Flask restarts
+        # cursor.execute("DROP TABLE IF EXISTS active_signals")
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS active_signals (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 symbol TEXT NOT NULL,
-                signal_type TEXT NOT NULL,  -- 'BUY' or 'SELL'
+                signal_type TEXT NOT NULL,  -- 'BUY', 'SELL', 'HOLD'
                 confidence REAL NOT NULL,   -- Model confidence (0.0 - 1.0)
 
                 -- Entry data (FIXED - never changes unless signal flips)
@@ -68,20 +71,36 @@ class TurboModeDB:
                 -- Current data (UPDATED each scan)
                 current_price REAL NOT NULL,
 
-                -- Targets (based on entry_price)
-                target_price REAL NOT NULL,  -- +12% for BUY, -12% for SELL
-                stop_price REAL NOT NULL,    -- -7% for BUY, +7% for SELL
+                -- Directional SL/TP (BUY/SELL) - NULL for HOLD
+                target_price REAL,
+                stop_price REAL,
 
-                -- Adaptive SL/TP fields (calculated by adaptive_sltp.py)
-                atr REAL,                           -- 14-period Average True Range
-                sector_volatility_multiplier REAL,  -- Sector-specific volatility adjustment
-                confidence_modifier REAL,           -- Confidence-based stop width (0.8-1.2)
-                stop_pct REAL,                      -- Calculated stop loss percentage
-                target_pct REAL,                    -- Calculated take profit percentage
+                -- Neutral SL/SL (HOLD) - NULL for BUY/SELL
+                stop_upper REAL,
+                stop_lower REAL,
+
+                -- Adaptive SL/TP fields - NULL for HOLD
+                atr REAL,
+                sector_volatility_multiplier REAL,
+                confidence_modifier REAL,
+                stop_pct REAL,
+                target_pct REAL,
 
                 -- Classifications
                 market_cap TEXT NOT NULL,    -- 'large_cap', 'mid_cap', 'small_cap'
                 sector TEXT NOT NULL,        -- GICS sector name
+
+                -- Probabilities
+                prob_buy REAL,
+                prob_sell REAL,
+
+                -- News risk
+                news_risk_symbol TEXT,
+                news_risk_sector TEXT,
+                news_risk_global TEXT,
+
+                -- Threshold source
+                threshold_source TEXT,
 
                 -- Lifecycle (UPDATED each scan)
                 age_days INTEGER DEFAULT 0,  -- Days since signal_timestamp
@@ -199,6 +218,18 @@ class TurboModeDB:
                 logger.error(f"Migration failed: {e}")
                 conn.rollback()
 
+        # Migration: Add Iron Condor columns for HOLD signals (2026-01-30)
+        if 'stop_upper' not in columns:
+            logger.info("Running migration: Adding Iron Condor columns to active_signals")
+            try:
+                cursor.execute("ALTER TABLE active_signals ADD COLUMN stop_upper REAL")
+                cursor.execute("ALTER TABLE active_signals ADD COLUMN stop_lower REAL")
+                conn.commit()
+                logger.info("[OK] Migration completed: Iron Condor columns added")
+            except Exception as e:
+                logger.error(f"Migration failed: {e}")
+                conn.rollback()
+
         conn.close()
 
     # =========================================================================
@@ -255,9 +286,10 @@ class TurboModeDB:
                 INSERT INTO active_signals
                 (symbol, signal_type, confidence, entry_date, entry_price, entry_min, entry_max,
                  signal_timestamp, current_price, target_price, stop_price,
+                 stop_upper, stop_lower,
                  atr, sector_volatility_multiplier, confidence_modifier, stop_pct, target_pct,
                  market_cap, sector, age_days, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 symbol,
                 new_signal_type,
@@ -268,8 +300,10 @@ class TurboModeDB:
                 entry_max,
                 now,  # signal_timestamp
                 current_price,
-                signal['target_price'],
-                signal['stop_price'],
+                signal.get('target_price'),
+                signal.get('stop_price'),
+                signal.get('stop_upper'),
+                signal.get('stop_lower'),
                 signal.get('atr'),
                 signal.get('sector_volatility_multiplier'),
                 signal.get('confidence_modifier'),
@@ -296,6 +330,10 @@ class TurboModeDB:
                     UPDATE active_signals
                     SET confidence = ?,
                         current_price = ?,
+                        target_price = ?,
+                        stop_price = ?,
+                        stop_upper = ?,
+                        stop_lower = ?,
                         atr = ?,
                         sector_volatility_multiplier = ?,
                         confidence_modifier = ?,
@@ -304,6 +342,8 @@ class TurboModeDB:
                         updated_at = ?
                     WHERE symbol = ? AND status = 'ACTIVE'
                 """, (signal['confidence'], current_price,
+                      signal.get('target_price'), signal.get('stop_price'),
+                      signal.get('stop_upper'), signal.get('stop_lower'),
                       signal.get('atr'), signal.get('sector_volatility_multiplier'),
                       signal.get('confidence_modifier'), signal.get('stop_pct'),
                       signal.get('target_pct'), now, symbol))

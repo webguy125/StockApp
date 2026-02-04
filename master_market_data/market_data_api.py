@@ -34,7 +34,7 @@ class MarketDataAPI:
             read_only: Enforce read-only access (default: True)
         """
         if db_path is None:
-            db_path = os.path.join(os.path.dirname(__file__), 'market_data.db')
+            db_path = os.path.join(os.path.dirname(__file__), 'master_market_data.db')
 
         self.db_path = db_path
         self.read_only = read_only
@@ -88,11 +88,11 @@ class MarketDataAPI:
         cursor = conn.cursor()
 
         query = """
-            SELECT timestamp, open, high, low, close, volume, adjusted_close
-            FROM candles
-            WHERE symbol = ? AND timeframe = ?
+            SELECT timestamp, open, high, low, close, volume
+            FROM ohlcv
+            WHERE symbol = ?
         """
-        params = [symbol, timeframe]
+        params = [symbol]
 
         # Handle days_back parameter
         if days_back and not start_date:
@@ -100,11 +100,13 @@ class MarketDataAPI:
 
         if start_date:
             query += " AND timestamp >= ?"
-            params.append(start_date)
+            start_ts = int(datetime.strptime(start_date, '%Y-%m-%d').timestamp())
+            params.append(start_ts)
 
         if end_date:
             query += " AND timestamp <= ?"
-            params.append(end_date)
+            end_ts = int(datetime.strptime(end_date, '%Y-%m-%d').timestamp())
+            params.append(end_ts)
 
         query += " ORDER BY timestamp ASC"
 
@@ -118,8 +120,8 @@ class MarketDataAPI:
         if not rows:
             return pd.DataFrame()
 
-        df = pd.DataFrame(rows, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'adjusted_close'])
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df = pd.DataFrame(rows, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
         df.set_index('timestamp', inplace=True)
 
         return df
@@ -139,12 +141,12 @@ class MarketDataAPI:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT timestamp, open, high, low, close, volume, adjusted_close
-            FROM candles
-            WHERE symbol = ? AND timeframe = ?
+            SELECT timestamp, open, high, low, close, volume
+            FROM ohlcv
+            WHERE symbol = ?
             ORDER BY timestamp DESC
             LIMIT 1
-        """, (symbol, timeframe))
+        """, (symbol,))
 
         row = cursor.fetchone()
         conn.close()
@@ -413,9 +415,9 @@ class MarketDataAPI:
 
         cursor.execute("""
             SELECT MIN(timestamp), MAX(timestamp)
-            FROM candles
-            WHERE symbol = ? AND timeframe = ?
-        """, (symbol, timeframe))
+            FROM ohlcv
+            WHERE symbol = ?
+        """, (symbol,))
 
         row = cursor.fetchone()
         conn.close()
@@ -439,8 +441,8 @@ class MarketDataAPI:
 
         availability = {}
 
-        # Check candles
-        cursor.execute("SELECT COUNT(*) FROM candles WHERE symbol = ?", (symbol,))
+        # Check ohlcv
+        cursor.execute("SELECT COUNT(*) FROM ohlcv WHERE symbol = ?", (symbol,))
         availability['has_candles'] = cursor.fetchone()[0] > 0
 
         # Check fundamentals

@@ -57,11 +57,38 @@ class HybridDataFetcher:
             try:
                 self.ib = IB()
                 self.ib.connect(ibkr_host, ibkr_port, clientId=999, readonly=True)
-                self.ibkr_available = True
+                self.ibkr_available = self._ibkr_connection_is_fully_ready()
                 logger.info(f"[HYBRID] Connected to IBKR Gateway on port {ibkr_port}")
             except Exception as e:
                 logger.warning(f"[HYBRID] IBKR unavailable ({e}), using yfinance only")
                 self.ibkr_available = False
+
+    def _ibkr_connection_is_fully_ready(self) -> bool:
+        """
+        Test if IBKR connection is fully operational (including event loop availability)
+
+        Returns:
+            True if IBKR is ready for data fetching, False otherwise
+        """
+        if not self.ib or not self.ib.isConnected():
+            return False
+
+        try:
+            # Test a simple operation that requires event loop
+            # Use a contract that should always work
+            test_contract = Stock('AAPL', 'SMART', 'USD')
+            contracts = self.ib.qualifyContracts(test_contract)
+
+            if contracts:
+                logger.info("[HYBRID] IBKR connection fully validated (event loop OK)")
+                return True
+            else:
+                logger.warning("[HYBRID] IBKR connected but contract qualification failed")
+                return False
+
+        except Exception as e:
+            logger.warning(f"[HYBRID] IBKR connected but not fully operational ({e}), using yfinance only")
+            return False
 
     def disconnect(self):
         """Disconnect from IBKR Gateway"""
@@ -184,29 +211,33 @@ class HybridDataFetcher:
         """
         # Try IBKR first if available
         if self.ibkr_available:
-            # Convert period/interval to IBKR format
-            duration_map = {
-                '1d': '1 D', '5d': '5 D', '1mo': '1 M', '3mo': '3 M',
-                '6mo': '6 M', '1y': '1 Y', '2y': '2 Y', '5y': '5 Y',
-                '10y': '10 Y', 'max': '20 Y'
-            }
+            try:
+                # Convert period/interval to IBKR format
+                duration_map = {
+                    '1d': '1 D', '5d': '5 D', '1mo': '1 M', '3mo': '3 M',
+                    '6mo': '6 M', '1y': '1 Y', '2y': '2 Y', '5y': '5 Y',
+                    '10y': '10 Y', 'max': '20 Y'
+                }
 
-            bar_size_map = {
-                '1m': '1 min', '5m': '5 mins', '15m': '15 mins',
-                '30m': '30 mins', '1h': '1 hour', '1d': '1 day',
-                '1wk': '1 week', '1mo': '1 month'
-            }
+                bar_size_map = {
+                    '1m': '1 min', '5m': '5 mins', '15m': '15 mins',
+                    '30m': '30 mins', '1h': '1 hour', '1d': '1 day',
+                    '1wk': '1 week', '1mo': '1 month'
+                }
 
-            duration = duration_map.get(period, '10 Y')
-            bar_size = bar_size_map.get(interval, '1 day')
+                duration = duration_map.get(period, '10 Y')
+                bar_size = bar_size_map.get(interval, '1 day')
 
-            df = self.fetch_candles_ibkr(symbol, duration, bar_size)
+                df = self.fetch_candles_ibkr(symbol, duration, bar_size)
 
-            if df is not None and not df.empty:
-                logger.info(f"[HYBRID] ✓ {symbol} fetched from IBKR")
-                return df
-            else:
-                logger.warning(f"[HYBRID] IBKR failed for {symbol}, falling back to yfinance")
+                if df is not None and not df.empty:
+                    logger.info(f"[HYBRID] [OK] {symbol} fetched from IBKR")
+                    return df
+                else:
+                    logger.warning(f"[HYBRID] IBKR returned no data for {symbol}, falling back to yfinance")
+
+            except Exception as e:
+                logger.warning(f"[HYBRID] IBKR exception for {symbol} ({e}), falling back to yfinance")
 
         # Fallback to yfinance
         df = self.fetch_candles_yfinance(symbol, period, interval)

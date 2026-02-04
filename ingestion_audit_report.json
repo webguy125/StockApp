@@ -1,0 +1,197 @@
+{
+  "audit_timestamp": "2026-01-24T14:45:00",
+  "audit_scope": "master_market_data ingestion subsystem",
+  "status": "FAIL",
+
+  "db_paths": {
+    "expected": "C:/StockApp/master_market_data/master_market_data.db",
+    "found": [
+      {
+        "file": "create_master_market_db.py",
+        "line": 17,
+        "path": "market_data.db",
+        "severity": "CRITICAL",
+        "issue": "DB path is 'market_data.db' instead of 'master_market_data.db'"
+      },
+      {
+        "file": "market_data_api.py",
+        "line": 37,
+        "path": "market_data.db",
+        "severity": "CRITICAL",
+        "issue": "API references 'market_data.db' instead of 'master_market_data.db'"
+      }
+    ],
+    "validation": "FAIL - WRONG DB PATH"
+  },
+
+  "schema_issues": {
+    "expected_tables": [
+      "ohlcv",
+      "fundamentals",
+      "splits",
+      "dividends",
+      "symbol_metadata",
+      "sector_mappings"
+    ],
+    "found_tables": [
+      "candles",
+      "fundamentals",
+      "splits",
+      "dividends",
+      "symbol_metadata",
+      "sector_mappings",
+      "data_quality_log",
+      "db_metadata"
+    ],
+    "issues": [
+      {
+        "severity": "CRITICAL",
+        "issue": "Table 'ohlcv' does not exist - found 'candles' instead",
+        "file": "create_master_market_db.py",
+        "line": 34
+      }
+    ],
+    "validation": "FAIL - TABLE NAME MISMATCH"
+  },
+
+  "symbol_universe_issues": {
+    "expected": "CORE_230",
+    "validation": "UNKNOWN - NO INGESTION RUNNER FOUND",
+    "issues": [
+      {
+        "severity": "CRITICAL",
+        "issue": "ingestion_runner.py does not exist",
+        "details": "Pipeline references 'master_market_data.ingestion_runner.run_full_ingestion' but file not found"
+      },
+      {
+        "severity": "HIGH",
+        "issue": "ingest_sample_data.py uses hardcoded test symbols",
+        "file": "ingest_sample_data.py",
+        "line": 17,
+        "symbols": ["AAPL", "MSFT", "GOOGL", "NVDA", "TSLA"],
+        "details": "Only 5 test symbols, not CORE_230"
+      }
+    ]
+  },
+
+  "ohlcv_issues": {
+    "validation": "CANNOT_VALIDATE - NO INGESTION LOGIC FOUND",
+    "issues": [
+      {
+        "severity": "CRITICAL",
+        "issue": "No production ingestion script found",
+        "details": "master_market_data.ingest_market_data module referenced in ingest_sample_data.py line 10 does not exist"
+      },
+      {
+        "severity": "CRITICAL",
+        "issue": "Cannot validate OHLCV completeness without ingestion logic"
+      }
+    ]
+  },
+
+  "fundamentals_issues": {
+    "validation": "CANNOT_VALIDATE - NO INGESTION LOGIC FOUND",
+    "issues": [
+      {
+        "severity": "HIGH",
+        "issue": "Fundamentals table schema exists but no ingestion logic found"
+      }
+    ]
+  },
+
+  "corporate_actions_issues": {
+    "validation": "CANNOT_VALIDATE - NO INGESTION LOGIC FOUND",
+    "issues": [
+      {
+        "severity": "HIGH",
+        "issue": "Splits and dividends tables exist but no ingestion logic found"
+      }
+    ]
+  },
+
+  "sector_mapping_issues": {
+    "validation": "CANNOT_VALIDATE - NO INGESTION LOGIC FOUND",
+    "issues": [
+      {
+        "severity": "HIGH",
+        "issue": "Sector mappings table exists but no ingestion logic found"
+      }
+    ]
+  },
+
+  "error_handling_issues": {
+    "validation": "CANNOT_VALIDATE - NO INGESTION LOGIC FOUND",
+    "issues": [
+      {
+        "severity": "CRITICAL",
+        "issue": "Cannot validate error handling without ingestion implementation"
+      }
+    ]
+  },
+
+  "contamination_risks": {
+    "validation": "HIGH_RISK",
+    "issues": [
+      {
+        "severity": "CRITICAL",
+        "issue": "DB path mismatch creates risk of dual database state",
+        "details": "Code references 'market_data.db' but pipeline expects 'master_market_data.db'"
+      },
+      {
+        "severity": "CRITICAL",
+        "issue": "Table name mismatch: 'candles' vs expected 'ohlcv'",
+        "impact": "Backtest engine calls get_candles() which reads from 'candles' table, but schema audit expects 'ohlcv'"
+      },
+      {
+        "severity": "CRITICAL",
+        "issue": "Missing ingestion entrypoint creates phantom dependency",
+        "details": "Pipeline Stage 0 calls non-existent master_market_data.ingestion_runner.run_full_ingestion"
+      },
+      {
+        "severity": "HIGH",
+        "issue": "ingest_market_data module referenced but does not exist",
+        "file": "ingest_sample_data.py",
+        "line": 10
+      }
+    ]
+  },
+
+  "missing_files": [
+    {
+      "expected": "master_market_data/ingestion_runner.py",
+      "severity": "CRITICAL",
+      "referenced_by": "backend/turbomode/core_engine/run_full_production_pipeline_14d.py line 113"
+    },
+    {
+      "expected": "master_market_data/ingest_market_data.py",
+      "severity": "CRITICAL",
+      "referenced_by": "master_market_data/ingest_sample_data.py line 10"
+    }
+  ],
+
+  "files_audited": [
+    "C:/StockApp/master_market_data/create_master_market_db.py",
+    "C:/StockApp/master_market_data/ingest_sample_data.py",
+    "C:/StockApp/master_market_data/market_data_api.py",
+    "C:/StockApp/master_market_data/test_symbol_normalizer.py"
+  ],
+
+  "critical_findings": [
+    "CRITICAL: DB path is 'market_data.db' not 'master_market_data.db'",
+    "CRITICAL: Table 'ohlcv' does not exist (found 'candles' instead)",
+    "CRITICAL: ingestion_runner.py does not exist (phantom import)",
+    "CRITICAL: ingest_market_data.py does not exist (phantom import)",
+    "CRITICAL: No production ingestion logic exists",
+    "CRITICAL: Pipeline Stage 0 will fail immediately on missing import"
+  ],
+
+  "recommendations": [
+    "DO NOT run production pipeline - Stage 0 will fail on import",
+    "Create master_market_data/ingestion_runner.py with run_full_ingestion() function",
+    "Decide on canonical DB path: market_data.db OR master_market_data.db",
+    "Decide on canonical table name: candles OR ohlcv",
+    "Implement full CORE_230 ingestion logic with OHLCV, fundamentals, splits, dividends, metadata",
+    "Add error handling and logging for failed symbol ingestion",
+    "Verify no symbols are silently skipped"
+  ]
+}

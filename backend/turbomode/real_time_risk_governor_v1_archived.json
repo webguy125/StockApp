@@ -1,0 +1,327 @@
+{
+  "module_name": "real_time_risk_governor",
+  "version": "1.0.0",
+  "description": "Canonical module-level JSON defining the structure of the Real-Time Risk Governor. Contains no logic, only fields and schema.",
+
+  "runtime": {
+    "process_type": "daemon",
+    "loop_interval_ms": 5000,
+    "runs_during": "market_hours",
+    "priority": "high",
+    "restart_on_failure": true
+  },
+
+  "inputs": {
+    "ibkr_realtime": {
+      "symbols": ["all_active_positions"],
+      "fields": [
+        "current_price",
+        "bid",
+        "ask",
+        "last_trade_time",
+        "volume",
+        "unrealized_pnl",
+        "market_value"
+      ]
+    },
+    "micro_scanner": {
+      "enabled": true,
+      "symbols": ["all_active_positions", "watchlist"],
+      "fields": [
+        "signal_type",
+        "signal_strength",
+        "prediction_confidence",
+        "model_agreement",
+        "volume_profile"
+      ]
+    },
+    "news_engine": {
+      "fields": [
+        "headline",
+        "sentiment_score",
+        "relevance_score",
+        "symbols_mentioned",
+        "publication_time",
+        "source"
+      ]
+    },
+    "portfolio_state": {
+      "fields": [
+        "total_equity",
+        "cash_balance",
+        "buying_power",
+        "day_trades_remaining",
+        "positions_count",
+        "total_unrealized_pnl",
+        "total_realized_pnl",
+        "margin_used"
+      ]
+    }
+  },
+
+  "risk_thresholds": {
+    "portfolio_level": {
+      "max_drawdown_pct": 10.0,
+      "max_daily_loss_pct": 5.0,
+      "max_position_size_pct": 10.0,
+      "max_sector_exposure_pct": 30.0,
+      "min_cash_reserve_pct": 10.0,
+      "max_margin_utilization_pct": 50.0
+    },
+    "position_level": {
+      "stop_loss_pct": 7.0,
+      "profit_target_pct": 15.0,
+      "trailing_stop_pct": 5.0,
+      "max_hold_days": 14,
+      "intraday_loss_limit_pct": 3.0
+    },
+    "velocity_checks": {
+      "max_price_move_pct_per_minute": 5.0,
+      "max_volume_spike_multiplier": 10.0,
+      "max_spread_widening_pct": 200.0
+    }
+  },
+
+  "state_machine": {
+    "states": {
+      "NORMAL": {
+        "description": "Normal market conditions, full trading enabled",
+        "actions": [
+          "monitor_positions",
+          "allow_new_entries",
+          "apply_standard_stops"
+        ]
+      },
+      "CAUTION": {
+        "description": "Elevated risk detected, restricted trading",
+        "actions": [
+          "tighten_stops",
+          "reduce_position_sizes",
+          "increase_monitoring_frequency",
+          "block_aggressive_entries"
+        ]
+      },
+      "CRITICAL": {
+        "description": "Critical risk level, emergency mode",
+        "actions": [
+          "close_losing_positions",
+          "block_all_new_entries",
+          "send_alert_notifications",
+          "reduce_exposure"
+        ]
+      },
+      "HALT": {
+        "description": "Trading halted, manual intervention required",
+        "actions": [
+          "block_all_trading",
+          "flatten_positions_if_safe",
+          "require_manual_restart",
+          "log_halt_reason"
+        ]
+      }
+    },
+    "transitions": {
+      "NORMAL_to_CAUTION": {
+        "triggers": [
+          "daily_loss_exceeds_3pct",
+          "single_position_loss_exceeds_5pct",
+          "high_volatility_detected",
+          "negative_news_cluster"
+        ]
+      },
+      "CAUTION_to_CRITICAL": {
+        "triggers": [
+          "daily_loss_exceeds_5pct",
+          "rapid_equity_decline",
+          "multiple_stop_triggers",
+          "flash_crash_detected"
+        ]
+      },
+      "CRITICAL_to_HALT": {
+        "triggers": [
+          "daily_loss_exceeds_8pct",
+          "system_malfunction_detected",
+          "circuit_breaker_triggered",
+          "manual_halt_requested"
+        ]
+      },
+      "recovery": {
+        "HALT_to_NORMAL": "manual_review_and_approval",
+        "CRITICAL_to_CAUTION": "risk_levels_stabilized_for_10min",
+        "CAUTION_to_NORMAL": "risk_levels_normal_for_30min"
+      }
+    }
+  },
+
+  "database": {
+    "tables": {
+      "global_risk_state": {
+        "fields": {
+          "timestamp": "DATETIME PRIMARY KEY",
+          "state": "TEXT NOT NULL",
+          "total_equity": "REAL",
+          "daily_pnl": "REAL",
+          "daily_pnl_pct": "REAL",
+          "max_drawdown": "REAL",
+          "positions_count": "INTEGER",
+          "risk_score": "REAL",
+          "margin_used_pct": "REAL",
+          "warnings": "TEXT"
+        }
+      },
+      "symbol_risk_flags": {
+        "fields": {
+          "timestamp": "DATETIME",
+          "symbol": "TEXT NOT NULL",
+          "risk_level": "TEXT",
+          "flag_type": "TEXT",
+          "flag_reason": "TEXT",
+          "price_at_flag": "REAL",
+          "position_size": "REAL",
+          "unrealized_pnl_pct": "REAL",
+          "action_taken": "TEXT",
+          "resolved": "INTEGER DEFAULT 0"
+        },
+        "indexes": [
+          "CREATE INDEX IF NOT EXISTS idx_symbol_flags ON symbol_risk_flags(symbol, timestamp DESC)"
+        ]
+      },
+      "risk_events": {
+        "fields": {
+          "timestamp": "DATETIME PRIMARY KEY",
+          "event_type": "TEXT NOT NULL",
+          "severity": "TEXT",
+          "description": "TEXT",
+          "affected_symbols": "TEXT",
+          "state_before": "TEXT",
+          "state_after": "TEXT",
+          "actions_taken": "TEXT"
+        }
+      }
+    }
+  },
+
+  "websocket_events": {
+    "outbound": [
+      {
+        "event": "risk_state_change",
+        "payload": ["timestamp", "old_state", "new_state", "reason", "risk_score"]
+      },
+      {
+        "event": "position_alert",
+        "payload": ["symbol", "alert_type", "current_pnl_pct", "action_required"]
+      },
+      {
+        "event": "portfolio_alert",
+        "payload": ["alert_type", "metric", "current_value", "threshold", "severity"]
+      },
+      {
+        "event": "stop_triggered",
+        "payload": ["symbol", "entry_price", "exit_price", "pnl_pct", "stop_type"]
+      }
+    ],
+    "inbound": [
+      {
+        "event": "manual_halt",
+        "payload": ["reason", "user_id"]
+      },
+      {
+        "event": "override_risk_check",
+        "payload": ["override_type", "duration_minutes", "reason", "user_id"]
+      },
+      {
+        "event": "update_threshold",
+        "payload": ["threshold_name", "new_value", "user_id"]
+      }
+    ]
+  },
+
+  "integration_points": {
+    "realtime_scanner": {
+      "subscribes_to": ["new_signal", "signal_update", "model_confidence_change"],
+      "provides": ["risk_adjusted_signal", "position_sizing_recommendation"]
+    },
+    "execution_engine": {
+      "controls": ["order_approval", "position_sizing", "stop_placement"],
+      "requires": ["risk_check_before_order", "portfolio_capacity_check"]
+    },
+    "position_manager": {
+      "monitors": ["unrealized_pnl", "position_age", "stop_distance"],
+      "actions": ["adjust_stops", "close_position", "reduce_size"]
+    },
+    "signal_closer": {
+      "coordinates_with": "position_exit_logic",
+      "overrides": ["emergency_exit", "risk_based_early_close"]
+    },
+    "notification_service": {
+      "alerts": [
+        "sms_on_critical",
+        "email_on_caution",
+        "websocket_on_all_events"
+      ]
+    }
+  },
+
+  "monitoring_rules": {
+    "continuous_checks": [
+      {
+        "name": "position_stop_loss",
+        "frequency_ms": 5000,
+        "action": "close_position_if_stop_hit"
+      },
+      {
+        "name": "daily_loss_limit",
+        "frequency_ms": 10000,
+        "action": "halt_trading_if_exceeded"
+      },
+      {
+        "name": "position_age",
+        "frequency_ms": 60000,
+        "action": "flag_stale_positions"
+      },
+      {
+        "name": "sector_concentration",
+        "frequency_ms": 30000,
+        "action": "block_new_entries_if_overexposed"
+      }
+    ],
+    "event_driven_checks": [
+      {
+        "trigger": "new_position_opened",
+        "checks": ["portfolio_capacity", "sector_limits", "correlation_risk"]
+      },
+      {
+        "trigger": "price_alert",
+        "checks": ["stop_proximity", "profit_target_proximity", "volatility_spike"]
+      },
+      {
+        "trigger": "news_event",
+        "checks": ["sentiment_impact", "position_exposure", "correlation_cascade"]
+      }
+    ]
+  },
+
+  "logging": {
+    "log_levels": {
+      "risk_events": "INFO",
+      "state_transitions": "WARNING",
+      "stops_triggered": "WARNING",
+      "system_errors": "ERROR"
+    },
+    "retention": {
+      "risk_events": "90_days",
+      "symbol_flags": "30_days",
+      "state_history": "365_days"
+    }
+  },
+
+  "configuration": {
+    "enable_auto_stops": true,
+    "enable_circuit_breakers": true,
+    "enable_news_monitoring": true,
+    "enable_correlation_checks": true,
+    "simulation_mode": false,
+    "max_concurrent_positions": 10,
+    "max_daily_trades": 20
+  }
+}

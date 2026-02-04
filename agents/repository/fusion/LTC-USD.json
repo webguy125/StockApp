@@ -1,6 +1,6 @@
 {
   "symbol": "LTC-USD",
-  "timestamp": "2026-01-21T00:02:42.394235",
+  "timestamp": "2026-02-02T00:02:35.870405",
   "agent": "fusion_agent",
   "total_score": 27.461538461538463,
   "confidence": 0.5746153846153845,
@@ -11,7 +11,7 @@
     "💰"
   ],
   "emoji_string": "📉❌💰",
-  "shorthand": "LTC-USD | 📉❌💰 | 27 | 0.57 | 2026-01-21",
+  "shorthand": "LTC-USD | 📉❌💰 | 27 | 0.57 | 2026-02-02",
   "weighted_scores": {
     "indicators_agent": {
       "score": 4,

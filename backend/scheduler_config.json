@@ -25,7 +25,7 @@
   "scheduled_tasks": [
     {
       "task_id": 1,
-      "name": "Master Market Data Ingestion",
+      "name": "Master Market Data Ingestion|Daily",
       "function_name": "run_ingestion",
       "endpoint": "/scheduler/run_ingestion",
       "enabled": true,
@@ -48,7 +48,7 @@
     },
     {
       "task_id": 2,
-      "name": "TurboMode Training Orchestrator",
+      "name": "TurboMode Training Orchestrator|Weekly",
       "function_name": "run_orchestrator",
       "endpoint": "/scheduler/run_orchestrator",
       "enabled": true,
@@ -56,7 +56,7 @@
         "type": "cron",
         "hour": 0,
         "minute": 0,
-        "day_of_week": "sun"
+        "day_of_week": "mon"
       },
       "responsibilities": [
         "Load symbols from Master Market Data DB.",
@@ -65,66 +65,164 @@
         "Compute SHAP values and save logs.",
         "Update model metadata and versioning."
       ],
-      "dependencies": [1],
+      "dependencies": [],
       "timeout_minutes": 120,
       "retry_on_failure": false,
       "max_retries": 0
     },
     {
+      "task_id": "3A",
+      "name": "Morning Scanner|8AM-10AM",
+      "function_name": "run_overnight_scanner",
+      "endpoint": "/scheduler/run_overnight_scanner",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "hour": "8-9",
+        "minute": "*/3",
+        "day_of_week": "mon-fri"
+      },
+      "responsibilities": [
+        "Run scanner every 3 minutes from 8:00-9:57 AM CST.",
+        "Load the latest trained model from TurboMode.db.",
+        "Generate real-time predictions for active trading.",
+        "Save signals and prediction metadata to TurboMode.db."
+      ],
+      "dependencies": [],
+      "timeout_minutes": 2,
+      "retry_on_failure": false,
+      "max_retries": 0
+    },
+    {
+      "task_id": "3B",
+      "name": "Midday Scanner|10AM-2PM",
+      "function_name": "run_overnight_scanner",
+      "endpoint": "/scheduler/run_overnight_scanner",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "hour": "10-13",
+        "minute": "0,10,20,30,40,50",
+        "day_of_week": "mon-fri"
+      },
+      "responsibilities": [
+        "Run scanner every 10 minutes from 10:00 AM-1:50 PM CST.",
+        "Runs at :00, :10, :20, :30, :40, :50 of each hour.",
+        "First run at 10:00 AM, last run at 1:50 PM (13:50).",
+        "3C takes over at 2:03 PM.",
+        "Load the latest trained model from TurboMode.db.",
+        "Generate real-time predictions for active trading.",
+        "Save signals and prediction metadata to TurboMode.db."
+      ],
+      "dependencies": [],
+      "timeout_minutes": 2,
+      "retry_on_failure": false,
+      "max_retries": 0
+    },
+    {
+      "task_id": "3C",
+      "name": "Close Scanner|2PM-3PM",
+      "function_name": "run_overnight_scanner",
+      "endpoint": "/scheduler/run_overnight_scanner",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "hour": "14",
+        "minute": "3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57",
+        "day_of_week": "mon-fri"
+      },
+      "responsibilities": [
+        "Run scanner every 3 minutes from 2:03-2:57 PM CST.",
+        "First run at 2:03 PM, last run at 2:57 PM.",
+        "Load the latest trained model from TurboMode.db.",
+        "Generate real-time predictions for active trading.",
+        "Save signals and prediction metadata to TurboMode.db."
+      ],
+      "dependencies": [],
+      "timeout_minutes": 2,
+      "retry_on_failure": false,
+      "max_retries": 0
+    },
+    {
       "task_id": 3,
-      "name": "Overnight Scanner",
+      "name": "Overnight Scanner|Weekly",
       "function_name": "run_overnight_scanner",
       "endpoint": "/scheduler/run_overnight_scanner",
       "enabled": true,
       "schedule": {
         "type": "cron",
         "hour": 23,
-        "minute": 30,
-        "day_of_week": "mon-sun"
+        "minute": 45,
+        "day_of_week": "sat"
       },
       "responsibilities": [
+        "Run scanner Saturday night for Sunday trading prep.",
         "Load the latest trained model from TurboMode.db.",
-        "Generate predictions for the next trading day.",
+        "Generate predictions for next trading week.",
         "Save signals and prediction metadata to TurboMode.db."
       ],
-      "dependencies": [2],
-      "timeout_minutes": 60,
-      "retry_on_failure": true,
-      "max_retries": 2
+      "dependencies": [],
+      "timeout_minutes": 2,
+      "retry_on_failure": false,
+      "max_retries": 0
     },
     {
       "task_id": 4,
-      "name": "Backtest Data Generator",
+      "name": "Backtest Generator|Weekly",
       "function_name": "run_backtest_generator",
       "endpoint": "/scheduler/run_backtest_generator",
       "enabled": true,
       "schedule": {
         "type": "cron",
-        "hour": 23,
-        "minute": 5,
-        "day_of_week": "sat"
+        "hour": 0,
+        "minute": 15,
+        "day_of_week": "sun"
       },
       "responsibilities": [
         "Use Master Market Data DB to generate updated backtest datasets.",
         "Save backtest results and metadata to TurboMode.db.",
         "Ensure backtests reflect the latest ingestion."
       ],
-      "dependencies": [1],
+      "dependencies": [],
       "timeout_minutes": 90,
       "retry_on_failure": false,
       "max_retries": 0
     },
     {
       "task_id": 5,
-      "name": "Drift Monitoring System",
+      "name": "Adaptive Ranking|Weekly",
+      "function_name": "run_adaptive_ranking",
+      "endpoint": "/scheduler/run_adaptive_ranking",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "hour": 0,
+        "minute": 45,
+        "day_of_week": "sun"
+      },
+      "responsibilities": [
+        "Calculate risk-adjusted win rates (WIN_FRACTION = 3.0) from backtest data.",
+        "Apply directional fallback logic (pnl > 0 for BUY, pnl < 0 for SELL).",
+        "Generate composite scores with recency bias.",
+        "Produce top 10 ranked stocks list.",
+        "Save rankings to stock_rankings.json."
+      ],
+      "dependencies": [],
+      "timeout_minutes": 15,
+      "retry_on_failure": true,
+      "max_retries": 2
+    },
+    {
+      "task_id": 6,
+      "name": "Drift Monitor|Weekly",
       "function_name": "run_drift_monitor",
       "endpoint": "/scheduler/run_drift_monitor",
       "enabled": true,
       "schedule": {
         "type": "cron",
-        "hour": 23,
-        "minute": 10,
-        "day_of_week": "sat"
+        "hour": 1,
+        "minute": 15,
+        "day_of_week": "sun"
       },
       "responsibilities": [
         "Compare today's feature distributions to historical baselines.",
@@ -132,22 +230,22 @@
         "Write drift logs to TurboMode.db.",
         "Trigger retraining flags if drift exceeds thresholds."
       ],
-      "dependencies": [2, 4],
+      "dependencies": [],
       "timeout_minutes": 45,
       "retry_on_failure": true,
       "max_retries": 2
     },
     {
-      "task_id": 6,
-      "name": "Weekly Maintenance",
+      "task_id": 7,
+      "name": "Weekly Maintenance|Weekly",
       "function_name": "run_weekly_maintenance",
       "endpoint": "/scheduler/run_weekly_maintenance",
       "enabled": true,
       "schedule": {
         "type": "cron",
-        "hour": 23,
-        "minute": 0,
-        "day_of_week": "sat"
+        "hour": 1,
+        "minute": 45,
+        "day_of_week": "sun"
       },
       "responsibilities": [
         "VACUUM Master Market Data DB.",

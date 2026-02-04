@@ -75,25 +75,40 @@ class AdaptiveStockRanker:
             }
 
         # Calculate wins/losses based on profit_loss_pct
-        # For BUY signals: win if profit_loss_pct > 0
-        # For SELL signals: win if profit_loss_pct < 0
+        # Risk-adjusted logic (Option C): Use model targets/stops with fallback
+        WIN_FRACTION = 3.0
+
         wins = 0
         losses = 0
 
         for _, row in window_df.iterrows():
-            pnl = row['profit_loss_pct']
-            outcome = row['outcome']
+            pnl = row['profit_loss_pct']  # already in percent units
+            outcome = row['outcome'].upper()  # Normalize to uppercase
 
-            if outcome == 'buy':
-                if pnl >= 10.0:  # Hit the +10% target
-                    wins += 1
+            # TODO: Load model_target and model_stop from metadata when available
+            model_target = None
+            model_stop = None
+
+            is_win = False
+
+            if outcome == 'BUY':
+                if model_target is not None:
+                    threshold = model_target / WIN_FRACTION
+                    is_win = pnl >= threshold
                 else:
-                    losses += 1
-            elif outcome == 'sell':
-                if pnl <= -10.0:  # Hit the -10% target
-                    wins += 1
+                    is_win = pnl >= 0.0167
+
+            elif outcome == 'SELL':
+                if model_stop is not None:
+                    threshold = model_stop / WIN_FRACTION
+                    is_win = pnl <= threshold
                 else:
-                    losses += 1
+                    is_win = pnl <= -0.0167
+
+            if is_win:
+                wins += 1
+            else:
+                losses += 1
 
         total = wins + losses
         win_rate = wins / total if total > 0 else 0.0
@@ -111,7 +126,18 @@ class AdaptiveStockRanker:
 
         Score = (30d_wr * 0.5) + (60d_wr * 0.3) + (90d_wr * 0.2) +
                 (signal_frequency * 0.1) + (persistence_bonus)
+
+        Returns None if insufficient data (< 3 signals in any window)
         """
+        # Check minimum data requirements
+        MIN_SIGNALS = 3
+        if symbol_stats['signals_30d'] < MIN_SIGNALS:
+            return None
+        if symbol_stats['signals_60d'] < MIN_SIGNALS:
+            return None
+        if symbol_stats['signals_90d'] < MIN_SIGNALS:
+            return None
+
         # Win rate components (weighted by recency)
         wr_30d = symbol_stats['win_rate_30d']
         wr_60d = symbol_stats['win_rate_60d']
@@ -163,18 +189,17 @@ class AdaptiveStockRanker:
         print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print()
 
-        # Load data
+        # Load data from signal_history (REAL closed trades only, no synthetic data)
         conn = sqlite3.connect(self.db_path)
         query = """
         SELECT
             symbol,
-            outcome,
+            signal_type as outcome,
             profit_loss_pct,
             entry_date,
             exit_date
-        FROM trades
-        WHERE trade_type = 'backtest'
-        AND outcome IN ('buy', 'sell')
+        FROM signal_history
+        WHERE signal_type IN ('BUY', 'SELL')
         AND symbol IS NOT NULL
         ORDER BY symbol, entry_date
         """
@@ -183,7 +208,20 @@ class AdaptiveStockRanker:
         conn.close()
 
         if len(df) == 0:
-            print("[ERROR] No backtest data found")
+            print("[INFO] No real closed trades yet - signal_history is empty")
+            print("[INFO] This is expected after migration to contamination-proof lifecycle")
+            print("[INFO] Real performance data will accumulate as scanner runs and signals close")
+            print()
+            print("Current state:")
+            print("  - signal_history: 0 rows (clean, awaiting real closed trades)")
+            print("  - active_signals: Contains open positions")
+            print("  - training_samples: Contains synthetic backtest data for ML training")
+            print()
+            print("Win rates and rankings will be available after:")
+            print("  1. Scanner runs daily and generates signals")
+            print("  2. Signals reach exit conditions (14 days or target/stop)")
+            print("  3. Real closed trades accumulate in signal_history")
+            print()
             return None
 
         print(f"Total signals: {len(df):,}")
@@ -231,11 +269,20 @@ class AdaptiveStockRanker:
 
             all_stats.append(stats)
 
-        # Sort by composite score
+        # Filter out stocks with insufficient data
         stats_df = pd.DataFrame(all_stats)
-        stats_df = stats_df.sort_values('composite_score', ascending=False)
+        stats_df_valid = stats_df[stats_df['composite_score'].notna()].copy()
+        stats_df_insufficient = stats_df[stats_df['composite_score'].isna()].copy()
 
-        return stats_df
+        if len(stats_df_insufficient) > 0:
+            print(f"\nExcluded {len(stats_df_insufficient)} symbols with insufficient data:")
+            for symbol in stats_df_insufficient['symbol'].head(10):
+                print(f"  - {symbol}")
+
+        # Sort valid symbols by composite score
+        stats_df_valid = stats_df_valid.sort_values('composite_score', ascending=False)
+
+        return stats_df_valid
 
     def get_top_10(self, stats_df):
         """Extract top 10 stocks"""

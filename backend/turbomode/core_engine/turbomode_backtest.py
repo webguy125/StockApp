@@ -25,7 +25,8 @@ import uuid
 
 # Add project root to path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-backend_dir = os.path.dirname(current_dir)
+turbomode_dir = os.path.dirname(current_dir)
+backend_dir = os.path.dirname(turbomode_dir)
 project_root = os.path.dirname(backend_dir)
 
 if project_root not in sys.path:
@@ -33,6 +34,9 @@ if project_root not in sys.path:
 
 # Import Master Market Data API (read-only)
 from master_market_data.market_data_api import get_market_data_api
+
+# Import feature engine for computing entry features
+from backend.turbomode.core_engine.turbomode_vectorized_feature_engine import TurboModeVectorizedFeatureEngine
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('turbomode_backtest')
@@ -80,8 +84,13 @@ class TurboModeBacktest:
 
         # Connect to Master Market Data DB (read-only)
         self.market_data_api = get_market_data_api()
+
+        # Initialize feature engine for computing entry features
+        self.feature_engine = TurboModeVectorizedFeatureEngine()
+
         logger.info("[INIT] TurboMode Backtest Engine initialized")
         logger.info(f"       TurboMode DB: {turbomode_db_path}")
+        logger.info("       Feature engine initialized (179 features)")
 
     def get_last_entry_date(self, symbol: str) -> Optional[str]:
         """
@@ -180,7 +189,7 @@ class TurboModeBacktest:
 
         logger.info(f"[BACKTEST] Loaded {len(price_data)} days of price data")
 
-        # Generate training samples with canonical labels
+        # Generate training samples with canonical labels AND features
         samples = self._generate_samples_with_canonical_labels(symbol, price_data)
 
         # Save samples to trades table
@@ -214,29 +223,47 @@ class TurboModeBacktest:
                                                  symbol: str,
                                                  price_data: pd.DataFrame) -> List[Dict[str, Any]]:
         """
-        Generate training samples with canonical label logic
+        Generate training samples with canonical label logic AND entry features
 
         Canonical label logic:
-        - Look forward 5 days (holding period)
+        - Look forward 14 days (holding period)
         - Calculate return_pct = (future_price - entry_price) / entry_price
         - if return_pct >= +5%: label = 'buy'
         - if return_pct <= -5%: label = 'sell'
         - else: label = 'hold'
+
+        Features:
+        - Computes 179 features for each entry point using TurboModeVectorizedFeatureEngine
+        - Stores features as JSON in entry_features_json column
 
         Args:
             symbol: Stock ticker
             price_data: DataFrame with columns [date, open, high, low, close, volume]
 
         Returns:
-            List of sample dictionaries
+            List of sample dictionaries with features
         """
+        import json
+
         samples = []
-        holding_period = 5  # days
+        holding_period = 14  # days (aligned with 14-day swing trading strategy)
         buy_threshold = 0.05  # +5%
         sell_threshold = -0.05  # -5%
 
         # Ensure price_data is sorted by date
         price_data = price_data.sort_values('date').reset_index(drop=True)
+
+        # Compute features for ALL dates at once (vectorized)
+        # Feature engine expects DataFrame with columns: open, high, low, close, volume
+        try:
+            features_df = self.feature_engine.extract_features(price_data)
+            # Convert DataFrame to list of dicts (one per row)
+            all_features = features_df.to_dict('records')
+        except Exception as e:
+            logger.error(f"[FEATURES] Failed to compute features for {symbol}: {e}")
+            import traceback
+            traceback.print_exc()
+            all_features = None
 
         # Generate samples for each day (except last holding_period days)
         for i in range(len(price_data) - holding_period):
@@ -261,6 +288,12 @@ class TurboModeBacktest:
             else:
                 outcome = 'hold'
 
+            # Extract features for this entry point
+            entry_features_json = None
+            if all_features is not None and len(all_features) > i:
+                features_dict = all_features[i]
+                entry_features_json = json.dumps(features_dict)
+
             # Create sample
             # Convert pandas Timestamp to string format
             entry_date_str = entry_date.strftime('%Y-%m-%d') if hasattr(entry_date, 'strftime') else str(entry_date)
@@ -278,10 +311,10 @@ class TurboModeBacktest:
                 'profit_loss': float(profit_loss),
                 'profit_loss_pct': float(return_pct),
                 'exit_reason': 'backtest',
-                'entry_features_json': None,  # Features can be added later
+                'entry_features_json': entry_features_json,
                 'trade_type': 'backtest',
                 'strategy': 'turbomode',
-                'notes': f'{holding_period}d holding period',
+                'notes': f'{holding_period}d swing trade',
                 'created_at': datetime.now().isoformat()
             }
 
@@ -372,6 +405,47 @@ class TurboModeBacktest:
 
         return count
 
+
+def main():
+    """
+    Production entrypoint for full 230-symbol backtest generation.
+
+    This delegates to generate_backtest_data.py which processes all 230 CORE_230
+    symbols and writes backtest samples to backend/data/turbomode.db.
+
+    For testing a single symbol, use the __main__ block below.
+    """
+    print("[PRODUCTION] Running full 230-symbol batch backtest generation")
+    print("This function delegates to generate_backtest_data.py")
+    print()
+
+    import subprocess
+    import os
+
+    # Get path to generate_backtest_data.py
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    batch_script = os.path.join(current_dir, "generate_backtest_data.py")
+
+    if not os.path.exists(batch_script):
+        raise FileNotFoundError(f"Batch backtest generator not found: {batch_script}")
+
+    # Run the batch generator
+    result = subprocess.run([sys.executable, batch_script], cwd=current_dir)
+
+    if result.returncode != 0:
+        raise RuntimeError(f"Batch backtest generation failed with exit code {result.returncode}")
+
+    print()
+    print("[OK] Full backtest generation completed")
+    return 0
+
+
+# ===================================================================================
+# TEST HARNESS (for development/testing only)
+# ===================================================================================
+# NOTE: This __main__ block is for TESTING ONLY with a single symbol.
+# Production code should call main() or use generate_backtest_data.py directly.
+# ===================================================================================
 
 if __name__ == '__main__':
     # Test the backtest engine

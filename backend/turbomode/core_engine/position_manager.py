@@ -14,9 +14,11 @@ Supports atomic writes and deterministic state recovery.
 import json
 import os
 from typing import Dict, Optional
-from datetime import datetime
+from datetime import datetime, time
 from pathlib import Path
 import threading
+import pytz
+from backend.turbomode.core_engine.pnl_utils import calculate_pnl_pct
 
 
 class PositionManager:
@@ -130,6 +132,11 @@ class PositionManager:
         pos = self.get_position(symbol)
         return pos is not None and pos['position'] == 'short'
 
+    def _within_market_hours(self):
+        cst = pytz.timezone("America/Chicago")
+        now = datetime.now(cst).time()
+        return time(8, 15) <= now <= time(14, 45)
+
     def open_position(
         self,
         symbol: str,
@@ -162,6 +169,10 @@ class PositionManager:
             sector: Sector name
             atr: ATR at entry
         """
+        if not self._within_market_hours():
+            print(f"[EXECUTION BLOCKED] Market closed — skipping open_position for {symbol}")
+            return
+
         with self._lock:
             self._positions[symbol] = {
                 'symbol': symbol,
@@ -228,19 +239,17 @@ class PositionManager:
             # Calculate P&L
             if position_type == 'long':
                 pnl = (exit_price - entry_price) * position_size
-                pnl_pct = (exit_price / entry_price - 1) * 100
+                pnl_pct = calculate_pnl_pct(entry_price, exit_price, "BUY")  # Long position
             else:  # short
                 pnl = (entry_price - exit_price) * position_size
-                pnl_pct = (1 - exit_price / entry_price) * 100
+                pnl_pct = calculate_pnl_pct(entry_price, exit_price, "SELL")  # Short position
 
             print(f"[POSITION] Closed {position_type.upper()} {symbol} @ ${exit_price:.2f}")
             print(f"           Entry: ${entry_price:.2f} | P&L: ${pnl:+.2f} ({pnl_pct:+.2f}%)")
             print(f"           Reason: {reason}")
 
-            # Mark as flat
-            self._positions[symbol]['position'] = 'flat'
-            self._positions[symbol]['current_price'] = exit_price
-            self._positions[symbol]['last_update'] = datetime.now().isoformat()
+            # Remove position entirely
+            del self._positions[symbol]
             self._save_state()
 
     def get_all_active_positions(self) -> Dict[str, Dict]:

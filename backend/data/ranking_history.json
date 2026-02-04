@@ -73,5 +73,191 @@
       "SLB",
       "CRM"
     ]
+  },
+  {
+    "timestamp": "2026-01-24T10:35:24.955059",
+    "top_10_symbols": [
+      "A",
+      "NET",
+      "NKE",
+      "NOC",
+      "NOW",
+      "NSC",
+      "NTRA",
+      "NUE",
+      "NVDA",
+      "NX"
+    ]
+  },
+  {
+    "timestamp": "2026-01-24T14:15:34.554142",
+    "top_10_symbols": [
+      "A",
+      "NET",
+      "NKE",
+      "NOC",
+      "NOW",
+      "NSC",
+      "NTRA",
+      "NUE",
+      "NVDA",
+      "NX"
+    ]
+  },
+  {
+    "timestamp": "2026-01-24T14:22:59.992391",
+    "top_10_symbols": [
+      "A",
+      "NET",
+      "NKE",
+      "NOC",
+      "NOW",
+      "NSC",
+      "NTRA",
+      "NUE",
+      "NVDA",
+      "NX"
+    ]
+  },
+  {
+    "timestamp": "2026-01-24T14:42:44.820658",
+    "top_10_symbols": [
+      "A",
+      "NET",
+      "NKE",
+      "NOC",
+      "NOW",
+      "NSC",
+      "NTRA",
+      "NUE",
+      "NVDA",
+      "NX"
+    ]
+  },
+  {
+    "timestamp": "2026-01-24T16:16:07.104545",
+    "top_10_symbols": [
+      "A",
+      "NET",
+      "NKE",
+      "NOC",
+      "NOW",
+      "NSC",
+      "NTRA",
+      "NUE",
+      "NVDA",
+      "NX"
+    ]
+  },
+  {
+    "timestamp": "2026-01-24T16:44:12.381592",
+    "top_10_symbols": [
+      "A",
+      "NET",
+      "NKE",
+      "NOC",
+      "NOW",
+      "NSC",
+      "NTRA",
+      "NUE",
+      "NVDA",
+      "NX"
+    ]
+  },
+  {
+    "timestamp": "2026-01-24T18:52:38.657851",
+    "top_10_symbols": [
+      "A",
+      "PRU",
+      "NFLX",
+      "NKE",
+      "NOC",
+      "NOW",
+      "NSC",
+      "NTRA",
+      "NUE",
+      "NVDA"
+    ]
+  },
+  {
+    "timestamp": "2026-01-24T23:10:23.261782",
+    "top_10_symbols": [
+      "A",
+      "ORLY",
+      "NKE",
+      "NOC",
+      "NOW",
+      "NSC",
+      "NTRA",
+      "NUE",
+      "NVDA",
+      "NX"
+    ]
+  },
+  {
+    "timestamp": "2026-01-25T08:34:08.825034",
+    "top_10_symbols": [
+      "A",
+      "OMI",
+      "NET",
+      "NFLX",
+      "NKE",
+      "NOC",
+      "NOW",
+      "NTRA",
+      "NUE",
+      "NVDA"
+    ]
+  },
+  {
+    "timestamp": "2026-01-25T08:37:58.173497",
+    "top_10_symbols": [
+      "A",
+      "OMI",
+      "NET",
+      "NFLX",
+      "NKE",
+      "NOC",
+      "NOW",
+      "NTRA",
+      "NUE",
+      "NVDA"
+    ]
+  },
+  {
+    "timestamp": "2026-01-25T13:15:13.343490",
+    "top_10_symbols": []
+  },
+  {
+    "timestamp": "2026-01-25T13:17:39.901714",
+    "top_10_symbols": []
+  },
+  {
+    "timestamp": "2026-01-25T15:16:43.243088",
+    "top_10_symbols": []
+  },
+  {
+    "timestamp": "2026-01-25T23:44:34.399017",
+    "top_10_symbols": []
+  },
+  {
+    "timestamp": "2026-01-29T10:56:25.340589",
+    "top_10_symbols": []
+  },
+  {
+    "timestamp": "2026-01-29T14:43:31.288079",
+    "top_10_symbols": []
+  },
+  {
+    "timestamp": "2026-01-29T18:41:48.447120",
+    "top_10_symbols": []
+  },
+  {
+    "timestamp": "2026-01-31T23:15:00.222539",
+    "top_10_symbols": []
+  },
+  {
+    "timestamp": "2026-02-01T02:00:00.204255",
+    "top_10_symbols": []
   }
 ]

@@ -18,6 +18,7 @@ import json
 import logging
 import sqlite3
 import shutil
+import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -49,6 +50,55 @@ job_state = {
     'last_results': {},
     'errors': {}
 }
+
+# Execution history file path
+EXECUTION_HISTORY_FILE = os.path.join(current_dir, 'data', 'execution_history.json')
+
+def load_execution_history() -> List[Dict[str, Any]]:
+    """Load execution history from file"""
+    if not os.path.exists(EXECUTION_HISTORY_FILE):
+        return []
+    try:
+        with open(EXECUTION_HISTORY_FILE, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        logger.warning(f"Failed to load execution history: {e}")
+        return []
+
+def save_execution_history(history: List[Dict[str, Any]]):
+    """Save execution history to file with 30-day retention"""
+    # Filter to keep only last 30 days
+    cutoff_date = datetime.now() - timedelta(days=30)
+    filtered_history = [
+        entry for entry in history
+        if datetime.fromisoformat(entry['timestamp']) > cutoff_date
+    ]
+
+    # Ensure data directory exists
+    os.makedirs(os.path.dirname(EXECUTION_HISTORY_FILE), exist_ok=True)
+
+    # Save to file
+    try:
+        with open(EXECUTION_HISTORY_FILE, 'w') as f:
+            json.dump(filtered_history, f, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to save execution history: {e}")
+
+def add_execution_to_history(task_id: int, task_name: str, status: str, duration_seconds: float = None, error: str = None):
+    """Add a task execution to the history"""
+    history = load_execution_history()
+
+    entry = {
+        'task_id': task_id,
+        'task_name': task_name,
+        'timestamp': datetime.now().isoformat(),
+        'status': status,  # 'success', 'failed', 'timeout'
+        'duration_seconds': duration_seconds,
+        'error': error
+    }
+
+    history.append(entry)
+    save_execution_history(history)
 
 
 # ============================================================================
@@ -102,7 +152,8 @@ def run_ingestion() -> Dict[str, Any]:
 
     task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
-    task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    start_time = datetime.now()
+    task_logger.info(f"Started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
 
     try:
@@ -126,12 +177,16 @@ def run_ingestion() -> Dict[str, Any]:
         task_logger.info(f"  Data updated: master_market_data/master_market_data.db")
 
         # Update state
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['last_runs'][task_id] = datetime.now().isoformat()
         job_state['last_results'][task_id] = {
             'status': 'success',
             'symbols_processed': results.get('total_symbols', 0) if results else 0,
             'candles_ingested': results.get('total_candles', 0) if results else 0
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'success', duration)
 
         task_logger.info("=" * 80)
 
@@ -146,10 +201,14 @@ def run_ingestion() -> Dict[str, Any]:
         import traceback
         traceback.print_exc()
 
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['errors'][task_id] = {
             'timestamp': datetime.now().isoformat(),
             'error': str(e)
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'failed', duration, str(e))
 
         return {
             'success': False,
@@ -183,7 +242,8 @@ def run_orchestrator() -> Dict[str, Any]:
 
     task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
-    task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    start_time = datetime.now()
+    task_logger.info(f"Started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
 
     try:
@@ -201,6 +261,7 @@ def run_orchestrator() -> Dict[str, Any]:
             task_logger.info(f"[SUCCESS] Task {task_id} completed - 14-day optimized training")
             task_logger.info(f"Trained {len(results)} sectors successfully")
 
+            duration = (datetime.now() - start_time).total_seconds()
             job_state['last_runs'][task_id] = datetime.now().isoformat()
             job_state['last_results'][task_id] = {
                 'status': 'success',
@@ -208,6 +269,9 @@ def run_orchestrator() -> Dict[str, Any]:
                 'total_models': 66,
                 'sectors_trained': len(results)
             }
+
+            # Add to execution history
+            add_execution_to_history(task_id, task_config['name'], 'success', duration)
 
             task_logger.info("=" * 80)
 
@@ -226,10 +290,14 @@ def run_orchestrator() -> Dict[str, Any]:
         import traceback
         traceback.print_exc()
 
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['errors'][task_id] = {
             'timestamp': datetime.now().isoformat(),
             'error': str(e)
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'failed', duration, str(e))
 
         return {
             'success': False,
@@ -261,7 +329,8 @@ def run_overnight_scanner() -> Dict[str, Any]:
 
     task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
-    task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    start_time = datetime.now()
+    task_logger.info(f"Started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
 
     try:
@@ -288,12 +357,16 @@ def run_overnight_scanner() -> Dict[str, Any]:
         task_logger.info(f"  Symbols scanned: {len(symbols)}")
         task_logger.info(f"  Signals generated: {num_signals}")
 
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['last_runs'][task_id] = datetime.now().isoformat()
         job_state['last_results'][task_id] = {
             'status': 'success',
             'symbols_scanned': len(symbols),
             'signals_generated': num_signals
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'success', duration)
 
         task_logger.info("=" * 80)
 
@@ -308,10 +381,14 @@ def run_overnight_scanner() -> Dict[str, Any]:
         import traceback
         traceback.print_exc()
 
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['errors'][task_id] = {
             'timestamp': datetime.now().isoformat(),
             'error': str(e)
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'failed', duration, str(e))
 
         return {
             'success': False,
@@ -343,7 +420,8 @@ def run_backtest_generator() -> Dict[str, Any]:
 
     task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
-    task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    start_time = datetime.now()
+    task_logger.info(f"Started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
 
     try:
@@ -373,11 +451,15 @@ def run_backtest_generator() -> Dict[str, Any]:
         if total_samples > 0:
             task_logger.info(f"[SUCCESS] Task {task_id} completed - Generated {total_samples:,} samples")
 
+            duration = (datetime.now() - start_time).total_seconds()
             job_state['last_runs'][task_id] = datetime.now().isoformat()
             job_state['last_results'][task_id] = {
                 'status': 'success',
                 'total_samples': total_samples
             }
+
+            # Add to execution history
+            add_execution_to_history(task_id, task_config['name'], 'success', duration)
 
             task_logger.info("=" * 80)
 
@@ -394,10 +476,14 @@ def run_backtest_generator() -> Dict[str, Any]:
         import traceback
         traceback.print_exc()
 
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['errors'][task_id] = {
             'timestamp': datetime.now().isoformat(),
             'error': str(e)
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'failed', duration, str(e))
 
         return {
             'success': False,
@@ -430,7 +516,8 @@ def run_adaptive_ranking() -> Dict[str, Any]:
 
     task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
-    task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    start_time = datetime.now()
+    task_logger.info(f"Started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
 
     try:
@@ -451,12 +538,16 @@ def run_adaptive_ranking() -> Dict[str, Any]:
             task_logger.info(f"[SUCCESS] Task {task_id} completed")
             task_logger.info(f"Top 10 symbols: {top_10_symbols}")
 
+            duration = (datetime.now() - start_time).total_seconds()
             job_state['last_runs'][task_id] = datetime.now().isoformat()
             job_state['last_results'][task_id] = {
                 'status': 'success',
                 'top_10_count': len(results['top_10']),
                 'total_stocks_analyzed': len(results['all_stats'])
             }
+
+            # Add to execution history
+            add_execution_to_history(task_id, task_config['name'], 'success', duration)
 
             task_logger.info("=" * 80)
 
@@ -474,10 +565,14 @@ def run_adaptive_ranking() -> Dict[str, Any]:
         import traceback
         traceback.print_exc()
 
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['errors'][task_id] = {
             'timestamp': datetime.now().isoformat(),
             'error': str(e)
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'failed', duration, str(e))
 
         return {
             'success': False,
@@ -510,7 +605,8 @@ def run_drift_monitor() -> Dict[str, Any]:
 
     task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
-    task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    start_time = datetime.now()
+    task_logger.info(f"Started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
 
     try:
@@ -576,11 +672,15 @@ def run_drift_monitor() -> Dict[str, Any]:
 
         task_logger.info(f"[SUCCESS] Task {task_id} completed")
 
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['last_runs'][task_id] = datetime.now().isoformat()
         job_state['last_results'][task_id] = {
             'status': 'success',
             **drift_results
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'success', duration)
 
         task_logger.info("=" * 80)
 
@@ -595,10 +695,14 @@ def run_drift_monitor() -> Dict[str, Any]:
         import traceback
         traceback.print_exc()
 
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['errors'][task_id] = {
             'timestamp': datetime.now().isoformat(),
             'error': str(e)
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'failed', duration, str(e))
 
         return {
             'success': False,
@@ -631,7 +735,8 @@ def run_weekly_maintenance() -> Dict[str, Any]:
 
     task_logger.info("=" * 80)
     task_logger.info(f"TASK {task_id}: {task_config['name']}")
-    task_logger.info(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    start_time = datetime.now()
+    task_logger.info(f"Started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     task_logger.info("=" * 80)
 
     try:
@@ -696,7 +801,6 @@ def run_weekly_maintenance() -> Dict[str, Any]:
         # Archive old logs
         try:
             import zipfile
-            from datetime import datetime, timedelta
 
             # Get old logs (older than 30 days)
             old_logs = logger_manager.get_old_logs(days=30)
@@ -732,11 +836,15 @@ def run_weekly_maintenance() -> Dict[str, Any]:
         task_logger.info(f"  TurboMode DB vacuumed: {results['turbomode_db_vacuum']}")
         task_logger.info(f"  Temp cleaned: {results['temp_cleaned']}")
 
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['last_runs'][task_id] = datetime.now().isoformat()
         job_state['last_results'][task_id] = {
             'status': 'success',
             **results
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'success', duration)
 
         task_logger.info("=" * 80)
 
@@ -751,10 +859,14 @@ def run_weekly_maintenance() -> Dict[str, Any]:
         import traceback
         traceback.print_exc()
 
+        duration = (datetime.now() - start_time).total_seconds()
         job_state['errors'][task_id] = {
             'timestamp': datetime.now().isoformat(),
             'error': str(e)
         }
+
+        # Add to execution history
+        add_execution_to_history(task_id, task_config['name'], 'failed', duration, str(e))
 
         return {
             'success': False,
@@ -767,15 +879,137 @@ def run_weekly_maintenance() -> Dict[str, Any]:
 # SCHEDULER MANAGEMENT
 # ============================================================================
 
-# Map task IDs to functions
+# Map task IDs to subprocess wrapper functions (for isolation from Flask)
+def _task_subprocess_wrapper(task_id, task_func):
+    """
+    Wrapper that runs task function in a subprocess to isolate from Flask.
+    Returns a callable that executes the task in a subprocess.
+    """
+    import subprocess
+    import sys
+
+    def wrapper():
+        """Execute task in subprocess"""
+        # Get the Python executable
+        python_exe = sys.executable
+
+        # Determine which script to call based on task_id
+        script_map = {
+            1: 'backend/turbomode/core_engine/ingest_master_market_data.py',
+            2: 'backend/turbomode/core_engine/train_all_sectors_fastmode_orchestrator.py',
+            3: 'backend/turbomode/core_engine/overnight_scanner.py',
+            "3A": 'backend/turbomode/core_engine/overnight_scanner.py',
+            "3B": 'backend/turbomode/core_engine/overnight_scanner.py',
+            "3C": 'backend/turbomode/core_engine/overnight_scanner.py',
+            4: 'backend/turbomode/core_engine/generate_backtest_data.py',
+            5: 'backend/turbomode/adaptive_stock_ranker.py',
+            6: None,  # Drift monitor - runs inline for now
+            7: None   # Weekly maintenance - runs inline for now
+        }
+
+        script_path = script_map.get(task_id)
+
+        # If no script path, fall back to inline task function
+        if script_path is None:
+            task_logger = logger_manager.get_task_logger(task_id)
+            task_logger.info(f"[INLINE] Running task {task_id} inline (no subprocess script)")
+            try:
+                return task_func()
+            except Exception as e:
+                task_logger.error(f"[INLINE ERROR] Task {task_id}: {e}")
+                return {
+                    'success': False,
+                    'task_id': task_id,
+                    'error': str(e)
+                }
+
+        # Run task in subprocess with output redirected to task log
+        task_config = get_task_config(task_id)
+        task_name = task_config['name'] if task_config else f'Task {task_id}'
+        start_time = time.time()
+        task_logger = None
+
+        try:
+            # Create logger (may fail if task_name has invalid chars)
+            task_logger = logger_manager.get_task_logger(task_id, task_name)
+            task_logger.info(f"[SUBPROCESS] Starting task {task_id} via {script_path}")
+
+            # Start subprocess (fully isolated from Flask)
+            process = subprocess.Popen(
+                [python_exe, script_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                cwd=project_root
+            )
+
+            # Stream output to task log (don't let it go to Flask terminal)
+            for line in iter(process.stdout.readline, ''):
+                if line:
+                    task_logger.info(line.rstrip())
+
+            # Wait for completion
+            return_code = process.wait()
+            duration = time.time() - start_time
+
+            if return_code == 0:
+                task_logger.info(f"[SUBPROCESS] Task {task_id} completed successfully in {duration:.1f}s")
+
+                # Add to execution history
+                add_execution_to_history(task_id, task_name, 'success', duration)
+
+                return {
+                    'success': True,
+                    'task_id': task_id,
+                    'message': f'Task {task_id} completed via subprocess'
+                }
+            else:
+                error_msg = f'Subprocess exited with code {return_code}'
+                task_logger.error(f"[SUBPROCESS] Task {task_id} failed: {error_msg}")
+
+                # Add to execution history
+                add_execution_to_history(task_id, task_name, 'failed', duration, error_msg)
+
+                return {
+                    'success': False,
+                    'task_id': task_id,
+                    'error': error_msg
+                }
+
+        except Exception as e:
+            duration = time.time() - start_time
+            error_msg = str(e)
+
+            # Log error (if logger was created)
+            if task_logger:
+                task_logger.error(f"[SUBPROCESS ERROR] Task {task_id}: {error_msg}")
+            else:
+                logger.error(f"[SUBPROCESS ERROR] Task {task_id}: {error_msg}")
+
+            # Add to execution history
+            add_execution_to_history(task_id, task_name, 'failed', duration, error_msg)
+
+            return {
+                'success': False,
+                'task_id': task_id,
+                'error': error_msg
+            }
+
+    return wrapper
+
+
+# Map task IDs to subprocess wrapper functions
 TASK_FUNCTIONS = {
-    1: run_ingestion,
-    2: run_orchestrator,
-    3: run_overnight_scanner,
-    4: run_backtest_generator,
-    5: run_adaptive_ranking,
-    6: run_drift_monitor,
-    7: run_weekly_maintenance
+    1: _task_subprocess_wrapper(1, run_ingestion),
+    2: _task_subprocess_wrapper(2, run_orchestrator),
+    3: _task_subprocess_wrapper(3, run_overnight_scanner),
+    "3A": _task_subprocess_wrapper("3A", run_overnight_scanner),
+    "3B": _task_subprocess_wrapper("3B", run_overnight_scanner),
+    "3C": _task_subprocess_wrapper("3C", run_overnight_scanner),
+    4: _task_subprocess_wrapper(4, run_backtest_generator),
+    5: _task_subprocess_wrapper(5, run_adaptive_ranking),
+    6: _task_subprocess_wrapper(6, run_drift_monitor),
+    7: _task_subprocess_wrapper(7, run_weekly_maintenance)
 }
 
 
@@ -975,19 +1209,38 @@ def start_unified_scheduler():
             continue
 
         schedule = task['schedule']
+        schedule_type = schedule.get('type', 'cron')
 
-        # Create cron trigger
-        trigger = CronTrigger(
-            hour=schedule['hour'],
-            minute=schedule['minute'],
-            day_of_week=schedule.get('day_of_week', '*'),
-            timezone=config['global_settings'].get('timezone', 'America/New_York')
-        )
+        # Create trigger based on schedule type
+        if schedule_type == 'interval':
+            # Interval-based schedule (e.g., every 3 minutes during market hours)
+            from apscheduler.triggers.interval import IntervalTrigger
+            from datetime import time as dt_time
 
-        # Add job with timeout and retry wrapper
+            trigger = IntervalTrigger(
+                minutes=schedule['minutes'],
+                start_date=schedule.get('start_time'),  # e.g., "08:30"
+                end_date=schedule.get('end_time'),      # e.g., "15:00"
+                timezone=config['global_settings'].get('timezone', 'America/Chicago')
+            )
+            schedule_desc = f"Every {schedule['minutes']} min ({schedule.get('start_time')}-{schedule.get('end_time')}) {schedule.get('day_of_week', 'daily')}"
+        else:
+            # Cron-based schedule
+            trigger = CronTrigger(
+                hour=schedule['hour'],
+                minute=schedule['minute'],
+                day_of_week=schedule.get('day_of_week', '*'),
+                timezone=config['global_settings'].get('timezone', 'America/Chicago')
+            )
+            # Format schedule description (handle both int and string hour/minute)
+            hour_str = str(schedule['hour']) if isinstance(schedule['hour'], int) else schedule['hour']
+            min_str = str(schedule['minute']) if isinstance(schedule['minute'], int) else schedule['minute']
+            schedule_desc = f"{hour_str}:{min_str} {schedule.get('day_of_week', 'daily')}"
+
+        # Add job with timeout and retry wrapper (async to prevent Flask crashes)
         task_id = task['task_id']
         scheduler.add_job(
-            lambda tid=task_id: run_task_with_timeout_and_retry(tid),
+            lambda tid=task_id: run_task_manually_async(tid),
             trigger=trigger,
             id=f"task_{task_id}",
             name=task['name'],
@@ -995,7 +1248,7 @@ def start_unified_scheduler():
         )
 
         logger.info(f"[REGISTERED] Task {task['task_id']}: {task['name']}")
-        logger.info(f"             Schedule: {schedule['hour']:02d}:{schedule['minute']:02d} {schedule.get('day_of_week', 'daily')}")
+        logger.info(f"             Schedule: {schedule_desc}")
 
     # Start scheduler
     scheduler.start()
@@ -1031,15 +1284,51 @@ def get_scheduler_status() -> Dict[str, Any]:
     if config is None:
         config = load_scheduler_config()
 
+    # Check if scheduler is running (either in-process or as subprocess)
     is_running = scheduler is not None and scheduler.running
 
+    # If not running in-process, check if subprocess is running
+    if not is_running:
+        try:
+            import subprocess as sp
+            # Check if unified_scheduler.py is running as a subprocess
+            result = sp.run(
+                ['wmic', 'process', 'where', "commandline like '%unified_scheduler.py%'", 'get', 'processid'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            # If we find any process IDs (excluding the wmic command itself), scheduler is running
+            output_lines = result.stdout.strip().split('\n')
+            if len(output_lines) > 1:  # More than just the header
+                # Verify the log file also exists and has the STARTED message
+                log_path = os.path.join(os.path.dirname(__file__), 'logs', 'scheduler.log')
+                if os.path.exists(log_path):
+                    with open(log_path, 'r') as f:
+                        lines = f.readlines()
+                        for line in reversed(lines[-100:]):  # Check last 100 lines
+                            if 'Unified Scheduler STARTED' in line:
+                                is_running = True
+                                break
+        except Exception as e:
+            logger.warning(f"Could not check subprocess status: {e}")
+
     jobs = []
-    if is_running:
+    if is_running and scheduler is not None:
         for job in scheduler.get_jobs():
             jobs.append({
                 'id': job.id,
                 'name': job.name,
                 'next_run': job.next_run_time.isoformat() if job.next_run_time else None
+            })
+    elif is_running:
+        # Subprocess is running but we can't get job details
+        # Return job info from config
+        for task in config.get('scheduled_tasks', []):
+            jobs.append({
+                'id': f"task_{task['task_id']}",
+                'name': task['name'],
+                'next_run': None  # Can't get from subprocess
             })
 
     return {
@@ -1048,7 +1337,8 @@ def get_scheduler_status() -> Dict[str, Any]:
         'jobs': jobs,
         'last_runs': job_state.get('last_runs', {}),
         'last_results': job_state.get('last_results', {}),
-        'errors': job_state.get('errors', {})
+        'errors': job_state.get('errors', {}),
+        'execution_history': load_execution_history()
     }
 
 
@@ -1062,10 +1352,28 @@ def run_task_manually(task_id: int) -> Dict[str, Any]:
     return result
 
 
+def run_task_manually_async(task_id: int) -> None:
+    """
+    Start the given task in a daemon thread.
+    The task itself will run in a subprocess via TASK_FUNCTIONS wrapper.
+    This provides double isolation: thread + subprocess.
+    """
+    # Run in daemon thread so it doesn't block Flask
+    # The task function in TASK_FUNCTIONS will launch a subprocess
+    thread = threading.Thread(
+        target=run_task_with_timeout_and_retry,
+        args=(task_id,),
+        daemon=True,
+        name=f"Task-{task_id}"
+    )
+    thread.start()
+    logger.info(f"[ASYNC] Task {task_id} started in daemon thread (will spawn subprocess)")
+
+
 if __name__ == '__main__':
-    # Test unified scheduler
+    # Production mode - run scheduler as standalone process
     print("=" * 80)
-    print("UNIFIED SCHEDULER - TEST MODE")
+    print("UNIFIED SCHEDULER - STANDALONE MODE")
     print("=" * 80)
 
     # Start scheduler

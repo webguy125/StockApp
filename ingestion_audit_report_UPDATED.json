@@ -1,0 +1,214 @@
+{
+  "audit_timestamp": "2026-01-24T14:50:00",
+  "audit_scope": "master_market_data ingestion subsystem (UPDATED - found core_engine ingestion)",
+  "status": "FAIL",
+
+  "db_paths": {
+    "expected": "C:/StockApp/master_market_data/master_market_data.db",
+    "found": [
+      {
+        "file": "backend/turbomode/core_engine/ingest_market_data.py",
+        "line": 49,
+        "path": "master_market_data/market_data.db",
+        "severity": "CRITICAL",
+        "issue": "Ingestion writes to 'market_data.db' not 'master_market_data.db'"
+      },
+      {
+        "file": "master_market_data/create_master_market_db.py",
+        "line": 17,
+        "path": "market_data.db",
+        "severity": "CRITICAL",
+        "issue": "Schema creator uses 'market_data.db'"
+      },
+      {
+        "file": "master_market_data/market_data_api.py",
+        "line": 37,
+        "path": "market_data.db",
+        "severity": "CRITICAL",
+        "issue": "API references 'market_data.db'"
+      }
+    ],
+    "validation": "FAIL - CONSISTENT BUT WRONG PATH (all use market_data.db instead of master_market_data.db)"
+  },
+
+  "schema_issues": {
+    "expected_tables": [
+      "ohlcv",
+      "fundamentals",
+      "splits",
+      "dividends",
+      "symbol_metadata",
+      "sector_mappings"
+    ],
+    "found_tables": [
+      "candles",
+      "fundamentals",
+      "splits",
+      "dividends",
+      "symbol_metadata",
+      "sector_mappings",
+      "data_quality_log",
+      "db_metadata"
+    ],
+    "issues": [
+      {
+        "severity": "MEDIUM",
+        "issue": "Table named 'candles' instead of 'ohlcv' - functionally OK but naming inconsistent",
+        "details": "API uses get_candles() which expects 'candles' table, so this is aligned internally"
+      }
+    ],
+    "validation": "PARTIAL - Table names differ from spec but are internally consistent"
+  },
+
+  "symbol_universe_issues": {
+    "expected": "CORE_230",
+    "found_imports": [
+      {
+        "file": "backend/turbomode/core_engine/ingest_market_data.py",
+        "lines": "514-515",
+        "imports": "get_training_symbols(), get_scanning_symbols(), CRYPTO_SYMBOLS",
+        "severity": "CRITICAL",
+        "issue": "Uses deprecated symbol lists (training_symbols, scanning_symbols) NOT CORE_230"
+      }
+    ],
+    "validation": "FAIL - DOES NOT USE CORE_230"
+  },
+
+  "ohlcv_issues": {
+    "validation": "PARTIAL PASS",
+    "found_logic": {
+      "file": "backend/turbomode/core_engine/ingest_market_data.py",
+      "function": "ingest_candles()",
+      "lines": "161-256",
+      "features": {
+        "incremental_updates": "YES - checks latest candle date and fetches only new data",
+        "full_history": "YES - uses period='10y' by default",
+        "gap_handling": "PARTIAL - inserts on conflict but no explicit gap detection",
+        "error_handling": "YES - logs errors per candle insertion"
+      }
+    },
+    "issues": [
+      {
+        "severity": "LOW",
+        "issue": "No explicit gap detection or backfill logic",
+        "details": "Incremental updates may miss gaps if ingestion skipped days"
+      },
+      {
+        "severity": "MEDIUM",
+        "issue": "adjusted_close uses raw Close price (line 241)",
+        "details": "Does not apply dividend/split adjustments"
+      }
+    ]
+  },
+
+  "fundamentals_issues": {
+    "validation": "PASS",
+    "found_logic": {
+      "file": "backend/turbomode/core_engine/ingest_market_data.py",
+      "function": "ingest_fundamentals()",
+      "lines": "257-334",
+      "features": "Ingests 36 fundamental fields from yfinance"
+    },
+    "issues": []
+  },
+
+  "corporate_actions_issues": {
+    "validation": "PASS",
+    "found_logic": {
+      "file": "backend/turbomode/core_engine/ingest_market_data.py",
+      "function": "ingest_splits_and_dividends()",
+      "lines": "336-401",
+      "features": "Ingests splits and dividends from yfinance"
+    },
+    "issues": []
+  },
+
+  "sector_mapping_issues": {
+    "validation": "PARTIAL",
+    "found_logic": {
+      "file": "backend/turbomode/core_engine/ingest_market_data.py",
+      "function": "ingest_symbol_metadata()",
+      "lines": "63-127",
+      "features": "Ingests sector from yfinance info.sector"
+    },
+    "issues": [
+      {
+        "severity": "HIGH",
+        "issue": "No sector_mappings table population",
+        "details": "Metadata ingestion writes to symbol_metadata table but NOT sector_mappings table"
+      }
+    ]
+  },
+
+  "error_handling_issues": {
+    "validation": "PASS",
+    "found_features": [
+      "Per-symbol error logging (line 492)",
+      "Per-candle error logging (line 245)",
+      "Failed symbols tracked in summary (line 486)",
+      "Rate limiting between symbols (line 489)"
+    ],
+    "issues": []
+  },
+
+  "contamination_risks": {
+    "validation": "HIGH_RISK",
+    "issues": [
+      {
+        "severity": "CRITICAL",
+        "issue": "MISSING run_full_ingestion() ENTRYPOINT",
+        "details": "Pipeline calls master_market_data.ingestion_runner.run_full_ingestion() but NO such function exists. The ingest_market_data.py module has ingest_multiple_symbols() but no run_full_ingestion() wrapper."
+      },
+      {
+        "severity": "CRITICAL",
+        "issue": "Uses DEPRECATED symbol lists",
+        "file": "backend/turbomode/core_engine/ingest_market_data.py",
+        "lines": "514-522",
+        "details": "Imports training_symbols and scanning_symbols instead of CORE_230"
+      },
+      {
+        "severity": "HIGH",
+        "issue": "DB path naming inconsistency",
+        "details": "Code uses 'market_data.db' everywhere but spec calls for 'master_market_data.db'"
+      },
+      {
+        "severity": "MEDIUM",
+        "issue": "Symbol normalization may alter CORE_230",
+        "details": "Lines 74-82 and 185-193 call validate_and_normalize() which may reject or modify symbols"
+      }
+    ]
+  },
+
+  "missing_entrypoints": [
+    {
+      "expected": "master_market_data.ingestion_runner.run_full_ingestion()",
+      "severity": "CRITICAL",
+      "found": "NONE - ingestion_runner.py does not exist",
+      "workaround": "backend.turbomode.core_engine.ingest_market_data.MarketDataIngestion.ingest_multiple_symbols() exists but wrong import path"
+    }
+  ],
+
+  "files_audited": [
+    "C:/StockApp/master_market_data/create_master_market_db.py",
+    "C:/StockApp/master_market_data/ingest_sample_data.py",
+    "C:/StockApp/master_market_data/market_data_api.py",
+    "C:/StockApp/backend/turbomode/core_engine/ingest_market_data.py"
+  ],
+
+  "critical_findings": [
+    "CRITICAL: run_full_ingestion() entrypoint DOES NOT EXIST",
+    "CRITICAL: Pipeline import 'master_market_data.ingestion_runner' will FAIL",
+    "CRITICAL: Ingestion uses DEPRECATED symbol lists (training_symbols, scanning_symbols) NOT CORE_230",
+    "CRITICAL: DB path is 'market_data.db' not 'master_market_data.db'",
+    "HIGH: sector_mappings table not populated by ingestion logic"
+  ],
+
+  "recommendations": [
+    "IMMEDIATE: Create ingestion_runner.py wrapper with run_full_ingestion() that calls MarketDataIngestion",
+    "IMMEDIATE: Replace training_symbols/scanning_symbols imports with CORE_230",
+    "HIGH: Decide canonical DB path and update all references",
+    "MEDIUM: Add sector_mappings population to metadata ingestion",
+    "LOW: Add explicit gap detection and backfill logic",
+    "LOW: Fix adjusted_close to use actual split/dividend adjusted values"
+  ]
+}

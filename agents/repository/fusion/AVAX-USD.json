@@ -1,6 +1,6 @@
 {
   "symbol": "AVAX-USD",
-  "timestamp": "2026-01-23T00:02:27.364902",
+  "timestamp": "2026-02-02T00:02:35.837179",
   "agent": "fusion_agent",
   "total_score": 6.307692307692307,
   "confidence": 0.363076923076923,
@@ -11,7 +11,7 @@
     "💸"
   ],
   "emoji_string": "📉❌💸",
-  "shorthand": "AVAX-USD | 📉❌💸 | 6 | 0.36 | 2026-01-23",
+  "shorthand": "AVAX-USD | 📉❌💸 | 6 | 0.36 | 2026-02-02",
   "weighted_scores": {
     "indicators_agent": {
       "score": 4,

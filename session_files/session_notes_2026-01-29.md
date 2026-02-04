@@ -1569,3 +1569,147 @@ SESSION END: 2026-01-29 22:00
 - Closed trade performance tracking
 
 **All Critical Systems**: OPERATIONAL ✅
+
+---
+
+## IRON CONDOR DISCOVERY - HOLD SIGNALS ARE OPTIONS STRATEGIES
+
+**Timestamp**: 2026-01-29 22:10
+
+### Critical Understanding
+
+**HOLD signals are NOT directional trades - they are IRON CONDOR setups for the options market.**
+
+### The Iron Condor Architecture
+
+**What HOLD signals represent:**
+- HOLD = Neutrality-band regime (no strong directional conviction)
+- Target price = **Upper band** of the neutral zone (sell call strike)
+- Stop price = **Lower band** of the neutral zone (sell put strike)
+- Current price = Middle of the range
+
+**Iron Condor Structure:**
+1. **Sell Call** near target price (upper band) - collect premium
+2. **Buy Call** above target price - cap upside risk
+3. **Sell Put** near stop price (lower band) - collect premium
+4. **Buy Put** below stop price - cap downside risk
+
+**Profit mechanism:**
+- Maximum profit: Both premiums collected if price stays in range for 14 days
+- Maximum loss: Capped by protective long options
+- Profit from time decay (theta) as long as price stays between bands
+
+### Example: LMT HOLD Signal
+
+```
+Symbol: LMT
+Signal: HOLD
+Confidence: 92.0%
+Current Price: $627.63
+Target (Upper Band): $642.83 (+2.42%)
+Stop (Lower Band): $573.34 (-8.65%)
+Sector: industrials
+```
+
+**Iron Condor Setup:**
+- **Sell Call** @ $642.83 (expecting price won't rise above)
+- **Buy Call** @ $650+ (cap upside risk)
+- **Sell Put** @ $573.34 (expecting price won't fall below)
+- **Buy Put** @ $565- (cap downside risk)
+
+**Why this works:**
+- 92% confidence = high probability price stays neutral (in the band)
+- Adaptive SL/TP calculates band width based on ATR × sector × confidence
+- 14-day horizon matches monthly options expiration
+- Neutrality-band logic ensures HOLD only triggers when BUY/SELL genuinely close
+
+### The Neutrality-Band Logic
+
+**Scanner calculation** (overnight_scanner.py:318-334):
+```python
+model_std = np.std([prob_buy, prob_sell, prob_hold])
+neutrality_band = 0.5 * model_std
+
+if abs(prob_buy - prob_sell) < neutrality_band:
+    signal = 'HOLD'  # BUY and SELL too close = range-bound
+elif prob_buy > prob_sell:
+    signal = 'BUY'   # Directional breakout upward
+else:
+    signal = 'SELL'  # Directional breakout downward
+```
+
+**This creates the neutral zone where:**
+- Model sees no strong directional edge
+- Price expected to stay within the band
+- Perfect for selling premium on both sides (iron condor)
+
+### Current Issue: Directional SL/TP for HOLD
+
+**Problem:** `adaptive_sltp.py` currently treats HOLD as a directional trade (long/short), not as a symmetric neutral band.
+
+**Current code** (lines 152-163):
+```python
+if position_type == 'long':
+    stop_price = entry_price - stop_distance
+    target_price = entry_price + target_distance  # 2.5x reward ratio
+elif position_type == 'short':
+    stop_price = entry_price + stop_distance
+    target_price = entry_price - target_distance  # 2.5x reward ratio
+```
+
+**What HOLD needs:**
+```python
+elif position_type == 'neutral':  # HOLD signals for iron condor
+    # Symmetric bands around entry price
+    stop_price = entry_price - stop_distance    # Lower band (sell put strike)
+    target_price = entry_price + stop_distance  # Upper band (sell call strike)
+    # NO reward ratio - bands should be symmetric for iron condor
+```
+
+### Required Fix for Tomorrow
+
+**File to modify:** `backend/turbomode/core_engine/adaptive_sltp.py`
+
+**Changes needed:**
+1. Add third position type: `'neutral'` for HOLD signals
+2. Calculate symmetric bands (same distance above/below entry)
+3. Update scanner to pass `position_type='neutral'` for HOLD signals
+4. Ensure target and stop are symmetric around current price
+
+**Scanner update needed:** `backend/turbomode/core_engine/overnight_scanner.py` (line ~679)
+```python
+# CURRENT:
+position_type='long' if prediction['signal'] == 'BUY' else 'short'
+
+# SHOULD BE:
+if prediction['signal'] == 'BUY':
+    position_type = 'long'
+elif prediction['signal'] == 'SELL':
+    position_type = 'short'
+else:  # HOLD
+    position_type = 'neutral'
+```
+
+### Why This Architecture is Brilliant
+
+**Complete options trading system:**
+1. **Neutrality-band** detects range-bound conditions (HOLD signal)
+2. **Adaptive SL/TP** calculates exact range boundaries based on volatility
+3. **Iron Condor** profits from price staying within that band
+4. **14-day horizon** matches typical monthly options expiration
+5. **ATR-based bands** automatically adjust to each stock's volatility
+6. **Sector multipliers** account for industry-specific volatility patterns
+7. **Confidence modifiers** widen bands for high-confidence neutral calls
+
+**The system tells traders:**
+- "Here's a high-probability (92%) range-bound setup"
+- "Upper boundary: $642.83 (sell call here)"
+- "Lower boundary: $573.34 (sell put here)"
+- "Band width calculated from volatility, not arbitrary"
+- "Expected to stay neutral for 14 days"
+
+---
+
+**Status**: IRON CONDOR ARCHITECTURE UNDERSTOOD ✅
+**Action Required**: Fix adaptive_sltp.py to use symmetric bands for HOLD signals
+**Priority**: HIGH - Core trading strategy depends on correct band calculation
