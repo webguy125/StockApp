@@ -1,3 +1,4 @@
+# imports
 from flask import Flask, request, jsonify, send_from_directory, make_response
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
@@ -17,6 +18,7 @@ import logging
 from dotenv import load_dotenv
 import jwt
 import secrets
+# end imports
 
 app = Flask(__name__)
 CORS(app)
@@ -2795,18 +2797,8 @@ except ImportError as e:
     print(f"[TURBOMODE] Not available: {e}")
     TURBOMODE_AVAILABLE = False
 
-# Initialize TurboMode Scheduler (separate from ML automation)
-try:
-    from backend.turbomode.turbomode_scheduler import (
-        init_turbomode_scheduler,
-        start_scheduler as start_turbomode,
-        stop_scheduler as stop_turbomode,
-        get_status as get_turbomode_status
-    )
-    TURBOMODE_SCHEDULER_AVAILABLE = True
-except ImportError as e:
-    print(f"[TURBOMODE SCHEDULER] Not available: {e}")
-    TURBOMODE_SCHEDULER_AVAILABLE = False
+# OLD TurboMode Scheduler removed - now using Unified Scheduler
+TURBOMODE_SCHEDULER_AVAILABLE = False
 
 # Initialize Stock Ranking API Blueprint (adaptive top 10 stock selection)
 try:
@@ -2896,6 +2888,28 @@ def get_turbomode_signals():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/turbomode/top10', methods=['GET'])
+def get_top10_rankings():
+    """Get Top 10 ranked stocks from adaptive ranker"""
+    try:
+        from pathlib import Path
+        import json
+        rankings_path = Path('backend/data/stock_rankings.json')
+        if not rankings_path.exists():
+            return jsonify({
+                'top_10': [],
+                'timestamp': None,
+                'message': 'Rankings not available yet'
+            }), 200
+        with open(rankings_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify(data), 200
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/turbomode/sectors', methods=['GET'])
 def get_turbomode_sectors():
     """
@@ -2908,11 +2922,90 @@ def get_turbomode_sectors():
         return jsonify({'error': 'TurboMode not available'}), 503
 
     try:
-        date = request.args.get('date')  # None = latest
+        from backend.commentary import generate_sector_commentary
 
-        sector_stats = turbomode_db.get_sector_stats(date=date)
+        # Get all active signals
+        active_signals = turbomode_db.get_active_signals(limit=1000)
 
-        # Separate into bullish and bearish
+        # Group by sector and calculate stats
+        sector_data = {}
+        for signal in active_signals:
+            sector = signal['sector']
+            if sector not in sector_data:
+                sector_data[sector] = {
+                    'sector': sector,
+                    'total_buy_signals': 0,
+                    'total_sell_signals': 0,
+                    'total_hold_signals': 0,
+                    'buy_confidences': [],
+                    'sell_confidences': [],
+                    'hold_confidences': []
+                }
+
+            if signal['signal_type'] == 'BUY':
+                sector_data[sector]['total_buy_signals'] += 1
+                sector_data[sector]['buy_confidences'].append(signal['confidence'])
+            elif signal['signal_type'] == 'SELL':
+                sector_data[sector]['total_sell_signals'] += 1
+                sector_data[sector]['sell_confidences'].append(signal['confidence'])
+            elif signal['signal_type'] == 'HOLD':
+                sector_data[sector]['total_hold_signals'] += 1
+                sector_data[sector]['hold_confidences'].append(signal['confidence'])
+
+        # Calculate averages and sentiment
+        sector_stats = []
+        for sector, data in sector_data.items():
+            avg_buy_conf = sum(data['buy_confidences']) / len(data['buy_confidences']) if data['buy_confidences'] else 0.0
+            avg_sell_conf = sum(data['sell_confidences']) / len(data['sell_confidences']) if data['sell_confidences'] else 0.0
+
+            # Determine sector sentiment
+            buy_count = data['total_buy_signals']
+            sell_count = data['total_sell_signals']
+            hold_count = data['total_hold_signals']
+
+            directional_total = buy_count + sell_count
+            delta = buy_count - sell_count
+
+            # HOLD dominance override
+            if hold_count > directional_total:
+                sentiment = 'NEUTRAL'
+
+            # Directional imbalance strong enough
+            elif delta >= 2:
+                sentiment = 'BULLISH'
+            elif delta <= -2:
+                sentiment = 'BEARISH'
+
+            # Otherwise neutral
+            else:
+                sentiment = 'NEUTRAL'
+            # End sector sentiment
+
+            # Generate dynamic commentary
+            commentary = generate_sector_commentary(
+                sector_name=sector,
+                buy_count=data['total_buy_signals'],
+                sell_count=data['total_sell_signals'],
+                hold_count=data['total_hold_signals'],
+                avg_buy_conf=avg_buy_conf,
+                avg_sell_conf=avg_sell_conf,
+                sector_sentiment=sentiment,
+                news_context=None
+            )
+
+            sector_stats.append({
+                'sector': sector,
+                'total_buy_signals': data['total_buy_signals'],
+                'total_sell_signals': data['total_sell_signals'],
+                'total_hold_signals': data['total_hold_signals'],
+                'avg_buy_confidence': avg_buy_conf,
+                'avg_sell_confidence': avg_sell_conf,
+                'sentiment': sentiment,
+                'commentary': commentary,
+                'date': datetime.now().strftime('%Y-%m-%d')
+            })
+
+        # Separate into bullish, bearish, neutral
         bullish_sectors = [s for s in sector_stats if s['sentiment'] == 'BULLISH']
         bearish_sectors = [s for s in sector_stats if s['sentiment'] == 'BEARISH']
         neutral_sectors = [s for s in sector_stats if s['sentiment'] == 'NEUTRAL']
@@ -2975,6 +3068,246 @@ def run_turbomode_scan():
             'success': True,
             'message': 'TurboMode scan started',
             'estimated_time': '20-30 minutes for full S&P 500 scan'
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# PERFORMANCE DASHBOARD API
+# ============================================================================
+
+@app.route('/api/performance/summary', methods=['GET'])
+def performance_api():
+    """
+    GET /api/performance/summary
+
+    Returns comprehensive P&L data as JSON for the Performance Dashboard
+    """
+    import sqlite3
+
+    db_path = os.path.join(os.path.dirname(__file__), 'data', 'turbomode.db')
+
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # Summary Statistics
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_trades,
+                SUM(CASE WHEN profit_loss_pct > 0 THEN 1 ELSE 0 END) as wins,
+                SUM(CASE WHEN profit_loss_pct < 0 THEN 1 ELSE 0 END) as losses,
+                SUM(CASE WHEN profit_loss_pct = 0 THEN 1 ELSE 0 END) as breakeven,
+                SUM(profit_loss_pct) as total_pnl,
+                AVG(profit_loss_pct) as avg_pnl,
+                MAX(profit_loss_pct) as max_win,
+                MIN(profit_loss_pct) as max_loss,
+                SUM(CASE WHEN profit_loss_pct > 0 THEN profit_loss_pct ELSE 0 END) as total_wins,
+                SUM(CASE WHEN profit_loss_pct < 0 THEN ABS(profit_loss_pct) ELSE 0 END) as total_losses
+            FROM signal_history
+            WHERE exit_date IS NOT NULL
+        """)
+        summary = dict(cursor.fetchone())
+
+        # Calculate derived metrics
+        summary['win_rate'] = (summary['wins'] / summary['total_trades'] * 100) if summary['total_trades'] > 0 else 0
+        summary['profit_factor'] = (summary['total_wins'] / summary['total_losses']) if summary['total_losses'] > 0 else 0
+        summary['avg_win'] = (summary['total_wins'] / summary['wins']) if summary['wins'] > 0 else 0
+        summary['avg_loss'] = (summary['total_losses'] / summary['losses']) if summary['losses'] > 0 else 0
+        summary['expectancy'] = summary['avg_pnl']
+
+        # Biggest 20 Wins (infer window from entry time)
+        cursor.execute("""
+            SELECT
+                symbol,
+                entry_date as entry_time,
+                exit_date as exit_time,
+                profit_loss_pct as pnl,
+                signal_type,
+                entry_price,
+                exit_price,
+                CASE
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) BETWEEN 8 AND 9 THEN '3A'
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) BETWEEN 10 AND 13 THEN '3B'
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) = 14 THEN '3C'
+                    ELSE 'Other'
+                END as window
+            FROM signal_history
+            WHERE exit_date IS NOT NULL AND profit_loss_pct > 0
+            ORDER BY profit_loss_pct DESC
+            LIMIT 20
+        """)
+        biggest_wins_raw = cursor.fetchall()
+        biggest_wins = []
+        starting_equity = 8000
+        equity_tracker = starting_equity
+        for row in biggest_wins_raw:
+            row_dict = dict(row)
+            risk_amount = equity_tracker * 0.05
+            shares = int(risk_amount / row['entry_price'])
+            if shares < 1:
+                shares = 1
+            if row['signal_type'] == 'BUY':
+                dollar_pnl = (row['exit_price'] - row['entry_price']) * shares
+            else:
+                dollar_pnl = (row['entry_price'] - row['exit_price']) * shares
+            row_dict['shares'] = shares
+            row_dict['dollar_pnl'] = dollar_pnl
+            biggest_wins.append(row_dict)
+
+        # Biggest 20 Losses (infer window from entry time)
+        cursor.execute("""
+            SELECT
+                symbol,
+                entry_date as entry_time,
+                exit_date as exit_time,
+                profit_loss_pct as pnl,
+                signal_type,
+                entry_price,
+                exit_price,
+                CASE
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) BETWEEN 8 AND 9 THEN '3A'
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) BETWEEN 10 AND 13 THEN '3B'
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) = 14 THEN '3C'
+                    ELSE 'Other'
+                END as window
+            FROM signal_history
+            WHERE exit_date IS NOT NULL AND profit_loss_pct < 0
+            ORDER BY profit_loss_pct ASC
+            LIMIT 20
+        """)
+        biggest_losses_raw = cursor.fetchall()
+        biggest_losses = []
+        for row in biggest_losses_raw:
+            row_dict = dict(row)
+            risk_amount = equity_tracker * 0.05
+            shares = int(risk_amount / row['entry_price'])
+            if shares < 1:
+                shares = 1
+            if row['signal_type'] == 'BUY':
+                dollar_pnl = (row['exit_price'] - row['entry_price']) * shares
+            else:
+                dollar_pnl = (row['entry_price'] - row['exit_price']) * shares
+            row_dict['shares'] = shares
+            row_dict['dollar_pnl'] = dollar_pnl
+            biggest_losses.append(row_dict)
+
+        # P&L by Window (3A, 3B, 3C grouping - inferred from entry time)
+        cursor.execute("""
+            SELECT
+                CASE
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) BETWEEN 8 AND 9 THEN '3A'
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) BETWEEN 10 AND 13 THEN '3B'
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) = 14 THEN '3C'
+                    ELSE 'Other'
+                END as window,
+                COUNT(*) as trades,
+                SUM(CASE WHEN profit_loss_pct > 0 THEN 1 ELSE 0 END) as wins,
+                SUM(profit_loss_pct) as total_pnl,
+                AVG(profit_loss_pct) as avg_pnl,
+                MAX(profit_loss_pct) as best_trade,
+                MIN(profit_loss_pct) as worst_trade
+            FROM signal_history
+            WHERE exit_date IS NOT NULL
+            GROUP BY window
+            ORDER BY window
+        """)
+        pnl_by_window = [dict(row) for row in cursor.fetchall()]
+        for row in pnl_by_window:
+            row['win_rate'] = (row['wins'] / row['trades'] * 100) if row['trades'] > 0 else 0
+
+        # P&L by Month
+        cursor.execute("""
+            SELECT
+                strftime('%Y-%m', exit_date) as month,
+                COUNT(*) as trades,
+                SUM(CASE WHEN profit_loss_pct > 0 THEN 1 ELSE 0 END) as wins,
+                SUM(profit_loss_pct) as total_pnl,
+                AVG(profit_loss_pct) as avg_pnl
+            FROM signal_history
+            WHERE exit_date IS NOT NULL
+            GROUP BY month
+            ORDER BY month DESC
+        """)
+        pnl_by_month = [dict(row) for row in cursor.fetchall()]
+        for row in pnl_by_month:
+            row['win_rate'] = (row['wins'] / row['trades'] * 100) if row['trades'] > 0 else 0
+
+        # Equity Curve Data (cumulative P&L over time)
+        cursor.execute("""
+            SELECT
+                exit_date,
+                profit_loss_pct,
+                entry_price,
+                exit_price,
+                signal_type,
+                symbol,
+                entry_date,
+                CASE
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) BETWEEN 8 AND 9 THEN '3A'
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) BETWEEN 10 AND 13 THEN '3B'
+                    WHEN CAST(strftime('%H', entry_date) AS INTEGER) = 14 THEN '3C'
+                    ELSE 'Other'
+                END as window
+            FROM signal_history
+            WHERE exit_date IS NOT NULL
+            ORDER BY exit_date ASC
+        """)
+        equity_data = cursor.fetchall()
+        # Real-money equity curve with compounding and dynamic 5% risk sizing
+        starting_equity = 8000
+        equity = starting_equity
+        equity_curve = []
+
+        for row in equity_data:
+            entry_price = row['entry_price']
+            exit_price = row['exit_price']
+            signal = row['signal_type']  # BUY = long, SELL = short
+
+            # 5% risk model based on current equity
+            risk_amount = equity * 0.05
+
+            # Position sizing based on entry price
+            shares = int(risk_amount / entry_price)
+            if shares < 1:
+                shares = 1
+
+            # Direction-aware dollar P&L
+            if signal == 'BUY':
+                dollar_pnl = (exit_price - entry_price) * shares
+            else:
+                dollar_pnl = (entry_price - exit_price) * shares
+
+            # Update equity after trade
+            equity += dollar_pnl
+
+            equity_curve.append({
+                'timestamp': row['exit_date'],
+                'symbol': row['symbol'],
+                'signal_type': row['signal_type'],
+                'window': row['window'],
+                'entry_time': row['entry_date'],
+                'exit_time': row['exit_date'],
+                'pnl': row['profit_loss_pct'],
+                'shares': shares,
+                'dollar_pnl': dollar_pnl,
+                'equity': equity
+            })
+
+        conn.close()
+
+        return jsonify({
+            'summary': summary,
+            'biggest_wins': biggest_wins,
+            'biggest_losses': biggest_losses,
+            'pnl_by_window': pnl_by_window,
+            'pnl_by_month': pnl_by_month,
+            'equity_curve': equity_curve
         })
 
     except Exception as e:
@@ -3068,17 +3401,8 @@ if __name__ == "__main__":
     # else:
     #     print("[TURBO AUTOMATION] Not available - install APScheduler")
 
-    # Initialize TurboMode Scheduler (runs at 11 PM nightly on 82 curated stocks)
-    if TURBOMODE_SCHEDULER_AVAILABLE:
-        print("[TURBOMODE SCHEDULER] Initializing overnight scan scheduler...")
-        init_turbomode_scheduler()
-        status = get_turbomode_status()
-        if status['enabled']:
-            print(f"[TURBOMODE SCHEDULER] Ready - Next scan at {status['next_run']}")
-        else:
-            print("[TURBOMODE SCHEDULER] Disabled")
-    else:
-        print("[TURBOMODE SCHEDULER] Not available")
+    # OLD TurboMode Scheduler removed - now using Unified Scheduler
+    print("[TURBOMODE SCHEDULER] Old scheduler disabled - using Unified Scheduler")
 
     # Initialize Stock Ranking Scheduler (runs monthly on 1st at 2 AM)
     if STOCK_RANKING_AVAILABLE:

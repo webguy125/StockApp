@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-card h3 {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .summary-card .value.positive {
+            color: #10b981;
+        }
+
+        .summary-card .value.negative {
+            color: #ef4444;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .table-container h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f3f4f6;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .positive {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .negative {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .pct {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .filter-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .filter-container label {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .filter-container select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .filter-container button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .filter-container button:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Performance Dashboard</h1>
+            <p style="color: #6b7280; margin-top: 5px;">Lifetime P&L Analysis (Read-Only)</p>
+            <a href="/turbomode" class="back-link">← Back to TurboMode</a>
+        </div>
+
+        <div id="loading" class="loading">Loading performance data...</div>
+
+        <!-- Summary Statistics -->
+        <div id="summaryGrid" class="summary-grid" style="display: none;"></div>
+
+        <!-- Date Filter -->
+        <div id="dateFilterContainer" class="filter-container" style="display: none;">
+            <label>Start Month:</label>
+            <select id="monthFilter">
+                <option value="">All</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+
+            <label>Start Year:</label>
+            <select id="yearFilter">
+                <option value="">All</option>
+            </select>
+
+            <label>
+                <input type="checkbox" id="isolateModeCheckbox"> Show ONLY this month/year
+            </label>
+
+            <button id="clearFiltersBtn">Reset</button>
+        </div>
+
+        <!-- Equity Curve -->
+        <div id="equityContainer" class="chart-container" style="display: none;">
+            <h2>📈 Equity Curve</h2>
+            <canvas id="equityChart" style="max-height: 400px;"></canvas>
+        </div>
+
+        <!-- Position Size Over Time -->
+        <div id="positionSizeContainer" class="chart-container" style="display: none;">
+            <h2>📊 Position Size Over Time (Shares)</h2>
+            <canvas id="positionSizeChart" style="max-height: 400px;"></canvas>
+        </div>
+
+        <!-- Risk Used Per Trade -->
+        <div id="riskUsedContainer" class="chart-container" style="display: none;">
+            <h2>💸 Risk Used Per Trade ($)</h2>
+            <canvas id="riskUsedChart" style="max-height: 400px;"></canvas>
+        </div>
+
+        <!-- P&L by Window -->
+        <div id="windowContainer" class="table-container" style="display: none;">
+            <h2>🕐 P&L by Trading Window</h2>
+            <div id="windowTable"></div>
+        </div>
+
+        <!-- P&L by Month -->
+        <div id="monthContainer" class="table-container" style="display: none;">
+            <h2>📅 P&L by Month</h2>
+            <div id="monthTable"></div>
+        </div>
+
+        <!-- Biggest Wins -->
+        <div id="winsContainer" class="table-container" style="display: none;">
+            <h2>🏆 Top 20 Wins</h2>
+            <div id="winsTable"></div>
+        </div>
+
+        <!-- Biggest Losses -->
+        <div id="lossesContainer" class="table-container" style="display: none;">
+            <h2>💔 Top 20 Losses</h2>
+            <div id="lossesTable"></div>
+        </div>
+    </div>
+
+    <script>
+        window.fullData = null;
+        window.chartInstances = {};
+        const DEFAULT_START_MONTH = 2;
+        const DEFAULT_START_YEAR = 2026;
+
+        // Fetch performance data from API
+        fetch('/api/performance/summary')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                window.fullData = data;
+                populateYearDropdown(data);
+                setupEventListeners();
+                applyFilters();
+                document.getElementById('dateFilterContainer').style.display = 'flex';
+                renderWindowTable(data.pnl_by_window);
+                renderMonthTable(data.pnl_by_month);
+            })
+            .catch(error => {
+                document.getElementById('loading').innerHTML = `
+                    <div style="color: #ef4444;">Error loading data: ${error.message}</div>
+                `;
+            });
+
+        function populateYearDropdown(data) {
+            const years = [...new Set(data.equity_curve.map(p => new Date(p.timestamp).getFullYear()))];
+            const yearFilter = document.getElementById('yearFilter');
+            years.sort().forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearFilter.appendChild(opt);
+            });
+        }
+
+        function filterTradesBySelection() {
+            const monthVal = document.getElementById('monthFilter').value;
+            const yearVal = document.getElementById('yearFilter').value;
+            const isolate = document.getElementById('isolateModeCheckbox').checked;
+
+            const selectedMonth = monthVal ? parseInt(monthVal) : null;
+            const selectedYear = yearVal ? parseInt(yearVal) : null;
+
+            const startMonth = selectedMonth || DEFAULT_START_MONTH;
+            const startYear = selectedYear || DEFAULT_START_YEAR;
+            const startDate = new Date(startYear, startMonth - 1, 1);
+
+            return window.fullData.equity_curve.filter(t => {
+                const d = new Date(t.timestamp);
+                const m = d.getMonth() + 1;
+                const y = d.getFullYear();
+
+                if (y === 2026 && m === 1 && !(selectedMonth === 1 && selectedYear === 2026)) {
+                    return false;
+                }
+
+                if (isolate) {
+                    if (selectedMonth && selectedYear) {
+                        return y === selectedYear && m === selectedMonth;
+                    }
+                    if (!selectedMonth && selectedYear) {
+                        if (y !== selectedYear) return false;
+                        if (y === 2026 && m === 1) return false;
+                        return true;
+                    }
+                    if (selectedMonth && !selectedYear) {
+                        return m === selectedMonth;
+                    }
+                    return !(y === 2026 && m === 1);
+                }
+
+                return d >= startDate;
+            });
+        }
+
+        function recomputeEquityCurve(trades) {
+            let equity = 8000;
+            return trades.map(t => {
+                equity += t.dollar_pnl;
+                return {
+                    timestamp: t.timestamp,
+                    equity: equity,
+                    shares: t.shares,
+                    dollar_pnl: t.dollar_pnl
+                };
+            });
+        }
+
+        function applyFilters() {
+            const filteredTrades = filterTradesBySelection();
+            const recomputedEquity = recomputeEquityCurve(filteredTrades);
+
+            const filteredWins = filteredTrades.filter(t => t.dollar_pnl > 0);
+            const filteredLosses = filteredTrades.filter(t => t.dollar_pnl < 0);
+
+            renderSummary(window.fullData.summary, recomputedEquity);
+            renderEquityCurve(recomputedEquity);
+            renderPositionSizeChart(recomputedEquity);
+            renderRiskUsedChart(recomputedEquity);
+            renderWinsTable(filteredWins);
+            renderLossesTable(filteredLosses);
+        }
+
+        function setupEventListeners() {
+            document.getElementById('monthFilter').addEventListener('change', applyFilters);
+            document.getElementById('yearFilter').addEventListener('change', applyFilters);
+            document.getElementById('isolateModeCheckbox').addEventListener('change', applyFilters);
+
+            document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+                document.getElementById('monthFilter').value = '';
+                document.getElementById('yearFilter').value = '';
+                document.getElementById('isolateModeCheckbox').checked = false;
+                applyFilters();
+            });
+        }
+
+        function renderSummary(summary, equity_curve) {
+            const grid = document.getElementById('summaryGrid');
+            grid.style.display = 'grid';
+
+            const starting_equity = 8000;
+            const final_equity = equity_curve.length > 0 ? equity_curve[equity_curve.length - 1].equity : starting_equity;
+            const total_dollar_pnl = final_equity - starting_equity;
+            const max_equity = Math.max(...equity_curve.map(p => p.equity));
+
+            let max_drawdown = 0;
+            let peak = starting_equity;
+            equity_curve.forEach(point => {
+                if (point.equity > peak) peak = point.equity;
+                const drawdown = peak - point.equity;
+                if (drawdown > max_drawdown) max_drawdown = drawdown;
+            });
+
+            const cards = [
+                { label: 'Total Dollar P&L', value: `$${total_dollar_pnl.toFixed(2)}`, class: total_dollar_pnl > 0 ? 'positive' : 'negative' },
+                { label: 'Max Equity', value: `$${max_equity.toFixed(2)}`, class: 'positive' },
+                { label: 'Max Drawdown', value: `$${max_drawdown.toFixed(2)}`, class: 'negative' },
+                { label: 'Total Trades', value: summary.total_trades, class: '' },
+                { label: 'Win Rate', value: `${summary.win_rate.toFixed(1)}%`, sub: `${summary.wins}W / ${summary.losses}L / ${summary.breakeven}BE`, class: '' },
+                { label: 'Profit Factor', value: summary.profit_factor.toFixed(2), class: summary.profit_factor > 1 ? 'positive' : 'negative' },
+                { label: 'Avg Win', value: `$${summary.avg_win.toFixed(2)}`, class: 'positive' },
+                { label: 'Avg Loss', value: `$${summary.avg_loss.toFixed(2)}`, class: 'negative' },
+                { label: 'Best Trade', value: `$${summary.max_win.toFixed(2)}`, class: 'positive' },
+                { label: 'Worst Trade', value: `$${summary.max_loss.toFixed(2)}`, class: 'negative' },
+                { label: 'Expectancy', value: `$${summary.expectancy.toFixed(2)}`, class: summary.expectancy > 0 ? 'positive' : 'negative' }
+            ];
+
+            grid.innerHTML = cards.map(card => `
+                <div class="summary-card">
+                    <h3>${card.label}</h3>
+                    <div class="value ${card.class}">${card.value}</div>
+                    ${card.sub ? `<div class="pct">${card.sub}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function renderEquityCurve(equity_curve) {
+            const container = document.getElementById('equityContainer');
+            container.style.display = 'block';
+
+            if (window.chartInstances.equityChart) {
+                window.chartInstances.equityChart.destroy();
+            }
+
+            const ctx = document.getElementById('equityChart').getContext('2d');
+            const labels = equity_curve.map(point => {
+                const date = new Date(point.timestamp);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            });
+            const values = equity_curve.map(point => point.equity);
+
+            window.chartInstances.equityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Account Equity ($)',
+                        data: values,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderWindowTable(data) {
+            const container = document.getElementById('windowContainer');
+            container.style.display = 'block';
+
+            if (data.length === 0) {
+                document.getElementById('windowTable').innerHTML = '<p style="color: #6b7280;">No data available</p>';
+                return;
+            }
+
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Window</th>
+                            <th>Trades</th>
+                            <th>Wins</th>
+                            <th>Win Rate</th>
+                            <th>Total P&L</th>
+                            <th>Avg P&L</th>
+                            <th>Best Trade</th>
+                            <th>Worst Trade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(row => `
+                            <tr>
+                                <td><strong>${row.window}</strong></td>
+                                <td>${row.trades}</td>
+                                <td>${row.wins}</td>
+                                <td>${row.win_rate.toFixed(1)}%</td>
+                                <td class="${row.total_pnl > 0 ? 'positive' : 'negative'}">$${row.total_pnl.toFixed(2)}</td>
+                                <td class="${row.avg_pnl > 0 ? 'positive' : 'negative'}">$${row.avg_pnl.toFixed(2)}</td>
+                                <td class="positive">$${row.best_trade.toFixed(2)}</td>
+                                <td class="negative">$${row.worst_trade.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('windowTable').innerHTML = html;
+        }
+
+        function renderMonthTable(data) {
+            const container = document.getElementById('monthContainer');
+            container.style.display = 'block';
+
+            if (data.length === 0) {
+                document.getElementById('monthTable').innerHTML = '<p style="color: #6b7280;">No data available</p>';
+                return;
+            }
+
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Trades</th>
+                            <th>Wins</th>
+                            <th>Win Rate</th>
+                            <th>Total P&L</th>
+                            <th>Avg P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(row => `
+                            <tr>
+                                <td><strong>${row.month}</strong></td>
+                                <td>${row.trades}</td>
+                                <td>${row.wins}</td>
+                                <td>${row.win_rate.toFixed(1)}%</td>
+                                <td class="${row.total_pnl > 0 ? 'positive' : 'negative'}">$${row.total_pnl.toFixed(2)}</td>
+                                <td class="${row.avg_pnl > 0 ? 'positive' : 'negative'}">$${row.avg_pnl.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('monthTable').innerHTML = html;
+        }
+
+        function renderWinsTable(data) {
+            const container = document.getElementById('winsContainer');
+            container.style.display = 'block';
+
+            if (data.length === 0) {
+                document.getElementById('winsTable').innerHTML = '<p style="color: #6b7280;">No wins yet</p>';
+                return;
+            }
+
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Signal Type</th>
+                            <th>Window</th>
+                            <th>Entry Time</th>
+                            <th>Exit Time</th>
+                            <th>Shares</th>
+                            <th>$ P&L</th>
+                            <th>% P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(trade => `
+                            <tr>
+                                <td><strong>${trade.symbol}</strong></td>
+                                <td>${trade.signal_type}</td>
+                                <td>${trade.window}</td>
+                                <td>${formatDateTime(trade.entry_time)}</td>
+                                <td>${formatDateTime(trade.exit_time)}</td>
+                                <td>${trade.shares || 'N/A'}</td>
+                                <td class="positive">$${trade.dollar_pnl ? trade.dollar_pnl.toFixed(2) : 'N/A'}</td>
+                                <td class="positive">${trade.pnl.toFixed(2)}%</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('winsTable').innerHTML = html;
+        }
+
+        function renderLossesTable(data) {
+            const container = document.getElementById('lossesContainer');
+            container.style.display = 'block';
+
+            if (data.length === 0) {
+                document.getElementById('lossesTable').innerHTML = '<p style="color: #6b7280;">No losses yet</p>';
+                return;
+            }
+
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Signal Type</th>
+                            <th>Window</th>
+                            <th>Entry Time</th>
+                            <th>Exit Time</th>
+                            <th>Shares</th>
+                            <th>$ P&L</th>
+                            <th>% P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(trade => `
+                            <tr>
+                                <td><strong>${trade.symbol}</strong></td>
+                                <td>${trade.signal_type}</td>
+                                <td>${trade.window}</td>
+                                <td>${formatDateTime(trade.entry_time)}</td>
+                                <td>${formatDateTime(trade.exit_time)}</td>
+                                <td>${trade.shares || 'N/A'}</td>
+                                <td class="negative">$${trade.dollar_pnl ? trade.dollar_pnl.toFixed(2) : 'N/A'}</td>
+                                <td class="negative">${trade.pnl.toFixed(2)}%</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('lossesTable').innerHTML = html;
+        }
+
+        function renderPositionSizeChart(equity_curve) {
+            const container = document.getElementById('positionSizeContainer');
+            container.style.display = 'block';
+
+            if (window.chartInstances.positionSizeChart) {
+                window.chartInstances.positionSizeChart.destroy();
+            }
+
+            const ctx = document.getElementById('positionSizeChart').getContext('2d');
+            const labels = equity_curve.map(point => {
+                const date = new Date(point.timestamp);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            });
+            const shares = equity_curve.map(point => point.shares);
+
+            window.chartInstances.positionSizeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Shares per Trade',
+                        data: shares,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return Math.floor(value);
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderRiskUsedChart(equity_curve) {
+            const container = document.getElementById('riskUsedContainer');
+            container.style.display = 'block';
+
+            if (window.chartInstances.riskUsedChart) {
+                window.chartInstances.riskUsedChart.destroy();
+            }
+
+            const ctx = document.getElementById('riskUsedChart').getContext('2d');
+            const labels = equity_curve.map(point => {
+                const date = new Date(point.timestamp);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            });
+
+            const starting_equity = 8000;
+            let equity = starting_equity;
+            const risk_used = [];
+
+            equity_curve.forEach((point, i) => {
+                const risk = equity * 0.05;
+                risk_used.push(risk);
+                equity = point.equity;
+            });
+
+            window.chartInstances.riskUsedChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Risk Used ($)',
+                        data: risk_used,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatDateTime(timestamp) {
+            if (timestamp.includes('T')) {
+                const parts = timestamp.split('T');
+                const time = parts[1].split('.')[0];
+                return `${parts[0]} ${time}`;
+            }
+            return timestamp;
+        }
+    </script>
+</body>
+</html>
