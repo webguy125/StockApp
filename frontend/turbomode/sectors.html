@@ -396,7 +396,15 @@
     <div class="container">
         <header>
             <h1>📊 TurboMode - Sectors Overview</h1>
-            <div class="subtitle">S&P 500 Sector Sentiment Analysis</div>
+            <div class="subtitle">S&P 500 Sector Sentiment Analysis (BUY/SELL signals only)</div>
+            <div style="margin-top: 15px; display: flex; gap: 15px; justify-content: center;">
+                <a href="signal_intel_dashboard.html" style="display: inline-block; padding: 10px 25px; background: rgba(59, 130, 246, 0.9); border-radius: 8px; color: #fff; text-decoration: none; font-weight: 700; transition: all 0.3s ease;">
+                    📊 Signal Intelligence →
+                </a>
+                <a href="hold_dashboard.html" style="display: inline-block; padding: 10px 25px; background: rgba(251, 191, 36, 0.9); border-radius: 8px; color: #78350f; text-decoration: none; font-weight: 700; transition: all 0.3s ease;">
+                    View HOLD Dashboard →
+                </a>
+            </div>
         </header>
 
         <div class="sector-filter-tabs nav-tabs">
@@ -493,8 +501,11 @@
             const sellConf = (sector.avg_sell_confidence * 100).toFixed(1);
             const commentary = sector.commentary || 'No commentary available.';
 
-            // Get all stocks in this sector
-            const sectorStocks = allActiveSignals.filter(s => s.sector === sector.sector);
+            // Get all stocks in this sector (BUY/SELL only, exclude HOLD)
+            const sectorStocks = allActiveSignals.filter(s =>
+                s.sector === sector.sector &&
+                s.prediction.toLowerCase() !== 'hold'
+            );
 
             // Sort by confidence descending
             sectorStocks.sort((a, b) => b.confidence - a.confidence);
@@ -561,7 +572,7 @@
                                 }
 
                                 return `
-                                    <tr onclick="goToOptionsPage('${stock.symbol}');">
+                                    <tr onclick="goToOptionsPage('${stock.symbol}');" data-symbol="${stock.symbol}" data-signal-type="${predType}">
                                         <td class="stock-symbol">${stock.symbol}</td>
                                         <td style="text-align: center;">
                                             <span class="stock-signal ${predType}">${stock.prediction}</span>
@@ -692,6 +703,37 @@
 
         // Refresh every 5 minutes
         setInterval(loadSectors, 5 * 60 * 1000);
+
+        // Iron Condor P&L polling for HOLD signals only
+        async function updateHoldCondorPnL() {
+            // Find all HOLD signal rows
+            const holdRows = document.querySelectorAll('tr[data-signal-type="hold"]');
+
+            for (const row of holdRows) {
+                const symbol = row.getAttribute('data-symbol');
+                if (!symbol) continue;
+
+                try {
+                    const response = await fetch(`/turbomode/options/pnl/${symbol}`);
+                    const data = await response.json();
+
+                    if (data.pnl !== null && data.pnl !== undefined) {
+                        // Find P&L cell (6th td)
+                        const pnlCell = row.querySelector('td:nth-child(6)');
+                        if (pnlCell) {
+                            const pnl = data.pnl;
+                            const pnlClass = pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+                            pnlCell.innerHTML = `<span class="${pnlClass}">$${pnl.toFixed(2)}</span>`;
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Failed to fetch Iron Condor P&L for ${symbol}:`, error);
+                }
+            }
+        }
+
+        // Poll every 5 seconds during market hours
+        setInterval(updateHoldCondorPnL, 5000);
     </script>
 </body>
 </html>

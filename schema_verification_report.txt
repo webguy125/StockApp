@@ -1,0 +1,73 @@
+================================================================================
+READ-ONLY SCHEMA SUBSET VERIFICATION REPORT
+Date: 2026-02-04
+================================================================================
+
+OBJECTIVE:
+Verify that turbomode.db schema is a complete subset of database_schema.py
+
+METHOD:
+- Strict text-based parsing of CREATE TABLE blocks
+- PRAGMA table_info() for actual database schema
+- Column-by-column comparison
+
+================================================================================
+RESULTS:
+================================================================================
+
+[FAIL] Database schema is NOT a complete subset of canonical schema
+
+DISCREPANCIES FOUND:
+
+1. MISSING TABLES (6 tables in DB not in canonical schema)
+   - config_audit_log
+   - feature_store
+   - model_metadata
+   - price_data
+   - trades
+   - training_runs
+
+   NOTE: These tables are extra tables in the database that are not
+   defined in database_schema.py. This is EXPECTED as they belong to
+   other systems (training infrastructure, model registry, etc.)
+
+2. MISSING COLUMNS (1 column in DB not in canonical schema)
+
+   Table: active_signals
+   Database has: 31 columns
+   Canonical has: 32 columns
+
+   MISSING IN DATABASE:
+   - prob_hold REAL (line 96 in database_schema.py)
+
+   This column exists in the canonical schema but was never migrated
+   to the actual database.
+
+3. ALL OTHER TABLES MATCH PERFECTLY
+
+   Table: signal_history
+   - Database: 23 columns
+   - Canonical: 23 columns
+   - Status: [OK] All columns match
+
+   Table: sector_stats
+   - Database: 11 columns
+   - Canonical: 11 columns
+   - Status: [OK] All columns match
+
+================================================================================
+CONCLUSION:
+================================================================================
+
+The database schema is NOT a complete subset of the canonical schema due to:
+1. Missing column: active_signals.prob_hold
+
+The 6 extra tables (config_audit_log, feature_store, etc.) are acceptable
+as they belong to other subsystems and are intentionally not in the
+TurboMode canonical schema.
+
+RECOMMENDATION:
+Add migration to database_schema.py to create prob_hold column in
+active_signals table.
+
+================================================================================

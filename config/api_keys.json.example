@@ -1,0 +1,5 @@
+{
+  "EODHD_API_KEY": "your_eodhd_api_key_here",
+  "TRADIER_API_KEY": "pplYfsA91vM8AAFoSmLB4naoaDa5",
+  "ALPHA_VANTAGE_API_KEY": "your_alpha_vantage_key_if_needed"
+}

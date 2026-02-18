@@ -1,0 +1,22 @@
+================================================================================
+DEPRECATED MODEL DIRECTORY
+================================================================================
+
+DATE: 2026-02-16
+STATUS: INACTIVE - DO NOT USE IN PRODUCTION
+
+All models in this directory (backend/turbomode/models/trained/) are LEGACY
+1-day models trained with label_1d_5pct (1-day horizon, 5% threshold).
+
+These models are INCOMPATIBLE with TurboMode's 14-day MFE/MAE labeling system.
+
+METADATA INSPECTION RESULTS:
+- horizon_days: 1 (DEPRECATED - should be 14)
+- label: label_1d_5pct (DEPRECATED - should be 14-day MFE/MAE)
+- training_timestamp: 2026-01-21 (OUTDATED)
+
+NEXT TRAINING RUN:
+The next successful training run will overwrite these models with 14-day models.
+
+DO NOT LOAD THESE MODELS FOR PRODUCTION INFERENCE.
+================================================================================

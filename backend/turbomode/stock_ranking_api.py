@@ -14,7 +14,7 @@ import sys
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from backend.turbomode.adaptive_stock_ranker import AdaptiveStockRanker
+from backend.turbomode.core_engine.adaptive_stock_ranker import AdaptiveStockRanker
 from backend.turbomode.database_schema import TurboModeDB
 import sqlite3
 

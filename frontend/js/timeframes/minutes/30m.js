@@ -4,6 +4,7 @@
  */
 import { CanvasRenderer } from '../../chart-renderers/canvas-renderer.js';
 import { volumeAccumulator } from '../../services/VolumeAccumulator.js';
+import { tradierPriceUpdater } from '../../services/TradierPriceUpdater.js';
 
 export class Timeframe30m {
   constructor() {
@@ -81,6 +82,40 @@ export class Timeframe30m {
         }
       };
       volumeAccumulator.registerCallback('30m', this.volumeCallback);
+
+      // Initialize TradierPriceUpdater with socket connection (WebSocket version)
+      if (!tradierPriceUpdater.socket) {
+        tradierPriceUpdater.setSocket(socket);
+      }
+
+      // Register callback for Tradier real-time price updates
+      this.priceCallback = (quote) => {
+        if (this.isActive && this.data.length > 0) {
+          const lastCandle = this.data[this.data.length - 1];
+
+          // Update the close price with real-time Tradier data
+          lastCandle.Close = quote.price;
+
+          // Update high if current price is higher
+          if (quote.price > lastCandle.High) {
+            lastCandle.High = quote.price;
+          }
+
+          // Update low if current price is lower
+          if (quote.price < lastCandle.Low) {
+            lastCandle.Low = quote.price;
+          }
+
+          // Trigger chart re-render with new price
+          this.renderer.draw();
+        }
+      };
+      tradierPriceUpdater.registerCallback('30m', this.priceCallback);
+
+      // Start Tradier real-time price updates (shared across all timeframes)
+      if (!tradierPriceUpdater.isRunning()) {
+        tradierPriceUpdater.start(symbol);
+      }
 
       // Register callback for new candle detection (critical for ORD Volume auto-update)
       this.newCandleCallback = (interval) => {
@@ -278,6 +313,12 @@ export class Timeframe30m {
     if (this.volumeCallback) {
       volumeAccumulator.unregisterCallback('30m', this.volumeCallback);
       this.volumeCallback = null;
+    }
+
+    // Unregister Tradier price callback
+    if (this.priceCallback) {
+      tradierPriceUpdater.unregisterCallback('30m');
+      this.priceCallback = null;
     }
 
     // Unregister new candle callback

@@ -20,6 +20,8 @@ Author: TurboMode Core Engine
 
 import hashlib
 from typing import List
+import numpy as np
+import orjson
 
 # CANONICAL FEATURE ORDER - DO NOT MODIFY WITHOUT VERSION BUMP
 FEATURE_LIST: List[str] = [
@@ -294,6 +296,56 @@ def features_to_array(features_dict: dict, fill_value: float = 0.0) -> list:
         result.append(float(value))
 
     return result
+
+
+def features_to_array_vectorized(json_list, fill_value=0.0):
+    """
+    Convert a list of JSON feature strings into a 2D NumPy array using FEATURE_LIST ordering.
+
+    Args:
+        json_list: List of JSON strings, each representing a feature dict for one trade.
+        fill_value: Value to use when a feature is missing, NaN, or Inf.
+
+    Returns:
+        NumPy array of shape (N, FEATURE_COUNT) with dtype float32.
+    """
+    from backend.turbomode.core_engine.feature_list import FEATURE_LIST, FEATURE_COUNT
+
+    num_rows = len(json_list)
+    if num_rows == 0:
+        return np.empty((0, FEATURE_COUNT), dtype=np.float32)
+
+    # Pre-allocate output matrix
+    X = np.full((num_rows, FEATURE_COUNT), fill_value, dtype=np.float32)
+
+    for i, features_json in enumerate(json_list):
+        if features_json is None:
+            continue
+        try:
+            features = orjson.loads(features_json)
+        except Exception:
+            # If JSON is invalid, leave row as fill_value
+            continue
+
+        if not isinstance(features, dict):
+            continue
+
+        # Fill row i according to FEATURE_LIST ordering
+        for j, feature_name in enumerate(FEATURE_LIST):
+            value = features.get(feature_name, fill_value)
+            try:
+                if value is None:
+                    X[i, j] = fill_value
+                else:
+                    v = float(value)
+                    if np.isnan(v) or np.isinf(v):
+                        X[i, j] = fill_value
+                    else:
+                        X[i, j] = v
+            except Exception:
+                X[i, j] = fill_value
+
+    return X
 
 
 if __name__ == '__main__':

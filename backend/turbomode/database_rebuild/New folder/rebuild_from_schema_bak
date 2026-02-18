@@ -1,0 +1,173 @@
+"""
+Rebuild TurboMode Database from database_schema.py
+Uses the database_schema.py in this directory to create turbomode.db
+Target: C:\StockApp\backend\data\turbomode.db
+"""
+import os
+import sys
+import sqlite3
+from pathlib import Path
+
+# Add paths
+script_dir = Path(__file__).resolve().parent  # C:\StockApp\backend\turbomode\rebuild the database
+turbomode_dir = script_dir.parent  # C:\StockApp\backend\turbomode
+backend_dir = turbomode_dir.parent  # C:\StockApp\backend
+project_root = backend_dir.parent  # C:\StockApp
+sys.path.insert(0, str(project_root))
+
+# Import the database_schema.py from THIS directory
+sys.path.insert(0, str(script_dir))
+from database_schema import TurboModeDB
+
+# Target database path
+target_db_path = os.path.join(backend_dir, "data", "turbomode.db")
+
+print("=" * 80)
+print("REBUILD TURBOMODE DATABASE FROM SCHEMA")
+print("=" * 80)
+print(f"Schema source: {os.path.join(script_dir, 'database_schema.py')}")
+print(f"Target DB: {target_db_path}")
+print()
+
+# Check if target exists
+if os.path.exists(target_db_path):
+    print("[WARNING] Target database already exists!")
+    response = input("Do you want to DELETE and rebuild? (yes/no): ")
+    if response.lower() != 'yes':
+        print("[ABORT] Database rebuild cancelled")
+        sys.exit(0)
+    os.remove(target_db_path)
+    print("[OK] Existing database deleted")
+    print()
+
+# Create training tables first
+print("=" * 80)
+print("STEP 1: CREATE TRAINING TABLES")
+print("=" * 80)
+
+conn = sqlite3.connect(target_db_path)
+cursor = conn.cursor()
+
+print("[1/4] Creating 'trades' table...")
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS trades (
+    id TEXT PRIMARY KEY,
+    symbol TEXT NOT NULL,
+    entry_date TEXT NOT NULL,
+    entry_price REAL NOT NULL,
+    exit_date TEXT,
+    exit_price REAL,
+    position_size REAL DEFAULT 1.0,
+    outcome TEXT DEFAULT 'open',
+    profit_loss REAL,
+    profit_loss_pct REAL,
+    exit_reason TEXT,
+    entry_features_json TEXT,
+    trade_type TEXT DEFAULT 'backtest',
+    strategy TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+)
+""")
+print("   [OK]")
+
+print("[2/4] Creating 'feature_store' table...")
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS feature_store (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    features_json TEXT NOT NULL,
+    rsi_14 REAL,
+    macd_histogram REAL,
+    volume_ratio REAL,
+    trend_strength REAL,
+    momentum_score REAL,
+    volatility_score REAL,
+    feature_version TEXT DEFAULT 'v1',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(symbol, timestamp)
+)
+""")
+print("   [OK]")
+
+print("[3/4] Creating 'price_data' table...")
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS price_data (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    timeframe TEXT NOT NULL,
+    open REAL NOT NULL,
+    high REAL NOT NULL,
+    low REAL NOT NULL,
+    close REAL NOT NULL,
+    volume REAL NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(symbol, timestamp, timeframe)
+)
+""")
+print("   [OK]")
+
+print("[4/4] Creating 'training_runs' table...")
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS training_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id TEXT NOT NULL UNIQUE,
+    model_type TEXT NOT NULL,
+    sector TEXT,
+    timeframe TEXT,
+    started_at TEXT NOT NULL,
+    completed_at TEXT,
+    status TEXT NOT NULL,
+    samples_count INTEGER,
+    accuracy REAL,
+    precision_score REAL,
+    recall_score REAL,
+    f1_score REAL,
+    hyperparameters TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+)
+""")
+print("   [OK]")
+
+conn.commit()
+conn.close()
+
+# Use TurboModeDB to create signal tables
+print()
+print("=" * 80)
+print("STEP 2: CREATE SIGNAL TABLES (from database_schema.py)")
+print("=" * 80)
+
+db = TurboModeDB(db_path=target_db_path)
+
+print()
+print("=" * 80)
+print("DATABASE REBUILD COMPLETE")
+print("=" * 80)
+print(f"Database: {target_db_path}")
+print()
+
+# Show all tables
+conn = sqlite3.connect(target_db_path)
+cursor = conn.cursor()
+cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+tables = cursor.fetchall()
+
+print("All tables:")
+for (table_name,) in tables:
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    columns = cursor.fetchall()
+    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+    count = cursor.fetchone()[0]
+    print(f"  - {table_name:30s} ({len(columns):2d} columns, {count} records)")
+
+conn.close()
+
+print()
+print("[OK] Database ready!")
+print()
+print("Next step: Run generate_backtest_data.py to populate with training data")
+print("=" * 80)

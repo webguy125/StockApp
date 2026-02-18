@@ -1,0 +1,366 @@
+"""
+STANDALONE EODHD HISTORICAL OPTIONS INGESTION
+
+This script downloads 1-2 years of historical options chains from EODHD
+for all symbols in CORE_230.json and stores them in options_universe.db.
+
+Usage:
+    python ingest_historical_options.py
+
+Features:
+- Uses EODHD ONLY (no Yahoo, no IBKR, no live scanner dependency)
+- Loads symbol universe from CORE_230.json
+- Downloads historical chains for specified date range
+- Stores in options_universe.db with deduplication
+- Tracks ingestion progress in metadata table
+- Resumes from last checkpoint if interrupted
+- Append-only design (no re-download of existing data)
+"""
+import os
+import sys
+import json
+import sqlite3
+from datetime import datetime, timedelta
+from time import time, sleep
+
+# Add backend to path
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+OPTIONS_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..'))
+BACKEND_DIR = os.path.abspath(os.path.join(OPTIONS_DIR, '..', '..'))
+STOCKAPP_DIR = os.path.abspath(os.path.join(BACKEND_DIR, '..'))
+sys.path.insert(0, BACKEND_DIR)
+sys.path.insert(0, STOCKAPP_DIR)
+
+from backend.eodhd_client import get_eodhd_client
+
+# Database paths
+OPTIONS_UNIVERSE_DB = os.path.join(OPTIONS_DIR, 'Data', 'options_universe.db')
+OPTIONS_TRAINING_DB = os.path.join(OPTIONS_DIR, 'Data', 'options_training_history.db')
+SCHEMA_UNIVERSE = os.path.join(OPTIONS_DIR, 'Data', 'schema_options_universe.sql')
+SCHEMA_TRAINING = os.path.join(OPTIONS_DIR, 'Data', 'schema_options_training_history.sql')
+
+# Symbol universe
+CORE_230_PATH = os.path.join(BACKEND_DIR, '..', 'config', 'symbols', 'CORE_230.json')
+
+# Ingestion configuration
+DEFAULT_LOOKBACK_DAYS = 365  # 1 year of historical data
+RATE_LIMIT_DELAY = 1.0  # Seconds between API calls
+
+
+def log(message):
+    """Thread-safe logging with timestamp"""
+    timestamp = datetime.now().strftime('[%Y-%m-%d %H:%M:%S]')
+    print(f'{timestamp} {message}', flush=True)
+
+
+def initialize_databases():
+    """
+    Create databases and tables if they don't exist
+    """
+    log('[INIT] Initializing databases...')
+
+    # Create options_universe.db
+    if not os.path.exists(OPTIONS_UNIVERSE_DB):
+        log(f'[INIT] Creating {OPTIONS_UNIVERSE_DB}')
+        conn = sqlite3.connect(OPTIONS_UNIVERSE_DB)
+        with open(SCHEMA_UNIVERSE, 'r') as f:
+            schema = f.read()
+        conn.executescript(schema)
+        conn.commit()
+        conn.close()
+        log('[INIT] options_universe.db created')
+    else:
+        log('[INIT] options_universe.db already exists')
+
+    # Create options_training_history.db
+    if not os.path.exists(OPTIONS_TRAINING_DB):
+        log(f'[INIT] Creating {OPTIONS_TRAINING_DB}')
+        conn = sqlite3.connect(OPTIONS_TRAINING_DB)
+        with open(SCHEMA_TRAINING, 'r') as f:
+            schema = f.read()
+        conn.executescript(schema)
+        conn.commit()
+        conn.close()
+        log('[INIT] options_training_history.db created')
+    else:
+        log('[INIT] options_training_history.db already exists')
+
+
+def load_symbol_universe():
+    """
+    Load symbol universe from CORE_230.json
+    """
+    try:
+        with open(CORE_230_PATH, 'r') as f:
+            data = json.load(f)
+        log(f'[SYMBOLS] Loaded {len(data)} symbols from CORE_230.json')
+        return data
+    except Exception as e:
+        log(f'[SYMBOLS] ERROR: Failed to load CORE_230.json: {e}')
+        return []
+
+
+def get_ingestion_status(symbol, start_date, end_date):
+    """
+    Check if symbol has already been ingested for the given date range
+    """
+    conn = sqlite3.connect(OPTIONS_UNIVERSE_DB)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT last_ingested_date, status, total_records
+        FROM ingestion_metadata
+        WHERE symbol = ? AND start_date = ? AND end_date = ?
+    ''', (symbol, start_date, end_date))
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return {
+            'last_ingested_date': row[0],
+            'status': row[1],
+            'total_records': row[2]
+        }
+    return None
+
+
+def update_ingestion_metadata(symbol, start_date, end_date, last_date, status, total_records, error=None):
+    """
+    Update ingestion metadata for a symbol
+    """
+    conn = sqlite3.connect(OPTIONS_UNIVERSE_DB)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        INSERT INTO ingestion_metadata (symbol, start_date, end_date, last_ingested_date, status, total_records, error_message, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(symbol, start_date, end_date) DO UPDATE SET
+            last_ingested_date = ?,
+            status = ?,
+            total_records = ?,
+            error_message = ?,
+            updated_at = CURRENT_TIMESTAMP
+    ''', (symbol, start_date, end_date, last_date, status, total_records, error,
+          last_date, status, total_records, error))
+
+    conn.commit()
+    conn.close()
+
+
+def insert_options_data(symbol, snapshot_date, options_data, underlying_price):
+    """
+    Insert options chain data into database
+    """
+    conn = sqlite3.connect(OPTIONS_UNIVERSE_DB)
+    cursor = conn.cursor()
+
+    inserted_count = 0
+
+    for option in options_data:
+        try:
+            # Parse option data
+            contract_name = option.get('contractName', '')
+            expiration = option.get('expirationDate', '')
+            strike = float(option.get('strike', 0))
+            option_type = option.get('type', '').lower()
+
+            last_price = option.get('lastTradePrice')
+            bid = option.get('bid')
+            ask = option.get('ask')
+            volume = option.get('volume')
+            open_interest = option.get('openInterest')
+            iv = option.get('impliedVolatility')
+            delta = option.get('delta')
+            gamma = option.get('gamma')
+            theta = option.get('theta')
+            vega = option.get('vega')
+
+            # Calculate days to expiration
+            days_to_exp = None
+            if expiration:
+                try:
+                    exp_date = datetime.strptime(expiration, '%Y-%m-%d')
+                    snap_date = datetime.strptime(snapshot_date, '%Y-%m-%d')
+                    days_to_exp = (exp_date - snap_date).days
+                except:
+                    pass
+
+            # Calculate moneyness
+            moneyness = None
+            if underlying_price and strike:
+                moneyness = strike / underlying_price
+
+            # Insert with IGNORE for duplicates
+            cursor.execute('''
+                INSERT OR IGNORE INTO historical_options_chains
+                (symbol, snapshot_date, contract_name, expiration_date, strike, option_type,
+                 last_price, bid, ask, volume, open_interest, implied_volatility,
+                 delta, gamma, theta, vega, underlying_price, days_to_expiration, moneyness)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (symbol, snapshot_date, contract_name, expiration, strike, option_type,
+                  last_price, bid, ask, volume, open_interest, iv,
+                  delta, gamma, theta, vega, underlying_price, days_to_exp, moneyness))
+
+            if cursor.rowcount > 0:
+                inserted_count += 1
+
+        except Exception as e:
+            log(f'[INSERT] ERROR inserting option: {e}')
+            continue
+
+    conn.commit()
+    conn.close()
+
+    return inserted_count
+
+
+def ingest_symbol(symbol, start_date, end_date):
+    """
+    Ingest historical options data for a single symbol
+    """
+    log(f'[INGEST] Starting ingestion for {symbol} ({start_date} to {end_date})')
+
+    # Check if already ingested
+    status = get_ingestion_status(symbol, start_date, end_date)
+    if status and status['status'] == 'completed':
+        log(f'[INGEST] {symbol} already completed ({status["total_records"]} records)')
+        return True
+
+    # Resume from last checkpoint if available
+    current_date = start_date
+    if status and status['last_ingested_date']:
+        resume_date = datetime.strptime(status['last_ingested_date'], '%Y-%m-%d') + timedelta(days=1)
+        current_date = resume_date.strftime('%Y-%m-%d')
+        log(f'[INGEST] Resuming {symbol} from {current_date}')
+
+    # Update status to in_progress
+    update_ingestion_metadata(symbol, start_date, end_date, current_date, 'in_progress', 0)
+
+    # Initialize EODHD client
+    client = get_eodhd_client()
+
+    total_records = status['total_records'] if status else 0
+    current = datetime.strptime(current_date, '%Y-%m-%d')
+    end = datetime.strptime(end_date, '%Y-%m-%d')
+
+    while current <= end:
+        date_str = current.strftime('%Y-%m-%d')
+
+        # Skip weekends (basic check)
+        if current.weekday() >= 5:
+            current += timedelta(days=1)
+            continue
+
+        try:
+            # Fetch options data from EODHD
+            log(f'[INGEST] Fetching {symbol} options for {date_str}')
+            data = client.get_options_data(symbol, date_str)
+
+            if data and data['data']:
+                # Extract underlying price (use first option's underlying)
+                underlying_price = None
+                if len(data['data']) > 0:
+                    underlying_price = data['data'][0].get('underlyingPrice')
+
+                # Insert into database
+                inserted = insert_options_data(symbol, date_str, data['data'], underlying_price)
+                total_records += inserted
+
+                log(f'[INGEST] {symbol} {date_str}: inserted {inserted} options (total: {total_records})')
+
+                # Update checkpoint
+                update_ingestion_metadata(symbol, start_date, end_date, date_str, 'in_progress', total_records)
+            else:
+                log(f'[INGEST] {symbol} {date_str}: no data available')
+
+            # Rate limiting
+            sleep(RATE_LIMIT_DELAY)
+
+        except Exception as e:
+            log(f'[INGEST] ERROR fetching {symbol} {date_str}: {e}')
+            update_ingestion_metadata(symbol, start_date, end_date, date_str, 'failed', total_records, str(e))
+            return False
+
+        current += timedelta(days=1)
+
+    # Mark as completed
+    update_ingestion_metadata(symbol, start_date, end_date, end_date, 'completed', total_records)
+    log(f'[INGEST] {symbol} completed: {total_records} total records')
+    return True
+
+
+def run_ingestion(lookback_days=DEFAULT_LOOKBACK_DAYS, symbols_limit=None):
+    """
+    Run full ingestion for all symbols in CORE_230.json
+
+    Args:
+        lookback_days: Number of days to look back (default: 365)
+        symbols_limit: Limit to first N symbols (for testing)
+    """
+    start_time = time()
+
+    log('='*80)
+    log('EODHD HISTORICAL OPTIONS INGESTION')
+    log('='*80)
+
+    # Initialize databases
+    initialize_databases()
+
+    # Load symbols
+    symbol_data = load_symbol_universe()
+    if not symbol_data:
+        log('[ERROR] No symbols loaded - exiting')
+        return
+
+    if symbols_limit:
+        symbol_data = symbol_data[:symbols_limit]
+        log(f'[CONFIG] Limited to first {symbols_limit} symbols')
+
+    # Calculate date range - ALWAYS use historical dates going back 3 months
+    # EODHD has data delay, so end date is 60 days ago (safe buffer)
+    # Start date is 3 months + 60 days ago to get 3 months of data
+    end_date = (datetime.now() - timedelta(days=60)).strftime('%Y-%m-%d')
+    start_date = (datetime.now() - timedelta(days=90 + 60)).strftime('%Y-%m-%d')
+
+    log(f'[CONFIG] Date range: {start_date} to {end_date} ({lookback_days} days)')
+    log(f'[CONFIG] Symbols: {len(symbol_data)}')
+    log(f'[CONFIG] Database: {OPTIONS_UNIVERSE_DB}')
+    log('='*80)
+
+    # Ingest each symbol
+    success_count = 0
+    error_count = 0
+
+    for idx, symbol_info in enumerate(symbol_data):
+        symbol = symbol_info['ticker']
+
+        log(f'\n[PROGRESS] Symbol {idx+1}/{len(symbol_data)}: {symbol}')
+
+        try:
+            if ingest_symbol(symbol, start_date, end_date):
+                success_count += 1
+            else:
+                error_count += 1
+        except Exception as e:
+            log(f'[ERROR] Failed to ingest {symbol}: {e}')
+            error_count += 1
+
+    # Summary
+    end_time = time()
+    runtime = end_time - start_time
+
+    log('\n' + '='*80)
+    log('INGESTION COMPLETE')
+    log('='*80)
+    log(f'Runtime: {runtime:.2f} seconds ({runtime/60:.2f} minutes)')
+    log(f'Symbols processed: {len(symbol_data)}')
+    log(f'Success: {success_count}')
+    log(f'Errors: {error_count}')
+    log('='*80)
+
+
+if __name__ == '__main__':
+    # Run with default settings
+    # For testing, use: run_ingestion(lookback_days=7, symbols_limit=3)
+    run_ingestion(lookback_days=DEFAULT_LOOKBACK_DAYS)

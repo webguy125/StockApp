@@ -1,0 +1,87 @@
+⭐ MASTER CHECKLIST — FULL 14‑DAY SYSTEM ALIGNMENT (STEP‑BASED)
+
+STEP 1 — Rebuild the training labels for a true 14‑day horizon
+Your current labels are short‑cycle. This must change first.
+• 	Compute 14‑day MFE (max favorable excursion)
+• 	Compute 14‑day MAE (max adverse excursion)
+• 	Compute 14‑day close‑to‑close return
+• 	Define win/loss based on realistic 14‑day thresholds
+• 	Example: +6–10% target, −6–8% stop
+• 	Ensure HOLD is defined correctly for 14‑day outcomes
+This step is the foundation.
+If this stays short‑cycle, everything above it will behave incorrectly.
+
+STEP 2 — Retrain the model using the new 14‑day labels
+• 	Use the same features initially
+• 	Train on the new 14‑day outcomes
+• 	Validate using 14‑day metrics, not 1–3 day metrics
+• 	Confirm the model predicts multi‑day durability, not micro‑moves
+This step ensures the model stops predicting 3–5% moves and starts predicting 6–12% moves.
+
+STEP 3 — Add durability‑aware features (optional but powerful)
+These features help the model understand multi‑week structure:
+• 	Trend persistence
+• 	Volatility regime
+• 	Sector rotation
+• 	Macro drift
+• 	Earnings proximity
+This step improves the model’s ability to survive 14 days of noise.
+
+STEP 4 — Update the prediction layer to be fully 14‑day aware
+The prediction layer must enforce 14‑day logic before the scanner sees anything.
+• 	Add durability scoring
+• 	Add event‑risk filters (no earnings inside 14 days)
+• 	Add volatility regime filters
+• 	Increase minimum confidence thresholds
+• 	Ensure probabilities are calibrated for 14‑day outcomes
+This step prevents short‑cycle signals from leaking into a long‑cycle system.
+
+STEP 5 — Update the scanner to behave like a 14‑day system
+Right now the scanner is still acting like a scalper.
+This step fixes that.
+• 	Add max concurrent positions (5–10)
+• 	Add daily cap on new trades (1–3)
+• 	Add symbol cooldown (don’t re‑enter same ticker for X days)
+• 	Add sector diversification rules
+• 	Add minimum signal spacing (don’t open trades every few minutes)
+• 	Add trend‑durability filters
+• 	Add a 14‑day no‑touch rule (no micro‑management)
+• 	Ensure the scanner uses the new 14‑day model, not the old one
+This step stops the system from flooding itself with overlapping trades.
+
+STEP 6 — Re‑align the adaptive SL/TP engine with real 14‑day data
+Your SL/TP engine is already 14‑day shaped — but it needs new inputs.
+• 	Recompute 14‑day MFE/MAE distributions
+• 	Set SL/TP from actual 14‑day statistics
+• 	Target ≈ 60–70th percentile of 14‑day MFE
+• 	Stop ≈ 60–70th percentile of 14‑day MAE
+• 	Consider tiered targets
+• 	Partial profit at +5–7%
+• 	Let remainder aim for +10–12%
+• 	Validate SL/TP against real 14‑day behavior
+This step ensures your targets are reachable and your stops are realistic.
+
+STEP 7 — Monitor and iterate using 14‑day metrics only
+Track:
+• 	14‑day win rate
+• 	14‑day profit factor
+• 	14‑day expectancy
+• 	14‑day MFE/MAE distributions
+• 	% of trades hitting target vs. stop vs. time‑out
+Adjust in this order:
+1. 	Scanner filters
+2. 	SL/TP levels
+3. 	Model architecture/features
+This step ensures the system stabilizes and improves over time.
+
+⭐ THE CORE TRUTH (NOW FIXED IN THE STEP LIST)
+Your system was:
+• 	14‑day SL/TP
+• 	3‑day model
+• 	3‑day scanner behavior
+This step‑based plan corrects that mismatch by making:
+• 	Training → 14‑day
+• 	Prediction → 14‑day
+• 	Scanner → 14‑day
+• 	SL/TP → aligned with real 14‑day data
+This is the complete, contamination‑proof path to a true swing‑trade engine.

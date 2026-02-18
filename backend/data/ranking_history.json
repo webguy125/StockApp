@@ -1,65 +1,5 @@
 [
   {
-    "timestamp": "2026-01-01T21:26:20.028910",
-    "top_10_symbols": [
-      "SMCI",
-      "TMDX",
-      "TSLA",
-      "MTDR",
-      "CRWD",
-      "TEAM",
-      "BOOT",
-      "NVDA",
-      "KRYS",
-      "EXAS"
-    ]
-  },
-  {
-    "timestamp": "2026-01-02T19:36:02.954440",
-    "top_10_symbols": [
-      "SMCI",
-      "TMDX",
-      "TSLA",
-      "MTDR",
-      "CRWD",
-      "TEAM",
-      "BOOT",
-      "NVDA",
-      "KRYS",
-      "EXAS"
-    ]
-  },
-  {
-    "timestamp": "2026-01-03T08:12:11.760542",
-    "top_10_symbols": [
-      "SMCI",
-      "TMDX",
-      "TSLA",
-      "MTDR",
-      "CRWD",
-      "TEAM",
-      "BOOT",
-      "NVDA",
-      "KRYS",
-      "SHAK"
-    ]
-  },
-  {
-    "timestamp": "2026-01-04T22:42:56.996895",
-    "top_10_symbols": [
-      "SMCI",
-      "TMDX",
-      "TSLA",
-      "MTDR",
-      "CRWD",
-      "TEAM",
-      "BOOT",
-      "NVDA",
-      "KRYS",
-      "SHAK"
-    ]
-  },
-  {
     "timestamp": "2026-01-12T01:00:40.947265",
     "top_10_symbols": [
       "AAPL",
@@ -259,5 +199,65 @@
   {
     "timestamp": "2026-02-01T02:00:00.204255",
     "top_10_symbols": []
+  },
+  {
+    "timestamp": "2026-02-15T05:28:41.543758",
+    "top_10_symbols": [
+      "AMAT",
+      "SNOW",
+      "CCOI",
+      "COHU",
+      "CRWV",
+      "GOGO",
+      "WOLF",
+      "WTI",
+      "BTAI",
+      "NEM"
+    ]
+  },
+  {
+    "timestamp": "2026-02-15T07:18:09.420057",
+    "top_10_symbols": [
+      "AMAT",
+      "SNOW",
+      "CCOI",
+      "COHU",
+      "CRWV",
+      "GOGO",
+      "WOLF",
+      "WTI",
+      "BTAI",
+      "NEM"
+    ]
+  },
+  {
+    "timestamp": "2026-02-15T07:19:44.894031",
+    "top_10_symbols": [
+      "AMAT",
+      "SNOW",
+      "CCOI",
+      "COHU",
+      "CRWV",
+      "GOGO",
+      "WOLF",
+      "WTI",
+      "BTAI",
+      "NEM"
+    ]
+  },
+  {
+    "timestamp": "2026-02-15T07:53:08.929213",
+    "top_10_symbols": [
+      "AMAT",
+      "SNOW",
+      "CCOI",
+      "COHU",
+      "CRWV",
+      "GOGO",
+      "WOLF",
+      "WTI",
+      "BTAI",
+      "NEM"
+    ]
   }
 ]

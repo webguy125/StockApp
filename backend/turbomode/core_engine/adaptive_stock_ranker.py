@@ -12,6 +12,14 @@ import json
 import os
 import sys
 
+# Add backend directory to path for subprocess execution
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))  # core_engine
+TURBOMODE_DIR = os.path.dirname(SCRIPT_DIR)  # turbomode
+BACKEND_DIR = os.path.dirname(TURBOMODE_DIR)  # backend
+STOCKAPP_DIR = os.path.dirname(BACKEND_DIR)  # StockApp root
+sys.path.insert(0, BACKEND_DIR)
+sys.path.insert(0, STOCKAPP_DIR)
+
 # Import canonical symbol normalizer (strict mode)
 from backend.turbomode.core_engine.symbol_normalizer import validate_and_normalize, is_canonical
 
@@ -31,12 +39,14 @@ class AdaptiveStockRanker:
     def __init__(self, db_path=None):
         # Use absolute path to avoid path resolution issues when called from Flask
         if db_path is None:
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            # Script is in core_engine, need to go up 2 levels to backend
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             db_path = os.path.join(base_dir, "data", "turbomode.db")
 
         self.db_path = db_path
 
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # Script is in core_engine, need to go up 2 levels to backend
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         self.rankings_file = os.path.join(base_dir, "data", "stock_rankings.json")
         self.history_file = os.path.join(base_dir, "data", "ranking_history.json")
 

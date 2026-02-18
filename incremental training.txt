@@ -1,0 +1,176 @@
+Step 0 — Define the target and freeze the current world
+Goal: Incremental training with constant‑time daily updates, no full retrains.
+
+Action:
+
+Freeze the current TurboMode training path as “batch mode” (no more structural changes there).
+
+Add a feature flag: TRAINING_MODE = "batch" | "incremental" in the orchestrator.
+
+All new work happens behind "incremental" so you can A/B and roll back instantly.
+
+Step 1 — Append‑only feature store (no models touched yet)
+Objective: Stop recomputing features for the entire history.
+
+Design storage schema (per sector, per symbol, per day):
+
+Columns: symbol, date, X_vector (serialized), y_label, horizon, regime, version.
+
+Create a new ingestion path:
+
+For each new day: compute features only for that day, append to the store.
+
+Backfill once from historical data:
+
+Run a one‑time job that:
+
+Loads existing historical data
+
+Computes features
+
+Writes them into the append‑only store
+
+This is the last time you ever do a full recompute.
+
+Wire a read API:
+
+load_features(sector, up_to_date) -> X, y, metadata
+
+For now, batch mode still uses this API to load all rows (no behavioral change yet).
+
+Step 2 — Checkpointable base models (warm‑start ready)
+Objective: Make each of the 5 base models capable of incremental updates.
+
+Define a model wrapper interface:
+
+fit_full(X, y) — used in batch mode.
+
+fit_incremental(X_new, y_new) — used in incremental mode.
+
+save_checkpoint(path) / load_checkpoint(path).
+
+Implement per‑model behavior:
+
+For models that support partial_fit: call it in fit_incremental.
+
+For others: load checkpoint, continue training, save new checkpoint.
+
+Add checkpoint storage layout:
+
+Per sector, per model: checkpoints/real_estate/base_model_1.pkl, etc.
+
+Include metadata: last trained date, data version.
+
+Keep orchestrator in batch mode:
+
+You’re only adding capabilities, not changing behavior yet.
+
+Step 3 — Incremental meta‑learner wiring
+Objective: Allow the meta‑learner to update without full retrain.
+
+Define meta‑learner interface:
+
+fit_full(base_preds_full, y_full)
+
+fit_incremental(base_preds_new, y_new)
+
+save_checkpoint / load_checkpoint.
+
+Decide update strategy:
+
+Simple start: treat meta‑learner like another model with partial_fit or warm‑start.
+
+Use a small replay buffer if needed to avoid drift.
+
+Add prediction logging for base models:
+
+For each day, store base model predictions + true labels in a compact table.
+
+This becomes the meta‑learner’s incremental training data.
+
+Step 4 — Orchestrator: introduce incremental mode (shadow, not live)
+Objective: Teach the orchestrator how to “think incrementally” without yet replacing batch.
+
+Add a new path in the orchestrator:
+
+If TRAINING_MODE == "incremental":
+
+Determine last_trained_date from checkpoints.
+
+Load only new rows from feature store: date > last_trained_date.
+
+Call fit_incremental on each base model.
+
+Generate base predictions for those new rows.
+
+Call fit_incremental on meta‑learner.
+
+Save all checkpoints.
+
+Run incremental mode in SHADOW:
+
+Keep batch mode as the “official” model.
+
+Run incremental mode in parallel, log metrics, but don’t use its outputs yet.
+
+Compare metrics:
+
+For overlapping periods, compare batch vs incremental performance.
+
+Confirm no contamination, no drift, no weird regime behavior.
+
+Step 5 — Regime and boundary enforcement
+Objective: Make sure incremental never violates your regime logic.
+
+Enforce horizon and label consistency:
+
+Assert that all new rows match the same horizon/label spec as historical.
+
+Version labels if you ever change definitions.
+
+Enforce regime separation:
+
+Store regime tags in the feature store.
+
+Ensure incremental updates never mix incompatible regimes (e.g., directional vs neutral).
+
+Guardrails in code:
+
+Hard assertions in the incremental path:
+
+No training on dates ≤ last_trained_date.
+
+No mixing of label versions.
+
+No cross‑sector leakage.
+
+Step 6 — Flip the switch (with rollback)
+Objective: Make incremental the primary path, with instant escape hatch.
+
+Promotion plan:
+
+For a chosen sector (e.g., real_estate), set TRAINING_MODE="incremental".
+
+Keep batch mode runnable via a CLI flag: --force-batch.
+
+Monitor for a full cycle:
+
+Confirm:
+
+Constant‑time daily updates.
+
+No I/O spikes.
+
+Stable or improved metrics.
+
+Rollout strategy:
+
+Sector by sector, promote incremental mode.
+
+Keep batch mode available as a fallback until you’re fully confident.
+
+Retire batch mode (eventually):
+
+Once you’ve proven parity and stability, deprecate full retrains as a default.
+
+Keep a “full rebuild” path only for rare rebaseline events.

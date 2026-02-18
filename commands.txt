@@ -1,0 +1,8 @@
+cd ..\..\stockapp
+
+ python backend/api_server.py
+ 
+ 
+ 
+ 
+ python backend/turbomode/core_engine/train_all_sectors_optimized_orchestrator.py

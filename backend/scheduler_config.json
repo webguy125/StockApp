@@ -66,7 +66,7 @@
         "Update model metadata and versioning."
       ],
       "dependencies": [],
-      "timeout_minutes": 120,
+      "timeout_minutes": 480,
       "retry_on_failure": false,
       "max_retries": 0
     },
@@ -75,7 +75,7 @@
       "name": "Morning Scanner|8AM-10AM",
       "function_name": "run_overnight_scanner",
       "endpoint": "/scheduler/run_overnight_scanner",
-      "enabled": true,
+      "enabled": false,
       "schedule": {
         "type": "cron",
         "hour": "8-9",
@@ -98,7 +98,7 @@
       "name": "Midday Scanner|10AM-2PM",
       "function_name": "run_overnight_scanner",
       "endpoint": "/scheduler/run_overnight_scanner",
-      "enabled": true,
+      "enabled": false,
       "schedule": {
         "type": "cron",
         "hour": "10-13",
@@ -124,7 +124,7 @@
       "name": "Close Scanner|2PM-3PM",
       "function_name": "run_overnight_scanner",
       "endpoint": "/scheduler/run_overnight_scanner",
-      "enabled": true,
+      "enabled": false,
       "schedule": {
         "type": "cron",
         "hour": "14",

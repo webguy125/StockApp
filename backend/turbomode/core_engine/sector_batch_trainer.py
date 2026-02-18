@@ -36,7 +36,7 @@ from datetime import datetime, timedelta
 import logging
 import sqlite3
 
-from backend.turbomode.core_engine.feature_list import FEATURE_LIST, features_to_array
+from backend.turbomode.core_engine.feature_list import FEATURE_LIST, features_to_array, features_to_array_vectorized
 from backend.turbomode.canonical_ohlcv_loader import load_ohlcv_for_trades, CANONICAL_DB_PATH
 from backend.turbomode.core_engine.train_turbomode_models_fastmode import (
     train_single_sector_worker_fastmode,
@@ -44,6 +44,9 @@ from backend.turbomode.core_engine.train_turbomode_models_fastmode import (
 )
 
 from sklearn.model_selection import train_test_split
+
+# In-memory cache for sector data
+_sector_cache = {}
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('sector_batch_trainer')
@@ -156,7 +159,9 @@ def compute_labels_14d_swing(trades: List[Dict], ohlcv_data: Dict) -> Dict:
 
 def compute_labels_1d_5pct(trades: List[Dict], ohlcv_data: Dict) -> Dict:
     """
-    **DEPRECATED: 1-day TP/DD labeling - replaced by 14-day swing labels**
+    **DEPRECATED: Legacy 1-day labeler, not used in TurboMode. Do not re-enable.**
+
+    This function is DISABLED. TurboMode uses ONLY 14-day MFE/MAE path-dependent labels.
 
     Compute label_1d_5pct for all trades.
 
@@ -267,11 +272,20 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
         - labels_dict: Dict mapping trade_id -> label (int: 0=SELL, 1=HOLD, 2=BUY)
         - trade_ids: List of trade IDs (aligned with X_features rows)
     """
+    # Check cache first
+    cache_key = tuple(sorted(sector_symbols))
+    if cache_key in _sector_cache:
+        return _sector_cache[cache_key]
+
     start_time = time.time()
 
     # Query all backtest trades for this sector
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+
+    # Enable WAL mode for concurrent read performance
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    conn.commit()
 
     placeholders = ','.join(['?'] * len(sector_symbols))
     query = f"""
@@ -296,9 +310,11 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
     logger.info(f"[DATA] Loaded {len(rows):,} trades for sector")
 
     # Parse features and outcomes (labels are pre-computed in trades table)
-    feature_list = []
     labels_dict = {}
     id_list = []
+
+    # Collect JSON feature strings for vectorized conversion
+    json_feature_list = []
 
     # Outcome mapping: 'sell' -> 0, 'hold' -> 1, 'buy' -> 2
     outcome_map = {'sell': 0, 'hold': 1, 'buy': 2}
@@ -307,21 +323,13 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
         trade_id, symbol, entry_date, entry_price, features_json, outcome = row
 
         try:
-            # Parse features JSON
-            features = json.loads(features_json)
-            feature_values = features_to_array(features, fill_value=0.0)
-
-            # Validate feature count
-            if len(feature_values) != 179:
-                logger.error(f"[ERROR] Expected 179 features, got {len(feature_values)} for trade {trade_id}")
-                continue
-
             # Map outcome string to label integer
             if outcome not in outcome_map:
                 logger.error(f"[ERROR] Invalid outcome '{outcome}' for trade {trade_id}")
                 continue
 
-            feature_list.append(feature_values)
+            # Collect JSON string for vectorized processing
+            json_feature_list.append(features_json)
             labels_dict[trade_id] = outcome_map[outcome]
             id_list.append(trade_id)
 
@@ -329,8 +337,13 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
             logger.error(f"[ERROR] Failed to parse trade {trade_id}: {e}")
             continue
 
-    # Convert features to numpy array
-    X_features = np.array(feature_list, dtype=np.float32)
+    # Vectorized conversion of all JSON feature strings to NumPy array
+    X_features = features_to_array_vectorized(json_feature_list, fill_value=0.0)
+
+    # Validate feature matrix shape
+    if X_features.shape[1] != 179:
+        logger.error(f"[ERROR] Expected 179 features, got {X_features.shape[1]}")
+        return np.array([]), {}, []
 
     parse_time = time.time() - start_time
     logger.info(f"[PARSE] Features and labels parsed in {parse_time:.2f}s ({len(X_features):,} samples)")
@@ -348,6 +361,9 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
 
     total_time = time.time() - start_time
     logger.info(f"[TOTAL] Sector data loaded in {total_time:.2f}s")
+
+    # Store in cache
+    _sector_cache[cache_key] = (X_features, labels_dict, id_list)
 
     return X_features, labels_dict, id_list
 
@@ -399,7 +415,7 @@ def run_sector_training(
         logger.error(f"[FAILED] No valid data for sector {sector_name}")
         return {'status': 'failed', 'error': 'No valid data'}
 
-    # STEP 2: Build label vector (label_1d_5pct only)
+    # STEP 2: Build label vector (14-day MFE/MAE labels only)
     y_sector = np.array([labels_dict[tid] for tid in trade_ids], dtype=np.int32)
 
     # Log label distribution
@@ -428,7 +444,7 @@ def run_sector_training(
             y_train=y_train,
             X_val=X_val,
             y_val=y_val,
-            horizon_days=1,  # Fixed: 1d
+            horizon_days=14,  # ENFORCED: 14d (TurboMode uses only 14-day MFE/MAE labels)
             save_models=True,
             save_dir=save_dir
         )
@@ -473,7 +489,7 @@ if __name__ == '__main__':
 
     print(f"\nTesting single-model training with {test_sector} sector...")
     print(f"Symbols: {len(test_symbols)}")
-    print(f"Label: label_1d_5pct only")
+    print(f"Label: 14-day MFE/MAE path-dependent (±5% threshold)")
     print(f"Expected output: 1 model file")
     print()
 

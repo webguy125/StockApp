@@ -1,0 +1,1358 @@
+[
+  {
+    "ticker": "A",
+    "sector": "materials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 15
+  },
+  {
+    "ticker": "AAPL",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "ABBV",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "ABT",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "ACHC",
+    "sector": "healthcare",
+    "market_cap_category": "small_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "ADBE",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "ADI",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "ADSK",
+    "sector": "technology",
+    "market_cap_category": "mid_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "AEP",
+    "sector": "utilities",
+    "market_cap_category": "mid_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "AIG",
+    "sector": "financials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "ALEX",
+    "sector": "real_estate",
+    "market_cap_category": "small_cap",
+    "sector_code": 60
+  },
+  {
+    "ticker": "ALL",
+    "sector": "financials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "ALNY",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "AMAT",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "AMC",
+    "sector": "communication_services",
+    "market_cap_category": "small_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "AMD",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "AMGN",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "AMT",
+    "sector": "real_estate",
+    "market_cap_category": "mid_cap",
+    "sector_code": 60
+  },
+  {
+    "ticker": "AMZN",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "large_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "ANET",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "APD",
+    "sector": "materials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 15
+  },
+  {
+    "ticker": "ARLO",
+    "sector": "industrials",
+    "market_cap_category": "small_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "ATRC",
+    "sector": "healthcare",
+    "market_cap_category": "small_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "AVGO",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "AXP",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "BAC",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "BCRX",
+    "sector": "healthcare",
+    "market_cap_category": "small_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "BDX",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "BK",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "BLK",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "BMY",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "BRK-B",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "C",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "CAH",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "CARR",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "CAT",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "CCL",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "CCOI",
+    "sector": "communication_services",
+    "market_cap_category": "small_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "CDNS",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "CI",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "CME",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "CMG",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "CMI",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "COF",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "COHU",
+    "sector": "technology",
+    "market_cap_category": "small_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "COST",
+    "sector": "consumer_staples",
+    "market_cap_category": "large_cap",
+    "sector_code": 30
+  },
+  {
+    "ticker": "CRI",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "small_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "CRM",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "CRWD",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "CRWV",
+    "sector": "technology",
+    "market_cap_category": "mid_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "CSCO",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "CSX",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "CTAS",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "CTSH",
+    "sector": "technology",
+    "market_cap_category": "mid_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "CVS",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "CVX",
+    "sector": "energy",
+    "market_cap_category": "large_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "D",
+    "sector": "utilities",
+    "market_cap_category": "mid_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "DBI",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "small_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "DDOG",
+    "sector": "technology",
+    "market_cap_category": "mid_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "DE",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "DG",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "DHR",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "DIS",
+    "sector": "communication_services",
+    "market_cap_category": "large_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "DK",
+    "sector": "energy",
+    "market_cap_category": "small_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "DLR",
+    "sector": "real_estate",
+    "market_cap_category": "mid_cap",
+    "sector_code": 60
+  },
+  {
+    "ticker": "DOMO",
+    "sector": "technology",
+    "market_cap_category": "small_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "DUK",
+    "sector": "utilities",
+    "market_cap_category": "large_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "EBAY",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "ECL",
+    "sector": "materials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 15
+  },
+  {
+    "ticker": "ED",
+    "sector": "utilities",
+    "market_cap_category": "mid_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "EMR",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "EPC",
+    "sector": "consumer_staples",
+    "market_cap_category": "small_cap",
+    "sector_code": 30
+  },
+  {
+    "ticker": "EQT",
+    "sector": "energy",
+    "market_cap_category": "mid_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "ESRT",
+    "sector": "real_estate",
+    "market_cap_category": "small_cap",
+    "sector_code": 60
+  },
+  {
+    "ticker": "ETN",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "ETR",
+    "sector": "utilities",
+    "market_cap_category": "mid_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "EW",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "EXC",
+    "sector": "utilities",
+    "market_cap_category": "mid_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "EXPE",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "EXR",
+    "sector": "real_estate",
+    "market_cap_category": "mid_cap",
+    "sector_code": 60
+  },
+  {
+    "ticker": "FANG",
+    "sector": "energy",
+    "market_cap_category": "mid_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "FAST",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "FCX",
+    "sector": "materials",
+    "market_cap_category": "large_cap",
+    "sector_code": 15
+  },
+  {
+    "ticker": "FDX",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "FTNT",
+    "sector": "technology",
+    "market_cap_category": "mid_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "GD",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "GE",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "GILD",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "GM",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "GO",
+    "sector": "consumer_staples",
+    "market_cap_category": "small_cap",
+    "sector_code": 30
+  },
+  {
+    "ticker": "GOGO",
+    "sector": "communication_services",
+    "market_cap_category": "small_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "GOOGL",
+    "sector": "communication_services",
+    "market_cap_category": "large_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "GS",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "GTN",
+    "sector": "communication_services",
+    "market_cap_category": "small_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "GWW",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "HAIN",
+    "sector": "consumer_staples",
+    "market_cap_category": "small_cap",
+    "sector_code": 30
+  },
+  {
+    "ticker": "HCA",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "HD",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "large_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "HLT",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "HLX",
+    "sector": "energy",
+    "market_cap_category": "small_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "HON",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "HSY",
+    "sector": "consumer_staples",
+    "market_cap_category": "mid_cap",
+    "sector_code": 30
+  },
+  {
+    "ticker": "HUM",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "HWM",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "ICE",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "IDXX",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "IMAX",
+    "sector": "communication_services",
+    "market_cap_category": "small_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "INTU",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "ISRG",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "ITW",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "JCI",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "JNJ",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "JPM",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "KLAC",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "KO",
+    "sector": "consumer_staples",
+    "market_cap_category": "large_cap",
+    "sector_code": 30
+  },
+  {
+    "ticker": "LEN",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "LIN",
+    "sector": "materials",
+    "market_cap_category": "large_cap",
+    "sector_code": 15
+  },
+  {
+    "ticker": "LLY",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "LMT",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "LOW",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "large_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "LRCX",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "LVS",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "MAR",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "large_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "MCD",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "large_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "MDB",
+    "sector": "technology",
+    "market_cap_category": "mid_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "MDT",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "MET",
+    "sector": "financials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "META",
+    "sector": "communication_services",
+    "market_cap_category": "large_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "MLM",
+    "sector": "materials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 15
+  },
+  {
+    "ticker": "MRK",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "MS",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "MSFT",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "MTD",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "MU",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "NEE",
+    "sector": "utilities",
+    "market_cap_category": "large_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "NEM",
+    "sector": "materials",
+    "market_cap_category": "large_cap",
+    "sector_code": 15
+  },
+  {
+    "ticker": "NET",
+    "sector": "technology",
+    "market_cap_category": "mid_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "NFLX",
+    "sector": "communication_services",
+    "market_cap_category": "large_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "NKE",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "large_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "NOC",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "NOW",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "NSC",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "NTRA",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "NUE",
+    "sector": "materials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 15
+  },
+  {
+    "ticker": "NVDA",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "NX",
+    "sector": "industrials",
+    "market_cap_category": "small_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "ODFL",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "ORCL",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "ORLY",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "OTIS",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "OXY",
+    "sector": "energy",
+    "market_cap_category": "mid_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "PANW",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "PCAR",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "PDM",
+    "sector": "real_estate",
+    "market_cap_category": "small_cap",
+    "sector_code": 60
+  },
+  {
+    "ticker": "PEG",
+    "sector": "utilities",
+    "market_cap_category": "mid_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "PFE",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "PG",
+    "sector": "consumer_staples",
+    "market_cap_category": "large_cap",
+    "sector_code": 30
+  },
+  {
+    "ticker": "PGR",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "PH",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "PLAY",
+    "sector": "communication_services",
+    "market_cap_category": "small_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "PLCE",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "small_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "PLD",
+    "sector": "real_estate",
+    "market_cap_category": "large_cap",
+    "sector_code": 60
+  },
+  {
+    "ticker": "PLTR",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "PRU",
+    "sector": "financials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "PSA",
+    "sector": "real_estate",
+    "market_cap_category": "mid_cap",
+    "sector_code": 60
+  },
+  {
+    "ticker": "PWR",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "PYPL",
+    "sector": "financials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "QCOM",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "RCL",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "REI",
+    "sector": "energy",
+    "market_cap_category": "small_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "RMD",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "ROK",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "ROL",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "ROP",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "ROST",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "RSG",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "SBUX",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "large_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "SCHW",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "SGRY",
+    "sector": "healthcare",
+    "market_cap_category": "small_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "SHW",
+    "sector": "materials",
+    "market_cap_category": "large_cap",
+    "sector_code": 15
+  },
+  {
+    "ticker": "SLB",
+    "sector": "energy",
+    "market_cap_category": "mid_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "SMPL",
+    "sector": "consumer_staples",
+    "market_cap_category": "small_cap",
+    "sector_code": 30
+  },
+  {
+    "ticker": "SNOW",
+    "sector": "technology",
+    "market_cap_category": "mid_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "SNPS",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "SO",
+    "sector": "utilities",
+    "market_cap_category": "large_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "SOFI",
+    "sector": "financials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "SPGI",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "SRE",
+    "sector": "utilities",
+    "market_cap_category": "mid_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "SYK",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "TFC",
+    "sector": "financials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "TGT",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "TJX",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "large_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "TMO",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "TNDM",
+    "sector": "healthcare",
+    "market_cap_category": "small_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "TRIP",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "small_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "TRV",
+    "sector": "financials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "TSLA",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "large_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "TT",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "TXN",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "ULTA",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "mid_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "UNH",
+    "sector": "healthcare",
+    "market_cap_category": "large_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "UNIT",
+    "sector": "real_estate",
+    "market_cap_category": "small_cap",
+    "sector_code": 60
+  },
+  {
+    "ticker": "UNP",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "UPS",
+    "sector": "industrials",
+    "market_cap_category": "large_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "URI",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "USB",
+    "sector": "financials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "V",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "VEEV",
+    "sector": "healthcare",
+    "market_cap_category": "mid_cap",
+    "sector_code": 35
+  },
+  {
+    "ticker": "VLO",
+    "sector": "energy",
+    "market_cap_category": "mid_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "VMC",
+    "sector": "materials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 15
+  },
+  {
+    "ticker": "VRTX",
+    "sector": "technology",
+    "market_cap_category": "large_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "VTR",
+    "sector": "real_estate",
+    "market_cap_category": "mid_cap",
+    "sector_code": 60
+  },
+  {
+    "ticker": "WAB",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "WBD",
+    "sector": "communication_services",
+    "market_cap_category": "mid_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "WEC",
+    "sector": "utilities",
+    "market_cap_category": "mid_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "WERN",
+    "sector": "industrials",
+    "market_cap_category": "small_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "WFC",
+    "sector": "financials",
+    "market_cap_category": "large_cap",
+    "sector_code": 40
+  },
+  {
+    "ticker": "WLY",
+    "sector": "communication_services",
+    "market_cap_category": "small_cap",
+    "sector_code": 50
+  },
+  {
+    "ticker": "WMT",
+    "sector": "consumer_discretionary",
+    "market_cap_category": "large_cap",
+    "sector_code": 25
+  },
+  {
+    "ticker": "WOLF",
+    "sector": "technology",
+    "market_cap_category": "small_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "WTI",
+    "sector": "energy",
+    "market_cap_category": "small_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "XEL",
+    "sector": "utilities",
+    "market_cap_category": "mid_cap",
+    "sector_code": 55
+  },
+  {
+    "ticker": "XOM",
+    "sector": "energy",
+    "market_cap_category": "large_cap",
+    "sector_code": 10
+  },
+  {
+    "ticker": "XYL",
+    "sector": "industrials",
+    "market_cap_category": "mid_cap",
+    "sector_code": 20
+  },
+  {
+    "ticker": "YALA",
+    "sector": "technology",
+    "market_cap_category": "small_cap",
+    "sector_code": 45
+  },
+  {
+    "ticker": "ZS",
+    "sector": "technology",
+    "market_cap_category": "mid_cap",
+    "sector_code": 45
+  }
+]

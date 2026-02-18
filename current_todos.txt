@@ -1,108 +1,100 @@
 ============================================
-TODAY'S TODO LIST - Updated 2026-01-11 19:08
+TODO LIST - Updated 2026-02-14 11:50
 ============================================
 
-COMPLETED TODAY (2026-01-11):
-[X] DECIDED: Option 1 selected (disable NNs, fast path)
-[X] Modified train_turbomode_models.py to exclude tc_nn_lstm, tc_nn_gru
-[X] Trained meta-learner with 8 tree models (93.99% val accuracy!)
-[X] Fixed scanner bug #1: Column name case mismatch (Volume → volume)
-[X] Fixed scanner bug #2: Data threshold too strict (500 → 400 rows)
-[X] Fixed scanner bug #3: Feature extraction method mismatch
-[X] Fixed scanner bug #4: Dict-to-array conversion missing
-[X] Verified all 9 models work (8 base + 1 meta)
-[X] Tested predictions pipeline end-to-end
-[X] System OPERATIONAL and PRODUCTION READY
+SYSTEM STATUS: FULLY OPERATIONAL
+Last Scanner Run: 2026-02-13 09:30:03
+Current Signals: 117 (81 BUY, 36 SELL, 0 HOLD)
 
-PENDING TASKS:
-[ ] Wait for Monday market open - test options page with live data
-[ ] Quarterly curation (optional - checkpointed at 52/80 candidates)
+============================================
+ACTIVE TASKS
+============================================
 
-CURRENT MODEL STATUS (2026-01-11 19:08):
-✓ ALL MODELS TRAINED AND OPERATIONAL
+OPTIONS ML SYSTEM (3 Future Tasks):
 
-Tree Models (8/8) - All trained Jan 11:
-  - xgboost (gbtree) - 87.24% val accuracy
-  - xgboost_et (ExtraTrees) - BEST BASE MODEL
-  - xgboost_approx
-  - xgboost_hist
-  - xgboost_dart
-  - xgboost_gblinear
-  - lightgbm
-  - catboost
+[ ] Task 1: Accumulate 30 days of real data
+    Status: In progress (collecting daily)
+    Database: backend/data/options_logs/options_predictions.db
+    Target: 2000-3000 labeled examples
+    Action: Run track_options_outcomes.py daily at 4:30 PM ET
+    Timeline: Need ~25 more days
 
-Meta-Learner (1/1):
-  - meta_learner - 93.99% val accuracy (stacks 8 models)
+[ ] Task 2: Train ML ensemble on real data
+    Status: Waiting for Task 1 completion
+    Scripts: options_data_collector.py, options_feature_engineer.py, train_options_ml_model.py
+    Duration: ~3-4 hours
+    Target: Test AUC > 0.75, Win rate 75-80%
+    Timeline: Run after Task 1 completes
 
-Neural Networks: DISABLED
-  - tc_nn_lstm - Removed (architectural mismatch with tabular data)
-  - tc_nn_gru - Removed (architectural mismatch with tabular data)
+[ ] Task 3: Enable hybrid scoring (40% rules + 60% ML)
+    Status: Waiting for Task 2 completion
+    Action: Restart Flask server after training
+    Result: Models auto-load, hybrid scoring activates
+    Timeline: Immediate after Task 2
 
-SYSTEM STATUS:
-✓ Scanner bugs fixed (4 critical issues resolved)
-✓ Feature extraction pipeline working
-✓ Model predictions working end-to-end
-✓ PRODUCTION READY
+============================================
+COMPLETED TASKS (No Longer Relevant)
+============================================
 
-AUTOMATED SCANNING SCHEDULE:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-AUTOMATED: Full 82 Stocks (Overnight Scan)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Symbols: All 82 curated stocks from core_symbols.py
-Scanner: TurboMode Scheduler (integrated in Flask)
-Duration: ~60 minutes
-Schedule: 11:00 PM (23:00) EVERY NIGHT
-Status: ENABLED (but needs model retraining first)
+[X] All models trained - REPLACED with per-sector architecture (66 models)
+[X] Test options page - OPERATIONAL
+[X] Scanner bug fixes - ALL FIXED (Jan 11)
+[X] Options historical ingestion - COMPLETED then CLEARED (Feb 8)
+[X] Tradier integration - COMPLETE (REST + WebSocket)
+[X] HOLD signal logic - FIXED (Feb 5)
+[X] Chart rendering bug - FIXED (Feb 6)
+[X] Performance dashboard - DEPLOYED (Feb 6)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MANUAL: Top 10 Stocks (Intraday Updates)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Symbols: SMCI, TMDX, TSLA, MTDR, CRWD, TEAM, BOOT, NVDA, KRYS, SHAK
-Scanner: backend/turbomode/top10_scanner.py
-Duration: ~7 minutes
-Status: Will work after model retraining
+============================================
+SYSTEM ARCHITECTURE (Current State)
+============================================
 
-KNOWN ISSUES:
-[CRITICAL] Models not fully trained
-   - Cause: Jan 10 training crashed during meta-learner phase
-   - Resolution: Rerun training pipeline
+TURBOMODE ML SYSTEM:
+- Architecture: Per-sector fast ensemble (6 models × 11 sectors = 66 models)
+- Models: LightGBM-GPU, CatBoost-GPU, XGBoost-Hist-GPU, XGBoost-Linear, RandomForest, MetaLearner
+- Trading Horizon: 14-day swing trading (±5% thresholds)
+- Symbol Universe: CORE_230 (233 curated stocks)
+- Scanner: overnight_scanner.py (11 PM nightly)
+- Database: turbomode.db
 
-Options page: "No liquid options found" error
-   - Cause: yfinance OI data = 0 for all stocks (weekend data issue)
-   - Resolution: Expected Monday when markets open
+OPTIONS SYSTEM:
+- Mode: 100% Rules-Based (ML pending 30 days of data)
+- Data Sources: Tradier REST (primary) + Yahoo (fallback)
+- Components: Scanner, Scheduler, Condor Engine, Intel Dashboard
+- Databases: options_universe.db (empty), options_intel.db, options_training_history.db
 
-FUTURE TASKS (After 30 Days):
-[ ] Accumulate 30 days of real data for TurboOptions training
-[ ] Train TurboOptions ML ensemble on real data
-[ ] Enable hybrid scoring (40% rules + 60% ML)
+DATA INTEGRATIONS:
+- Tradier: WebSocket + REST (real-time quotes + options)
+- Yahoo Finance: Fallback quotes + options
+- EODHD: Historical options data (configured, data cleared)
+- Coinbase: Crypto minute-level data
+
+FRONTEND:
+- 21 HTML pages (13 TurboMode, 8 Main)
+- Key pages: options.html, performance_dashboard.html, signal_intel_dashboard.html
+- All pages operational
+
+============================================
+KNOWN ISSUES
+============================================
+
+NONE - System fully operational
+
+============================================
+INSTRUCTIONS FOR CLAUDE
+============================================
+
+AT SESSION START:
+1. Read this file and session_files/session_notes_2026-02-14.md
+2. Print current TODO list to user
+3. Use TodoWrite tool to initialize task tracking
+4. Update this file as tasks progress
+
+AT SESSION END:
+1. Update this file with final state
+2. Append session summary to session_notes_2026-02-14.md
+3. Mark completed tasks [X] or remove if irrelevant
 
 ============================================
 END OF TODO LIST
 ============================================
-
-============================================
-INSTRUCTIONS FOR CLAUDE (READ AT EVERY SESSION STARTUP)
-============================================
-
-AT THE START OF EVERY SESSION, YOU MUST:
-
-1. PRINT the TODO list above to the screen immediately
-   - Show it in a clean, readable format
-   - Use checkboxes to show pending/completed status
-
-2. USE the TodoWrite tool to initialize your task tracking
-   - Load all tasks from the list above
-   - Mark tasks as in_progress/completed as you work
-
-3. UPDATE this file (current_todos.txt) whenever:
-   - A task is completed (change [ ] to [X])
-   - A new task is added
-   - A task is removed or becomes irrelevant
-   - Keep this file synchronized with TodoWrite state
-
-4. AT END OF SESSION:
-   - Update this file with final TODO state
-   - Remove completed tasks or mark them [X]
-   - Ensure next session starts with clean, current list
-
-This ensures continuity across sessions and we never forget tasks!

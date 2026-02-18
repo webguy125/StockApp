@@ -1,6 +1,6 @@
 {
   "symbol": "ADA-USD",
-  "timestamp": "2026-02-02T00:02:35.806288",
+  "timestamp": "2026-02-16T00:02:36.412992",
   "agent": "fusion_agent",
   "total_score": 6.307692307692307,
   "confidence": 0.363076923076923,
@@ -11,7 +11,7 @@
     "💸"
   ],
   "emoji_string": "📉❌💸",
-  "shorthand": "ADA-USD | 📉❌💸 | 6 | 0.36 | 2026-02-02",
+  "shorthand": "ADA-USD | 📉❌💸 | 6 | 0.36 | 2026-02-16",
   "weighted_scores": {
     "indicators_agent": {
       "score": 4,

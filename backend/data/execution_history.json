@@ -286,5 +286,3517 @@
     "status": "success",
     "duration_seconds": 95.71731686592102,
     "error": null
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-03T22:49:17.310120",
+    "status": "success",
+    "duration_seconds": 257.3024106025696,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:01:34.258216",
+    "status": "success",
+    "duration_seconds": 94.24694919586182,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:04:18.581155",
+    "status": "success",
+    "duration_seconds": 78.5658073425293,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:07:19.262830",
+    "status": "success",
+    "duration_seconds": 79.25781607627869,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:10:19.751275",
+    "status": "success",
+    "duration_seconds": 79.73461318016052,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:13:19.384759",
+    "status": "success",
+    "duration_seconds": 79.37356567382812,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:16:20.657717",
+    "status": "success",
+    "duration_seconds": 80.6448540687561,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:19:24.363056",
+    "status": "success",
+    "duration_seconds": 84.35048294067383,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:22:24.592162",
+    "status": "success",
+    "duration_seconds": 84.57355237007141,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:25:24.827752",
+    "status": "success",
+    "duration_seconds": 84.82178449630737,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:28:23.940242",
+    "status": "success",
+    "duration_seconds": 83.92718410491943,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:31:34.107638",
+    "status": "success",
+    "duration_seconds": 94.09887170791626,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:34:29.631599",
+    "status": "success",
+    "duration_seconds": 89.62265086174011,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:37:33.284064",
+    "status": "success",
+    "duration_seconds": 93.27949571609497,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:40:54.123336",
+    "status": "success",
+    "duration_seconds": 114.09999251365662,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:43:31.622072",
+    "status": "success",
+    "duration_seconds": 91.61603236198425,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:46:29.037051",
+    "status": "success",
+    "duration_seconds": 89.01359510421753,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:49:30.109683",
+    "status": "success",
+    "duration_seconds": 90.0979163646698,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:52:29.421507",
+    "status": "success",
+    "duration_seconds": 89.40289425849915,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:55:32.702939",
+    "status": "success",
+    "duration_seconds": 92.69168901443481,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T08:58:33.832251",
+    "status": "success",
+    "duration_seconds": 93.80338978767395,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:01:46.754255",
+    "status": "success",
+    "duration_seconds": 106.74867868423462,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:05:29.407862",
+    "status": "success",
+    "duration_seconds": 149.3705427646637,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:08:04.279196",
+    "status": "success",
+    "duration_seconds": 124.25717282295227,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:11:03.230848",
+    "status": "success",
+    "duration_seconds": 123.21001172065735,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:14:07.278701",
+    "status": "success",
+    "duration_seconds": 127.25028705596924,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:17:35.183996",
+    "status": "success",
+    "duration_seconds": 155.16435384750366,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:20:38.848696",
+    "status": "success",
+    "duration_seconds": 158.77272200584412,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:23:09.849938",
+    "status": "success",
+    "duration_seconds": 129.83711528778076,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:26:40.746763",
+    "status": "success",
+    "duration_seconds": 160.71584010124207,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:29:34.343272",
+    "status": "success",
+    "duration_seconds": 154.29014348983765,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:32:12.455595",
+    "status": "success",
+    "duration_seconds": 132.40940308570862,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:35:42.309666",
+    "status": "success",
+    "duration_seconds": 162.27992343902588,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:38:23.924227",
+    "status": "success",
+    "duration_seconds": 143.8840503692627,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:41:31.178038",
+    "status": "success",
+    "duration_seconds": 151.15800976753235,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:44:42.214707",
+    "status": "success",
+    "duration_seconds": 162.17347168922424,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:47:34.641807",
+    "status": "success",
+    "duration_seconds": 154.61637020111084,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:50:12.782099",
+    "status": "success",
+    "duration_seconds": 132.72665977478027,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:52:55.975300",
+    "status": "success",
+    "duration_seconds": 115.96692681312561,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:55:49.046140",
+    "status": "success",
+    "duration_seconds": 109.03041338920593,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-04T09:58:38.901466",
+    "status": "success",
+    "duration_seconds": 98.88882660865784,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T10:01:54.161018",
+    "status": "success",
+    "duration_seconds": 114.15199422836304,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T10:12:11.347228",
+    "status": "success",
+    "duration_seconds": 131.31697368621826,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T10:22:06.722077",
+    "status": "success",
+    "duration_seconds": 126.7100031375885,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T10:32:10.632344",
+    "status": "success",
+    "duration_seconds": 130.61398768424988,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T10:42:10.262639",
+    "status": "success",
+    "duration_seconds": 130.25419068336487,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T10:51:59.454401",
+    "status": "success",
+    "duration_seconds": 119.44195508956909,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T11:02:18.567143",
+    "status": "success",
+    "duration_seconds": 138.5578203201294,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T11:12:24.000710",
+    "status": "success",
+    "duration_seconds": 143.98439240455627,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T11:22:00.861672",
+    "status": "success",
+    "duration_seconds": 120.84764838218689,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T11:32:09.995701",
+    "status": "success",
+    "duration_seconds": 129.99040532112122,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T11:42:13.977085",
+    "status": "success",
+    "duration_seconds": 133.96251940727234,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T11:52:12.024621",
+    "status": "success",
+    "duration_seconds": 132.003803730011,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T12:02:10.117456",
+    "status": "success",
+    "duration_seconds": 130.08517146110535,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T12:12:13.621957",
+    "status": "success",
+    "duration_seconds": 133.59728932380676,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T12:21:53.331531",
+    "status": "success",
+    "duration_seconds": 113.32510876655579,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T12:31:59.098454",
+    "status": "success",
+    "duration_seconds": 119.0871810913086,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T12:41:56.946515",
+    "status": "success",
+    "duration_seconds": 116.9214379787445,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T12:51:41.791163",
+    "status": "success",
+    "duration_seconds": 101.78546476364136,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T13:01:59.793387",
+    "status": "success",
+    "duration_seconds": 119.7809112071991,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T13:12:16.060049",
+    "status": "success",
+    "duration_seconds": 136.05457830429077,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T13:21:59.090212",
+    "status": "success",
+    "duration_seconds": 119.0759265422821,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T13:32:00.973811",
+    "status": "success",
+    "duration_seconds": 120.96647334098816,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T13:41:58.625896",
+    "status": "success",
+    "duration_seconds": 118.61487674713135,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-04T13:51:55.825076",
+    "status": "success",
+    "duration_seconds": 115.81435704231262,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:05:13.285183",
+    "status": "success",
+    "duration_seconds": 133.2721769809723,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:08:03.726431",
+    "status": "success",
+    "duration_seconds": 123.70783185958862,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:11:01.503843",
+    "status": "success",
+    "duration_seconds": 121.49391603469849,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:14:03.234804",
+    "status": "success",
+    "duration_seconds": 123.22427701950073,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:17:01.703487",
+    "status": "success",
+    "duration_seconds": 121.69557046890259,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:20:00.383149",
+    "status": "success",
+    "duration_seconds": 120.37830328941345,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:23:02.607554",
+    "status": "success",
+    "duration_seconds": 122.59696745872498,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:26:03.297998",
+    "status": "success",
+    "duration_seconds": 123.29323744773865,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:29:09.963725",
+    "status": "success",
+    "duration_seconds": 129.94753575325012,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:32:53.321257",
+    "status": "success",
+    "duration_seconds": 173.28653240203857,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:36:05.082392",
+    "status": "success",
+    "duration_seconds": 185.05678844451904,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:38:55.825792",
+    "status": "success",
+    "duration_seconds": 175.7900059223175,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:42:03.605230",
+    "status": "success",
+    "duration_seconds": 183.5436816215515,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:44:52.004412",
+    "status": "success",
+    "duration_seconds": 171.9792754650116,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:47:27.183655",
+    "status": "success",
+    "duration_seconds": 147.16393303871155,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:50:17.109846",
+    "status": "success",
+    "duration_seconds": 137.09513640403748,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:53:10.293458",
+    "status": "success",
+    "duration_seconds": 130.2863473892212,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:56:10.704729",
+    "status": "success",
+    "duration_seconds": 130.69024443626404,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-04T14:59:30.499092",
+    "status": "success",
+    "duration_seconds": 150.46642875671387,
+    "error": null
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-04T22:49:03.187431",
+    "status": "success",
+    "duration_seconds": 243.1783995628357,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:16:43.058195",
+    "status": "success",
+    "duration_seconds": 103.03957390785217,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:19:35.227097",
+    "status": "success",
+    "duration_seconds": 95.22029781341553,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:22:36.336948",
+    "status": "success",
+    "duration_seconds": 96.32557392120361,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:25:37.985549",
+    "status": "success",
+    "duration_seconds": 97.96927547454834,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:28:34.319493",
+    "status": "success",
+    "duration_seconds": 94.30743503570557,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:31:36.072988",
+    "status": "success",
+    "duration_seconds": 96.06074595451355,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:34:34.823989",
+    "status": "success",
+    "duration_seconds": 94.805006980896,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:37:32.220928",
+    "status": "success",
+    "duration_seconds": 92.20501279830933,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:40:46.978832",
+    "status": "success",
+    "duration_seconds": 106.96461725234985,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:44:06.854367",
+    "status": "success",
+    "duration_seconds": 126.82123446464539,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:48:52.245851",
+    "status": "success",
+    "duration_seconds": 232.19726037979126,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:51:00.091551",
+    "status": "success",
+    "duration_seconds": 180.0554449558258,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:53:10.012209",
+    "status": "success",
+    "duration_seconds": 129.98283290863037,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:56:02.963449",
+    "status": "success",
+    "duration_seconds": 122.92618823051453,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-05T09:59:01.274421",
+    "status": "success",
+    "duration_seconds": 121.24123573303223,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T10:01:56.950891",
+    "status": "success",
+    "duration_seconds": 116.92811274528503,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T10:11:52.708550",
+    "status": "success",
+    "duration_seconds": 112.67541337013245,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T10:21:45.954624",
+    "status": "success",
+    "duration_seconds": 105.92467188835144,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T10:31:39.499982",
+    "status": "success",
+    "duration_seconds": 99.47946619987488,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T10:41:37.134771",
+    "status": "success",
+    "duration_seconds": 97.11293172836304,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T10:51:32.312677",
+    "status": "success",
+    "duration_seconds": 92.28986167907715,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T11:01:32.963299",
+    "status": "success",
+    "duration_seconds": 92.92232990264893,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T11:11:37.003719",
+    "status": "success",
+    "duration_seconds": 96.9854063987732,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T11:21:29.302557",
+    "status": "success",
+    "duration_seconds": 89.28664660453796,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T11:31:25.133890",
+    "status": "success",
+    "duration_seconds": 85.1201856136322,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T11:41:27.729189",
+    "status": "success",
+    "duration_seconds": 87.71442103385925,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T11:51:22.072125",
+    "status": "success",
+    "duration_seconds": 82.06140327453613,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T12:01:20.723886",
+    "status": "success",
+    "duration_seconds": 80.70852017402649,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T12:11:22.868776",
+    "status": "success",
+    "duration_seconds": 82.85247707366943,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T12:21:21.984990",
+    "status": "success",
+    "duration_seconds": 81.97750306129456,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T12:31:23.211542",
+    "status": "success",
+    "duration_seconds": 83.20562553405762,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T12:41:21.583201",
+    "status": "success",
+    "duration_seconds": 81.56907677650452,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T12:51:24.456450",
+    "status": "success",
+    "duration_seconds": 84.44504237174988,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T13:01:25.819139",
+    "status": "success",
+    "duration_seconds": 85.8001697063446,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T13:11:23.865589",
+    "status": "success",
+    "duration_seconds": 83.84883761405945,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T13:21:34.672565",
+    "status": "success",
+    "duration_seconds": 94.66293287277222,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T13:31:35.284051",
+    "status": "success",
+    "duration_seconds": 95.27441382408142,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T13:41:40.287586",
+    "status": "success",
+    "duration_seconds": 100.2740797996521,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-05T13:51:33.816417",
+    "status": "success",
+    "duration_seconds": 93.78970193862915,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-05T14:04:38.321932",
+    "status": "success",
+    "duration_seconds": 98.29096555709839,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-05T14:07:35.038031",
+    "status": "success",
+    "duration_seconds": 95.01039958000183,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-05T14:34:52.764925",
+    "status": "success",
+    "duration_seconds": 112.74687027931213,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-05T14:37:45.410380",
+    "status": "success",
+    "duration_seconds": 105.3962824344635,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-05T14:40:45.314572",
+    "status": "success",
+    "duration_seconds": 105.3004252910614,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-05T14:43:48.871890",
+    "status": "success",
+    "duration_seconds": 108.83654618263245,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-05T14:49:49.215543",
+    "status": "success",
+    "duration_seconds": 109.19201469421387,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-05T14:52:56.543898",
+    "status": "success",
+    "duration_seconds": 116.47360134124756,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-05T14:55:55.322135",
+    "status": "success",
+    "duration_seconds": 115.28283405303955,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-05T14:58:50.060401",
+    "status": "success",
+    "duration_seconds": 110.04312252998352,
+    "error": null
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-05T22:51:56.579372",
+    "status": "success",
+    "duration_seconds": 416.5746741294861,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T11:01:56.119995",
+    "status": "success",
+    "duration_seconds": 116.09477496147156,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T11:11:33.732166",
+    "status": "success",
+    "duration_seconds": 93.71081042289734,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T11:21:35.944141",
+    "status": "success",
+    "duration_seconds": 95.90507650375366,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T11:31:32.268971",
+    "status": "success",
+    "duration_seconds": 92.25524950027466,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T11:41:32.504103",
+    "status": "success",
+    "duration_seconds": 92.48032665252686,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T11:51:32.839683",
+    "status": "success",
+    "duration_seconds": 92.80843448638916,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T12:01:36.613156",
+    "status": "success",
+    "duration_seconds": 96.58723616600037,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T12:11:35.976919",
+    "status": "success",
+    "duration_seconds": 95.94505667686462,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T12:21:47.219744",
+    "status": "success",
+    "duration_seconds": 107.16936993598938,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T12:31:36.346707",
+    "status": "success",
+    "duration_seconds": 96.32798361778259,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T12:41:33.954590",
+    "status": "success",
+    "duration_seconds": 93.92844557762146,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T12:51:31.076353",
+    "status": "success",
+    "duration_seconds": 91.04639983177185,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T13:01:30.453062",
+    "status": "success",
+    "duration_seconds": 90.42763710021973,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T13:11:31.621254",
+    "status": "success",
+    "duration_seconds": 91.60420107841492,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T13:21:30.702113",
+    "status": "success",
+    "duration_seconds": 90.67139053344727,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T13:31:31.329649",
+    "status": "success",
+    "duration_seconds": 91.3020441532135,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T13:41:30.940847",
+    "status": "success",
+    "duration_seconds": 90.91943001747131,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-06T13:51:31.004007",
+    "status": "success",
+    "duration_seconds": 90.98079180717468,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:04:30.037696",
+    "status": "success",
+    "duration_seconds": 90.01024341583252,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:07:33.994747",
+    "status": "success",
+    "duration_seconds": 93.95052790641785,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:10:34.558078",
+    "status": "success",
+    "duration_seconds": 94.51914930343628,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:13:35.642317",
+    "status": "success",
+    "duration_seconds": 95.62056589126587,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:16:35.606236",
+    "status": "success",
+    "duration_seconds": 95.56545662879944,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:19:46.789313",
+    "status": "success",
+    "duration_seconds": 106.7538492679596,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:22:43.194651",
+    "status": "success",
+    "duration_seconds": 103.19012498855591,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:25:40.918735",
+    "status": "success",
+    "duration_seconds": 100.90120029449463,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:28:40.633914",
+    "status": "success",
+    "duration_seconds": 100.60325765609741,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:31:47.907488",
+    "status": "success",
+    "duration_seconds": 107.88523745536804,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:34:46.014773",
+    "status": "success",
+    "duration_seconds": 105.9987735748291,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:38:04.150072",
+    "status": "success",
+    "duration_seconds": 124.12343311309814,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:41:20.473723",
+    "status": "success",
+    "duration_seconds": 140.45299124717712,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:44:24.935939",
+    "status": "success",
+    "duration_seconds": 144.9217667579651,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:46:50.951829",
+    "status": "success",
+    "duration_seconds": 110.94890856742859,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:49:43.960294",
+    "status": "success",
+    "duration_seconds": 103.92865586280823,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:52:40.506928",
+    "status": "success",
+    "duration_seconds": 100.4887011051178,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:55:40.961053",
+    "status": "success",
+    "duration_seconds": 100.93772959709167,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-06T14:58:39.564390",
+    "status": "success",
+    "duration_seconds": 99.5490665435791,
+    "error": null
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-06T22:50:06.782463",
+    "status": "success",
+    "duration_seconds": 306.7601525783539,
+    "error": null
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-07T22:51:43.997755",
+    "status": "success",
+    "duration_seconds": 403.97127413749695,
+    "error": null
+  },
+  {
+    "task_id": 3,
+    "task_name": "Overnight Scanner|Weekly",
+    "timestamp": "2026-02-07T23:46:48.530767",
+    "status": "success",
+    "duration_seconds": 108.5069797039032,
+    "error": null
+  },
+  {
+    "task_id": 4,
+    "task_name": "Backtest Generator|Weekly",
+    "timestamp": "2026-02-08T00:44:06.671260",
+    "status": "success",
+    "duration_seconds": 1746.6460633277893,
+    "error": null
+  },
+  {
+    "task_id": 5,
+    "task_name": "Adaptive Ranking|Weekly",
+    "timestamp": "2026-02-08T00:45:00.455397",
+    "status": "failed",
+    "duration_seconds": 0.44064831733703613,
+    "error": "Subprocess exited with code 1"
+  },
+  {
+    "task_id": 5,
+    "task_name": "Adaptive Ranking|Weekly",
+    "timestamp": "2026-02-08T00:45:00.879180",
+    "status": "failed",
+    "duration_seconds": 0.4114952087402344,
+    "error": "Subprocess exited with code 1"
+  },
+  {
+    "task_id": 5,
+    "task_name": "Adaptive Ranking|Weekly",
+    "timestamp": "2026-02-08T00:45:01.312312",
+    "status": "failed",
+    "duration_seconds": 0.42142462730407715,
+    "error": "Subprocess exited with code 1"
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-10T22:50:26.844462",
+    "status": "success",
+    "duration_seconds": 324.80232429504395,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:02:13.388472",
+    "status": "success",
+    "duration_seconds": 133.3701229095459,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:04:32.727547",
+    "status": "success",
+    "duration_seconds": 92.69960403442383,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:07:34.431602",
+    "status": "success",
+    "duration_seconds": 94.41098523139954,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:10:36.014471",
+    "status": "success",
+    "duration_seconds": 95.98959183692932,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:13:37.684684",
+    "status": "success",
+    "duration_seconds": 97.6664924621582,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:16:38.486046",
+    "status": "success",
+    "duration_seconds": 98.46018719673157,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:19:45.624302",
+    "status": "success",
+    "duration_seconds": 105.6055154800415,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:22:47.186743",
+    "status": "success",
+    "duration_seconds": 107.13887572288513,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:25:42.724202",
+    "status": "success",
+    "duration_seconds": 102.69768929481506,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:28:40.113653",
+    "status": "success",
+    "duration_seconds": 100.08697938919067,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:31:42.498890",
+    "status": "success",
+    "duration_seconds": 102.47818779945374,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:34:40.712037",
+    "status": "success",
+    "duration_seconds": 100.68582153320312,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:37:42.783993",
+    "status": "success",
+    "duration_seconds": 102.75685954093933,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:40:41.330527",
+    "status": "success",
+    "duration_seconds": 101.29851484298706,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:43:42.644794",
+    "status": "success",
+    "duration_seconds": 102.61855912208557,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:46:41.226316",
+    "status": "success",
+    "duration_seconds": 101.205650806427,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:49:42.046514",
+    "status": "success",
+    "duration_seconds": 102.02109885215759,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:52:40.804728",
+    "status": "success",
+    "duration_seconds": 100.76324653625488,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:55:42.569834",
+    "status": "success",
+    "duration_seconds": 102.53600239753723,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T08:58:40.391839",
+    "status": "success",
+    "duration_seconds": 100.33796572685242,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:01:42.794051",
+    "status": "success",
+    "duration_seconds": 102.74645113945007,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:04:41.194944",
+    "status": "success",
+    "duration_seconds": 101.17351841926575,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:07:43.290321",
+    "status": "success",
+    "duration_seconds": 103.25550770759583,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:10:41.404314",
+    "status": "success",
+    "duration_seconds": 101.36083436012268,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:13:42.668715",
+    "status": "success",
+    "duration_seconds": 102.6557068824768,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:17:14.440033",
+    "status": "success",
+    "duration_seconds": 134.41834950447083,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:19:59.073997",
+    "status": "success",
+    "duration_seconds": 119.03279972076416,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:22:55.766706",
+    "status": "success",
+    "duration_seconds": 115.75389552116394,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:25:49.239509",
+    "status": "success",
+    "duration_seconds": 109.21590685844421,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:28:45.906877",
+    "status": "success",
+    "duration_seconds": 105.87950468063354,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:31:47.431551",
+    "status": "success",
+    "duration_seconds": 107.39307522773743,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:34:45.645445",
+    "status": "success",
+    "duration_seconds": 105.62198114395142,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:37:46.626840",
+    "status": "success",
+    "duration_seconds": 106.60211706161499,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:40:44.762422",
+    "status": "success",
+    "duration_seconds": 104.72737646102905,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:43:45.786342",
+    "status": "success",
+    "duration_seconds": 105.74651885032654,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:46:45.057126",
+    "status": "success",
+    "duration_seconds": 105.02537655830383,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:49:45.693876",
+    "status": "success",
+    "duration_seconds": 105.67573189735413,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:52:44.133776",
+    "status": "success",
+    "duration_seconds": 104.09587025642395,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:55:45.487228",
+    "status": "success",
+    "duration_seconds": 105.46990156173706,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-11T09:58:45.235797",
+    "status": "success",
+    "duration_seconds": 105.21772193908691,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T10:01:47.504409",
+    "status": "success",
+    "duration_seconds": 107.47848200798035,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T10:11:38.396961",
+    "status": "success",
+    "duration_seconds": 98.37825012207031,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T10:21:43.610480",
+    "status": "success",
+    "duration_seconds": 103.58148574829102,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T10:31:42.836545",
+    "status": "success",
+    "duration_seconds": 102.81042623519897,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T10:41:43.123816",
+    "status": "success",
+    "duration_seconds": 103.10210824012756,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T10:51:45.130715",
+    "status": "success",
+    "duration_seconds": 105.10812759399414,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T11:01:45.256859",
+    "status": "success",
+    "duration_seconds": 105.23339366912842,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T11:11:44.058212",
+    "status": "success",
+    "duration_seconds": 104.03396344184875,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T11:21:44.168860",
+    "status": "success",
+    "duration_seconds": 104.14986515045166,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T11:31:43.830524",
+    "status": "success",
+    "duration_seconds": 103.80096554756165,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T11:41:44.329417",
+    "status": "success",
+    "duration_seconds": 104.3007128238678,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T11:51:45.019569",
+    "status": "success",
+    "duration_seconds": 105.00266528129578,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T12:01:44.408488",
+    "status": "success",
+    "duration_seconds": 104.38997173309326,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T12:11:44.273979",
+    "status": "success",
+    "duration_seconds": 104.2432656288147,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T12:21:45.007314",
+    "status": "success",
+    "duration_seconds": 104.96752452850342,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T12:31:44.740458",
+    "status": "success",
+    "duration_seconds": 104.71267485618591,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T12:41:46.202480",
+    "status": "success",
+    "duration_seconds": 106.18603682518005,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T12:51:44.299090",
+    "status": "success",
+    "duration_seconds": 104.2780966758728,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T13:01:44.493431",
+    "status": "success",
+    "duration_seconds": 104.47296261787415,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T13:11:45.288342",
+    "status": "success",
+    "duration_seconds": 105.24607586860657,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T13:22:12.334229",
+    "status": "success",
+    "duration_seconds": 132.30239868164062,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T13:31:46.705336",
+    "status": "success",
+    "duration_seconds": 106.67826223373413,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T13:41:40.580004",
+    "status": "success",
+    "duration_seconds": 100.55327320098877,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-11T13:51:43.112413",
+    "status": "success",
+    "duration_seconds": 103.09025382995605,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:04:40.219548",
+    "status": "success",
+    "duration_seconds": 100.19202995300293,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:07:41.619235",
+    "status": "success",
+    "duration_seconds": 101.5870463848114,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:10:45.171089",
+    "status": "success",
+    "duration_seconds": 105.15028238296509,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:13:45.412724",
+    "status": "success",
+    "duration_seconds": 105.38524222373962,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:16:49.707956",
+    "status": "success",
+    "duration_seconds": 109.68028783798218,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:19:48.225941",
+    "status": "success",
+    "duration_seconds": 108.17385244369507,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:22:49.896855",
+    "status": "success",
+    "duration_seconds": 109.87718272209167,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:25:47.624974",
+    "status": "success",
+    "duration_seconds": 107.60534167289734,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:28:49.461757",
+    "status": "success",
+    "duration_seconds": 109.41681003570557,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:31:48.681908",
+    "status": "success",
+    "duration_seconds": 108.66393208503723,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:34:51.532978",
+    "status": "success",
+    "duration_seconds": 111.51744079589844,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:37:49.292161",
+    "status": "success",
+    "duration_seconds": 109.2601625919342,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:40:56.524197",
+    "status": "success",
+    "duration_seconds": 116.50747585296631,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:43:50.664886",
+    "status": "success",
+    "duration_seconds": 110.62327480316162,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:46:55.502090",
+    "status": "success",
+    "duration_seconds": 115.47483682632446,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:49:50.057390",
+    "status": "success",
+    "duration_seconds": 110.02428793907166,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:52:49.524503",
+    "status": "success",
+    "duration_seconds": 109.50233459472656,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:55:50.379286",
+    "status": "success",
+    "duration_seconds": 110.34890127182007,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-11T14:58:50.941347",
+    "status": "success",
+    "duration_seconds": 110.8898618221283,
+    "error": null
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-11T22:48:26.216686",
+    "status": "success",
+    "duration_seconds": 206.18723678588867,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:02:00.716032",
+    "status": "success",
+    "duration_seconds": 120.68646883964539,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:04:40.078404",
+    "status": "success",
+    "duration_seconds": 100.05048727989197,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:07:40.896874",
+    "status": "success",
+    "duration_seconds": 100.87760305404663,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:10:41.631619",
+    "status": "success",
+    "duration_seconds": 101.6028184890747,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:13:42.597644",
+    "status": "success",
+    "duration_seconds": 102.58177137374878,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:16:43.555336",
+    "status": "success",
+    "duration_seconds": 103.5280077457428,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:19:50.898139",
+    "status": "success",
+    "duration_seconds": 110.86958456039429,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:22:57.501979",
+    "status": "success",
+    "duration_seconds": 117.48688006401062,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:25:51.426099",
+    "status": "success",
+    "duration_seconds": 111.3978180885315,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:28:49.786652",
+    "status": "success",
+    "duration_seconds": 109.7512903213501,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:31:49.693984",
+    "status": "success",
+    "duration_seconds": 109.67728543281555,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:34:49.642927",
+    "status": "success",
+    "duration_seconds": 109.61505389213562,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:37:49.158915",
+    "status": "success",
+    "duration_seconds": 109.13297581672668,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:40:49.500983",
+    "status": "success",
+    "duration_seconds": 109.48281979560852,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:43:50.526944",
+    "status": "success",
+    "duration_seconds": 110.48853039741516,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:46:50.276834",
+    "status": "success",
+    "duration_seconds": 110.23259997367859,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:49:49.891883",
+    "status": "success",
+    "duration_seconds": 109.86644530296326,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:52:49.908286",
+    "status": "success",
+    "duration_seconds": 109.88315987586975,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:55:49.554636",
+    "status": "success",
+    "duration_seconds": 109.52991366386414,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T08:58:52.052348",
+    "status": "success",
+    "duration_seconds": 112.02255368232727,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:01:50.541828",
+    "status": "success",
+    "duration_seconds": 110.50729513168335,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:04:50.973012",
+    "status": "success",
+    "duration_seconds": 110.94740891456604,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:07:51.343043",
+    "status": "success",
+    "duration_seconds": 111.31199240684509,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:10:51.081888",
+    "status": "success",
+    "duration_seconds": 111.06646466255188,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:13:50.429873",
+    "status": "success",
+    "duration_seconds": 110.40609979629517,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:16:50.515715",
+    "status": "success",
+    "duration_seconds": 110.4872407913208,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:19:51.147687",
+    "status": "success",
+    "duration_seconds": 111.1170563697815,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:22:51.395364",
+    "status": "success",
+    "duration_seconds": 111.3648669719696,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:25:51.363592",
+    "status": "success",
+    "duration_seconds": 111.34289932250977,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:28:51.893561",
+    "status": "success",
+    "duration_seconds": 111.8687744140625,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:31:51.493944",
+    "status": "success",
+    "duration_seconds": 111.45234608650208,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:34:51.679692",
+    "status": "success",
+    "duration_seconds": 111.65029668807983,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:37:50.952202",
+    "status": "success",
+    "duration_seconds": 110.93525648117065,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:40:52.174108",
+    "status": "success",
+    "duration_seconds": 112.15588998794556,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:43:52.188040",
+    "status": "success",
+    "duration_seconds": 112.16532969474792,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:46:51.649246",
+    "status": "success",
+    "duration_seconds": 111.61958527565002,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:49:51.258573",
+    "status": "success",
+    "duration_seconds": 111.21729612350464,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:52:51.587054",
+    "status": "success",
+    "duration_seconds": 111.5490460395813,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:55:51.992742",
+    "status": "success",
+    "duration_seconds": 111.95838856697083,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-12T09:58:52.797728",
+    "status": "success",
+    "duration_seconds": 112.76254796981812,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T10:01:52.184438",
+    "status": "success",
+    "duration_seconds": 112.14921879768372,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T10:11:46.723616",
+    "status": "success",
+    "duration_seconds": 106.6889660358429,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T10:21:45.551367",
+    "status": "success",
+    "duration_seconds": 105.53855490684509,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T10:31:43.602771",
+    "status": "success",
+    "duration_seconds": 103.57602834701538,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T10:41:43.734639",
+    "status": "success",
+    "duration_seconds": 103.70690250396729,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T10:51:44.846466",
+    "status": "success",
+    "duration_seconds": 104.8201117515564,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T11:01:44.388694",
+    "status": "success",
+    "duration_seconds": 104.35939073562622,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T11:11:43.754449",
+    "status": "success",
+    "duration_seconds": 103.7265100479126,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T11:21:44.077139",
+    "status": "success",
+    "duration_seconds": 104.04940629005432,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T11:31:43.431691",
+    "status": "success",
+    "duration_seconds": 103.38553357124329,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T11:41:44.561939",
+    "status": "success",
+    "duration_seconds": 104.53315663337708,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T11:51:42.812255",
+    "status": "success",
+    "duration_seconds": 102.79167461395264,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T12:01:46.746374",
+    "status": "success",
+    "duration_seconds": 106.72885131835938,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T12:11:44.467272",
+    "status": "success",
+    "duration_seconds": 104.44253587722778,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T12:21:47.053314",
+    "status": "success",
+    "duration_seconds": 107.0271303653717,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T12:31:42.774299",
+    "status": "success",
+    "duration_seconds": 102.74330592155457,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T12:41:40.227239",
+    "status": "success",
+    "duration_seconds": 100.19513249397278,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T12:51:42.119330",
+    "status": "success",
+    "duration_seconds": 102.07811498641968,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T13:01:40.972020",
+    "status": "success",
+    "duration_seconds": 100.94912910461426,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T13:11:46.594332",
+    "status": "success",
+    "duration_seconds": 106.56734538078308,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T13:21:53.908049",
+    "status": "success",
+    "duration_seconds": 113.8928918838501,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T13:31:53.958517",
+    "status": "success",
+    "duration_seconds": 113.92522192001343,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T13:41:54.334808",
+    "status": "success",
+    "duration_seconds": 114.30433821678162,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-12T13:52:08.812769",
+    "status": "success",
+    "duration_seconds": 128.78331661224365,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:04:43.468525",
+    "status": "success",
+    "duration_seconds": 103.42222666740417,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:07:48.628368",
+    "status": "success",
+    "duration_seconds": 108.57615637779236,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:10:48.755641",
+    "status": "success",
+    "duration_seconds": 108.71954226493835,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:13:50.914892",
+    "status": "success",
+    "duration_seconds": 110.87095737457275,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:16:51.460348",
+    "status": "success",
+    "duration_seconds": 111.43838572502136,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:19:52.072219",
+    "status": "success",
+    "duration_seconds": 112.03760242462158,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:22:52.599851",
+    "status": "success",
+    "duration_seconds": 112.56693458557129,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:25:54.286130",
+    "status": "success",
+    "duration_seconds": 114.25808429718018,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:28:52.703115",
+    "status": "success",
+    "duration_seconds": 112.68201971054077,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:31:54.150840",
+    "status": "success",
+    "duration_seconds": 114.11418104171753,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:34:54.452823",
+    "status": "success",
+    "duration_seconds": 114.42802906036377,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:37:55.509116",
+    "status": "success",
+    "duration_seconds": 115.4911699295044,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:41:15.708006",
+    "status": "success",
+    "duration_seconds": 135.68389534950256,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:43:57.559747",
+    "status": "success",
+    "duration_seconds": 117.52091550827026,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:46:54.578670",
+    "status": "success",
+    "duration_seconds": 114.5454409122467,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:49:53.493305",
+    "status": "success",
+    "duration_seconds": 113.46228861808777,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:52:54.802611",
+    "status": "success",
+    "duration_seconds": 114.77540922164917,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:55:54.267374",
+    "status": "success",
+    "duration_seconds": 114.23827981948853,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-12T14:58:56.550564",
+    "status": "success",
+    "duration_seconds": 116.52875208854675,
+    "error": null
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-12T22:48:54.612716",
+    "status": "success",
+    "duration_seconds": 234.59515738487244,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:01:42.742148",
+    "status": "success",
+    "duration_seconds": 102.72144865989685,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:04:43.992724",
+    "status": "success",
+    "duration_seconds": 103.9802598953247,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:07:46.774158",
+    "status": "success",
+    "duration_seconds": 106.7608335018158,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:10:46.821002",
+    "status": "success",
+    "duration_seconds": 106.81610655784607,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:13:49.146278",
+    "status": "success",
+    "duration_seconds": 109.13593602180481,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:16:49.762983",
+    "status": "success",
+    "duration_seconds": 109.74376273155212,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:19:51.038110",
+    "status": "success",
+    "duration_seconds": 111.02615284919739,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:22:49.049123",
+    "status": "success",
+    "duration_seconds": 109.04075217247009,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:25:51.460803",
+    "status": "success",
+    "duration_seconds": 111.44939637184143,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:28:50.022432",
+    "status": "success",
+    "duration_seconds": 110.01295399665833,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:31:50.528070",
+    "status": "success",
+    "duration_seconds": 110.51670980453491,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:34:51.882863",
+    "status": "success",
+    "duration_seconds": 111.87633633613586,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:37:51.292792",
+    "status": "success",
+    "duration_seconds": 111.28160977363586,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:40:50.321582",
+    "status": "success",
+    "duration_seconds": 110.31128716468811,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:43:53.837262",
+    "status": "success",
+    "duration_seconds": 113.8204345703125,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:46:53.010292",
+    "status": "success",
+    "duration_seconds": 113.00241541862488,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:49:53.580144",
+    "status": "success",
+    "duration_seconds": 113.5587866306305,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:52:54.051701",
+    "status": "success",
+    "duration_seconds": 114.03273963928223,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:55:54.535733",
+    "status": "success",
+    "duration_seconds": 114.52080965042114,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T08:58:54.773840",
+    "status": "success",
+    "duration_seconds": 114.75573587417603,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:01:55.742605",
+    "status": "success",
+    "duration_seconds": 115.72721934318542,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:04:53.953021",
+    "status": "success",
+    "duration_seconds": 113.93991208076477,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:07:52.838186",
+    "status": "success",
+    "duration_seconds": 112.83190298080444,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:10:53.426803",
+    "status": "success",
+    "duration_seconds": 113.40782308578491,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:13:54.887791",
+    "status": "success",
+    "duration_seconds": 114.8720600605011,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:16:54.851971",
+    "status": "success",
+    "duration_seconds": 114.83209800720215,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:19:54.005632",
+    "status": "success",
+    "duration_seconds": 113.98677396774292,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:22:54.831044",
+    "status": "success",
+    "duration_seconds": 114.81212711334229,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:25:53.130060",
+    "status": "success",
+    "duration_seconds": 113.10893988609314,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:28:52.816880",
+    "status": "success",
+    "duration_seconds": 112.80961322784424,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:31:53.232217",
+    "status": "success",
+    "duration_seconds": 113.21797204017639,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:34:53.806631",
+    "status": "success",
+    "duration_seconds": 113.79758358001709,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:37:53.339823",
+    "status": "success",
+    "duration_seconds": 113.32584404945374,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:40:53.713741",
+    "status": "success",
+    "duration_seconds": 113.69797110557556,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:43:53.610132",
+    "status": "success",
+    "duration_seconds": 113.60271143913269,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:46:55.370588",
+    "status": "success",
+    "duration_seconds": 115.35161685943604,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:49:53.538860",
+    "status": "success",
+    "duration_seconds": 113.52909517288208,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:52:52.848793",
+    "status": "success",
+    "duration_seconds": 112.83825540542603,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:55:53.376797",
+    "status": "success",
+    "duration_seconds": 113.36152410507202,
+    "error": null
+  },
+  {
+    "task_id": "3A",
+    "task_name": "Morning Scanner|8AM-10AM",
+    "timestamp": "2026-02-13T09:58:53.674286",
+    "status": "success",
+    "duration_seconds": 113.66026282310486,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T10:01:53.765419",
+    "status": "success",
+    "duration_seconds": 113.74909138679504,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T10:11:48.769472",
+    "status": "success",
+    "duration_seconds": 108.74941110610962,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T10:21:47.598232",
+    "status": "success",
+    "duration_seconds": 107.58939123153687,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T10:31:47.307847",
+    "status": "success",
+    "duration_seconds": 107.29282069206238,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T10:41:46.482667",
+    "status": "success",
+    "duration_seconds": 106.46327638626099,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T10:51:47.144618",
+    "status": "success",
+    "duration_seconds": 107.12652373313904,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T11:01:46.055756",
+    "status": "success",
+    "duration_seconds": 106.03613686561584,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T11:11:46.958825",
+    "status": "success",
+    "duration_seconds": 106.94113802909851,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T11:21:46.518779",
+    "status": "success",
+    "duration_seconds": 106.50003623962402,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T11:31:47.192726",
+    "status": "success",
+    "duration_seconds": 107.16376900672913,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T11:41:46.332790",
+    "status": "success",
+    "duration_seconds": 106.31303405761719,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T11:51:45.608460",
+    "status": "success",
+    "duration_seconds": 105.5796148777008,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T12:01:46.769158",
+    "status": "success",
+    "duration_seconds": 106.74259448051453,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T12:11:45.534309",
+    "status": "success",
+    "duration_seconds": 105.5143620967865,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T12:21:46.323613",
+    "status": "success",
+    "duration_seconds": 106.30230855941772,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T12:31:45.839074",
+    "status": "success",
+    "duration_seconds": 105.81511306762695,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T12:41:46.556014",
+    "status": "success",
+    "duration_seconds": 106.53241348266602,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T12:51:47.079784",
+    "status": "success",
+    "duration_seconds": 107.05090355873108,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T13:01:46.003525",
+    "status": "success",
+    "duration_seconds": 105.97726774215698,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T13:11:45.759365",
+    "status": "success",
+    "duration_seconds": 105.72495937347412,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T13:21:47.939668",
+    "status": "success",
+    "duration_seconds": 107.90998077392578,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T13:31:46.396065",
+    "status": "success",
+    "duration_seconds": 106.37467408180237,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T13:41:46.816176",
+    "status": "success",
+    "duration_seconds": 106.79891848564148,
+    "error": null
+  },
+  {
+    "task_id": "3B",
+    "task_name": "Midday Scanner|10AM-2PM",
+    "timestamp": "2026-02-13T13:51:46.792678",
+    "status": "success",
+    "duration_seconds": 106.77200889587402,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:04:44.832642",
+    "status": "success",
+    "duration_seconds": 104.81532716751099,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:07:48.029157",
+    "status": "success",
+    "duration_seconds": 107.9861159324646,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:10:49.147864",
+    "status": "success",
+    "duration_seconds": 109.13043332099915,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:13:51.372513",
+    "status": "success",
+    "duration_seconds": 111.3517553806305,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:16:51.163885",
+    "status": "success",
+    "duration_seconds": 111.14467906951904,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:19:52.286306",
+    "status": "success",
+    "duration_seconds": 112.25944828987122,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:22:52.912626",
+    "status": "success",
+    "duration_seconds": 112.8764579296112,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:25:52.773662",
+    "status": "success",
+    "duration_seconds": 112.75292825698853,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:28:51.662620",
+    "status": "success",
+    "duration_seconds": 111.63579988479614,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:31:52.292490",
+    "status": "success",
+    "duration_seconds": 112.27522468566895,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:34:53.473313",
+    "status": "success",
+    "duration_seconds": 113.4379210472107,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:37:52.725490",
+    "status": "success",
+    "duration_seconds": 112.6987521648407,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:40:53.014308",
+    "status": "success",
+    "duration_seconds": 112.99236130714417,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:44:03.306217",
+    "status": "success",
+    "duration_seconds": 123.28807377815247,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:47:15.779002",
+    "status": "success",
+    "duration_seconds": 135.75066828727722,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:49:56.563166",
+    "status": "success",
+    "duration_seconds": 116.5485692024231,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:52:53.666030",
+    "status": "success",
+    "duration_seconds": 113.64892554283142,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:55:53.549483",
+    "status": "success",
+    "duration_seconds": 113.52205443382263,
+    "error": null
+  },
+  {
+    "task_id": "3C",
+    "task_name": "Close Scanner|2PM-3PM",
+    "timestamp": "2026-02-13T14:58:53.884810",
+    "status": "success",
+    "duration_seconds": 113.85558009147644,
+    "error": null
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-13T22:50:24.464054",
+    "status": "success",
+    "duration_seconds": 324.44502234458923,
+    "error": null
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-14T22:49:04.402509",
+    "status": "success",
+    "duration_seconds": 244.3712179660797,
+    "error": null
+  },
+  {
+    "task_id": 3,
+    "task_name": "Overnight Scanner|Weekly",
+    "timestamp": "2026-02-14T23:46:54.403708",
+    "status": "success",
+    "duration_seconds": 114.38920044898987,
+    "error": null
+  },
+  {
+    "task_id": 5,
+    "task_name": "Adaptive Ranking|Weekly",
+    "timestamp": "2026-02-15T00:45:00.513295",
+    "status": "failed",
+    "duration_seconds": 0.5019631385803223,
+    "error": "Subprocess exited with code 1"
+  },
+  {
+    "task_id": 5,
+    "task_name": "Adaptive Ranking|Weekly",
+    "timestamp": "2026-02-15T00:45:00.981501",
+    "status": "failed",
+    "duration_seconds": 0.44597339630126953,
+    "error": "Subprocess exited with code 1"
+  },
+  {
+    "task_id": 5,
+    "task_name": "Adaptive Ranking|Weekly",
+    "timestamp": "2026-02-15T00:45:01.523937",
+    "status": "failed",
+    "duration_seconds": 0.5229251384735107,
+    "error": "Subprocess exited with code 1"
+  },
+  {
+    "task_id": 4,
+    "task_name": "Backtest Generator|Weekly",
+    "timestamp": "2026-02-15T00:57:24.462273",
+    "status": "success",
+    "duration_seconds": 2544.448710680008,
+    "error": null
+  },
+  {
+    "task_id": 1,
+    "task_name": "Master Market Data Ingestion|Daily",
+    "timestamp": "2026-02-16T22:48:54.247743",
+    "status": "success",
+    "duration_seconds": 234.22843623161316,
+    "error": null
   }
 ]

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TurboMode - HOLD Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .nav-link {
+            padding: 10px 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            text-decoration: none;
+            color: #fff;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .sectors-list {
+            max-width: 100%;
+            margin-top: 20px;
+        }
+
+        .sector-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            color: #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .sector-section h2 {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            color: #1e3c72;
+            border-bottom: 2px solid #1e3c72;
+            padding-bottom: 10px;
+        }
+
+        .stocks-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .stocks-table thead {
+            background: #f3f4f6;
+        }
+
+        .stocks-table th {
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 700;
+            color: #1e3c72;
+            border-bottom: 2px solid #1e3c72;
+        }
+
+        .stocks-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .stocks-table tbody tr {
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .stocks-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .stock-symbol {
+            font-weight: 700;
+            color: #1e3c72;
+            font-size: 1.05em;
+        }
+
+        .stock-signal {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+
+        .stock-signal.hold {
+            background: #fbbf24;
+            color: #78350f;
+        }
+
+        .pnl-positive {
+            color: #059669;
+            font-weight: 700;
+        }
+
+        .pnl-negative {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+        .age-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #e5e7eb;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        .quality-score {
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .quality-excellent {
+            color: #059669;
+        }
+
+        .quality-good {
+            color: #0891b2;
+        }
+
+        .quality-fair {
+            color: #ea580c;
+        }
+
+        .quality-poor {
+            color: #dc2626;
+        }
+
+        .pressure-stable {
+            color: #059669;
+        }
+
+        .pressure-bullish {
+            color: #0891b2;
+        }
+
+        .pressure-bearish {
+            color: #ea580c;
+        }
+
+        .pressure-break {
+            color: #dc2626;
+        }
+
+        .volatility-profitable {
+            color: #059669;
+        }
+
+        .volatility-collapsing {
+            color: #0891b2;
+        }
+
+        .volatility-breakout {
+            color: #dc2626;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            margin-top: 40px;
+        }
+
+        .empty-state h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .empty-state p {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+
+        .error-message {
+            background: #dc2626;
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HOLD Dashboard</h1>
+            <p class="subtitle">Neutral-Regime Iron Condor Analytics</p>
+            <div class="nav-links">
+                <a href="signal_intel_dashboard.html" class="nav-link">Signal Intelligence</a>
+                <a href="sectors.html" class="nav-link">Back to Sectors</a>
+                <a href="large_cap.html" class="nav-link">Large Cap</a>
+                <a href="mid_cap.html" class="nav-link">Mid Cap</a>
+                <a href="small_cap.html" class="nav-link">Small Cap</a>
+            </div>
+        </header>
+
+        <div id="loading" class="loading">
+            Loading HOLD signals...
+        </div>
+
+        <div id="error-container"></div>
+
+        <div id="sectors-content" class="sectors-list"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+
+        let allHoldSignals = [];
+
+        async function init() {
+            try {
+                await loadHoldSignals();
+
+                // Poll every 5 seconds
+                setInterval(updateAnalytics, 5000);
+            } catch (error) {
+                console.error('Error initializing:', error);
+                showError(error.message);
+            }
+        }
+
+        async function loadHoldSignals() {
+            try {
+                const response = await fetch(`${API_BASE}/turbomode/predictions/all`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load signals');
+                }
+
+                // Filter for HOLD signals only
+                allHoldSignals = data.predictions.filter(s => s.prediction.toLowerCase() === 'hold');
+
+                renderSectorCards();
+
+            } catch (error) {
+                console.error('Error loading HOLD signals:', error);
+                showError(error.message);
+            }
+        }
+
+        function renderSectorCards() {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('sectors-content');
+
+            loading.style.display = 'none';
+
+            if (allHoldSignals.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No HOLD signals found</h2>
+                        <p>All signals are directional (BUY/SELL)</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by sector
+            const sectorGroups = {};
+            allHoldSignals.forEach(signal => {
+                const sector = signal.sector || 'Unknown';
+                if (!sectorGroups[sector]) {
+                    sectorGroups[sector] = [];
+                }
+                sectorGroups[sector].push(signal);
+            });
+
+            // Sort each sector's signals by confidence
+            Object.keys(sectorGroups).forEach(sector => {
+                sectorGroups[sector].sort((a, b) => b.confidence - a.confidence);
+            });
+
+            // Render sector cards
+            content.innerHTML = Object.keys(sectorGroups).sort().map(sector =>
+                createSectorCard(sector, sectorGroups[sector])
+            ).join('');
+        }
+
+        function createSectorCard(sectorName, signals) {
+            const sectorId = sectorName.replace(/\s+/g, '-');
+
+            return `
+                <div class="sector-section">
+                    <h2>${sectorName}</h2>
+                    <div style="font-weight: 700; margin-bottom: 10px; color: #6b7280;">
+                        ${signals.length} HOLD signal${signals.length !== 1 ? 's' : ''}
+                    </div>
+                    <table class="stocks-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th style="text-align: center;">Signal</th>
+                                <th style="text-align: center;">Conf</th>
+                                <th style="text-align: center;">Prob</th>
+                                <th style="text-align: right;">P&L</th>
+                                <th style="text-align: center;">Age</th>
+                                <th style="text-align: center;">Expire</th>
+                                <th style="text-align: right;">Drift</th>
+                                <th style="text-align: center;">Pressure</th>
+                                <th style="text-align: center;">Vol</th>
+                                <th style="text-align: center;">Quality</th>
+                                <th style="text-align: center;">Regime</th>
+                                <th style="text-align: center;">Transition</th>
+                                <th style="text-align: center;">T-Strength</th>
+                                <th style="text-align: left;">Narrative</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sector-${sectorId}">
+                            ${signals.map(signal => createSignalRow(signal)).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function createSignalRow(signal) {
+            return `
+                <tr data-symbol="${signal.symbol}" onclick="goToOptionsPage('${signal.symbol}');">
+                    <td class="stock-symbol">${signal.symbol}</td>
+                    <td style="text-align: center;">
+                        <span class="stock-signal hold">HOLD</span>
+                    </td>
+                    <td style="text-align: center;">
+                        ${(signal.confidence * 100).toFixed(1)}%
+                    </td>
+                    <td style="text-align: center;" data-field="probability">
+                        -
+                    </td>
+                    <td style="text-align: right;" data-field="pnl">
+                        -
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="age-badge">${signal.age_days || 0}d</span>
+                    </td>
+                    <td style="text-align: center; font-size: 0.85em;" data-field="expire_date">
+                        -
+                    </td>
+                    <td style="text-align: right; font-weight: 600;" data-field="drift">
+                        -
+                    </td>
+                    <td style="text-align: center; font-weight: 600;" data-field="pressure">
+                        -
+                    </td>
+                    <td style="text-align: center; font-weight: 600;" data-field="volatility">
+                        -
+                    </td>
+                    <td style="text-align: center;" data-field="quality">
+                        -
+                    </td>
+                    <td style="text-align: center; font-weight: 600; font-size: 0.9em;" data-field="regime">
+                        -
+                    </td>
+                    <td style="text-align: center; font-size: 0.85em;" data-field="transition">
+                        -
+                    </td>
+                    <td style="text-align: center; font-size: 0.85em;" data-field="transition_strength">
+                        -
+                    </td>
+                    <td style="text-align: left; font-size: 0.85em; max-width: 350px;" data-field="narrative">
+                        -
+                    </td>
+                </tr>
+            `;
+        }
+
+        async function updateAnalytics() {
+            // Find all HOLD signal rows
+            const rows = document.querySelectorAll('tr[data-symbol]');
+
+            for (const row of rows) {
+                const symbol = row.getAttribute('data-symbol');
+                if (!symbol) continue;
+
+                try {
+                    const response = await fetch(`${API_BASE}/turbomode/options/analytics/${symbol}`);
+                    const data = await response.json();
+
+                    if (data.error) {
+                        continue;
+                    }
+
+                    // Update probability
+                    const probCell = row.querySelector('[data-field="probability"]');
+                    if (probCell && data.probability) {
+                        probCell.textContent = `${(data.probability * 100).toFixed(1)}%`;
+                    }
+
+                    // Update P&L
+                    const pnlCell = row.querySelector('[data-field="pnl"]');
+                    if (pnlCell && data.pnl !== null && data.pnl !== undefined) {
+                        const pnl = data.pnl;
+                        const pnlClass = pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+                        pnlCell.innerHTML = `<span class="${pnlClass}">$${pnl.toFixed(2)}</span>`;
+                    }
+
+                    // Update expire date
+                    const expireCell = row.querySelector('[data-field="expire_date"]');
+                    if (expireCell && data.expire_date) {
+                        expireCell.textContent = data.expire_date;
+                    }
+
+                    // Update drift
+                    const driftCell = row.querySelector('[data-field="drift"]');
+                    if (driftCell && data.drift !== undefined) {
+                        const drift = data.drift;
+                        const driftClass = Math.abs(drift) < 1 ? 'pnl-positive' :
+                                          Math.abs(drift) < 3 ? '' : 'pnl-negative';
+                        driftCell.innerHTML = `<span class="${driftClass}">${drift.toFixed(2)}</span>`;
+                    }
+
+                    // Update pressure
+                    const pressureCell = row.querySelector('[data-field="pressure"]');
+                    if (pressureCell && data.pressure_index) {
+                        const pressure = data.pressure_index;
+                        const pressureClass =
+                            pressure === 'Stable' ? 'pressure-stable' :
+                            pressure === 'Bullish' ? 'pressure-bullish' :
+                            pressure === 'Bearish' ? 'pressure-bearish' :
+                            pressure === 'Break' ? 'pressure-break' : '';
+                        pressureCell.innerHTML = `<span class="${pressureClass}">${pressure}</span>`;
+                    }
+
+                    // Update volatility
+                    const volCell = row.querySelector('[data-field="volatility"]');
+                    if (volCell && data.volatility_regime) {
+                        const vol = data.volatility_regime;
+                        const volClass =
+                            vol === 'Profitable' ? 'volatility-profitable' :
+                            vol === 'Collapsing' ? 'volatility-collapsing' :
+                            vol === 'Breakout' ? 'volatility-breakout' : '';
+                        volCell.innerHTML = `<span class="${volClass}">${vol}</span>`;
+                    }
+
+                    // Update quality score
+                    const qualityCell = row.querySelector('[data-field="quality"]');
+                    if (qualityCell && data.quality_score !== undefined) {
+                        const score = data.quality_score;
+                        const qualityClass =
+                            score >= 80 ? 'quality-excellent' :
+                            score >= 60 ? 'quality-good' :
+                            score >= 40 ? 'quality-fair' : 'quality-poor';
+                        qualityCell.innerHTML = `<span class="${qualityClass} quality-score">${score}</span>`;
+                    }
+
+                    // Fetch regime intelligence
+                    try {
+                        const regimeResponse = await fetch(`${API_BASE}/turbomode/options/regime/${symbol}`);
+                        const regimeData = await regimeResponse.json();
+
+                        if (!regimeData.error) {
+                            // Update regime state
+                            const regimeCell = row.querySelector('[data-field="regime"]');
+                            if (regimeCell && regimeData.regime_state) {
+                                const regime = regimeData.regime_state;
+                                const regimeClass = getRegimeClass(regime);
+                                regimeCell.innerHTML = `<span class="${regimeClass}">${regime}</span>`;
+                            }
+
+                            // Update transition
+                            const transitionCell = row.querySelector('[data-field="transition"]');
+                            if (transitionCell && regimeData.transition_state) {
+                                const transition = regimeData.transition_state;
+                                const transitionClass = getTransitionClass(transition);
+                                transitionCell.innerHTML = `<span class="${transitionClass}">${transition}</span>`;
+                            }
+
+                            // Update transition strength
+                            const strengthCell = row.querySelector('[data-field="transition_strength"]');
+                            if (strengthCell && regimeData.transition_strength !== undefined) {
+                                const strength = regimeData.transition_strength;
+                                const strengthClass = strength >= 0.7 ? 'pnl-negative' :
+                                                     strength >= 0.4 ? '' : 'pnl-positive';
+                                strengthCell.innerHTML = `<span class="${strengthClass}">${(strength * 100).toFixed(0)}%</span>`;
+                            }
+
+                            // Update narrative
+                            const narrativeCell = row.querySelector('[data-field="narrative"]');
+                            if (narrativeCell && regimeData.narrative) {
+                                narrativeCell.textContent = regimeData.narrative;
+                                narrativeCell.title = regimeData.narrative; // Tooltip
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Failed to fetch regime intelligence for ${symbol}:`, error);
+                    }
+
+                } catch (error) {
+                    console.error(`Failed to fetch analytics for ${symbol}:`, error);
+                }
+            }
+        }
+
+        function getRegimeClass(regime) {
+            if (regime.includes('Stable')) return 'pnl-positive';
+            if (regime.includes('Breaking')) return 'pnl-negative';
+            if (regime.includes('Expansion')) return 'pnl-negative';
+            if (regime.includes('Compression')) return 'pnl-positive';
+            if (regime.includes('Drift')) return 'pressure-bearish';
+            if (regime.includes('Expanding')) return '';
+            return '';
+        }
+
+        function getTransitionClass(transition) {
+            if (transition.includes('Breaking')) return 'pnl-negative';
+            if (transition.includes('Weakening')) return 'pnl-negative';
+            if (transition.includes('Strengthening')) return 'pnl-positive';
+            if (transition.includes('Compression')) return 'pnl-positive';
+            if (transition.includes('Expansion')) return 'pnl-negative';
+            return '';
+        }
+
+        function goToOptionsPage(symbol) {
+            window.location.href = `options.html?symbol=${symbol}`;
+        }
+
+        function showError(message) {
+            const container = document.getElementById('error-container');
+            container.innerHTML = `
+                <div class="error-message">
+                    Error: ${message}
+                </div>
+            `;
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>

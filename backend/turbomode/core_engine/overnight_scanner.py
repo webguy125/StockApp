@@ -5,9 +5,11 @@ project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
 """
-TurboMode Overnight Scanner - Fast Ensemble Architecture
+TurboMode Overnight Scanner - 14-Day Swing Trade Ensemble Architecture
 
 ARCHITECTURE: Per-sector fast ensemble (5 base models + MetaLearner)
+HORIZON: 14 trading days (2-3 weeks)
+THRESHOLDS: ±6% swing trade thresholds (BUY >= +6%, SELL <= -6%)
 
 Models per sector:
 - 3 GPU models: LightGBM-GPU, CatBoost-GPU, XGBoost-Hist-GPU
@@ -15,7 +17,7 @@ Models per sector:
 - 1 MetaLearner: LogisticRegression (stacked ensemble)
 
 Features:
-1. Fast ensemble prediction per sector (6 models total)
+1. Fast ensemble prediction per sector (6 models total) - "Fast" = inference speed, not trading timeframe
 2. Adaptive Stop Loss / Take Profit (ATR-based)
 3. Partial Profit-Taking (1R, 2R, 3R levels)
 4. Hysteresis, Persistence, Position-Aware Logic
@@ -23,7 +25,7 @@ Features:
 6. Comprehensive Logging
 7. Unified 3-Tier Directional Biasing (global + sector + symbol)
 
-Single-horizon, single-threshold: label_1d_5pct only
+Mode: 14-Day Swing Trading (Not Intraday)
 """
 
 import sys
@@ -52,6 +54,13 @@ from master_market_data.market_data_api import get_market_data_api
 # Import CORE_230 symbol universe (230 stocks) for signal generation
 import json
 from pathlib import Path
+
+# Scanner probability thresholds (aligned with ±6% label regime)
+SCANNER_PROB_THRESHOLDS = {
+    'buy_trigger': 0.55,
+    'sell_trigger': 0.55,
+    'hold_floor': 0.50
+}
 
 def get_scanning_symbols():
     """Load CORE_230 symbols from canonical config"""
@@ -103,6 +112,8 @@ class ProductionScanner:
     Production-grade overnight scanner with ensemble inference and adaptive risk management.
 
     ARCHITECTURE: Per-sector fast ensemble (5 base models + MetaLearner)
+    HORIZON: 14 trading days (2-3 weeks swing trade)
+    THRESHOLDS: ±6% swing trade thresholds
 
     Models per sector:
     - 3 GPU models: LightGBM-GPU, CatBoost-GPU, XGBoost-Hist-GPU
@@ -110,35 +121,36 @@ class ProductionScanner:
     - 1 MetaLearner: LogisticRegression (stacked ensemble)
 
     Features:
-    - Fast ensemble prediction per sector (6 models total)
+    - Fast ensemble prediction per sector (6 models total) - "Fast" = inference speed
     - Adaptive SL/TP based on ATR, confidence, and sector
     - Partial profit-taking at 1R (50%), 2R (25%), 3R (25%)
-    - Hysteresis: entry threshold 0.50, exit threshold 0.70
-    - Persistence: N=3 consecutive opposite signals required for signal-based exit
+    - Hysteresis: entry threshold 0.40, exit threshold 0.60
+    - Persistence: N=5 consecutive opposite signals required for signal-based exit
     - Position state management with atomic persistence
     - Unified 3-Tier Directional Biasing (global + sector + symbol)
-    - Single-horizon only: 1d (label_1d_5pct)
+    - Mode: 14-Day Swing Trading (Not Intraday)
     """
 
     def __init__(
         self,
         db_path: str = None,
         position_state_file: str = None,
-        entry_threshold: float = 0.50,
-        exit_threshold: float = 0.70,
-        persistence_required: int = 3
+        entry_threshold: float = 0.40,
+        exit_threshold: float = 0.60,
+        persistence_required: int = 5
     ):
         """
         Initialize production scanner.
 
-        ARCHITECTURE: Single-model-per-sector (1d/5% only)
+        ARCHITECTURE: 14-Day Swing-Trade Ensemble (Per-Sector Fast Models)
+        HORIZON: 14 Days | THRESHOLDS: ±6% (Swing Trade)
 
         Args:
             db_path: Path to TurboMode database
             position_state_file: Path to position state JSON file
-            entry_threshold: Minimum probability for opening new position (default: 0.50)
-            exit_threshold: Minimum probability for signal-based exit (default: 0.70)
-            persistence_required: Consecutive opposite signals required for exit (default: 3)
+            entry_threshold: Minimum probability for opening new position (default: 0.40)
+            exit_threshold: Minimum probability for signal-based exit (default: 0.60)
+            persistence_required: Consecutive opposite signals required for exit (default: 5)
         """
         # Use absolute paths
         if db_path is None:
@@ -150,7 +162,9 @@ class ProductionScanner:
 
         logger.info(f"Database path: {db_path}")
         logger.info(f"Position state file: {position_state_file}")
-        logger.info(f"Architecture: Single-model-per-sector (1d/5% only)")
+        logger.info(f"Architecture: 14-Day Swing-Trade Ensemble")
+        logger.info(f"Horizon: 14 Days | Thresholds: ±6% (Swing Trade)")
+        logger.info(f"Inference Engine: Fast Ensemble (GPU-Accelerated)")
 
         # Initialize position manager (persistent state)
         self.position_manager = PositionManager(state_file=position_state_file)
@@ -179,7 +193,8 @@ class ProductionScanner:
         )
         logger.info("News Engine initialized")
 
-        logger.info("Production scanner initialized (Fast Mode + News-Aware)")
+        logger.info("Production scanner initialized (14-Day Swing + News-Aware)")
+        logger.info("Note: 'Fast Mode' refers to inference speed, not trading timeframe")
 
     def _get_all_symbols(self) -> List[str]:
         """Get list of all scanning symbols"""
@@ -332,20 +347,31 @@ class ProductionScanner:
             result['prob_sell'] = prob_sell
             result['prob_hold'] = prob_hold
 
-            # Neutrality-band signal decision (HOLD as true neutral regime)
+            # --- HOLD-FIRST CONFIDENCE LOGIC ---
             # Compute model output volatility using consistent distribution
             model_std = np.std([prob_buy, prob_sell, prob_hold])
-            neutrality_band = 1.5 * model_std  # Widened from 0.5x to 1.5x to allow more HOLD signals
+            neutrality_band = 0.75 * model_std  # 0.75x standard deviation for neutral regime detection
+            diff = abs(prob_buy - prob_sell)
 
-            # HOLD only when BUY and SELL are genuinely close (within neutrality band)
-            if abs(prob_buy - prob_sell) < neutrality_band:
+            # Determine raw argmax (what the model thinks is most likely)
+            probs_array = np.array([prob_sell, prob_hold, prob_buy])
+            argmax_idx = np.argmax(probs_array)
+            argmax_labels = ['SELL', 'HOLD', 'BUY']
+            raw_argmax = argmax_labels[argmax_idx]
+
+            # 1. HOLD if model argmax is HOLD AND within neutrality band
+            if raw_argmax == 'HOLD' and diff < neutrality_band:
                 result['signal'] = 'HOLD'
                 result['confidence'] = prob_hold
-            # BUY breakout: BUY strictly greater than SELL, outside band
+            # 2. HOLD if within neutrality band regardless of argmax
+            elif diff < neutrality_band:
+                result['signal'] = 'HOLD'
+                result['confidence'] = prob_hold
+            # 3. BUY if prob_buy > prob_sell (directional, outside band)
             elif prob_buy > prob_sell:
                 result['signal'] = 'BUY'
                 result['confidence'] = prob_buy
-            # SELL breakout: SELL at least as large as BUY, outside band
+            # 4. SELL if prob_sell >= prob_buy (directional, outside band)
             else:
                 result['signal'] = 'SELL'
                 result['confidence'] = prob_sell
@@ -361,7 +387,7 @@ class ProductionScanner:
         Phase 2: News-Aware Entry Signal Check (OPTION C REGIME ARCHITECTURE)
 
         Checks if prediction meets entry criteria with news risk gating:
-        - BUY/SELL: Probability threshold-based (0.60 default, 0.70 if global risk HIGH)
+        - BUY/SELL: Probability threshold-based (0.40 default, 0.70 if global risk HIGH)
         - HOLD: Band-based neutrality regime (no probability threshold)
         - Blocks entry if news risk is HIGH/CRITICAL
         - Applies 10% model special handling
@@ -381,10 +407,10 @@ class ProductionScanner:
             return None
 
         # Phase 2.2: Determine effective entry threshold (for BUY/SELL only)
-        effective_threshold = self.entry_threshold  # Default: 0.50
+        effective_threshold = self.entry_threshold  # Default: 0.40
         if self.news_engine.should_raise_entry_threshold():
             effective_threshold = 0.70  # Raised threshold due to global HIGH risk
-            logger.info(f"[ENTRY THRESHOLD RAISED] {symbol}: 0.50 -> 0.70 (global risk HIGH)")
+            logger.info(f"[ENTRY THRESHOLD RAISED] {symbol}: 0.40 -> 0.70 (global risk HIGH)")
 
         # Phase 2.3: Check if 10% model fired (major-move detector)
         is_10pct_signal = prediction.get('threshold_source') == '10pct'
@@ -402,8 +428,13 @@ class ProductionScanner:
                    f"prob_buy={prediction['prob_buy']:.3f}, prob_sell={prediction['prob_sell']:.3f}, "
                    f"prob_hold={prediction.get('prob_hold', 0):.3f}, threshold={effective_threshold:.3f}")
 
-        # DIRECTIONAL REGIMES (BUY/SELL): Probability threshold-based
-        if prediction['signal'] == 'BUY' and prediction['prob_buy'] >= effective_threshold:
+        # HOLD-FIRST ENTRY LOGIC
+        # 1. NEUTRAL REGIME (HOLD): Accept HOLD signals (iron condor opportunities)
+        if prediction['signal'] == 'HOLD':
+            logger.info(f"[ENTRY SIGNAL] {symbol} HOLD @ {prediction.get('prob_hold', 0):.2%} (neutrality band regime - iron condor)")
+            return 'HOLD'
+        # 2. DIRECTIONAL REGIMES (BUY/SELL): Probability threshold-based
+        elif prediction['signal'] == 'BUY' and prediction['prob_buy'] >= effective_threshold:
             logger.info(f"[ENTRY SIGNAL] {symbol} BUY @ {prediction['prob_buy']:.2%} "
                        f"(threshold: {effective_threshold:.2%}, source: {prediction.get('threshold_source', 'unknown')})")
             return 'BUY'
@@ -411,10 +442,7 @@ class ProductionScanner:
             logger.info(f"[ENTRY SIGNAL] {symbol} SELL @ {prediction['prob_sell']:.2%} "
                        f"(threshold: {effective_threshold:.2%}, source: {prediction.get('threshold_source', 'unknown')})")
             return 'SELL'
-        # NEUTRAL REGIME (HOLD): Band-based neutrality (no probability threshold)
-        elif prediction['signal'] == 'HOLD':
-            logger.info(f"[ENTRY SIGNAL] {symbol} HOLD (neutrality band regime, prob_hold={prediction['prob_hold']:.2%})")
-            return 'HOLD'
+        # 3. Low-confidence directional signals rejected
         else:
             logger.info(f"[ENTRY REJECTED] {symbol}: Failed threshold check")
             return None
@@ -495,7 +523,7 @@ class ProductionScanner:
             atr=atr,
             sector=sector,
             confidence=confidence,
-            horizon='1d',  # Fixed: 1d horizon (label_1d_5pct)
+            horizon='14d',  # Fixed: 14d horizon parameter (14-day swing model)
             position_type=position_type,
             reward_ratio=2.5  # Target is 2.5x stop distance
         )
@@ -546,7 +574,7 @@ class ProductionScanner:
             reward_ratio=2.5,
             position_size=position_size,
             confidence=confidence,
-            horizon='1d',  # Fixed: 1d horizon (label_1d_5pct)
+            horizon='14d',  # Fixed: 14d horizon parameter (14-day swing model)
             sector=sector,
             atr=atr
         )
@@ -578,6 +606,11 @@ class ProductionScanner:
 
         # Update current price
         self.position_manager.update_position(symbol, {'current_price': current_price})
+
+        # 14-day time-based exit
+        if position.get('age_days', 0) >= 14:
+            self.position_manager.close_position(symbol, current_price, '14-day horizon exit')
+            return
 
         # Phase 2: Check for forced flatten due to CRITICAL news risk
         should_flatten, flatten_reason = self.news_engine.should_force_flatten(symbol, sector)
@@ -674,18 +707,6 @@ class ProductionScanner:
             metadata = get_symbol_metadata(symbol)
             sector = metadata.get('sector', 'unknown')
 
-            # Calculate adaptive SL/TP (will be used in signal dict later)
-            from backend.turbomode.core_engine.adaptive_sltp import calculate_adaptive_sltp
-            sltp = calculate_adaptive_sltp(
-                entry_price=current_price,
-                atr=atr,
-                sector=sector,
-                confidence=0.5,  # Placeholder, will be updated with actual confidence
-                horizon='1d',
-                position_type='long',
-                reward_ratio=2.5
-            )
-
             # Extract features
             features = self.extract_features(df, symbol)
             if features is None:
@@ -714,12 +735,13 @@ class ProductionScanner:
 
             # For HOLD signals, pass model probabilities to calculate symmetric bands
             if position_type == 'neutral':
+                # HOLD regime uses 14-day symmetric bands
                 sltp = calculate_adaptive_sltp(
                     entry_price=current_price,
                     atr=atr,
                     sector=sector,
                     confidence=prediction['confidence'],
-                    horizon='1d',
+                    horizon='14d',
                     position_type=position_type,
                     reward_ratio=2.5,
                     prob_buy=prediction['prob_buy'],
@@ -733,7 +755,7 @@ class ProductionScanner:
                     atr=atr,
                     sector=sector,
                     confidence=prediction['confidence'],
-                    horizon='1d',
+                    horizon='14d',
                     position_type=position_type,
                     reward_ratio=2.5
                 )
@@ -786,6 +808,7 @@ class ProductionScanner:
                     'sector': sector,
                     'prob_buy': prediction['prob_buy'],
                     'prob_sell': prediction['prob_sell'],
+                    'prob_hold': prediction.get('prob_hold'),
                     'atr': atr,
                     'threshold_source': prediction.get('threshold_source', 'unknown'),
                     'news_risk_symbol': news_risk.get('symbol_risk', 'NONE'),
@@ -832,10 +855,13 @@ class ProductionScanner:
             Dictionary with 'buy_signals' and 'sell_signals' lists
         """
         logger.info("=" * 80)
-        logger.info("TURBOMODE PRODUCTION SCANNER (FAST MODE + NEWS-AWARE)")
+        logger.info("TURBOMODE PRODUCTION SCANNER (14-DAY SWING + NEWS-AWARE)")
         logger.info("=" * 80)
         logger.info(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        logger.info("Architecture: Single-model-per-sector (1d/5% only)")
+        logger.info("Architecture: 14-Day Swing-Trade Ensemble")
+        logger.info("Horizon: 14 Days | Thresholds: ±6% (Swing Trade)")
+        logger.info("66 Sector Models Loaded (14-Day Swing)")
+        logger.info("Mode: Swing Trading (Not Intraday)")
 
         # STEP -1: Close any active signals that meet exit conditions
         logger.info("\n[STEP -1] Checking for signals to close...")
@@ -870,7 +896,8 @@ class ProductionScanner:
         logger.info(f"  Total symbols: {len(all_symbols)}")
 
         # Scan all symbols
-        logger.info(f"\n[STEP 3] Scanning {len(all_symbols)} symbols with Fast Mode...")
+        logger.info(f"\n[STEP 3] Scanning {len(all_symbols)} symbols with 14-Day Swing Models...")
+        logger.info("  (Fast Ensemble = GPU-accelerated inference, not short-term trading)")
 
         buy_signals = []
         sell_signals = []
@@ -1023,7 +1050,7 @@ class ProductionScanner:
 
 
 if __name__ == '__main__':
-    # Run production scan with single-model architecture (1d/5% only)
+    # Run production scan with 14-Day Swing-Trade Ensemble (per-sector fast models)
     scanner = ProductionScanner()
     results = scanner.scan_all(max_signals_per_type=100)
 

@@ -24,6 +24,20 @@ from backend.turbomode.core_engine.turbomode_backtest import TurboModeBacktest
 from backend.turbomode.core_engine.training_symbols import get_training_symbols  # 230 training stocks
 from backend.turbomode.checkpoint_manager import CheckpointManager
 from backend.turbomode.schema_guardrail import run_guardrail
+import multiprocessing
+from multiprocessing.dummy import Pool as ThreadPool
+
+# ==================== PARSE ARGUMENTS ====================
+# Check for --full-rebuild flag or TURBOMODE_FULL_REBUILD environment variable
+full_rebuild = False
+
+if '--full-rebuild' in sys.argv:
+    full_rebuild = True
+    print("[FLAG] --full-rebuild detected")
+
+if os.environ.get('TURBOMODE_FULL_REBUILD') == '1':
+    full_rebuild = True
+    print("[ENV] TURBOMODE_FULL_REBUILD=1 detected")
 
 # ==================== START TIMER ====================
 START_TIME = time.time()
@@ -40,6 +54,7 @@ print("=" * 80)
 print(f"START TIME: {START_TIMESTAMP.strftime('%Y-%m-%d %I:%M:%S %p')}")
 print(f"Database: {db_path}")
 print(f"File exists: {os.path.exists(db_path)}")
+print(f"Full Rebuild Mode: {full_rebuild}")
 
 # Step 0: SCHEMA GUARDRAIL - Complete workflow (validate → clean → restore → validate)
 try:
@@ -57,60 +72,72 @@ print("\n" + "=" * 80)
 print("STEP 1: CLEAR OLD TRAINING DATA")
 print("=" * 80)
 
+# Initialize old_count (will be updated if database exists)
+old_count = 0
+
 if os.path.exists(db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     try:
-        # Count existing backtest trades
-        cursor.execute("SELECT COUNT(*) FROM trades WHERE trade_type = 'backtest'")
-        old_count = cursor.fetchone()[0]
-        print(f"\nExisting backtest trades: {old_count}")
+        # Check if backtest trades exist (fast query - no full table scan)
+        cursor.execute("SELECT EXISTS(SELECT 1 FROM trades WHERE trade_type = 'backtest' LIMIT 1)")
+        has_backtest_data = cursor.fetchone()[0]
+        old_count = 1 if has_backtest_data else 0
+        print(f"\nExisting backtest trades: {'YES (count > 0)' if old_count > 0 else '0'}")
 
-        if old_count > 0:
-            # Get current training symbol list (230 stocks)
-            curated_symbols = set(get_training_symbols())
+        # Get current training symbol list (230 stocks)
+        curated_symbols = set(get_training_symbols())
 
+        if full_rebuild:
+            # FULL REBUILD MODE: Delete ALL backtest rows for curated symbols
+            print(f"\n[FULL REBUILD REQUESTED] Deleting ALL backtest trades for curated symbols")
+            placeholders = ','.join(['?' for _ in curated_symbols])
+            cursor.execute(f"""
+                DELETE FROM trades
+                WHERE trade_type = 'backtest'
+                AND symbol IN ({placeholders})
+            """, list(curated_symbols))
+            deleted = cursor.rowcount
+            conn.commit()
+            print(f"[OK] Deleted {deleted} trades - starting fresh with full 10-year backtest")
+
+        elif old_count > 0:
+            # INCREMENTAL MODE: Only remove contaminated symbols (not in curated list)
             print(f"\n[INFO] Found {old_count} existing backtest trades")
 
             # Count unique symbols in database
             cursor.execute("SELECT COUNT(DISTINCT symbol) FROM trades WHERE trade_type = 'backtest'")
             unique_symbols_count = cursor.fetchone()[0]
 
-            # If symbol count matches curated list, skip validation (fast path)
-            if unique_symbols_count == len(curated_symbols):
-                print(f"[FAST PATH] {unique_symbols_count} symbols in DB matches {len(curated_symbols)} curated stocks")
-                print(f"[LEARNING] Continuous learning enabled - will update existing + add new samples")
-            else:
-                # Validation needed - count contaminated trades
-                print(f"[VALIDATION] {unique_symbols_count} symbols in DB vs {len(curated_symbols)} curated stocks")
-                placeholders = ','.join(['?' for _ in curated_symbols])
+            # Check for contamination (symbols NOT in curated list)
+            placeholders = ','.join(['?' for _ in curated_symbols])
+            cursor.execute(f"""
+                SELECT COUNT(*) FROM trades
+                WHERE trade_type = 'backtest'
+                AND symbol NOT IN ({placeholders})
+            """, list(curated_symbols))
+            contaminated_count = cursor.fetchone()[0]
+
+            if contaminated_count > 0:
+                print(f"[CLEANUP] Removing {contaminated_count} trades from non-curated symbols")
+
+                # DELETE only non-curated stocks (contamination)
                 cursor.execute(f"""
-                    SELECT COUNT(*) FROM trades
+                    DELETE FROM trades
                     WHERE trade_type = 'backtest'
                     AND symbol NOT IN ({placeholders})
                 """, list(curated_symbols))
-                contaminated_count = cursor.fetchone()[0]
+                conn.commit()
 
-                if contaminated_count > 0:
-                    print(f"[CLEANUP] Removing {contaminated_count} trades from non-curated stocks")
-
-                    # DELETE only non-curated stocks (contamination)
-                    cursor.execute(f"""
-                        DELETE FROM trades
-                        WHERE trade_type = 'backtest'
-                        AND symbol NOT IN ({placeholders})
-                    """, list(curated_symbols))
-                    conn.commit()
-
-                    # Count what remains
-                    cursor.execute("SELECT COUNT(*) FROM trades WHERE trade_type = 'backtest'")
-                    remaining = cursor.fetchone()[0]
-                    print(f"[OK] Kept {remaining} trades from curated stocks")
-                    print(f"[LEARNING] New data will UPDATE existing + ADD fresh samples")
-                else:
-                    print(f"[OK] All {old_count} trades are from curated stocks - no cleanup needed")
-                    print(f"[LEARNING] Will update existing data + add new samples")
+                # Count what remains
+                cursor.execute("SELECT COUNT(*) FROM trades WHERE trade_type = 'backtest'")
+                remaining = cursor.fetchone()[0]
+                print(f"[OK] Kept {remaining} trades from curated stocks")
+                print(f"[INCREMENTAL] Will update existing + add new samples")
+            else:
+                print(f"[OK] All {old_count} trades are from curated stocks - no cleanup needed")
+                print(f"[INCREMENTAL] Will update existing data + add new samples")
         else:
             print("No existing data - starting fresh")
     except sqlite3.OperationalError:
@@ -144,6 +171,9 @@ checkpoint.mark_backtest_start()
 # Get remaining symbols (skip already processed)
 symbols_to_process = checkpoint.get_remaining_symbols(symbols)
 
+# Determine incremental mode based on old_count from Step 1 and full_rebuild flag
+incremental_mode = (old_count > 0 and not full_rebuild)
+
 if len(symbols_to_process) == 0:
     print("\n[CHECKPOINT] All symbols already processed!")
     print(checkpoint.get_summary())
@@ -153,20 +183,34 @@ else:
     print(f"  Symbols: {len(symbols_to_process)} (of {len(symbols)} total)")
     print(f"  Years of history: 10")
     print(f"  Hold period: 14 days")
-    print(f"  Buy threshold: +5%")
-    print(f"  Sell threshold: -5%")
+    print(f"  Buy threshold: +6% (MFE-based)")
+    print(f"  Sell threshold: -6% (MAE-based)")
 
-    # Determine if this is incremental update (existing data) or full backtest
-    incremental_mode = old_count > 0  # If we have existing data, use incremental
-
-    if incremental_mode:
-        print(f"\n[INCREMENTAL MODE] Detected existing data - will only process new dates")
-        print(f"[INCREMENTAL MODE] This is MUCH faster (seconds vs minutes)")
+    # Print explicit mode banner
+    print("\n" + "=" * 80)
+    if full_rebuild:
+        print("[MODE] FULL REBUILD (explicitly requested)")
+        print("=" * 80)
+        print("All existing backtest data was deleted")
+        print("Generating full 10-year history for all symbols")
+        print("This will take several minutes")
+    elif incremental_mode:
+        print("[MODE] INCREMENTAL (existing data detected)")
+        print("=" * 80)
+        print(f"Found {old_count} existing backtest trades")
+        print("Will only process new dates after last entry_date")
+        print("This is MUCH faster (seconds vs minutes)")
     else:
-        print(f"\n[FULL MODE] No existing data - generating full 10-year history")
+        print("[MODE] FULL (empty database)")
+        print("=" * 80)
+        print("No existing data found")
+        print("Generating full 10-year history for all symbols")
+        print("This will take several minutes")
+    print("=" * 80)
 
-    # Process each symbol with checkpointing
-    for i, symbol in enumerate(symbols_to_process, 1):
+    # Process each symbol with checkpointing (parallel across symbols)
+    def _process_symbol(args):
+        i, symbol = args
         print(f"\n[{i}/{len(symbols_to_process)}] Processing {symbol}...")
         try:
             # Generate backtest samples for single symbol
@@ -185,7 +229,20 @@ else:
         except Exception as e:
             print(f"[ERROR] Failed to process {symbol}: {e}")
             checkpoint.mark_symbol_failed(symbol, str(e))
-            continue
+
+        return symbol
+
+    # Determine worker count (leave 1 core free, never exceed symbol count)
+    try:
+        max_workers = multiprocessing.cpu_count()
+    except Exception:
+        max_workers = 4
+
+    num_workers = max(1, min(max_workers - 1, len(symbols_to_process)))
+    print(f"\n[PARALLEL] Using {num_workers} workers for symbol backtests")
+
+    with ThreadPool(num_workers) as pool:
+        pool.map(_process_symbol, list(enumerate(symbols_to_process, 1)))
 
     # Mark backtest as complete
     checkpoint.mark_backtest_complete()

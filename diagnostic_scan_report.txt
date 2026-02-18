@@ -1,0 +1,174 @@
+================================================================================
+FULL DIAGNOSTIC SCAN - ProductionScanner Failure Analysis
+Date: 2026-02-04
+Scanner: task_3A (morning scanner 8am-10am)
+================================================================================
+
+SYMPTOM:
+ProductionScanner.scan_all() reports:
+- Scanned: 0/233
+- Failed: 233
+- BUY signals: 0
+- SELL signals: 0
+- HOLD signals: 0
+
+================================================================================
+ROOT CAUSE ANALYSIS:
+================================================================================
+
+SUBSYSTEM FAILURE: Entry Signal Rejection (NOT a model failure)
+
+The models ARE working correctly and returning predictions:
+- Feature extraction: PASSING (no "Failed to extract features" errors)
+- Model inference: PASSING (RAW_MODEL outputs show valid predictions)
+- News engine: PASSING (no "ENTRY BLOCKED" messages)
+- Database: PASSING (no database errors)
+
+Example RAW_MODEL outputs from logs:
+- AAPL: BUY=0.574, SELL=0.166, HOLD=0.260, ARGMAX=BUY
+- ADBE: BUY=0.964, SELL=0.004, HOLD=0.032, ARGMAX=BUY
+- AMD: BUY=0.584, SELL=0.031, HOLD=0.385, ARGMAX=BUY
+- AMZN: BUY=0.807, SELL=0.019, HOLD=0.174, ARGMAX=BUY
+- BTAI: BUY=0.996, SELL=0.000, HOLD=0.004, ARGMAX=BUY
+- DDOG: BUY=0.922, SELL=0.010, HOLD=0.068, ARGMAX=BUY
+- FCX: BUY=0.808, SELL=0.037, HOLD=0.154, ARGMAX=BUY
+
+These are STRONG directional signals with high probabilities (>80-90%).
+
+================================================================================
+THE ACTUAL PROBLEM:
+================================================================================
+
+After news biasing and renormalization, probabilities are being DILUTED
+by prob_hold, causing all signals to fall below the entry threshold.
+
+Example from logs showing ENTRY REJECTION:
+
+1. UNH: signal=BUY, prob_buy=0.448, prob_sell=0.136, prob_hold=0.416, threshold=0.500
+   [ENTRY REJECTED] UNH: Failed threshold check
+
+2. URI: signal=BUY, prob_buy=0.466, prob_sell=0.031, prob_hold=0.503, threshold=0.500
+   [ENTRY REJECTED] URI: Failed threshold check
+
+3. VEEV: signal=BUY, prob_buy=0.407, prob_sell=0.070, prob_hold=0.524, threshold=0.500
+   [ENTRY REJECTED] VEEV: Failed threshold check
+
+4. PLD: signal=SELL, prob_buy=0.078, prob_sell=0.416, prob_hold=0.506, threshold=0.500
+   [ENTRY REJECTED] PLD: Failed threshold check
+
+5. PLTR: signal=SELL, prob_buy=0.115, prob_sell=0.418, prob_hold=0.467, threshold=0.500
+   [ENTRY REJECTED] PLTR: Failed threshold check
+
+PATTERN:
+- All BUY/SELL signals have prob_buy or prob_sell < 0.500
+- All signals have prob_hold >= 0.416 (high HOLD probability)
+- Threshold is 0.500 (should be 0.510 based on constructor, but formatted as 0.500)
+- ALL 233 symbols failed the threshold check
+
+================================================================================
+FAILURE LOCATION:
+================================================================================
+
+File: C:\StockApp\backend\turbomode\core_engine\overnight_scanner.py
+
+Line 414-428: check_entry_signal() threshold logic
+
+    # DIRECTIONAL REGIMES (BUY/SELL): Probability threshold-based
+    if prediction['signal'] == 'BUY' and prediction['prob_buy'] >= effective_threshold:
+        logger.info(f"[ENTRY SIGNAL] {symbol} BUY @ {prediction['prob_buy']:.2%} ...")
+        return 'BUY'
+    elif prediction['signal'] == 'SELL' and prediction['prob_sell'] >= effective_threshold:
+        logger.info(f"[ENTRY SIGNAL] {symbol} SELL @ {prediction['prob_sell']:.2%} ...")
+        return 'SELL'
+    # NEUTRAL REGIME (HOLD): Do not open positions
+    elif prediction['signal'] == 'HOLD':
+        logger.info(f"[ENTRY SIGNAL] {symbol} HOLD (neutrality band regime)")
+        return None  # <-- HOLD returns None (does not generate signal)
+    else:
+        logger.info(f"[ENTRY REJECTED] {symbol}: Failed threshold check")
+        return None  # <-- THIS IS BEING HIT FOR ALL 233 SYMBOLS
+
+================================================================================
+WHY THIS HAPPENED:
+================================================================================
+
+The neutrality band widening at line 346 is causing MOST symbols to be
+classified as HOLD regime:
+
+    neutrality_band = 1.5 * model_std  # Widened from 0.5x to 1.5x
+
+This widening, combined with news biasing and 3-class renormalization
+(prob_buy + prob_sell + prob_hold = 1.0), is causing:
+
+1. Raw model gives strong directional signal (e.g., AAPL BUY=0.574)
+2. News engine applies biasing to all three probabilities
+3. Renormalization redistributes probability mass across BUY/SELL/HOLD
+4. prob_hold "steals" probability from prob_buy and prob_sell
+5. Final prob_buy drops below 0.50 threshold (e.g., 0.448)
+6. Signal is classified as BUY (because prob_buy > prob_sell)
+7. BUT entry is rejected because prob_buy < 0.50
+
+================================================================================
+EXPLANATION OF 233 FAILURES:
+================================================================================
+
+scan_symbol() returns None for ALL 233 symbols because:
+
+1. Models generate predictions ✓
+2. News biasing is applied ✓
+3. Three-class renormalization dilutes probabilities ✓
+4. Neutrality band logic determines signal type ✓
+5. check_entry_signal() is called with signal + probabilities ✓
+6. Entry threshold check FAILS for all symbols ✗
+7. check_entry_signal() returns None
+8. scan_symbol() returns None (line 762)
+9. scan_all() increments failed counter (line 905-906)
+
+Result: Scanned=0, Failed=233
+
+================================================================================
+MINIMAL SURGICAL FIX:
+================================================================================
+
+OPTION 1: Lower entry threshold from 0.51 to 0.40
+- Change constructor default: entry_threshold: float = 0.40
+- This allows signals with 40%+ directional probability to enter
+- Rationale: Three-class normalization inherently dilutes probabilities
+- Trade-off: More signals generated, but with lower confidence floor
+
+OPTION 2: Use two-class normalization for directional regimes
+- When signal is BUY or SELL, renormalize only prob_buy and prob_sell
+- Exclude prob_hold from normalization for directional signals
+- Only use three-class normalization for HOLD regime
+- This preserves directional signal strength
+
+OPTION 3: Narrow neutrality band back to 0.5x from 1.5x
+- Change line 346: neutrality_band = 0.5 * model_std
+- This reduces HOLD classifications, allowing more BUY/SELL signals
+- Trade-off: Fewer HOLD signals, more directional entries
+
+OPTION 4: Apply threshold to confidence instead of raw probability
+- Change threshold check to use prediction['confidence'] instead of prob_buy/prob_sell
+- Confidence is already the max probability (lines 351, 355, 359)
+- This aligns threshold logic with model certainty, not probability mass
+
+RECOMMENDATION:
+Use OPTION 4 (threshold on confidence) + OPTION 1 (lower to 0.40).
+
+This combination:
+- Aligns threshold with model confidence (max probability)
+- Accounts for three-class normalization dilution
+- Preserves strong signals while filtering weak ones
+- Maintains regime-specific entry logic
+
+================================================================================
+VERIFICATION:
+================================================================================
+
+After fix, expect to see:
+- [ENTRY SIGNAL] messages in logs instead of [ENTRY REJECTED]
+- Scanned > 0 (likely 30-80 symbols)
+- BUY signals > 0, SELL signals > 0
+- Failed < 233 (only true data/model failures)
+
+================================================================================

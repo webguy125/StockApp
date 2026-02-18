@@ -522,7 +522,7 @@ def run_adaptive_ranking() -> Dict[str, Any]:
 
     try:
         # Import adaptive stock ranker
-        from backend.turbomode.adaptive_stock_ranker import AdaptiveStockRanker
+        from backend.turbomode.core_engine.adaptive_stock_ranker import AdaptiveStockRanker
 
         # Initialize ranker
         ranker = AdaptiveStockRanker()
@@ -902,7 +902,7 @@ def _task_subprocess_wrapper(task_id, task_func):
             "3B": 'backend/turbomode/core_engine/overnight_scanner.py',
             "3C": 'backend/turbomode/core_engine/overnight_scanner.py',
             4: 'backend/turbomode/core_engine/generate_backtest_data.py',
-            5: 'backend/turbomode/adaptive_stock_ranker.py',
+            5: 'backend/turbomode/core_engine/adaptive_stock_ranker.py',
             6: None,  # Drift monitor - runs inline for now
             7: None   # Weekly maintenance - runs inline for now
         }

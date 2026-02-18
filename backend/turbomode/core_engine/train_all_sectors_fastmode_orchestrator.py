@@ -5,6 +5,25 @@ project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
 """
+DEPRECATED: Legacy 1-day labeler, not used in TurboMode. Do not re-enable.
+
+This file trained 1-day, 2-day, and 5-day horizons with dual thresholds.
+TurboMode now uses ONLY 14-day MFE/MAE path-dependent labels.
+
+DO NOT USE THIS FILE IN PRODUCTION.
+For TurboMode training, use: train_all_sectors_optimized_orchestrator.py
+"""
+
+# HARD DISABLE - Prevent accidental execution
+if True:
+    raise RuntimeError(
+        "DEPRECATED: train_all_sectors_fastmode_orchestrator.py is disabled. "
+        "TurboMode uses only 14-day horizon. "
+        "Use train_all_sectors_optimized_orchestrator.py instead."
+    )
+
+# Original docstring preserved below for reference:
+"""
 Full Production Training - Fast Mode (Phase 1.5 - Dual-Threshold)
 Train all 11 sectors for multiple horizons (1D, 2D, 5D) with BOTH 5% and 10% thresholds
 

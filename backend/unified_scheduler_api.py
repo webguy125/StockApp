@@ -574,7 +574,7 @@ SCHEDULER_STATUS_HTML = """
                 '3B': 'C:\\StockApp\\backend\\turbomode\\core_engine\\overnight_scanner.py',
                 '3C': 'C:\\StockApp\\backend\\turbomode\\core_engine\\overnight_scanner.py',
                 '4': 'C:\\StockApp\\backend\\turbomode\\core_engine\\generate_backtest_data.py',
-                '5': 'C:\\StockApp\\backend\\turbomode\\adaptive_stock_ranker.py',
+                '5': 'C:\\StockApp\\backend\\turbomode\\core_engine\\adaptive_stock_ranker.py',
                 '6': 'No script path (runs inline)',
                 '7': 'No script path (runs inline)'
             };

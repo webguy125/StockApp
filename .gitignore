@@ -66,3 +66,4 @@ backend/data/turbomode_models/*/catboost_model.cbm
 
 # Training cache files (numpy arrays can be very large)
 backend/data/training_cache/*.npy
+config/api_keys.json

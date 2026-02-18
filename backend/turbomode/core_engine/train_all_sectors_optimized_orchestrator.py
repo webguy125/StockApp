@@ -9,24 +9,32 @@ Ensemble Training Orchestrator
 Trains 6 models per sector: 5 base models + 1 MetaLearner (66 models total)
 
 ARCHITECTURE:
-- Single label: label_1d_5pct (1-day horizon, 5% threshold)
+- Single label: 14-day MFE/MAE path-dependent labels (±5% threshold)
 - 6 models per sector: 11 sectors × 6 models = 66 models total
 - 5 base models: LightGBM-GPU, CatBoost-GPU, XGBoost-Hist-GPU, XGBoost-Linear, RandomForest
 - 1 MetaLearner: LogisticRegression (trained on stacked out-of-fold predictions)
 - Directory structure: models/trained/<sector>/<model_name>.pkl
 
 PERFORMANCE:
-- Training time: ~60-90 minutes for all 11 sectors
+- Training time: ~4-5 hours for all 11 sectors (14-day labels)
 - Fast ensemble architecture with GPU acceleration
 
 Author: TurboMode Optimization Team
 Date: 2026-01-21
+Updated: 2026-02-16 (14-day enforcement)
 """
+
+# TURBOMODE 14-DAY HORIZON ENFORCEMENT
+TURBOMODE_HORIZON = '14d'
 
 import os
 import time
 from datetime import datetime
 import numpy as np
+import multiprocessing
+
+# Enable spawn method for safe multiprocessing
+multiprocessing.set_start_method('spawn', force=True)
 
 from backend.turbomode.core_engine.sector_batch_trainer import run_sector_training
 from backend.turbomode.core_engine.training_symbols import TRAINING_SYMBOLS
@@ -67,6 +75,54 @@ def get_symbols_by_sector(sector: str):
     return symbols
 
 
+def train_single_sector(args):
+    """
+    Train a single sector in isolation (used for multiprocessing).
+
+    Args:
+        args: Tuple of (sector_name, preloaded_data_tuple)
+
+    Returns:
+        Dictionary with training results for the sector
+    """
+    sector, preloaded = args
+    X_sector, labels_dict, trade_ids = preloaded
+
+    sector_start = time.time()
+    print(f"[WORKER {os.getpid()}] Starting sector: {sector}")
+    print(f"[WORKER {os.getpid()}] Using preloaded data for {sector}...")
+
+    try:
+        print(f"[WORKER {os.getpid()}] Preloaded data verified for {sector} | X={len(X_sector)} samples")
+
+        if len(X_sector) == 0:
+            return {'sector': sector, 'status': 'failed', 'error': 'No training data', 'total_time': 0}
+
+        # Build label vector
+        y_sector = np.array([labels_dict[tid] for tid in trade_ids], dtype=np.int32)
+
+        print(f"[WORKER {os.getpid()}] Training ensemble for {sector}...")
+
+        # Train ensemble
+        ensemble_paths = train_sector_ensemble(sector, X_sector, y_sector)
+
+        total_time = time.time() - sector_start
+        print(f"[WORKER {os.getpid()}] Completed sector: {sector} | {len(ensemble_paths)} models saved | {total_time:.1f}s")
+
+        return {
+            'sector': sector,
+            'status': 'completed',
+            'n_models': 6,
+            'model_paths': ensemble_paths,
+            'n_samples': X_sector.shape[0],
+            'total_time': total_time
+        }
+
+    except Exception as e:
+        total_time = time.time() - sector_start
+        return {'sector': sector, 'status': 'failed', 'error': str(e), 'total_time': total_time}
+
+
 def train_all_sectors_optimized():
     """
     ENSEMBLE TRAINING ORCHESTRATOR
@@ -77,21 +133,28 @@ def train_all_sectors_optimized():
 
     Performance:
         - 11 sectors × 6 models each = 66 models total
-        - Training time: ~60-90 minutes
-        - Single label: label_1d_5pct (1-day horizon, 5% threshold)
+        - Training time: ~4-5 hours
+        - Single label: 14-day MFE/MAE path-dependent (±5% threshold)
     """
+    # ENFORCE 14-DAY HORIZON
+    assert TURBOMODE_HORIZON == '14d', 'TurboMode must use 14d horizon only'
+
+    # EXPLICIT START LOGGING
+    start_time = datetime.now()
+    global_start = time.time()
+    print(f"[TRAIN] TurboMode training started at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
     print("\n" + "=" * 80)
     print("ENSEMBLE TRAINING (5 BASE MODELS + META-LEARNER)")
     print("=" * 80)
-    print(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Start Time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Sectors: {len(ALL_SECTORS)}")
     print(f"Models per sector: 6 (5 base + 1 meta-learner)")
-    print(f"Label: label_1d_5pct (1-day horizon, 5% threshold)")
+    print(f"Label: 14-day MFE/MAE path-dependent (±5% threshold)")
+    print(f"Horizon: {TURBOMODE_HORIZON} (ENFORCED)")
     print(f"Total models: {len(ALL_SECTORS) * 6}")
     print("=" * 80)
     print()
-
-    global_start = time.time()
 
     # Database and save directory
     backend_dir = str(project_root / "backend")
@@ -100,79 +163,54 @@ def train_all_sectors_optimized():
 
     all_results = {}
 
-    # SECTOR LOOP (trains 6 models per sector)
-    for i, sector in enumerate(ALL_SECTORS, 1):
+    # PRELOAD: Load all sector data in main process before multiprocessing
+    print(f"[OPTIMIZE] Preloading all sector data in main process...")
+    from backend.turbomode.core_engine.sector_batch_trainer import load_sector_data_once
+
+    preloaded_data = {}
+    for sector in ALL_SECTORS:
         sector_symbols = get_symbols_by_sector(sector)
+        print(f"[PRELOAD] Loading {sector}...")
+        preloaded_data[sector] = load_sector_data_once(db_path, sector_symbols)
+    print(f"[OPTIMIZE] Preloading complete - {len(preloaded_data)} sectors loaded")
+    print()
 
-        print("\n" + "=" * 80)
-        print(f"[{i}/{len(ALL_SECTORS)}] SECTOR: {sector.upper()}")
-        print(f"Symbols: {len(sector_symbols)}")
-        print("=" * 80)
-        print()
+    # MULTIPROCESSING: Train sectors in parallel
+    print(f"[OPTIMIZE] Sector parallelization enabled - training {len(ALL_SECTORS)} sectors in parallel")
+    print(f"[OPTIMIZE] Using multiprocessing pool with {min(len(ALL_SECTORS), 4)} processes")
+    print()
 
-        sector_start = time.time()
+    with multiprocessing.Pool(processes=min(len(ALL_SECTORS), 4)) as pool:
+        async_result = pool.map_async(train_single_sector, [(sector, preloaded_data[sector]) for sector in ALL_SECTORS])
 
-        try:
-            # Load sector data using existing infrastructure
-            from backend.turbomode.core_engine.sector_batch_trainer import load_sector_data_once
+        # GLOBAL PROGRESS TICKER
+        print("[STATUS] Workers running... monitoring progress...")
 
-            print("Loading sector data...")
+        while not async_result.ready():
+            elapsed = time.time() - global_start
+            print(f"[STATUS] Elapsed: {elapsed/60:.1f} min | Training in progress... | {min(len(ALL_SECTORS), 4)} workers active")
+            async_result.wait(30)  # Wait up to 30 seconds
 
-            # Load all sector data (features + labels)
-            X_sector, labels_dict, trade_ids = load_sector_data_once(db_path, sector_symbols)
+        sector_results = async_result.get()
+        print(f"[STATUS] All sectors completed!")
 
-            if len(X_sector) == 0:
-                raise ValueError(f"No training data available for {sector}")
-
-            # Build label vector
-            y_sector = np.array([labels_dict[tid] for tid in trade_ids], dtype=np.int32)
-
-            print(f"Training data ready: X shape={X_sector.shape}, y shape={y_sector.shape}")
-            print(f"Label distribution: BUY={np.sum(y_sector==2)}, SELL={np.sum(y_sector==0)}, HOLD={np.sum(y_sector==1)}")
-
-            # Train ensemble (5 base models + MetaLearner)
-            print("Training ensemble models...")
-            ensemble_paths = train_sector_ensemble(sector, X_sector, y_sector)
-
-            sector_time = time.time() - sector_start
-
-            all_results[sector] = {
-                'status': 'completed',
-                'total_time': sector_time,
-                'n_models': 6,
-                'model_paths': ensemble_paths,
-                'n_samples': X_sector.shape[0]
-            }
-
-            print(f"\n[{i}/{len(ALL_SECTORS)}] {sector.upper()} COMPLETE [OK]")
-            print(f"Time: {sector_time/60:.1f} minutes")
-            print(f"Models saved: {len(ensemble_paths)}")
-
-        except Exception as e:
-            import traceback
-            print(f"\n[{i}/{len(ALL_SECTORS)}] {sector.upper()} FAILED [X]")
-            print(f"Exception: {e}")
-            traceback.print_exc()
-            all_results[sector] = {'status': 'failed', 'error': str(e)}
-
-        # Progress update
-        elapsed = time.time() - global_start
-        sectors_done = i
-        sectors_remaining = len(ALL_SECTORS) - i
-        avg_time_per_sector = elapsed / sectors_done
-        estimated_remaining = avg_time_per_sector * sectors_remaining
-
-        print(f"\n[PROGRESS] {sectors_done}/{len(ALL_SECTORS)} sectors complete")
-        print(f"[PROGRESS] Elapsed: {elapsed/60:.1f} min | Estimated remaining: {estimated_remaining/60:.1f} min")
-        print()
+    # Convert list of results to dictionary
+    for result in sector_results:
+        sector = result['sector']
+        all_results[sector] = result
 
     # Final summary
     total_time = time.time() - global_start
+    end_time = datetime.now()
+    duration_seconds = (end_time - start_time).total_seconds()
+
+    # EXPLICIT COMPLETION LOGGING
+    print(f"[TRAIN] TurboMode training completed successfully at {end_time.strftime('%Y-%m-%d %H:%M:%S')}, duration: {duration_seconds:.1f} seconds ({duration_seconds/3600:.2f} hours)")
 
     print("\n" + "=" * 80)
     print("SINGLE-MODEL TRAINING COMPLETE")
     print("=" * 80)
-    print(f"End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"End Time: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Total Time: {total_time/60:.1f} minutes ({total_time/3600:.1f} hours)")
     print()
 
@@ -215,4 +253,27 @@ def train_all_sectors_optimized():
 
 
 if __name__ == "__main__":
-    results = train_all_sectors_optimized()
+    import sys
+
+    # SMOKE TEST MODE: python train_all_sectors_optimized_orchestrator.py --smoke-test [sector]
+    if len(sys.argv) > 1 and sys.argv[1] == '--smoke-test':
+        # Determine which sector to test
+        test_sector = sys.argv[2] if len(sys.argv) > 2 else 'technology'
+
+        print(f"[SMOKE TEST MODE] Training SINGLE sector ({test_sector}) for validation")
+
+        # Temporarily override ALL_SECTORS for smoke test
+        original_sectors = ALL_SECTORS.copy()
+        ALL_SECTORS.clear()
+        ALL_SECTORS.append(test_sector)
+
+        results = train_all_sectors_optimized()
+
+        # Restore original sectors
+        ALL_SECTORS.clear()
+        ALL_SECTORS.extend(original_sectors)
+
+        print("\n[SMOKE TEST COMPLETE]")
+    else:
+        # FULL PRODUCTION RUN
+        results = train_all_sectors_optimized()

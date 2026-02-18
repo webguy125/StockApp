@@ -24,7 +24,12 @@ import logging
 project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
-# Import hybrid data fetcher (IBKR + Yahoo fallback)
+# Load environment variables (needed for TRADIER_API_KEY)
+from dotenv import load_dotenv
+backend_env_path = project_root / "backend" / ".env"
+load_dotenv(backend_env_path)
+
+# Import hybrid data fetcher (3-tier: Tradier → IBKR → Yahoo)
 from backend.turbomode.core_engine.hybrid_data_fetcher import HybridDataFetcher
 
 logging.basicConfig(level=logging.INFO)
@@ -264,14 +269,30 @@ def ingest_symbol_ohlcv(
     """
     Fetch and upsert OHLCV data for a single symbol.
     Returns number of rows ingested.
+
+    Strategy: Try Tradier first, then use Yahoo to fill gaps if Tradier has missing bars.
     """
+    import math
+
     rows = fetch_ohlcv_for_symbol(fetcher, symbol, start, end)
     if not rows:
         return 0
 
+    # Track skipped timestamps for gap-filling with Yahoo
+    skipped_timestamps = []
+
     cur = conn.cursor()
     inserted = 0
     for row in rows:
+        # Normalize Tradier keys (Open/High/Low/Close/Volume -> open/high/low/close/volume)
+        row = {k.lower(): v for k, v in row.items()}
+
+        # Skip invalid or incomplete bars (check for None and NaN)
+        if any(v is None or (isinstance(v, float) and math.isnan(v)) for v in [row.get('open'), row.get('high'), row.get('low'), row.get('close'), row.get('volume')]):
+            logger.warning(f"[SKIP] Invalid bar for {symbol} on {row.get('timestamp')} (missing OHLCV) - will try Yahoo")
+            skipped_timestamps.append(row.get('timestamp'))
+            continue
+
         cur.execute(
             """
             INSERT OR REPLACE INTO ohlcv (
@@ -290,6 +311,53 @@ def ingest_symbol_ohlcv(
             ),
         )
         inserted += 1
+
+    # Gap-filling: If we skipped any bars, try Yahoo to fill them in
+    if skipped_timestamps:
+        logger.info(f"[GAP-FILL] {symbol}: Trying Yahoo for {len(skipped_timestamps)} missing bars from Tradier")
+
+        # Temporarily disable Tradier to force Yahoo fallback
+        original_use_tradier = fetcher.use_tradier
+        fetcher.use_tradier = False
+
+        try:
+            yahoo_rows = fetch_ohlcv_for_symbol(fetcher, symbol, start, end)
+            if yahoo_rows:
+                filled = 0
+                for row in yahoo_rows:
+                    row = {k.lower(): v for k, v in row.items()}
+
+                    # Only insert if this timestamp was skipped from Tradier
+                    if row.get('timestamp') in skipped_timestamps:
+                        # Check if Yahoo data is valid
+                        if not any(v is None or (isinstance(v, float) and math.isnan(v)) for v in [row.get('open'), row.get('high'), row.get('low'), row.get('close'), row.get('volume')]):
+                            cur.execute(
+                                """
+                                INSERT OR REPLACE INTO ohlcv (
+                                    symbol, timestamp, open, high, low, close, volume
+                                )
+                                VALUES (?, ?, ?, ?, ?, ?, ?)
+                                """,
+                                (
+                                    symbol,
+                                    int(row["timestamp"]),
+                                    float(row["open"]),
+                                    float(row["high"]),
+                                    float(row["low"]),
+                                    float(row["close"]),
+                                    float(row["volume"]),
+                                ),
+                            )
+                            filled += 1
+                            inserted += 1
+
+                if filled > 0:
+                    logger.info(f"[GAP-FILL] {symbol}: Yahoo filled {filled} missing bars")
+                else:
+                    logger.warning(f"[GAP-FILL] {symbol}: Yahoo could not fill any missing bars")
+        finally:
+            # Restore Tradier setting
+            fetcher.use_tradier = original_use_tradier
 
     conn.commit()
     return inserted

@@ -4,6 +4,7 @@
  */
 import { CanvasRenderer } from '../../chart-renderers/canvas-renderer.js';
 import { volumeAccumulator } from '../../services/VolumeAccumulator.js';
+import { tradierPriceUpdater } from '../../services/TradierPriceUpdater.js';
 
 export class Timeframe1w {
   constructor() {
@@ -86,6 +87,26 @@ export class Timeframe1w {
         }
       };
       volumeAccumulator.registerCallback('1wk', this.volumeCallback);
+
+      // Initialize TradierPriceUpdater with socket connection (WebSocket version)
+      if (!tradierPriceUpdater.socket) {
+        tradierPriceUpdater.setSocket(socket);
+      }
+
+      // Register callback for Tradier real-time price updates
+      this.priceCallback = (quote) => {
+        if (this.isActive && this.data.length > 0) {
+          const lastCandle = this.data[this.data.length - 1];
+          lastCandle.Close = quote.price;
+          if (quote.price > lastCandle.High) lastCandle.High = quote.price;
+          if (quote.price < lastCandle.Low) lastCandle.Low = quote.price;
+          this.renderer.draw();
+        }
+      };
+      tradierPriceUpdater.registerCallback('1wk', this.priceCallback);
+      if (!tradierPriceUpdater.isRunning()) {
+        tradierPriceUpdater.start(symbol);
+      }
 
       // Register callback for new candle detection (critical for ORD Volume auto-update)
       this.newCandleCallback = (interval) => {
@@ -289,6 +310,12 @@ export class Timeframe1w {
     if (this.volumeCallback) {
       volumeAccumulator.unregisterCallback('1wk', this.volumeCallback);
       this.volumeCallback = null;
+    }
+
+    // Unregister Tradier price callback
+    if (this.priceCallback) {
+      tradierPriceUpdater.unregisterCallback('1wk');
+      this.priceCallback = null;
     }
 
     // Unregister new candle callback

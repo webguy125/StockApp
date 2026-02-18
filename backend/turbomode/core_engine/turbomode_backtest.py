@@ -186,6 +186,20 @@ class TurboModeBacktest:
         # Convert timestamp index to 'date' column for backtest processing
         price_data = price_data.reset_index()
         price_data.rename(columns={'timestamp': 'date'}, inplace=True)
+        if incremental:
+            last_date = self.get_last_entry_date(symbol)
+            if last_date:
+                price_data = price_data[price_data['date'] > last_date].reset_index(drop=True)
+                logger.info(f"[INCREMENTAL] Filtered to {len(price_data)} new days after {last_date}")
+                if len(price_data) == 0:
+                    logger.info("[INCREMENTAL] No new days to process")
+                    return {
+                        'symbol': symbol,
+                        'total_samples': 0,
+                        'buy_samples': 0,
+                        'sell_samples': 0,
+                        'hold_samples': 0
+                    }
 
         logger.info(f"[BACKTEST] Loaded {len(price_data)} days of price data")
 
@@ -228,8 +242,8 @@ class TurboModeBacktest:
         Canonical label logic:
         - Look forward 14 days (holding period)
         - Calculate return_pct = (future_price - entry_price) / entry_price
-        - if return_pct >= +5%: label = 'buy'
-        - if return_pct <= -5%: label = 'sell'
+        - if return_pct >= +6%: label = 'buy'
+        - if return_pct <= -6%: label = 'sell'
         - else: label = 'hold'
 
         Features:
@@ -247,8 +261,8 @@ class TurboModeBacktest:
 
         samples = []
         holding_period = 14  # days (aligned with 14-day swing trading strategy)
-        buy_threshold = 0.05  # +5%
-        sell_threshold = -0.05  # -5%
+        buy_threshold = 0.06  # +6%
+        sell_threshold = -0.06  # -6%
 
         # Ensure price_data is sorted by date
         price_data = price_data.sort_values('date').reset_index(drop=True)
@@ -265,57 +279,118 @@ class TurboModeBacktest:
             traceback.print_exc()
             all_features = None
 
-        # Generate samples for each day (except last holding_period days)
-        for i in range(len(price_data) - holding_period):
-            entry_row = price_data.iloc[i]
-            entry_date = entry_row['date']
-            entry_price = entry_row['close']
+        # === VECTORIZED LABEL + MFE/MAE PRECOMPUTATION (Phase 2 Restore) ===
+        n = len(price_data)
+        hp = holding_period
 
-            # Look forward holding_period days
-            exit_row = price_data.iloc[i + holding_period]
-            exit_date = exit_row['date']
-            exit_price = exit_row['close']
+        closes = price_data['close'].values
+        highs = price_data['high'].values
+        lows = price_data['low'].values
 
-            # Calculate return percentage
-            return_pct = (exit_price - entry_price) / entry_price
-            profit_loss = exit_price - entry_price
+        # Forward exit prices (vectorized)
+        exit_prices = closes[hp:]
+        entry_prices = closes[:-hp]
 
-            # Apply canonical label logic
-            if return_pct >= buy_threshold:
-                outcome = 'buy'
-            elif return_pct <= sell_threshold:
-                outcome = 'sell'
+        # Forward returns
+        return_pct_arr = (exit_prices - entry_prices) / entry_prices
+
+        # Precompute MFE/MAE windows
+        mfe_arr = np.zeros(n - hp)
+        mae_arr = np.zeros(n - hp)
+
+        for i in range(n - hp):
+            window_high = highs[i+1:i+hp+1]
+            window_low = lows[i+1:i+hp+1]
+            mfe_arr[i] = (window_high.max() - entry_prices[i]) / entry_prices[i]
+            mae_arr[i] = (window_low.min() - entry_prices[i]) / entry_prices[i]
+
+        # Threshold hits
+        hit_target_arr = mfe_arr >= buy_threshold
+        hit_stop_arr = mae_arr <= sell_threshold
+
+        # Vectorized outcome initialization
+        outcome_arr = np.full(n - hp, 'hold', dtype=object)
+
+        # BUY only
+        buy_mask = hit_target_arr & ~hit_stop_arr
+        outcome_arr[buy_mask] = 'buy'
+
+        # SELL only
+        sell_mask = hit_stop_arr & ~hit_target_arr
+        outcome_arr[sell_mask] = 'sell'
+
+        # BOTH hit → determine first hit
+        both_mask = hit_target_arr & hit_stop_arr
+
+        first_target_day_arr = np.full(n - hp, None, dtype=object)
+        first_stop_day_arr = np.full(n - hp, None, dtype=object)
+
+        both_idx = np.where(both_mask)[0]
+
+        for idx in both_idx:
+            entry_price = entry_prices[idx]
+            for j in range(1, hp + 1):
+                high_pct = (highs[idx + j] - entry_price) / entry_price
+                low_pct = (lows[idx + j] - entry_price) / entry_price
+
+                if first_target_day_arr[idx] is None and high_pct >= buy_threshold:
+                    first_target_day_arr[idx] = j
+
+                if first_stop_day_arr[idx] is None and low_pct <= sell_threshold:
+                    first_stop_day_arr[idx] = j
+
+                if first_target_day_arr[idx] is not None and first_stop_day_arr[idx] is not None:
+                    break
+
+            # FIRST-HIT DECISION
+            if first_stop_day_arr[idx] is None or (first_target_day_arr[idx] is not None and first_target_day_arr[idx] < first_stop_day_arr[idx]):
+                outcome_arr[idx] = 'buy'
             else:
-                outcome = 'hold'
+                outcome_arr[idx] = 'sell'
 
-            # Extract features for this entry point
-            entry_features_json = None
-            if all_features is not None and len(all_features) > i:
-                features_dict = all_features[i]
-                entry_features_json = json.dumps(features_dict)
+        # === SAMPLE CONSTRUCTION (kept identical to your logic) ===
+        samples = []
+        for i in range(n - hp):
+            entry_row = price_data.iloc[i]
+            exit_row = price_data.iloc[i + hp]
 
-            # Create sample
-            # Convert pandas Timestamp to string format
-            entry_date_str = entry_date.strftime('%Y-%m-%d') if hasattr(entry_date, 'strftime') else str(entry_date)
-            exit_date_str = exit_date.strftime('%Y-%m-%d') if hasattr(exit_date, 'strftime') else str(exit_date)
+            entry_date = entry_row['date']
+            exit_date = exit_row['date']
+
+            entry_price = float(entry_row['close'])
+            exit_price = float(exit_row['close'])
+
+            outcome = outcome_arr[i]
+            mfe = float(mfe_arr[i])
+            mae = float(mae_arr[i])
+
+            target_day = first_target_day_arr[i] if hit_target_arr[i] else None
+            stop_day = first_stop_day_arr[i] if hit_stop_arr[i] else None
+
+            features_dict = all_features[i] if all_features is not None else None
+            entry_features_json = json.dumps(features_dict) if features_dict else None
 
             sample = {
                 'id': str(uuid.uuid4()),
                 'symbol': symbol,
-                'entry_date': entry_date_str,
-                'entry_price': float(entry_price),
-                'exit_date': exit_date_str,
-                'exit_price': float(exit_price),
+                'entry_date': entry_date.strftime('%Y-%m-%d') if hasattr(entry_date, 'strftime') else str(entry_date),
+                'entry_price': entry_price,
+                'exit_date': exit_date.strftime('%Y-%m-%d') if hasattr(exit_date, 'strftime') else str(exit_date),
+                'exit_price': exit_price,
                 'position_size': 1.0,
                 'outcome': outcome,
-                'profit_loss': float(profit_loss),
-                'profit_loss_pct': float(return_pct),
+                'profit_loss': exit_price - entry_price,
+                'profit_loss_pct': float(return_pct_arr[i]),
                 'exit_reason': 'backtest',
                 'entry_features_json': entry_features_json,
                 'trade_type': 'backtest',
                 'strategy': 'turbomode',
                 'notes': f'{holding_period}d swing trade',
-                'created_at': datetime.now().isoformat()
+                'created_at': datetime.now().isoformat(),
+                'mfe': mfe,
+                'mae': mae,
+                'target_hit_day': target_day,
+                'stop_hit_day': stop_day
             }
 
             samples.append(sample)
@@ -338,38 +413,32 @@ class TurboModeBacktest:
         conn = sqlite3.connect(self.turbomode_db_path)
         cursor = conn.cursor()
 
-        saved_count = 0
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
 
-        for sample in samples:
-            try:
-                cursor.execute("""
-                    INSERT OR REPLACE INTO trades (
-                        id, symbol, entry_date, entry_price, exit_date, exit_price,
-                        position_size, outcome, profit_loss, profit_loss_pct,
-                        exit_reason, entry_features_json, trade_type, strategy,
-                        notes, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    sample['id'],
-                    sample['symbol'],
-                    sample['entry_date'],
-                    sample['entry_price'],
-                    sample['exit_date'],
-                    sample['exit_price'],
-                    sample['position_size'],
-                    sample['outcome'],
-                    sample['profit_loss'],
-                    sample['profit_loss_pct'],
-                    sample['exit_reason'],
-                    sample['entry_features_json'],
-                    sample['trade_type'],
-                    sample['strategy'],
-                    sample['notes'],
-                    sample['created_at']
-                ))
-                saved_count += 1
-            except Exception as e:
-                logger.error(f"[ERROR] Failed to save sample: {e}")
+        params = []
+        for s in samples:
+            params.append((
+                s['id'], s['symbol'], s['entry_date'], s['entry_price'],
+                s['exit_date'], s['exit_price'], s['position_size'], s['outcome'],
+                s['profit_loss'], s['profit_loss_pct'], s['exit_reason'],
+                s['entry_features_json'], s['trade_type'], s['strategy'],
+                s['notes'], s['created_at']
+            ))
+
+        try:
+            cursor.executemany("""
+                INSERT OR REPLACE INTO trades (
+                    id, symbol, entry_date, entry_price, exit_date, exit_price,
+                    position_size, outcome, profit_loss, profit_loss_pct,
+                    exit_reason, entry_features_json, trade_type, strategy,
+                    notes, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, params)
+            saved_count = len(params)
+        except Exception as e:
+            logger.error(f"[ERROR] Batch insert failed: {e}")
+            saved_count = 0
 
         conn.commit()
         conn.close()

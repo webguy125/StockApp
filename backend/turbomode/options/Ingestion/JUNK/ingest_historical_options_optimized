@@ -1,0 +1,555 @@
+"""
+OPTIMIZED EODHD HISTORICAL OPTIONS INGESTION
+
+This script uses an expiration-driven batched approach with symbol-level parallelism
+to efficiently download 3 months of historical options chains from EODHD.
+
+Key optimizations:
+- Expiration-driven: Fetch expiration ladder once, then process by expiration
+- Batched writes: Insert 100-2000 records per transaction
+- Symbol-level parallelism: 4-8 workers processing symbols concurrently
+- Caching: Cache expirations and strikes to avoid redundant API calls
+- Rate limiting: Token bucket with 5 req/sec global limit
+- Retry logic: Exponential backoff on 5xx errors
+- SQLite WAL mode: Concurrent reads, faster writes
+
+Usage:
+    python ingest_historical_options_optimized.py [--workers 4] [--test]
+"""
+import os
+import sys
+import json
+import sqlite3
+import logging
+import time
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from collections import defaultdict
+import threading
+
+# Add backend to path
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+OPTIONS_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..'))
+BACKEND_DIR = os.path.abspath(os.path.join(OPTIONS_DIR, '..', '..'))
+STOCKAPP_DIR = os.path.abspath(os.path.join(BACKEND_DIR, '..'))
+sys.path.insert(0, BACKEND_DIR)
+sys.path.insert(0, STOCKAPP_DIR)
+
+from backend.eodhd_client import get_eodhd_client
+
+# Configuration
+OPTIONS_UNIVERSE_DB = os.path.join(OPTIONS_DIR, 'Data', 'options_universe.db')
+CORE_230_PATH = os.path.join(BACKEND_DIR, '..', 'config', 'symbols', 'CORE_230.json')
+
+# Ingestion settings
+DEFAULT_LOOKBACK_DAYS = 90  # 3 months
+DATA_DELAY_DAYS = 60  # EODHD has ~60 day delay
+BATCH_SIZE_MIN = 100
+BATCH_SIZE_MAX = 2000
+MIN_WORKERS = 4
+MAX_WORKERS = 8
+
+# Rate limiting (global token bucket)
+RATE_LIMIT_RPS = 5  # 5 requests per second
+_rate_limit_lock = threading.Lock()
+_last_request_time = 0
+_request_tokens = RATE_LIMIT_RPS
+
+# Retry configuration
+RETRY_STATUS_CODES = [500, 502, 503, 504]
+HARD_FAIL_STATUS_CODES = [400, 401, 403, 404]
+MAX_RETRIES = 3
+BACKOFF_SEQUENCE = [1, 2, 4]  # seconds
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] [%(processName)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
+
+class RateLimiter:
+    """Global token bucket rate limiter"""
+
+    def __init__(self, rate_per_second: float):
+        self.rate = rate_per_second
+        self.tokens = rate_per_second
+        self.last_update = time.time()
+        self.lock = threading.Lock()
+
+    def acquire(self):
+        """Acquire a token, blocking if necessary"""
+        with self.lock:
+            now = time.time()
+            # Refill tokens based on time elapsed
+            elapsed = now - self.last_update
+            self.tokens = min(self.rate, self.tokens + elapsed * self.rate)
+            self.last_update = now
+
+            if self.tokens >= 1.0:
+                self.tokens -= 1.0
+            else:
+                # Need to wait
+                wait_time = (1.0 - self.tokens) / self.rate
+                time.sleep(wait_time)
+                self.tokens = 0.0
+                self.last_update = time.time()
+
+
+# Global rate limiter
+rate_limiter = RateLimiter(RATE_LIMIT_RPS)
+
+
+def initialize_database():
+    """Initialize database with WAL mode"""
+    logger.info('[INIT] Initializing database with WAL mode')
+
+    conn = sqlite3.connect(OPTIONS_UNIVERSE_DB)
+
+    # Enable WAL mode for concurrent access
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA synchronous=NORMAL')
+    conn.execute('PRAGMA cache_size=-64000')  # 64MB cache
+    conn.execute('PRAGMA temp_store=MEMORY')
+
+    # Verify WAL mode
+    journal_mode = conn.execute('PRAGMA journal_mode').fetchone()[0]
+    logger.info(f'[INIT] Database journal mode: {journal_mode}')
+
+    conn.close()
+
+
+def load_symbol_universe() -> List[Dict]:
+    """Load and sort symbol universe"""
+    try:
+        with open(CORE_230_PATH, 'r') as f:
+            data = json.load(f)
+
+        # Sort symbols for deterministic ordering
+        data.sort(key=lambda x: x['ticker'])
+
+        logger.info(f'[SYMBOLS] Loaded {len(data)} symbols (sorted)')
+        return data
+    except Exception as e:
+        logger.error(f'[SYMBOLS] Failed to load CORE_230.json: {e}')
+        return []
+
+
+def fetch_with_retry(fetch_func, *args, **kwargs):
+    """
+    Fetch with exponential backoff retry logic
+
+    Args:
+        fetch_func: Function to call (e.g., client.get_options_data)
+        *args, **kwargs: Arguments to pass to fetch_func
+
+    Returns:
+        Result from fetch_func, or None on failure
+    """
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            # Rate limiting
+            rate_limiter.acquire()
+
+            # Make request
+            result = fetch_func(*args, **kwargs)
+
+            if result is not None:
+                return result
+
+            # None result - treat as retryable
+            if attempt < MAX_RETRIES:
+                wait = BACKOFF_SEQUENCE[min(attempt, len(BACKOFF_SEQUENCE) - 1)]
+                logger.warning(f'[RETRY] Attempt {attempt + 1} failed, retrying in {wait}s')
+                time.sleep(wait)
+
+        except Exception as e:
+            error_msg = str(e)
+
+            # Check for hard fail status codes
+            if any(str(code) in error_msg for code in HARD_FAIL_STATUS_CODES):
+                logger.error(f'[HARD_FAIL] {error_msg} - skipping')
+                return None
+
+            # Retry on 5xx or timeout
+            if attempt < MAX_RETRIES:
+                wait = BACKOFF_SEQUENCE[min(attempt, len(BACKOFF_SEQUENCE) - 1)]
+                logger.warning(f'[RETRY] Attempt {attempt + 1} error: {error_msg}, retrying in {wait}s')
+                time.sleep(wait)
+            else:
+                logger.error(f'[RETRY] Max retries exceeded: {error_msg}')
+                return None
+
+    return None
+
+
+def get_expiration_ladder(client, symbol: str, date_str: str) -> List[str]:
+    """
+    Fetch and cache expiration ladder for a symbol
+
+    Args:
+        client: EODHD client
+        symbol: Stock ticker
+        date_str: Reference date
+
+    Returns:
+        List of expiration dates (sorted ascending)
+    """
+    logger.info(f'[EXPIRATION_LADDER] Fetching for {symbol} on {date_str}')
+
+    # Fetch sample chain to get expirations
+    data = fetch_with_retry(client.get_options_data, symbol, date_str)
+
+    if not data or 'expirations' not in data or not data['expirations']:
+        logger.warning(f'[EXPIRATION_LADDER] No expirations found for {symbol}')
+        return []
+
+    expirations = sorted(data['expirations'])
+    logger.info(f'[EXPIRATION_LADDER] {symbol}: {len(expirations)} expirations')
+
+    return expirations
+
+
+def fetch_chain_for_expiration(client, symbol: str, expiration: str,
+                               snapshot_date: str) -> List[Dict]:
+    """
+    Fetch options chain for specific expiration and snapshot date
+
+    Args:
+        client: EODHD client
+        symbol: Stock ticker
+        expiration: Expiration date
+        snapshot_date: Snapshot date
+
+    Returns:
+        List of option contracts
+    """
+    data = fetch_with_retry(client.get_options_data, symbol, snapshot_date)
+
+    if not data or 'data' not in data:
+        return []
+
+    # Filter to specific expiration
+    filtered = [
+        opt for opt in data['data']
+        if opt.get('expirationDate') == expiration
+    ]
+
+    return filtered
+
+
+def build_insert_rows(symbol: str, snapshot_date: str, options_data: List[Dict],
+                     underlying_price: float) -> List[Tuple]:
+    """
+    Build rows for batched insert
+
+    Returns:
+        List of tuples ready for executemany()
+    """
+    rows = []
+
+    for option in options_data:
+        try:
+            # Parse option data
+            contract_name = option.get('contractName', '')
+            expiration = option.get('expirationDate', '')
+            strike = float(option.get('strike', 0))
+            option_type = option.get('type', '').lower()
+
+            last_price = option.get('lastTradePrice')
+            bid = option.get('bid')
+            ask = option.get('ask')
+            volume = option.get('volume')
+            open_interest = option.get('openInterest')
+            iv = option.get('impliedVolatility')
+            delta = option.get('delta')
+            gamma = option.get('gamma')
+            theta = option.get('theta')
+            vega = option.get('vega')
+
+            # Calculate days to expiration
+            days_to_exp = None
+            if expiration:
+                try:
+                    exp_date = datetime.strptime(expiration, '%Y-%m-%d')
+                    snap_date = datetime.strptime(snapshot_date, '%Y-%m-%d')
+                    days_to_exp = (exp_date - snap_date).days
+                except:
+                    pass
+
+            # Calculate moneyness
+            moneyness = None
+            if underlying_price and strike:
+                moneyness = strike / underlying_price
+
+            rows.append((
+                symbol, snapshot_date, contract_name, expiration, strike, option_type,
+                last_price, bid, ask, volume, open_interest, iv,
+                delta, gamma, theta, vega, underlying_price, days_to_exp, moneyness
+            ))
+
+        except Exception as e:
+            logger.warning(f'[BUILD_ROWS] Error parsing option: {e}')
+            continue
+
+    return rows
+
+
+def batched_insert(conn, rows: List[Tuple]) -> int:
+    """
+    Insert rows in batches with short-lived transactions
+
+    Returns:
+        Number of rows inserted
+    """
+    cursor = conn.cursor()
+    inserted_count = 0
+
+    for i in range(0, len(rows), BATCH_SIZE_MAX):
+        batch = rows[i:i + BATCH_SIZE_MAX]
+
+        try:
+            cursor.executemany('''
+                INSERT OR IGNORE INTO historical_options_chains
+                (symbol, snapshot_date, contract_name, expiration_date, strike, option_type,
+                 last_price, bid, ask, volume, open_interest, implied_volatility,
+                 delta, gamma, theta, vega, underlying_price, days_to_expiration, moneyness)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', batch)
+
+            inserted_count += cursor.rowcount
+            conn.commit()
+
+        except Exception as e:
+            logger.error(f'[BATCHED_INSERT] Error inserting batch: {e}')
+            conn.rollback()
+
+    return inserted_count
+
+
+def ingest_symbol_optimized(symbol: str, start_date: str, end_date: str,
+                            worker_id: int) -> Dict:
+    """
+    Ingest historical options for a symbol using expiration-driven approach
+
+    Args:
+        symbol: Stock ticker
+        start_date: Start date (YYYY-MM-DD)
+        end_date: End date (YYYY-MM-DD)
+        worker_id: Worker process ID
+
+    Returns:
+        Dictionary with ingestion statistics
+    """
+    logger.info(f'[WORKER_{worker_id}] Starting {symbol} ({start_date} to {end_date})')
+
+    stats = {
+        'symbol': symbol,
+        'worker_id': worker_id,
+        'total_records': 0,
+        'expirations_processed': 0,
+        'dates_processed': 0,
+        'success': False
+    }
+
+    try:
+        # Initialize EODHD client (per-worker)
+        client = get_eodhd_client()
+
+        # Connect to database (WAL mode allows concurrent writes)
+        conn = sqlite3.connect(OPTIONS_UNIVERSE_DB, timeout=30.0)
+
+        # Step 1: Fetch expiration ladder (using start date - most likely to have data)
+        expirations = get_expiration_ladder(client, symbol, start_date)
+
+        if not expirations:
+            logger.warning(f'[WORKER_{worker_id}] {symbol}: No expirations found')
+            conn.close()
+            return stats
+
+        # Step 2: Process each expiration in ascending order
+        for expiration in sorted(expirations):
+            logger.info(f'[WORKER_{worker_id}] {symbol}: Processing expiration {expiration}')
+
+            expiration_records = 0
+
+            # Step 3: Fetch chain snapshots for each date in range
+            current = datetime.strptime(start_date, '%Y-%m-%d')
+            end = datetime.strptime(end_date, '%Y-%m-%d')
+
+            all_rows = []
+
+            while current <= end:
+                date_str = current.strftime('%Y-%m-%d')
+
+                # Skip weekends
+                if current.weekday() >= 5:
+                    current += timedelta(days=1)
+                    continue
+
+                # Fetch chain for this expiration and date
+                options_data = fetch_chain_for_expiration(client, symbol, expiration, date_str)
+
+                if options_data:
+                    # Extract underlying price
+                    underlying_price = options_data[0].get('underlyingPrice') if options_data else None
+
+                    # Build rows for this snapshot
+                    rows = build_insert_rows(symbol, date_str, options_data, underlying_price)
+                    all_rows.extend(rows)
+
+                    stats['dates_processed'] += 1
+
+                current += timedelta(days=1)
+
+            # Step 4: Batched insert for this expiration
+            if all_rows:
+                inserted = batched_insert(conn, all_rows)
+                expiration_records += inserted
+                stats['total_records'] += inserted
+
+                logger.info(
+                    f'[WORKER_{worker_id}] {symbol}: '
+                    f'Expiration {expiration}: {inserted} records '
+                    f'(cumulative: {stats["total_records"]})'
+                )
+
+            stats['expirations_processed'] += 1
+
+        conn.close()
+        stats['success'] = True
+
+        logger.info(
+            f'[WORKER_{worker_id}] {symbol} COMPLETE: '
+            f'{stats["total_records"]} records, '
+            f'{stats["expirations_processed"]} expirations, '
+            f'{stats["dates_processed"]} dates'
+        )
+
+    except Exception as e:
+        logger.error(f'[WORKER_{worker_id}] {symbol} FAILED: {e}')
+        stats['error'] = str(e)
+
+    return stats
+
+
+def run_optimized_ingestion(lookback_days: int = DEFAULT_LOOKBACK_DAYS,
+                            symbols_limit: Optional[int] = None,
+                            num_workers: int = MIN_WORKERS):
+    """
+    Run optimized ingestion with symbol-level parallelism
+
+    Args:
+        lookback_days: Number of days to look back
+        symbols_limit: Limit to first N symbols (for testing)
+        num_workers: Number of parallel workers (4-8)
+    """
+    start_time = time.time()
+
+    logger.info('=' * 80)
+    logger.info('OPTIMIZED EODHD HISTORICAL OPTIONS INGESTION')
+    logger.info('=' * 80)
+
+    # Initialize database
+    initialize_database()
+
+    # Load symbols (sorted for determinism)
+    symbol_data = load_symbol_universe()
+    if not symbol_data:
+        logger.error('[ERROR] No symbols loaded - exiting')
+        return
+
+    if symbols_limit:
+        symbol_data = symbol_data[:symbols_limit]
+        logger.info(f'[CONFIG] Limited to first {symbols_limit} symbols (testing mode)')
+
+    # Calculate date range
+    end_date = (datetime.now() - timedelta(days=DATA_DELAY_DAYS)).strftime('%Y-%m-%d')
+    start_date = (datetime.now() - timedelta(days=lookback_days + DATA_DELAY_DAYS)).strftime('%Y-%m-%d')
+
+    # Clamp workers
+    num_workers = max(MIN_WORKERS, min(num_workers, MAX_WORKERS))
+
+    logger.info(f'[CONFIG] Date range: {start_date} to {end_date} ({lookback_days} days)')
+    logger.info(f'[CONFIG] Symbols: {len(symbol_data)} (sorted)')
+    logger.info(f'[CONFIG] Workers: {num_workers}')
+    logger.info(f'[CONFIG] Rate limit: {RATE_LIMIT_RPS} req/sec')
+    logger.info(f'[CONFIG] Batch size: {BATCH_SIZE_MIN}-{BATCH_SIZE_MAX}')
+    logger.info(f'[CONFIG] Database: {OPTIONS_UNIVERSE_DB}')
+    logger.info('=' * 80)
+
+    # Run parallel ingestion
+    all_stats = []
+
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+        # Submit all symbols
+        futures = {}
+        for idx, symbol_info in enumerate(symbol_data):
+            symbol = symbol_info['ticker']
+            worker_id = idx % num_workers
+
+            future = executor.submit(
+                ingest_symbol_optimized,
+                symbol, start_date, end_date, worker_id
+            )
+            futures[future] = symbol
+
+        # Collect results as they complete
+        for future in as_completed(futures):
+            symbol = futures[future]
+            try:
+                stats = future.result()
+                all_stats.append(stats)
+
+                logger.info(
+                    f'[PROGRESS] {len(all_stats)}/{len(symbol_data)}: '
+                    f'{symbol} - {stats["total_records"]} records'
+                )
+
+            except Exception as e:
+                logger.error(f'[PROGRESS] {symbol} failed with exception: {e}')
+
+    # Summary
+    end_time = time.time()
+    runtime = end_time - start_time
+
+    success_count = sum(1 for s in all_stats if s['success'])
+    error_count = len(all_stats) - success_count
+    total_records = sum(s['total_records'] for s in all_stats)
+
+    logger.info('')
+    logger.info('=' * 80)
+    logger.info('INGESTION COMPLETE')
+    logger.info('=' * 80)
+    logger.info(f'Runtime: {runtime:.2f} seconds ({runtime/60:.2f} minutes)')
+    logger.info(f'Symbols processed: {len(all_stats)}')
+    logger.info(f'Success: {success_count}')
+    logger.info(f'Errors: {error_count}')
+    logger.info(f'Total records: {total_records:,}')
+    logger.info(f'Records/second: {total_records/runtime:.1f}')
+    logger.info('=' * 80)
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Optimized EODHD historical options ingestion')
+    parser.add_argument('--workers', type=int, default=MIN_WORKERS,
+                       help=f'Number of workers ({MIN_WORKERS}-{MAX_WORKERS})')
+    parser.add_argument('--test', action='store_true',
+                       help='Test mode: 3 symbols only')
+    parser.add_argument('--lookback', type=int, default=DEFAULT_LOOKBACK_DAYS,
+                       help='Lookback days (default: 90)')
+
+    args = parser.parse_args()
+
+    symbols_limit = 3 if args.test else None
+
+    run_optimized_ingestion(
+        lookback_days=args.lookback,
+        symbols_limit=symbols_limit,
+        num_workers=args.workers
+    )

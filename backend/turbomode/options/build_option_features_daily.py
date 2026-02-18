@@ -1,0 +1,296 @@
+#!/usr/bin/env python
+"""
+Build option_features_daily table with full OHLCV coverage.
+
+This script:
+1. Loads historical options chains from options_universe.db
+2. Computes daily aggregated features (IV surface, skew, term structure, volume/OI)
+3. Loads the full OHLCV universe from master_market_data.db
+4. Performs a LEFT JOIN to ensure every (symbol, date) from OHLCV has a row
+5. Leaves NaN for dates without options data (LightGBM handles NaN natively)
+"""
+
+import sqlite3
+import pandas as pd
+import numpy as np
+import logging
+from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s')
+logger = logging.getLogger(__name__)
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+OPTIONS_UNIVERSE_DB = SCRIPT_DIR / "Data" / "options_universe.db"
+MASTER_DB = SCRIPT_DIR.parent.parent.parent / "master_market_data" / "master_market_data.db"
+
+
+def load_ohlcv_symbol_dates():
+    """Load the full (symbol, date) universe from master_market_data."""
+    logger.info(f"Loading OHLCV symbol-date universe from {MASTER_DB}")
+    conn = sqlite3.connect(MASTER_DB)
+    df = pd.read_sql_query(
+        "SELECT DISTINCT symbol, timestamp as date FROM ohlcv ORDER BY symbol, timestamp",
+        conn
+    )
+    conn.close()
+
+    # Convert timestamp to date
+    df['date'] = pd.to_datetime(df['date'], unit='s').dt.date.astype(str)
+
+    return df
+
+
+def create_option_features_daily_table(conn):
+    """Create the option_features_daily table schema"""
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS option_features_daily (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            date TEXT NOT NULL,
+            underlying_price REAL,
+
+            -- IV Surface Metrics
+            iv_atm_call REAL,
+            iv_atm_put REAL,
+            iv_otm_call_1 REAL,
+            iv_otm_put_1 REAL,
+            iv_otm_call_2 REAL,
+            iv_otm_put_2 REAL,
+
+            -- Term Structure (by DTE buckets)
+            iv_7d REAL,
+            iv_14d REAL,
+            iv_30d REAL,
+            iv_60d REAL,
+            iv_90d REAL,
+
+            -- Skew Metrics
+            skew_put_call REAL,
+            skew_otm_atm_call REAL,
+            skew_otm_atm_put REAL,
+
+            -- Term Structure Slopes
+            term_slope_7_14 REAL,
+            term_slope_14_30 REAL,
+            term_slope_30_60 REAL,
+
+            -- Volume/OI Metrics
+            total_call_volume INTEGER,
+            total_put_volume INTEGER,
+            total_call_oi INTEGER,
+            total_put_oi INTEGER,
+            total_volume INTEGER,
+            total_oi INTEGER,
+
+            -- Ratios
+            put_call_volume_ratio REAL,
+            put_call_oi_ratio REAL,
+            oi_vol_ratio REAL,
+
+            -- Liquidity Score
+            liquidity_score REAL,
+
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(symbol, date)
+        )
+    """)
+
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_option_features_symbol_date ON option_features_daily(symbol, date)")
+
+    conn.commit()
+    logger.info("Created option_features_daily table")
+
+
+def load_historical_chains(conn):
+    """Load all historical options chains"""
+    logger.info("Loading historical_options_chains...")
+    df_chains = pd.read_sql_query(
+        "SELECT * FROM historical_options_chains ORDER BY symbol, snapshot_date",
+        conn
+    )
+    logger.info(f"Loaded {len(df_chains)} contracts")
+    return df_chains
+
+
+def get_iv_by_moneyness_bucket(df, option_type, moneyness_min, moneyness_max):
+    """Get average IV for contracts in a moneyness bucket"""
+    mask = (
+        (df['option_type'] == option_type) &
+        (df['moneyness'] >= moneyness_min) &
+        (df['moneyness'] < moneyness_max) &
+        (df['implied_volatility'].notna()) &
+        (df['implied_volatility'] > 0)
+    )
+
+    if mask.sum() > 0:
+        return df.loc[mask, 'implied_volatility'].mean()
+    return np.nan
+
+
+def get_iv_by_dte_bucket(df, dte_min, dte_max):
+    """Get average IV for contracts in a DTE bucket"""
+    mask = (
+        (df['days_to_expiration'] >= dte_min) &
+        (df['days_to_expiration'] < dte_max) &
+        (df['implied_volatility'].notna()) &
+        (df['implied_volatility'] > 0)
+    )
+
+    if mask.sum() > 0:
+        return df.loc[mask, 'implied_volatility'].mean()
+    return np.nan
+
+
+def agg_group(group):
+    """Aggregate a single (symbol, date) group into features"""
+    if group.empty:
+        return pd.Series()
+
+    underlying_price = group['underlying_price'].iloc[0]
+
+    # Calculate moneyness
+    group = group.copy()
+    group['moneyness'] = group['strike'] / underlying_price
+
+    # IV Surface
+    iv_atm_call = get_iv_by_moneyness_bucket(group, 'call', 0.95, 1.05)
+    iv_atm_put = get_iv_by_moneyness_bucket(group, 'put', 0.95, 1.05)
+    iv_otm_call_1 = get_iv_by_moneyness_bucket(group, 'call', 1.05, 1.15)
+    iv_otm_put_1 = get_iv_by_moneyness_bucket(group, 'put', 0.85, 0.95)
+    iv_otm_call_2 = get_iv_by_moneyness_bucket(group, 'call', 1.15, 1.25)
+    iv_otm_put_2 = get_iv_by_moneyness_bucket(group, 'put', 0.75, 0.85)
+
+    # Term Structure
+    iv_7d = get_iv_by_dte_bucket(group, 0, 10)
+    iv_14d = get_iv_by_dte_bucket(group, 10, 21)
+    iv_30d = get_iv_by_dte_bucket(group, 21, 45)
+    iv_60d = get_iv_by_dte_bucket(group, 45, 75)
+    iv_90d = get_iv_by_dte_bucket(group, 75, 105)
+
+    # Skew
+    skew_put_call = (iv_atm_put - iv_atm_call) if pd.notna(iv_atm_put) and pd.notna(iv_atm_call) else np.nan
+    skew_otm_atm_call = (iv_otm_call_1 - iv_atm_call) if pd.notna(iv_otm_call_1) and pd.notna(iv_atm_call) else np.nan
+    skew_otm_atm_put = (iv_otm_put_1 - iv_atm_put) if pd.notna(iv_otm_put_1) and pd.notna(iv_atm_put) else np.nan
+
+    # Term Structure Slopes
+    term_slope_7_14 = (iv_14d - iv_7d) if pd.notna(iv_14d) and pd.notna(iv_7d) else np.nan
+    term_slope_14_30 = (iv_30d - iv_14d) if pd.notna(iv_30d) and pd.notna(iv_14d) else np.nan
+    term_slope_30_60 = (iv_60d - iv_30d) if pd.notna(iv_60d) and pd.notna(iv_30d) else np.nan
+
+    # Volume/OI
+    calls = group[group['option_type'] == 'call']
+    puts = group[group['option_type'] == 'put']
+
+    total_call_volume = int(calls['volume'].sum()) if 'volume' in calls.columns else 0
+    total_put_volume = int(puts['volume'].sum()) if 'volume' in puts.columns else 0
+    total_call_oi = int(calls['open_interest'].sum()) if 'open_interest' in calls.columns else 0
+    total_put_oi = int(puts['open_interest'].sum()) if 'open_interest' in puts.columns else 0
+
+    total_volume = total_call_volume + total_put_volume
+    total_oi = total_call_oi + total_put_oi
+
+    # Ratios
+    put_call_volume_ratio = (total_put_volume / total_call_volume) if total_call_volume > 0 else np.nan
+    put_call_oi_ratio = (total_put_oi / total_call_oi) if total_call_oi > 0 else np.nan
+    oi_vol_ratio = (total_oi / total_volume) if total_volume > 0 else np.nan
+    liquidity_score = np.log1p(total_volume) * np.log1p(total_oi)
+
+    return pd.Series({
+        'underlying_price': underlying_price,
+        'iv_atm_call': iv_atm_call,
+        'iv_atm_put': iv_atm_put,
+        'iv_otm_call_1': iv_otm_call_1,
+        'iv_otm_put_1': iv_otm_put_1,
+        'iv_otm_call_2': iv_otm_call_2,
+        'iv_otm_put_2': iv_otm_put_2,
+        'iv_7d': iv_7d,
+        'iv_14d': iv_14d,
+        'iv_30d': iv_30d,
+        'iv_60d': iv_60d,
+        'iv_90d': iv_90d,
+        'skew_put_call': skew_put_call,
+        'skew_otm_atm_call': skew_otm_atm_call,
+        'skew_otm_atm_put': skew_otm_atm_put,
+        'term_slope_7_14': term_slope_7_14,
+        'term_slope_14_30': term_slope_14_30,
+        'term_slope_30_60': term_slope_30_60,
+        'total_call_volume': total_call_volume,
+        'total_put_volume': total_put_volume,
+        'total_call_oi': total_call_oi,
+        'total_put_oi': total_put_oi,
+        'total_volume': total_volume,
+        'total_oi': total_oi,
+        'put_call_volume_ratio': put_call_volume_ratio,
+        'put_call_oi_ratio': put_call_oi_ratio,
+        'oi_vol_ratio': oi_vol_ratio,
+        'liquidity_score': liquidity_score
+    })
+
+
+def compute_daily_features(df_chains):
+    """Compute aggregated features per (symbol, date)"""
+    group_cols = ['symbol', 'snapshot_date']
+
+    # Rename snapshot_date to date for consistency
+    df_chains = df_chains.rename(columns={'snapshot_date': 'date'})
+    group_cols = ['symbol', 'date']
+
+    grouped = df_chains.groupby(group_cols)
+    df_features = grouped.apply(agg_group).reset_index()
+
+    logger.info(f"Computed options features for {len(df_features)} symbol-date rows")
+    return df_features
+
+
+def main():
+    """Main function"""
+    conn = sqlite3.connect(OPTIONS_UNIVERSE_DB)
+
+    # Create table
+    create_option_features_daily_table(conn)
+
+    # Load options chains and compute features
+    df_chains = load_historical_chains(conn)
+
+    if df_chains.empty:
+        logger.warning("No data in historical_options_chains table")
+        conn.close()
+        return
+
+    df_features = compute_daily_features(df_chains)
+
+    # Load full OHLCV universe
+    df_ohlcv = load_ohlcv_symbol_dates()
+    logger.info(f"OHLCV universe contains {len(df_ohlcv)} symbol-date rows")
+
+    # Full coverage join: keep all OHLCV rows, attach options features where available
+    df_full = df_ohlcv.merge(df_features, on=['symbol', 'date'], how='left')
+
+    logger.info(
+        f"After full-coverage join: {len(df_full)} rows, {len(df_full.columns)} columns"
+    )
+
+    # IMPORTANT: Do NOT fill NaN. LightGBM handles NaN natively.
+
+    # Deduplicate on (symbol, date) to satisfy UNIQUE constraint
+    before = len(df_full)
+    df_full = df_full.drop_duplicates(subset=['symbol', 'date'], keep='last')
+    after = len(df_full)
+
+    logger.info(f"Deduplicated option features: removed {before - after} duplicate rows")
+
+    logger.info("Writing option_features_daily to database")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM option_features_daily")
+    df_full.to_sql("option_features_daily", conn, if_exists="append", index=False)
+
+    conn.commit()
+    conn.close()
+
+    logger.info("Done building full-coverage option_features_daily")
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,42 @@
+{
+  "train_window": "full_dataset",
+  "horizons": {
+    "H1": 2,
+    "H2": 10
+  },
+  "feature_list": [
+    "return_1d",
+    "return_3d",
+    "return_5d",
+    "return_10d",
+    "realized_vol_5d",
+    "realized_vol_10d",
+    "realized_vol_20d",
+    "iv_atm_call",
+    "iv_atm_put",
+    "iv_otm_call_1",
+    "iv_otm_put_1",
+    "iv_7d",
+    "iv_14d",
+    "iv_30d",
+    "iv_60d",
+    "skew_put_call",
+    "skew_otm_atm_call",
+    "skew_otm_atm_put",
+    "term_slope_7_14",
+    "term_slope_14_30",
+    "term_slope_30_60",
+    "oi_vol_ratio",
+    "liquidity_score",
+    "vol_regime",
+    "trend_regime",
+    "close",
+    "volume"
+  ],
+  "metrics": {
+    "train_samples": 1317819,
+    "val_samples": 282390,
+    "test_samples": 282390
+  },
+  "timestamp": "2026-02-14T21:14:16.676026"
+}

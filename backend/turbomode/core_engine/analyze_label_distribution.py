@@ -118,7 +118,7 @@ def main():
     print("DIAGNOSTIC TASK 1: LABEL DISTRIBUTION ANALYSIS")
     print("=" * 80)
     print("Analyzing training data for all 11 sectors...")
-    print("Label: label_1d_5pct (1-day horizon, 5% threshold)")
+    print("Label: 14-day MFE/MAE path-dependent (±5% threshold)")
     print("Class semantics: 0=SELL, 1=HOLD, 2=BUY")
     print("=" * 80)
 

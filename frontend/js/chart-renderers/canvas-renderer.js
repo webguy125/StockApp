@@ -489,8 +489,24 @@ export class CanvasRenderer {
 
     if (visibleData.length === 0) return;
 
-    this.minPrice = Math.min(...visibleData.map(d => d.Low));
-    this.maxPrice = Math.max(...visibleData.map(d => d.High));
+    // Filter out invalid candles (NaN, null, undefined, Infinity) before calculating ranges
+    const validCandles = visibleData.filter(d =>
+      d &&
+      typeof d.Low === 'number' &&
+      typeof d.High === 'number' &&
+      isFinite(d.Low) &&
+      isFinite(d.High) &&
+      d.Low > 0 &&
+      d.High > 0
+    );
+
+    if (validCandles.length === 0) {
+      console.error('[CHART RENDERER] No valid candles found in visible data! All candles have invalid OHLC values.');
+      return;
+    }
+
+    this.minPrice = Math.min(...validCandles.map(d => d.Low));
+    this.maxPrice = Math.max(...validCandles.map(d => d.High));
 
     // Add padding and round dynamically based on price range
     const priceRange = this.maxPrice - this.minPrice;
@@ -856,6 +872,20 @@ export class CanvasRenderer {
       if (i < 0 || i >= this.data.length) continue;
 
       const candle = this.data[i];
+
+      // Skip invalid candles (NaN, null, undefined, Infinity)
+      if (!candle ||
+          typeof candle.Open !== 'number' ||
+          typeof candle.Close !== 'number' ||
+          typeof candle.High !== 'number' ||
+          typeof candle.Low !== 'number' ||
+          !isFinite(candle.Open) ||
+          !isFinite(candle.Close) ||
+          !isFinite(candle.High) ||
+          !isFinite(candle.Low)) {
+        continue;
+      }
+
       const x = chartLeft + ((i - this.startIndex) * totalWidth) + spacing / 2;
 
       const open = this.priceToY(candle.Open);
@@ -1276,8 +1306,21 @@ export class CanvasRenderer {
     const clampedEnd = Math.min(this.data.length - 1, this.endIndex);
     const visibleData = this.data.slice(clampedStart, clampedEnd + 1);
 
-    const visibleHigh = Math.max(...visibleData.map(d => d.High));
-    const visibleLow = Math.min(...visibleData.map(d => d.Low));
+    // Filter out invalid candles before calculating visible high/low
+    const validCandles = visibleData.filter(d =>
+      d &&
+      typeof d.Low === 'number' &&
+      typeof d.High === 'number' &&
+      isFinite(d.Low) &&
+      isFinite(d.High) &&
+      d.Low > 0 &&
+      d.High > 0
+    );
+
+    if (validCandles.length === 0) return;
+
+    const visibleHigh = Math.max(...validCandles.map(d => d.High));
+    const visibleLow = Math.min(...validCandles.map(d => d.Low));
 
     const highY = this.priceToY(visibleHigh);
     const lowY = this.priceToY(visibleLow);
@@ -1481,8 +1524,21 @@ export class CanvasRenderer {
     const clampedEnd = Math.min(this.data.length - 1, this.endIndex);
     const visibleData = this.data.slice(clampedStart, clampedEnd + 1);
 
-    const visibleHigh = Math.max(...visibleData.map(d => d.High));
-    const visibleLow = Math.min(...visibleData.map(d => d.Low));
+    // Filter out invalid candles before calculating visible high/low
+    const validCandles = visibleData.filter(d =>
+      d &&
+      typeof d.Low === 'number' &&
+      typeof d.High === 'number' &&
+      isFinite(d.Low) &&
+      isFinite(d.High) &&
+      d.Low > 0 &&
+      d.High > 0
+    );
+
+    if (validCandles.length === 0) return;
+
+    const visibleHigh = Math.max(...validCandles.map(d => d.High));
+    const visibleLow = Math.min(...validCandles.map(d => d.Low));
 
     // Draw chart high line (orange) - ALWAYS
     const highY = this.priceToY(visibleHigh);

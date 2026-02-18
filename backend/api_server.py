@@ -69,6 +69,19 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
 os.makedirs(DATA_DIR, exist_ok=True)
 
+# Initialize Tradier WebSocket client for real-time stock quotes
+tradier_ws_client = None
+try:
+    # Import from tradier_websocket directory
+    import sys
+    sys.path.insert(0, os.path.join(BASE_DIR, "..", "tradier_websocket"))
+    from tradier_websocket_client import get_tradier_ws_client
+    tradier_ws_client = get_tradier_ws_client()
+    print("[TRADIER WS] Real-time streaming client initialized")
+except Exception as e:
+    print(f"[TRADIER WS] Failed to initialize: {e}")
+    tradier_ws_client = None
+
 # =============================================================================
 # COINBASE HISTORICAL DATA FETCHER (for minute-level crypto data)
 # =============================================================================
@@ -542,7 +555,7 @@ def get_current_candle_volume(symbol, interval):
     """
     Get the accumulated volume for the current forming candle.
     For crypto: fetches from Coinbase API
-    For stocks: fetches from Yahoo Finance
+    For stocks: fetches from Tradier API (real-time), with Yahoo Finance fallback
 
     Args:
         symbol: Stock or crypto symbol (e.g., 'AAPL', 'BTC', 'BTC-USD')
@@ -560,7 +573,9 @@ def get_current_candle_volume(symbol, interval):
 
     is_crypto = symbol.endswith('-USD') or symbol in known_crypto
 
-    # For stocks, use Yahoo Finance to get current volume
+    # For stocks, use Yahoo Finance to get current candle data
+    # Note: Tradier doesn't provide intraday candle data (only daily OHLC + current quote)
+    # Yahoo Finance provides actual candle OHLCV for the current interval
     if not is_crypto:
         try:
             ticker = yf.Ticker(symbol)
@@ -715,6 +730,75 @@ def current_candle_volume_endpoint(symbol):
     result = get_current_candle_volume(symbol, interval)
     return jsonify(result)
 
+@app.route("/quote/<symbol>")
+def get_realtime_quote(symbol):
+    """
+    Get real-time quote from Tradier (for price updates only, not candle data)
+
+    Returns:
+        JSON: {
+            'symbol': 'AAPL',
+            'last': 150.25,
+            'bid': 150.24,
+            'ask': 150.26,
+            'volume': 52341234,
+            'change': 0.75,
+            'change_percentage': 0.50
+        }
+    """
+    symbol = symbol.upper()
+
+    # Detect if crypto
+    known_crypto = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 'LTC',
+                   'MATIC', 'UNI', 'BNB', 'USDT', 'USDC']
+    is_crypto = symbol.endswith('-USD') or symbol in known_crypto
+
+    if is_crypto:
+        # For crypto, return basic response (could add Coinbase quote here if needed)
+        return jsonify({
+            'symbol': symbol,
+            'last': None,
+            'bid': None,
+            'ask': None,
+            'volume': 0,
+            'change': None,
+            'change_percentage': None,
+            'source': 'none'
+        })
+
+    # For stocks, use Tradier
+    try:
+        from tradier_client import get_tradier_client
+
+        tradier = get_tradier_client()
+        quote = tradier.get_quote(symbol)
+
+        if quote:
+            return jsonify({
+                'symbol': quote['symbol'],
+                'last': quote['last'],
+                'bid': quote['bid'],
+                'ask': quote['ask'],
+                'volume': quote['volume'],
+                'change': quote['change'],
+                'change_percentage': quote['change_percentage'],
+                'source': 'tradier'
+            })
+    except Exception as e:
+        print(f"[QUOTE ERROR] Tradier failed for {symbol}: {e}")
+
+    # Fallback: return empty quote
+    return jsonify({
+        'symbol': symbol,
+        'last': None,
+        'bid': None,
+        'ask': None,
+        'volume': 0,
+        'change': None,
+        'change_percentage': None,
+        'source': 'error'
+    })
+
 @app.route("/volume", methods=["POST"])
 def calculate_volume():
     data = request.get_json()
@@ -798,14 +882,23 @@ def save_tick_bar(symbol, threshold):
     os.makedirs(tick_dir, exist_ok=True)
 
     tick_file = os.path.join(tick_dir, f"tick_{threshold}_{symbol}.json")
+    temp_file = tick_file + ".tmp"
 
     try:
         # Load existing bars
+        bars = []
         if os.path.exists(tick_file):
-            with open(tick_file, 'r') as f:
-                bars = json.load(f)
-        else:
-            bars = []
+            try:
+                with open(tick_file, 'r') as f:
+                    bars = json.load(f)
+            except json.JSONDecodeError as e:
+                # File is corrupted, recover by starting fresh
+                print(f"[TICK WARNING] Corrupted JSON in {tick_file}, recovering: {e}")
+                # Backup corrupted file
+                backup_file = tick_file + ".corrupted"
+                if os.path.exists(tick_file):
+                    os.rename(tick_file, backup_file)
+                bars = []
 
         # Append new bar
         bars.append(bar_data)
@@ -814,15 +907,21 @@ def save_tick_bar(symbol, threshold):
         if len(bars) > 1000:
             bars = bars[-1000:]
 
-        # Save back to file
-        with open(tick_file, 'w') as f:
+        # Atomic write: write to temp file, then rename
+        with open(temp_file, 'w') as f:
             json.dump(bars, f, indent=2)
+
+        # Atomic rename (prevents corruption from concurrent writes)
+        os.replace(temp_file, tick_file)
 
         # print(f"[TICK] Saved bar for {symbol} threshold={threshold}, total bars={len(bars)}")
         return jsonify({"success": True, "total_bars": len(bars)})
 
     except Exception as e:
         print(f"[TICK ERROR] Failed to save tick bar: {e}")
+        # Clean up temp file if it exists
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/save_line", methods=["POST"])
@@ -1138,14 +1237,27 @@ def handle_subscribe(data):
         # print(f'[SUBSCRIBE] Subscribed to symbols: {symbols}')
         # print(f'[SUBSCRIBE] Total subscribed symbols: {len(subscribed_symbols)}')
 
-        # Start Coinbase WebSocket if not already running
-        if coinbase_ws is None:
-            # print(f'[COINBASE] Starting WebSocket (first connection)')
-            start_coinbase_websocket()
-        else:
-            # Update existing subscription
-            # print(f'[COINBASE] Updating subscriptions')
-            resubscribe_coinbase_ws()
+        # Separate crypto and stock symbols
+        crypto_suffixes = ['-USD', '-USDT', '-BTC', '-ETH']
+        crypto_symbols = [s for s in symbols if any(s.endswith(suffix) for suffix in crypto_suffixes)]
+        stock_symbols = [s for s in symbols if s not in crypto_symbols]
+
+        # Subscribe crypto symbols to Coinbase WebSocket
+        if crypto_symbols:
+            if coinbase_ws is None:
+                # print(f'[COINBASE] Starting WebSocket (first connection)')
+                start_coinbase_websocket()
+            else:
+                # Update existing subscription
+                # print(f'[COINBASE] Updating subscriptions')
+                resubscribe_coinbase_ws()
+
+        # Subscribe stock symbols to Tradier WebSocket
+        if stock_symbols and tradier_ws_client:
+            for symbol in stock_symbols:
+                tradier_ws_client.subscribe(symbol)
+                # Register callback to emit to Socket.IO
+                tradier_ws_client.register_callback(symbol, lambda sym, data: on_tradier_quote(sym, data))
 
 @socketio.on('subscribe_ticker')
 def handle_subscribe_ticker(data):
@@ -1157,14 +1269,25 @@ def handle_subscribe_ticker(data):
         # print(f'[SUBSCRIBE_TICKER] Subscribed to symbol: {symbol}')
         # print(f'[SUBSCRIBE_TICKER] Total subscribed symbols: {len(subscribed_symbols)}')
 
-        # Start Coinbase WebSocket if not already running
-        if coinbase_ws is None:
-            # print(f'[COINBASE] Starting WebSocket (first connection)')
-            start_coinbase_websocket()
+        # Determine if crypto or stock
+        crypto_suffixes = ['-USD', '-USDT', '-BTC', '-ETH']
+        is_crypto = any(symbol.endswith(suffix) for suffix in crypto_suffixes)
+
+        if is_crypto:
+            # Subscribe to Coinbase WebSocket
+            if coinbase_ws is None:
+                # print(f'[COINBASE] Starting WebSocket (first connection)')
+                start_coinbase_websocket()
+            else:
+                # Update existing subscription
+                # print(f'[COINBASE] Updating subscriptions')
+                resubscribe_coinbase_ws()
         else:
-            # Update existing subscription
-            # print(f'[COINBASE] Updating subscriptions')
-            resubscribe_coinbase_ws()
+            # Subscribe to Tradier WebSocket
+            if tradier_ws_client:
+                tradier_ws_client.subscribe(symbol)
+                # Register callback to emit to Socket.IO
+                tradier_ws_client.register_callback(symbol, lambda sym, data: on_tradier_quote(sym, data))
 
 @socketio.on('unsubscribe')
 def handle_unsubscribe(data):
@@ -1173,9 +1296,46 @@ def handle_unsubscribe(data):
     if symbols:
         subscribed_symbols.difference_update(symbols)
         # print(f'Unsubscribed from symbols: {symbols}')
-        # Update Coinbase WebSocket subscriptions
+
+        # Unsubscribe from both Coinbase and Tradier
         if coinbase_ws:
             resubscribe_coinbase_ws()
+
+        # Unsubscribe stock symbols from Tradier
+        if tradier_ws_client:
+            crypto_suffixes = ['-USD', '-USDT', '-BTC', '-ETH']
+            for symbol in symbols:
+                is_crypto = any(symbol.endswith(suffix) for suffix in crypto_suffixes)
+                if not is_crypto:
+                    tradier_ws_client.unsubscribe(symbol)
+
+def on_tradier_quote(symbol, quote_data):
+    """
+    Callback for Tradier WebSocket updates
+    Emits ticker_update to all Socket.IO clients
+
+    Args:
+        symbol: Stock symbol (e.g., 'AAPL')
+        quote_data: Dict with {last, bid, ask, volume, timestamp}
+    """
+    try:
+        # Format as ticker_update compatible with frontend
+        ticker_data = {
+            'symbol': symbol,
+            'price': quote_data.get('last', 0),
+            'bid': quote_data.get('bid', 0),
+            'ask': quote_data.get('ask', 0),
+            'change': 0,  # Not provided by Tradier streaming API
+            'changePercent': 0,
+            'previousClose': 0,
+            'timestamp': quote_data.get('timestamp', datetime.now()).isoformat() if isinstance(quote_data.get('timestamp'), datetime) else datetime.now().isoformat()
+        }
+
+        # Emit to all Socket.IO clients
+        socketio.emit('ticker_update', ticker_data)
+
+    except Exception as e:
+        print(f"[TRADIER WS ERROR] Failed to process quote for {symbol}: {e}")
 
 def on_coinbase_message(ws, message):
     """Handle incoming Coinbase WebSocket messages"""
@@ -2831,6 +2991,30 @@ except Exception as e:
     traceback.print_exc()
     OPTIONS_API_AVAILABLE = False
 
+# Initialize Options Intelligence API Blueprint (cached enriched signals from options_intel.db)
+try:
+    from backend.turbomode.Options.api_options_intel import bp as options_intel_bp
+    app.register_blueprint(options_intel_bp, url_prefix='/turbomode')
+    print("[OPTIONS INTEL API] Registered - /turbomode/options_intel/*")
+    OPTIONS_INTEL_API_AVAILABLE = True
+except Exception as e:
+    import traceback
+    print(f"[OPTIONS INTEL API] Not available: {e}")
+    traceback.print_exc()
+    OPTIONS_INTEL_API_AVAILABLE = False
+
+# Initialize HL (Higher-Level) Analytics API Blueprint (read-only advisory analytics)
+try:
+    from backend.api.hl_routes import hl_bp
+    app.register_blueprint(hl_bp)
+    print("[HL API] Registered - /api/hl/* (READ-ONLY, ADVISORY-ONLY)")
+    HL_API_AVAILABLE = True
+except Exception as e:
+    print(f"[HL API] Not available: {e}")
+    import traceback
+    traceback.print_exc()
+    HL_API_AVAILABLE = False
+
 
 @app.route('/turbomode/signals', methods=['GET'])
 def get_turbomode_signals():
@@ -3076,6 +3260,756 @@ def run_turbomode_scan():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/turbomode/options/pnl/<symbol>', methods=['GET'])
+def get_hold_condor_pnl(symbol):
+    """
+    Get real-time Iron Condor P&L for HOLD signal
+
+    RESTRICTIONS:
+    - ONLY for HOLD signals
+    - Returns None if not HOLD or if market closed
+    - Does NOT modify any existing logic
+
+    Returns:
+        {
+            'symbol': str,
+            'pnl': float or null
+        }
+    """
+    if not TURBOMODE_AVAILABLE:
+        return jsonify({'error': 'TurboMode not available'}), 503
+
+    try:
+        from backend.turbomode.Options import compute_hold_condor_pnl
+        import sqlite3
+
+        # Get signal from database
+        db_path = os.path.join(os.path.dirname(__file__), 'data', 'turbomode.db')
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT signal_type, current_price, stop_upper, stop_lower
+            FROM active_signals
+            WHERE symbol = ? AND status = 'ACTIVE'
+        ''', (symbol,))
+
+        signal = cursor.fetchone()
+        conn.close()
+
+        if not signal:
+            return jsonify({'symbol': symbol, 'pnl': None})
+
+        # Only compute for HOLD signals
+        if signal['signal_type'] != 'HOLD':
+            return jsonify({'symbol': symbol, 'pnl': None})
+
+        # Check if stop bounds exist
+        if not signal['stop_upper'] or not signal['stop_lower']:
+            return jsonify({'symbol': symbol, 'pnl': None})
+
+        # Compute Iron Condor P&L
+        pnl = compute_hold_condor_pnl(
+            symbol=symbol,
+            current_price=signal['current_price'],
+            stop_upper=signal['stop_upper'],
+            stop_lower=signal['stop_lower']
+        )
+
+        return jsonify({
+            'symbol': symbol,
+            'pnl': pnl
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'symbol': symbol, 'pnl': None})
+
+
+@app.route('/turbomode/options/analytics/<symbol>', methods=['GET'])
+def get_hold_analytics(symbol):
+    """
+    Get full analytics suite for HOLD signal
+    ONLY for HOLD signals
+    Returns comprehensive analytics including drift, pressure, volatility, quality
+    """
+    if not TURBOMODE_AVAILABLE:
+        return jsonify({'error': 'TurboMode not available'}), 503
+
+    try:
+        from backend.turbomode.Options import compute_hold_condor_pnl
+        from backend.turbomode.Options.ibkr_client import IBKROptionClient
+        from backend.turbomode.Options.expiration_selector import select_expiration
+        from backend.turbomode.Options.wing_selector import select_wings
+        from backend.turbomode.Options.condor_pricing import calculate_condor_pnl
+        from backend.turbomode.Options.analytics_engine import compute_analytics
+        from backend.turbomode.Options.hold_condor_engine import is_market_hours
+        import sqlite3
+        from datetime import datetime, timedelta
+
+        # Get signal from database
+        db_path = os.path.join(os.path.dirname(__file__), 'data', 'turbomode.db')
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT signal_type, current_price, stop_upper, stop_lower,
+                   confidence, prob_buy, prob_sell, prob_hold, created_at
+            FROM active_signals
+            WHERE symbol = ? AND status = 'ACTIVE'
+        ''', (symbol,))
+
+        signal = cursor.fetchone()
+        conn.close()
+
+        if not signal:
+            return jsonify({'error': 'Signal not found'}), 404
+
+        # Only compute for HOLD signals
+        if signal['signal_type'] != 'HOLD':
+            return jsonify({'error': 'Not a HOLD signal'}), 400
+
+        # Calculate signal age
+        try:
+            created_at = datetime.fromisoformat(signal['created_at'])
+            age_days = (datetime.now() - created_at).days
+        except:
+            age_days = 0
+
+        # Check market hours
+        if not is_market_hours():
+            return jsonify({
+                'symbol': symbol,
+                'signal': 'HOLD',
+                'confidence': signal['confidence'],
+                'probability': signal['prob_hold'],
+                'pnl': None,
+                'age': age_days,
+                'expire_date': None,
+                'drift': 0.0,
+                'pressure_index': 'Market Closed',
+                'volatility_regime': 'Market Closed',
+                'quality_score': 0
+            })
+
+        # Check if stop bounds exist
+        if not signal['stop_upper'] or not signal['stop_lower']:
+            return jsonify({
+                'symbol': symbol,
+                'signal': 'HOLD',
+                'confidence': signal['confidence'],
+                'probability': signal['prob_hold'],
+                'pnl': None,
+                'age': age_days,
+                'expire_date': None,
+                'drift': 0.0,
+                'pressure_index': 'No Stop Bounds',
+                'volatility_regime': 'No Stop Bounds',
+                'quality_score': 0
+            })
+
+        # Connect to IBKR and fetch option chain
+        client = IBKROptionClient()
+        try:
+            if not client.connect():
+                return jsonify({
+                    'symbol': symbol,
+                    'signal': 'HOLD',
+                    'confidence': signal['confidence'],
+                    'probability': signal['prob_hold'],
+                    'pnl': None,
+                    'age': age_days,
+                    'expire_date': None,
+                    'drift': 0.0,
+                    'pressure_index': 'IBKR Failed',
+                    'volatility_regime': 'IBKR Failed',
+                    'quality_score': 0
+                })
+
+            chain_data = client.fetch_option_chain(symbol)
+
+            if not chain_data or 'expirations' not in chain_data or 'chains' not in chain_data:
+                return jsonify({
+                    'symbol': symbol,
+                    'signal': 'HOLD',
+                    'confidence': signal['confidence'],
+                    'probability': signal['prob_hold'],
+                    'pnl': None,
+                    'age': age_days,
+                    'expire_date': None,
+                    'drift': 0.0,
+                    'pressure_index': 'No Chain',
+                    'volatility_regime': 'No Chain',
+                    'quality_score': 0
+                })
+
+            # Select expiration
+            expiration = select_expiration(chain_data['expirations'])
+
+            if not expiration or expiration not in chain_data['chains']:
+                return jsonify({
+                    'symbol': symbol,
+                    'signal': 'HOLD',
+                    'confidence': signal['confidence'],
+                    'probability': signal['prob_hold'],
+                    'pnl': None,
+                    'age': age_days,
+                    'expire_date': None,
+                    'drift': 0.0,
+                    'pressure_index': 'No Expiration',
+                    'volatility_regime': 'No Expiration',
+                    'quality_score': 0
+                })
+
+            chain = chain_data['chains'][expiration]
+            calls = chain.get('calls', {})
+            puts = chain.get('puts', {})
+
+            if not calls or not puts:
+                return jsonify({
+                    'symbol': symbol,
+                    'signal': 'HOLD',
+                    'confidence': signal['confidence'],
+                    'probability': signal['prob_hold'],
+                    'pnl': None,
+                    'age': age_days,
+                    'expire_date': expiration,
+                    'drift': 0.0,
+                    'pressure_index': 'No Options',
+                    'volatility_regime': 'No Options',
+                    'quality_score': 0
+                })
+
+            # Select wings
+            wings = select_wings(calls, puts, signal['current_price'],
+                               signal['stop_upper'], signal['stop_lower'])
+
+            if not wings:
+                return jsonify({
+                    'symbol': symbol,
+                    'signal': 'HOLD',
+                    'confidence': signal['confidence'],
+                    'probability': signal['prob_hold'],
+                    'pnl': None,
+                    'age': age_days,
+                    'expire_date': expiration,
+                    'drift': 0.0,
+                    'pressure_index': 'No Wings',
+                    'volatility_regime': 'No Wings',
+                    'quality_score': 0
+                })
+
+            short_call_strike, short_put_strike = wings
+
+            # Calculate P&L
+            pricing = calculate_condor_pnl(calls, puts, short_call_strike, short_put_strike)
+            pnl = pricing['pnl'] if pricing and 'pnl' in pricing else None
+
+            # Compute analytics
+            analytics = compute_analytics(
+                symbol=symbol,
+                current_price=signal['current_price'],
+                calls=calls,
+                puts=puts,
+                short_call_strike=short_call_strike,
+                short_put_strike=short_put_strike,
+                pnl=pnl,
+                age_days=age_days
+            )
+
+            return jsonify({
+                'symbol': symbol,
+                'signal': 'HOLD',
+                'confidence': round(signal['confidence'], 2),
+                'probability': round(signal['prob_hold'], 2),
+                'pnl': round(pnl, 2) if pnl is not None else None,
+                'age': age_days,
+                'expire_date': expiration,
+                'drift': analytics['drift'],
+                'pressure_index': analytics['pressure_index'],
+                'volatility_regime': analytics['volatility_regime'],
+                'quality_score': analytics['quality_score']
+            })
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'symbol': symbol,
+                'signal': 'HOLD',
+                'confidence': signal['confidence'],
+                'probability': signal['prob_hold'],
+                'pnl': None,
+                'age': age_days,
+                'expire_date': None,
+                'drift': 0.0,
+                'pressure_index': 'Error',
+                'volatility_regime': 'Error',
+                'quality_score': 0
+            })
+
+        finally:
+            try:
+                client.disconnect()
+            except:
+                pass
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/turbomode/options/regime/<symbol>', methods=['GET'])
+def get_regime_intelligence(symbol):
+    """
+    Get full regime intelligence for HOLD signal
+    ONLY for HOLD signals
+    Returns regime state, transitions, timeline, and narrative
+    """
+    if not TURBOMODE_AVAILABLE:
+        return jsonify({'error': 'TurboMode not available'}), 503
+
+    try:
+        from backend.turbomode.Options.ibkr_client import IBKROptionClient
+        from backend.turbomode.Options.expiration_selector import select_expiration
+        from backend.turbomode.Options.wing_selector import select_wings
+        from backend.turbomode.Options.condor_pricing import calculate_condor_pnl
+        from backend.turbomode.Options.analytics_engine import compute_analytics
+        from backend.turbomode.Options.regime_engine import classify_regime
+        from backend.turbomode.Options.transition_engine import detect_transition
+        from backend.turbomode.Options.timeline_engine import (
+            add_snapshot, get_timeline, get_previous_snapshot
+        )
+        from backend.turbomode.Options.narrative_engine import generate_narrative
+        from backend.turbomode.Options.hold_condor_engine import is_market_hours
+        import sqlite3
+        from datetime import datetime
+
+        # Get signal from database
+        db_path = os.path.join(os.path.dirname(__file__), 'data', 'turbomode.db')
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT signal_type, current_price, stop_upper, stop_lower,
+                   confidence, prob_hold, created_at
+            FROM active_signals
+            WHERE symbol = ? AND status = 'ACTIVE'
+        ''', (symbol,))
+
+        signal = cursor.fetchone()
+        conn.close()
+
+        if not signal:
+            return jsonify({'error': 'Signal not found'}), 404
+
+        # Only compute for HOLD signals
+        if signal['signal_type'] != 'HOLD':
+            return jsonify({'error': 'Not a HOLD signal'}), 400
+
+        # Calculate signal age
+        try:
+            created_at = datetime.fromisoformat(signal['created_at'])
+            age_days = (datetime.now() - created_at).days
+        except:
+            age_days = 0
+
+        # Check market hours
+        if not is_market_hours():
+            return jsonify({
+                'symbol': symbol,
+                'regime_state': 'Market Closed',
+                'transition_state': 'No Transition',
+                'transition_strength': 0.0,
+                'timeline': get_timeline(symbol),
+                'narrative': 'Market is currently closed. Regime intelligence unavailable.'
+            })
+
+        # Check if stop bounds exist
+        if not signal['stop_upper'] or not signal['stop_lower']:
+            return jsonify({
+                'symbol': symbol,
+                'regime_state': 'No Stop Bounds',
+                'transition_state': 'No Transition',
+                'transition_strength': 0.0,
+                'timeline': get_timeline(symbol),
+                'narrative': 'Stop bounds not available for this signal.'
+            })
+
+        # Connect to IBKR and fetch option chain
+        client = IBKROptionClient()
+        try:
+            if not client.connect():
+                return jsonify({
+                    'symbol': symbol,
+                    'regime_state': 'IBKR Failed',
+                    'transition_state': 'No Transition',
+                    'transition_strength': 0.0,
+                    'timeline': get_timeline(symbol),
+                    'narrative': 'Unable to connect to IBKR for regime analysis.'
+                })
+
+            chain_data = client.fetch_option_chain(symbol)
+
+            if not chain_data or 'expirations' not in chain_data or 'chains' not in chain_data:
+                return jsonify({
+                    'symbol': symbol,
+                    'regime_state': 'No Chain',
+                    'transition_state': 'No Transition',
+                    'transition_strength': 0.0,
+                    'timeline': get_timeline(symbol),
+                    'narrative': 'Option chain data unavailable.'
+                })
+
+            # Select expiration
+            expiration = select_expiration(chain_data['expirations'])
+
+            if not expiration or expiration not in chain_data['chains']:
+                return jsonify({
+                    'symbol': symbol,
+                    'regime_state': 'No Expiration',
+                    'transition_state': 'No Transition',
+                    'transition_strength': 0.0,
+                    'timeline': get_timeline(symbol),
+                    'narrative': 'No valid expiration date found.'
+                })
+
+            chain = chain_data['chains'][expiration]
+            calls = chain.get('calls', {})
+            puts = chain.get('puts', {})
+
+            if not calls or not puts:
+                return jsonify({
+                    'symbol': symbol,
+                    'regime_state': 'No Options',
+                    'transition_state': 'No Transition',
+                    'transition_strength': 0.0,
+                    'timeline': get_timeline(symbol),
+                    'narrative': 'Option data incomplete.'
+                })
+
+            # Select wings
+            wings = select_wings(calls, puts, signal['current_price'],
+                               signal['stop_upper'], signal['stop_lower'])
+
+            if not wings:
+                return jsonify({
+                    'symbol': symbol,
+                    'regime_state': 'No Wings',
+                    'transition_state': 'No Transition',
+                    'transition_strength': 0.0,
+                    'timeline': get_timeline(symbol),
+                    'narrative': 'Unable to select option strikes.'
+                })
+
+            short_call_strike, short_put_strike = wings
+
+            # Calculate P&L
+            pricing = calculate_condor_pnl(calls, puts, short_call_strike, short_put_strike)
+            pnl = pricing['pnl'] if pricing and 'pnl' in pricing else None
+
+            # Compute analytics
+            analytics = compute_analytics(
+                symbol=symbol,
+                current_price=signal['current_price'],
+                calls=calls,
+                puts=puts,
+                short_call_strike=short_call_strike,
+                short_put_strike=short_put_strike,
+                pnl=pnl,
+                age_days=age_days
+            )
+
+            # Classify regime
+            regime_state = classify_regime(
+                drift=analytics['drift'],
+                pressure_index=analytics['pressure_index'],
+                volatility_regime=analytics['volatility_regime'],
+                quality_score=analytics['quality_score'],
+                pnl=pnl
+            )
+
+            # Get previous snapshot for transition detection
+            previous_snapshot = get_previous_snapshot(symbol)
+
+            # Detect transition
+            if previous_snapshot:
+                transition_state, transition_strength = detect_transition(
+                    current_regime=regime_state,
+                    previous_regime=previous_snapshot.get('regime_state'),
+                    drift=analytics['drift'],
+                    previous_drift=previous_snapshot.get('drift'),
+                    quality_score=analytics['quality_score'],
+                    previous_quality_score=previous_snapshot.get('quality_score')
+                )
+            else:
+                transition_state = "No Transition"
+                transition_strength = 0.0
+
+            # Add snapshot to timeline
+            add_snapshot(
+                symbol=symbol,
+                drift=analytics['drift'],
+                pressure_index=analytics['pressure_index'],
+                volatility_regime=analytics['volatility_regime'],
+                quality_score=analytics['quality_score'],
+                regime_state=regime_state,
+                pnl=pnl
+            )
+
+            # Get timeline
+            timeline = get_timeline(symbol)
+
+            # Generate narrative
+            narrative = generate_narrative(
+                regime_state=regime_state,
+                transition_state=transition_state,
+                transition_strength=transition_strength,
+                drift=analytics['drift'],
+                pressure_index=analytics['pressure_index'],
+                volatility_regime=analytics['volatility_regime'],
+                quality_score=analytics['quality_score'],
+                pnl=pnl
+            )
+
+            return jsonify({
+                'symbol': symbol,
+                'regime_state': regime_state,
+                'transition_state': transition_state,
+                'transition_strength': round(transition_strength, 2),
+                'timeline': timeline,
+                'narrative': narrative
+            })
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'symbol': symbol,
+                'regime_state': 'Error',
+                'transition_state': 'No Transition',
+                'transition_strength': 0.0,
+                'timeline': get_timeline(symbol),
+                'narrative': f'Error computing regime intelligence: {str(e)}'
+            })
+
+        finally:
+            try:
+                client.disconnect()
+            except:
+                pass
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/turbomode/options/signal_intel', methods=['GET'])
+def get_signal_intelligence():
+    """
+    Get enriched BUY and SELL signals with Phase 4 intelligence
+    Returns existing signals with added context: strength, confirmation, risk, alignment, timing
+    """
+    if not TURBOMODE_AVAILABLE:
+        return jsonify({'error': 'TurboMode not available'}), 503
+
+    try:
+        from backend.turbomode.Options.unified_options_client import get_unified_options_client
+        from backend.turbomode.Options.expiration_selector import select_expiration
+        from backend.turbomode.Options.wing_selector import select_wings
+        from backend.turbomode.Options.condor_pricing import calculate_condor_pnl
+        from backend.turbomode.Options.analytics_engine import compute_analytics
+        from backend.turbomode.Options.regime_engine import classify_regime
+        from backend.turbomode.Options.transition_engine import detect_transition
+        from backend.turbomode.Options.timeline_engine import get_previous_snapshot
+        from backend.turbomode.Options.signal_intelligence import enrich_signal
+        from backend.turbomode.Options.hold_condor_engine import is_market_hours
+        import sqlite3
+        from datetime import datetime
+
+        # NOTE: Market hours check REMOVED for Signal Intelligence Dashboard
+        # This is a VIEW-ONLY page for existing signals - no trading/execution
+        # Market hours restrictions apply to:
+        #   - Trading execution (disabled after hours)
+        #   - Signal generation (disabled after hours)
+        # But NOT to:
+        #   - Viewing existing signals (allowed 24/7)
+        #   - Displaying last known options data (allowed 24/7)
+
+        # Get all active BUY and SELL signals from database
+        db_path = os.path.join(os.path.dirname(__file__), 'data', 'turbomode.db')
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT symbol, signal_type, current_price, stop_upper, stop_lower,
+                   confidence, prob_buy, prob_sell, prob_hold, created_at, sector
+            FROM active_signals
+            WHERE status = 'ACTIVE' AND signal_type IN ('BUY', 'SELL')
+            ORDER BY confidence DESC
+        ''')
+
+        signals = cursor.fetchall()
+        conn.close()
+
+        if not signals:
+            return jsonify({
+                'signals': [],
+                'message': 'No active BUY/SELL signals found.'
+            })
+
+        enriched_signals = []
+        client = get_unified_options_client()
+
+        try:
+            if not client.connect():
+                return jsonify({
+                    'signals': [],
+                    'error': 'Options data source connection failed'
+                })
+
+            for signal in signals:
+                try:
+                    symbol = signal['symbol']
+                    base_signal = signal['signal_type']
+
+                    # Get model probability
+                    model_probability = signal['prob_buy'] if base_signal == 'BUY' else signal['prob_sell']
+
+                    # Calculate signal age
+                    try:
+                        created_at = datetime.fromisoformat(signal['created_at'])
+                        age_days = (datetime.now() - created_at).days
+                    except:
+                        age_days = 0
+
+                    # Fetch option chain
+                    chain_data = client.fetch_option_chain(symbol)
+
+                    if not chain_data or 'expirations' not in chain_data:
+                        continue
+
+                    # Select expiration
+                    expiration = select_expiration(chain_data['expirations'])
+
+                    if not expiration or expiration not in chain_data['chains']:
+                        continue
+
+                    chain = chain_data['chains'][expiration]
+                    calls = chain.get('calls', {})
+                    puts = chain.get('puts', {})
+
+                    if not calls or not puts:
+                        continue
+
+                    # Select wings
+                    wings = select_wings(calls, puts, signal['current_price'],
+                                       signal['stop_upper'] or signal['current_price'],
+                                       signal['stop_lower'] or signal['current_price'])
+
+                    if not wings:
+                        continue
+
+                    short_call_strike, short_put_strike = wings
+
+                    # Calculate P&L
+                    pricing = calculate_condor_pnl(calls, puts, short_call_strike, short_put_strike)
+                    pnl = pricing['pnl'] if pricing and 'pnl' in pricing else None
+
+                    # Compute analytics
+                    analytics = compute_analytics(
+                        symbol=symbol,
+                        current_price=signal['current_price'],
+                        calls=calls,
+                        puts=puts,
+                        short_call_strike=short_call_strike,
+                        short_put_strike=short_put_strike,
+                        pnl=pnl,
+                        age_days=age_days
+                    )
+
+                    # Classify regime
+                    regime_state = classify_regime(
+                        drift=analytics['drift'],
+                        pressure_index=analytics['pressure_index'],
+                        volatility_regime=analytics['volatility_regime'],
+                        quality_score=analytics['quality_score'],
+                        pnl=pnl
+                    )
+
+                    # Get previous snapshot for transition detection
+                    previous_snapshot = get_previous_snapshot(symbol)
+
+                    # Detect transition
+                    if previous_snapshot:
+                        transition_state, transition_strength = detect_transition(
+                            current_regime=regime_state,
+                            previous_regime=previous_snapshot.get('regime_state'),
+                            drift=analytics['drift'],
+                            previous_drift=previous_snapshot.get('drift'),
+                            quality_score=analytics['quality_score'],
+                            previous_quality_score=previous_snapshot.get('quality_score')
+                        )
+                    else:
+                        transition_state = "No Transition"
+                        transition_strength = 0.0
+
+                    # Build regime data dict
+                    regime_data = {
+                        'regime_state': regime_state,
+                        'transition_state': transition_state,
+                        'transition_strength': transition_strength
+                    }
+
+                    # Enrich signal with intelligence
+                    enriched = enrich_signal(
+                        symbol=symbol,
+                        base_signal=base_signal,
+                        model_confidence=signal['confidence'],
+                        model_probability=model_probability,
+                        analytics=analytics,
+                        regime_data=regime_data,
+                        age_days=age_days
+                    )
+
+                    # Add sector for grouping
+                    enriched['sector'] = signal['sector'] or 'Unknown'
+                    enriched['age_days'] = age_days
+
+                    enriched_signals.append(enriched)
+
+                except Exception as e:
+                    logger.error(f"[SIGNAL_INTEL] Error processing {signal['symbol']}: {e}")
+                    continue
+
+        finally:
+            try:
+                client.disconnect()
+            except:
+                pass
+
+        # Sort by signal quality score descending
+        enriched_signals.sort(key=lambda x: x['signal_quality_score'], reverse=True)
+
+        return jsonify({
+            'signals': enriched_signals,
+            'count': len(enriched_signals),
+            'timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 # ============================================================================
 # PERFORMANCE DASHBOARD API
 # ============================================================================
@@ -3253,12 +4187,40 @@ def performance_api():
                     WHEN CAST(strftime('%H', entry_date) AS INTEGER) BETWEEN 10 AND 13 THEN '3B'
                     WHEN CAST(strftime('%H', entry_date) AS INTEGER) = 14 THEN '3C'
                     ELSE 'Other'
-                END as window
+                END as window,
+                prob_buy,
+                prob_sell,
+                prob_hold,
+                entry_atr,
+                target_price,
+                stop_price,
+                rr,
+                directional_margin,
+                confidence
             FROM signal_history
             WHERE exit_date IS NOT NULL
             ORDER BY exit_date ASC
         """)
         equity_data = cursor.fetchall()
+
+        # Log enriched field availability
+        total_trades = len(equity_data)
+        trades_with_prob_buy = sum(1 for row in equity_data if row['prob_buy'] is not None)
+        trades_with_prob_sell = sum(1 for row in equity_data if row['prob_sell'] is not None)
+        trades_with_prob_hold = sum(1 for row in equity_data if row['prob_hold'] is not None)
+        trades_with_atr = sum(1 for row in equity_data if row['entry_atr'] is not None)
+        trades_with_rr = sum(1 for row in equity_data if row['rr'] is not None)
+        trades_with_dm = sum(1 for row in equity_data if row['directional_margin'] is not None)
+
+        print(f"[API PERFORMANCE] Enriched Field Coverage:")
+        print(f"  Total Trades: {total_trades}")
+        print(f"  prob_buy: {trades_with_prob_buy}/{total_trades} ({100*trades_with_prob_buy/total_trades if total_trades > 0 else 0:.1f}%)")
+        print(f"  prob_sell: {trades_with_prob_sell}/{total_trades} ({100*trades_with_prob_sell/total_trades if total_trades > 0 else 0:.1f}%)")
+        print(f"  prob_hold: {trades_with_prob_hold}/{total_trades} ({100*trades_with_prob_hold/total_trades if total_trades > 0 else 0:.1f}%)")
+        print(f"  entry_atr: {trades_with_atr}/{total_trades} ({100*trades_with_atr/total_trades if total_trades > 0 else 0:.1f}%)")
+        print(f"  rr: {trades_with_rr}/{total_trades} ({100*trades_with_rr/total_trades if total_trades > 0 else 0:.1f}%)")
+        print(f"  directional_margin: {trades_with_dm}/{total_trades} ({100*trades_with_dm/total_trades if total_trades > 0 else 0:.1f}%)")
+
         # Real-money equity curve with compounding and dynamic 5% risk sizing
         starting_equity = 8000
         equity = starting_equity
@@ -3296,10 +4258,22 @@ def performance_api():
                 'pnl': row['profit_loss_pct'],
                 'shares': shares,
                 'dollar_pnl': dollar_pnl,
-                'equity': equity
+                'equity': equity,
+                'prob_buy': row['prob_buy'],
+                'prob_sell': row['prob_sell'],
+                'prob_hold': row['prob_hold'],
+                'entry_atr': row['entry_atr'],
+                'target_price': row['target_price'],
+                'stop_price': row['stop_price'],
+                'rr': row['rr'],
+                'directional_margin': row['directional_margin'],
+                'confidence': row['confidence']
             })
 
         conn.close()
+
+        # Log successful API response
+        print(f"[API PERFORMANCE] Returning {len(equity_curve)} trades with enriched quality fields")
 
         return jsonify({
             'summary': summary,

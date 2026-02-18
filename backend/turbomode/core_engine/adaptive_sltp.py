@@ -195,8 +195,18 @@ def calculate_adaptive_sltp(
     # Calculate stop distance (1R)
     stop_distance = atr * sector_mult * conf_mod * horizon_mult
 
+    # Apply ATR-based sanity bounds (aligned with ±6% label regime)
+    min_stop_distance = 0.5 * atr
+    max_stop_distance = 3.0 * atr
+    stop_distance = max(min_stop_distance, min(stop_distance, max_stop_distance))
+
     # Calculate target distance
     target_distance = stop_distance * reward_ratio
+
+    # Apply target distance bounds
+    min_target_distance = stop_distance * 1.5
+    max_target_distance = stop_distance * 4.0
+    target_distance = max(min_target_distance, min(target_distance, max_target_distance))
 
     # Calculate price levels
     if position_type == 'long':
