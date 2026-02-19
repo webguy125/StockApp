@@ -9,7 +9,7 @@ Ensemble Training Orchestrator
 Trains 6 models per sector: 5 base models + 1 MetaLearner (66 models total)
 
 ARCHITECTURE:
-- Single label: 14-day MFE/MAE path-dependent labels (±5% threshold)
+- Single label: 14-day MFE/MAE path-dependent labels (±6% threshold)
 - 6 models per sector: 11 sectors × 6 models = 66 models total
 - 5 base models: LightGBM-GPU, CatBoost-GPU, XGBoost-Hist-GPU, XGBoost-Linear, RandomForest
 - 1 MetaLearner: LogisticRegression (trained on stacked out-of-fold predictions)
@@ -26,6 +26,9 @@ Updated: 2026-02-16 (14-day enforcement)
 
 # TURBOMODE 14-DAY HORIZON ENFORCEMENT
 TURBOMODE_HORIZON = '14d'
+HORIZON_DAYS = 14
+BUY_THRESHOLD = 0.06   # +6% over 14 days
+SELL_THRESHOLD = -0.06  # -6% over 14 days
 
 import os
 import time
@@ -134,7 +137,7 @@ def train_all_sectors_optimized():
     Performance:
         - 11 sectors × 6 models each = 66 models total
         - Training time: ~4-5 hours
-        - Single label: 14-day MFE/MAE path-dependent (±5% threshold)
+        - Single label: 14-day MFE/MAE path-dependent (±6% threshold)
     """
     # ENFORCE 14-DAY HORIZON
     assert TURBOMODE_HORIZON == '14d', 'TurboMode must use 14d horizon only'
@@ -150,8 +153,9 @@ def train_all_sectors_optimized():
     print(f"Start Time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Sectors: {len(ALL_SECTORS)}")
     print(f"Models per sector: 6 (5 base + 1 meta-learner)")
-    print(f"Label: 14-day MFE/MAE path-dependent (±5% threshold)")
-    print(f"Horizon: {TURBOMODE_HORIZON} (ENFORCED)")
+    print(f"Label: 14-day MFE/MAE path-dependent (±6% threshold)")
+    print(f"Horizon: {TURBOMODE_HORIZON} ({HORIZON_DAYS} days - ENFORCED)")
+    print(f"Thresholds: BUY >= +{BUY_THRESHOLD*100:.0f}%, SELL <= {SELL_THRESHOLD*100:.0f}%")
     print(f"Total models: {len(ALL_SECTORS) * 6}")
     print("=" * 80)
     print()
@@ -171,7 +175,13 @@ def train_all_sectors_optimized():
     for sector in ALL_SECTORS:
         sector_symbols = get_symbols_by_sector(sector)
         print(f"[PRELOAD] Loading {sector}...")
-        preloaded_data[sector] = load_sector_data_once(db_path, sector_symbols)
+        preloaded_data[sector] = load_sector_data_once(
+            db_path,
+            sector_symbols,
+            horizon_days=HORIZON_DAYS,
+            buy_threshold=BUY_THRESHOLD,
+            sell_threshold=SELL_THRESHOLD
+        )
     print(f"[OPTIMIZE] Preloading complete - {len(preloaded_data)} sectors loaded")
     print()
 

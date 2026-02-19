@@ -231,10 +231,22 @@ FEATURE_LIST: List[str] = [
     "derived_feature_128",
     "derived_feature_129",
     "derived_feature_130",
+
+    # Advanced exponential features (4 features)
+    "exp_momo_14d",
+    "exp_vol_14d",
+    "exp_decay_volume_14d",
+    "exp_drawdown_pressure_14d",
+
+    # Options-derived features (4 features)
+    "opt_iv_rank",
+    "opt_put_call_ratio",
+    "opt_skew_25d",
+    "opt_term_structure_slope",
 ]
 
 # Metadata
-VERSION = "1.0.0"
+VERSION = "2.0.0"  # Updated for advanced features extension
 FEATURE_COUNT = len(FEATURE_LIST)
 
 # Compute integrity hash
@@ -242,7 +254,7 @@ _HASH_INPUT = "".join(FEATURE_LIST).encode('utf-8')
 FEATURE_LIST_HASH = hashlib.sha256(_HASH_INPUT).hexdigest()
 
 # Validation
-assert FEATURE_COUNT == 179, f"FEATURE_LIST must have exactly 179 features, got {FEATURE_COUNT}"
+assert FEATURE_COUNT == 187, f"FEATURE_LIST must have exactly 187 features, got {FEATURE_COUNT}"
 
 # Create lookup dict for O(1) index access
 FEATURE_INDEX = {name: idx for idx, name in enumerate(FEATURE_LIST)}

@@ -10,14 +10,14 @@ Multi-Model Ensemble for Directional Stock/Options Trading
 
 ARCHITECTURE:
 - Trains ONE ensemble per sector (5 base models + 1 MetaLearner)
-- Uses label_14d_swing (14-day horizon, ±5% threshold)
+- Uses label_14d_swing (14-day horizon, ±6% threshold)
 - Model directory: models/<sector>/*.pkl
 - Total models: 66 (6 per sector × 11 sectors)
 
 LABEL SEMANTICS (14-Day Swing):
-- 0 = SELL: 14-day return <= -5% (bearish swing)
-- 1 = HOLD: 14-day return between -5% and +5% (no edge)
-- 2 = BUY: 14-day return >= +5% (bullish swing)
+- 0 = SELL: 14-day return <= -6% (bearish swing)
+- 1 = HOLD: 14-day return between -6% and +6% (no edge)
+- 2 = BUY: 14-day return >= +6% (bullish swing)
 
 PERFORMANCE:
 - Training time: ~2-3 hours for all 11 sectors
@@ -52,32 +52,31 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('sector_batch_trainer')
 
 
-def compute_labels_14d_swing(trades: List[Dict], ohlcv_data: Dict) -> Dict:
+def compute_labels_14d_swing(trades: List[Dict], ohlcv_data: Dict, horizon_days: int = 14, buy_threshold: float = 0.06, sell_threshold: float = -0.06) -> Dict:
     """
     Compute 14-day swing trade labels based on close-to-close returns.
 
     **SWING TRADE LABEL CONFIGURATION:**
     - Horizon: 14 trading days (2-3 weeks)
-    - Thresholds: ±5% return over 14 days
+    - Thresholds: ±6% return over 14 days (configurable)
     - Method: Close-to-close return (not intraday TP/DD)
 
     **LABEL SEMANTICS:**
-    - 0 = SELL: 14-day return <= -5% (bearish swing)
-    - 1 = HOLD: 14-day return between -5% and +5% (no edge)
-    - 2 = BUY: 14-day return >= +5% (bullish swing)
+    - 0 = SELL: 14-day return <= -6% (bearish swing)
+    - 1 = HOLD: 14-day return between -6% and +6% (no edge)
+    - 2 = BUY: 14-day return >= +6% (bullish swing)
 
     Args:
         trades: List of trade dicts with id, symbol, entry_date, entry_price
         ohlcv_data: Dict mapping symbol -> OHLCV DataFrame with 'close' column
+        horizon_days: Number of days for the trading horizon (default: 14)
+        buy_threshold: Threshold for BUY label (default: 0.06 = +6%)
+        sell_threshold: Threshold for SELL label (default: -0.06 = -6%)
 
     Returns:
         Dict mapping trade_id -> label (int)
         Labels: 0=SELL, 1=HOLD, 2=BUY
     """
-    # Swing trade configuration
-    horizon_days = 14
-    buy_threshold = 0.05   # +5% over 14 days → BUY
-    sell_threshold = -0.05  # -5% over 14 days → SELL
 
     # Pre-process OHLCV data to numpy arrays
     price_data = {}
@@ -167,7 +166,7 @@ def compute_labels_1d_5pct(trades: List[Dict], ohlcv_data: Dict) -> Dict:
 
     Single label configuration:
     - 1d horizon: next 1 trading day
-    - 5% threshold: +5% for BUY, -5% for SELL
+    - Thresholds: configurable (legacy used ±5%)
 
     Args:
         trades: List of trade dicts with id, symbol, entry_date, entry_price
@@ -177,10 +176,10 @@ def compute_labels_1d_5pct(trades: List[Dict], ohlcv_data: Dict) -> Dict:
         Dict mapping trade_id -> label (int)
         Labels: 0=SELL, 1=HOLD, 2=BUY
     """
-    # Single configuration: 1d / 5%
+    # Legacy configuration: 1d (deprecated - not used in TurboMode)
     horizon_days = 1
-    buy_threshold = 0.05
-    sell_threshold = -0.05
+    buy_threshold = 0.05  # Legacy value
+    sell_threshold = -0.05  # Legacy value
 
     # Pre-process OHLCV data to numpy arrays
     price_data = {}
@@ -258,13 +257,16 @@ def compute_labels_1d_5pct(trades: List[Dict], ohlcv_data: Dict) -> Dict:
     return all_labels
 
 
-def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.ndarray, Dict, List]:
+def load_sector_data_once(db_path: str, sector_symbols: List[str], horizon_days: int = 14, buy_threshold: float = 0.06, sell_threshold: float = -0.06) -> Tuple[np.ndarray, Dict, List]:
     """
     Load sector data from database.
 
     Args:
         db_path: Path to turbomode.db
         sector_symbols: List of symbols in this sector
+        horizon_days: Trading horizon in days (default: 14)
+        buy_threshold: Threshold for BUY label (default: 0.06 = +6%)
+        sell_threshold: Threshold for SELL label (default: -0.06 = -6%)
 
     Returns:
         (X_features, labels_dict, trade_ids)
@@ -272,6 +274,7 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
         - labels_dict: Dict mapping trade_id -> label (int: 0=SELL, 1=HOLD, 2=BUY)
         - trade_ids: List of trade IDs (aligned with X_features rows)
     """
+    logger.info(f"[CONFIG] Loading sector data with: horizon={horizon_days}d, buy_threshold={buy_threshold:+.1%}, sell_threshold={sell_threshold:+.1%}")
     # Check cache first
     cache_key = tuple(sorted(sector_symbols))
     if cache_key in _sector_cache:
@@ -341,8 +344,9 @@ def load_sector_data_once(db_path: str, sector_symbols: List[str]) -> Tuple[np.n
     X_features = features_to_array_vectorized(json_feature_list, fill_value=0.0)
 
     # Validate feature matrix shape
-    if X_features.shape[1] != 179:
-        logger.error(f"[ERROR] Expected 179 features, got {X_features.shape[1]}")
+    from backend.turbomode.core_engine.feature_list import FEATURE_COUNT
+    if X_features.shape[1] != FEATURE_COUNT:
+        logger.error(f"[ERROR] Expected {FEATURE_COUNT} features, got {X_features.shape[1]}")
         return np.array([]), {}, []
 
     parse_time = time.time() - start_time
@@ -383,14 +387,14 @@ def run_sector_training(
     Pipeline:
     1. Loads sector data from database
     2. Preprocesses 179 features
-    3. Computes label_14d_swing (±3% over 14 days)
+    3. Computes label_14d_swing (±6% over 14 days)
     4. Trains 5 base models + MetaLearner
     5. Saves ensemble to: models/<sector>/*.pkl
 
     **LABEL SEMANTICS:**
-    - 0 = SELL: 14-day return <= -3%
-    - 1 = HOLD: 14-day return between -3% and +3%
-    - 2 = BUY: 14-day return >= +3%
+    - 0 = SELL: 14-day return <= -6%
+    - 1 = HOLD: 14-day return between -6% and +6%
+    - 2 = BUY: 14-day return >= +6%
 
     Args:
         sector_name: Sector name (e.g., 'technology')
@@ -489,7 +493,7 @@ if __name__ == '__main__':
 
     print(f"\nTesting single-model training with {test_sector} sector...")
     print(f"Symbols: {len(test_symbols)}")
-    print(f"Label: 14-day MFE/MAE path-dependent (±5% threshold)")
+    print(f"Label: 14-day MFE/MAE path-dependent (±6% threshold)")
     print(f"Expected output: 1 model file")
     print()
 

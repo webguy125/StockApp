@@ -9,23 +9,25 @@ SYMBOL-BATCHED TurboMode Feature Extraction Pipeline
 2000x Performance Optimization via Symbol-Level Batching + Vectorized GPU Engine
 
 Architecture:
-- Fetch candles ONCE per symbol (40 symbols total)
+- Fetch candles ONCE per symbol (230 symbols total)
 - Run VECTORIZED GPU feature extraction ONCE per symbol (processes all dates in one pass)
 - Index into pre-computed features_df by date
 - Batch database updates (500-2000 rows)
 
 Performance:
 - Old: 80 hours (169,400 samples × per-sample candle fetch + per-sample GPU call)
-- New: ~2-5 minutes (40 symbols × single candle fetch + single vectorized GPU call)
+- New: ~2-5 minutes (230 symbols × single candle fetch + single vectorized GPU call)
 - Speedup: 2000x
 
 Key Innovation:
 - Uses TurboModeVectorizedFeatureEngine (CuPy-based, fully vectorized)
 - Zero Python loops for feature computation
-- All 179 features computed simultaneously for all dates
+- All 187 features computed simultaneously for all dates (179 base + 8 advanced)
+- Includes exponential momentum/volatility and real-time options data
 
 Author: TurboMode Core Engine
 Date: 2026-01-06 (Vectorized GPU Optimization)
+Updated: 2026-02-18 (v3.1.0 - Added exponential and options features)
 """
 
 import sys
@@ -201,6 +203,9 @@ class SymbolBatchedFeatureExtractor:
             # Create date_only column for indexing
             candles['date_only'] = candles['date'].dt.date
 
+            # Add symbol column for options features lookup
+            candles['symbol'] = symbol
+
             # SINGLE VECTORIZED GPU CALL - Processes ALL dates in one pass
             features_df = self.vectorized_engine.extract_features(candles)
 
@@ -272,7 +277,7 @@ class SymbolBatchedFeatureExtractor:
 
             ordered_features[feature_name] = value
 
-        # Validate we have exactly 179 features
+        # Validate we have exactly FEATURE_COUNT features (187 in v3.1.0)
         assert len(ordered_features) == FEATURE_COUNT, f"Expected {FEATURE_COUNT} features, got {len(ordered_features)}"
 
         return json.dumps(ordered_features)

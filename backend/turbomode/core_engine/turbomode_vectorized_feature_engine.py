@@ -11,12 +11,13 @@ TurboMode Vectorized Feature Engine
 Replaces GPUFeatureEngineer with true vectorization:
 - Processes ENTIRE symbol history in one GPU pass
 - Zero Python loops
-- All 179 features computed via GPU array operations
+- All 187 features computed via GPU array operations (179 base + 8 advanced)
 - CuPy-based vectorized rolling windows
 - 2000x faster than per-sample approach
 
 Author: TurboMode Core Engine
 Date: 2026-01-06
+Updated: 2026-02-18 (v3.1.0 - Added exponential and options features)
 """
 
 import numpy as np
@@ -43,12 +44,13 @@ class TurboModeVectorizedFeatureEngine:
     Fully Vectorized GPU-Native Feature Engine
 
     Key Innovation:
-    - Computes all 179 features for ALL dates in one GPU pass
+    - Computes all 187 features for ALL dates in one GPU pass
     - No Python loops, no per-row computation
     - Pure vectorized array operations
+    - Includes exponential momentum/volatility and options-derived features
 
     Input: DataFrame with OHLCV for entire symbol history
-    Output: DataFrame with 179 features × N dates
+    Output: DataFrame with 187 features × N dates
     """
 
     def __init__(self, use_gpu: bool = True):
@@ -81,6 +83,11 @@ class TurboModeVectorizedFeatureEngine:
 
         Uses convolution for O(N) complexity instead of O(N*period)
         """
+        n = len(arr)
+        if period > n:
+            # Period larger than array - return all NaN
+            return self.xp.full(n, np.nan, dtype=np.float32)
+
         kernel = self.xp.ones(period, dtype=np.float32) / period
         # Use 'valid' mode and pad with NaN
         sma = self.xp.convolve(arr, kernel, mode='valid')
@@ -201,13 +208,13 @@ class TurboModeVectorizedFeatureEngine:
 
     def extract_features(self, candles: pd.DataFrame) -> pd.DataFrame:
         """
-        Extract ALL 179 features for entire candle history in ONE GPU pass
+        Extract ALL 187 features for entire candle history in ONE GPU pass
 
         Args:
-            candles: DataFrame with columns [date, open, high, low, close, volume]
+            candles: DataFrame with columns [date, open, high, low, close, volume, symbol (optional)]
 
         Returns:
-            DataFrame with 179 feature columns × N rows
+            DataFrame with 187 feature columns × N rows (includes exponential + options features)
         """
         # Convert to GPU arrays
         open_arr = self._to_array(candles['open'])
@@ -289,15 +296,63 @@ class TurboModeVectorizedFeatureEngine:
         # Convert all GPU arrays back to CPU for DataFrame creation
         features_cpu = {k: self._to_cpu(v) for k, v in features.items()}
 
-        # Add enough features to reach 179 total
-        # Pad with derived features using canonical FEATURE_LIST names
+        # Get reference length from close array
+        n_rows = len(self._to_cpu(close_arr))
+
+        # Compute advanced features (exponential + options)
+        from backend.turbomode.core_engine.advanced_features import (
+            compute_advanced_features_vectorized,
+            compute_options_features_from_db
+        )
+
+        # Exponential features (4 features) - vectorized computation
+        close_cpu = self._to_cpu(close_arr)
+        volume_cpu = self._to_cpu(volume_arr)
+        advanced_features = compute_advanced_features_vectorized(close_cpu, volume_cpu)
+
+        # Add exponential features to features_cpu
+        for feat_name, feat_values in advanced_features.items():
+            features_cpu[feat_name] = feat_values
+
+        # Options features (4 features) - need symbol and timestamps
+        # Get symbol from candles DataFrame if available
+        if 'symbol' in candles.columns:
+            symbol = candles['symbol'].iloc[0] if len(candles) > 0 else None
+        else:
+            symbol = None
+
+        if symbol is not None:
+            # Query options database for this symbol (latest data)
+            opt_features = compute_options_features_from_db(symbol)
+
+            # Broadcast options features to all rows (same value for all dates)
+            for feat_name, feat_value in opt_features.items():
+                features_cpu[feat_name] = np.full(n_rows, feat_value, dtype=np.float32)
+        else:
+            # No symbol available, use zeros
+            features_cpu['opt_iv_rank'] = np.zeros(n_rows, dtype=np.float32)
+            features_cpu['opt_put_call_ratio'] = np.zeros(n_rows, dtype=np.float32)
+            features_cpu['opt_skew_25d'] = np.zeros(n_rows, dtype=np.float32)
+            features_cpu['opt_term_structure_slope'] = np.zeros(n_rows, dtype=np.float32)
+
+        # Add remaining derived features to reach FEATURE_COUNT total
         current_count = len(features_cpu)
         needed = FEATURE_COUNT - current_count
 
         for i in range(needed):
-            # Add derived features to reach 179
+            # Add derived features to reach target count
             feature_name = f'derived_feature_{i}'
             features_cpu[feature_name] = features_cpu['close'] * (i + 1) * 0.001
+
+        # Debug: Check all array lengths before creating DataFrame
+        lengths = {k: len(v) for k, v in features_cpu.items()}
+        unique_lengths = set(lengths.values())
+        if len(unique_lengths) > 1:
+            logger.error(f"[ERROR] Array length mismatch! Unique lengths: {unique_lengths}")
+            for k, v in sorted(lengths.items(), key=lambda x: x[1]):
+                if v != n_rows:
+                    logger.error(f"  {k}: {v} (expected {n_rows})")
+            raise ValueError(f"Array length mismatch: {unique_lengths}")
 
         # Create DataFrame with columns in CANONICAL FEATURE_LIST order
         # This ensures all modules see features in the same order
